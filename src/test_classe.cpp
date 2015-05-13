@@ -10,7 +10,7 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "Phobic_whife_scene");
 
 	// ros::NodeHandle nodeH;
-	ros::Publisher Scena_info;
+	//ros::Publisher Scena_info;
 	ros::Subscriber reader;
 	std::cout<<"Sono nel main prima di aver creato ogetto classe"<<std::endl;
 	//leggo();

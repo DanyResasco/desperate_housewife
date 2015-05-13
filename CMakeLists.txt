@@ -4,7 +4,18 @@ project(desperate_housewife)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED roscpp pcl_conversions pcl_ros pcl_msgs)
+find_package(PCL REQUIRED)
+
+
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
+
+#add_definitions(-std=c++11) 
+
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -97,15 +108,16 @@ catkin_package(
 
 ## Declare a cpp executable
 # add_executable(desperate_housewife_node src/desperate_housewife_node.cpp)
-add_executable(ros_test test/ros_test.cpp)
+add_executable(phobic_camera src/phobic_camera.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(desperate_housewife_node desperate_housewife_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(ros_test
+target_link_libraries(phobic_camera
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 
 

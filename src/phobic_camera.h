@@ -7,8 +7,8 @@
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float32MultiArray.h>
 
-// //PCL
- #include <pcl/common/common_headers.h>
+//PCL
+#include <pcl/common/common_headers.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/visualization/pcl_visualizer.h>
@@ -18,23 +18,25 @@
 #include <pcl/sample_consensus/sac_model_plane.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/extract_indices.h>
- #include <pcl/point_types.h>
+#include <pcl/point_types.h>
 #include <pcl/sample_consensus/ransac.h>
 #include <pcl/ModelCoefficients.h>
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/segmentation/supervoxel_clustering.h>
 
 #include <boost/thread/thread.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <iostream>
 #include <utility>
 #include <list>
-#include <chrono>
-#include <thread>
+// #include <chrono>
+// #include <thread>
 
 
- #include <tf/transform_listener.h>
+#include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
 
@@ -46,24 +48,32 @@ class phobic_scene
 		ros::NodeHandle nodeH;
 		ros::Publisher Scena_info;
 		//ros::Subscriber reader;
-		pcl::PointCloud<pcl::PointXYZ>::Ptr cloud ;
-		std::list<pcl::PointCloud<pcl::PointXYZ>::Ptr> cloud_temp;
+		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud ;
 		tf::Transform hand_tr;
-	
+		std::list<pcl::PointCloud<pcl::PointXYZRGBA> > object_cluster;
+		bool start;
+
+
 	
 	public:
 		
 		void pointcloudCallback(sensor_msgs::PointCloud2 msg);
 		//void pub_transf();
 		//tf::Transform fitting (pcl::PointCloud<pcl::PointXYZ>::Ptr  cloud );
-		tf::Transform fitting ();
+		//tf::Transform fitting ();
+		void fitting ();
 		void send_msg();
+		void erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  pc);
+		bool check_change_pc();
+		void getcluster();
+		//void visualization();
 
 		// phobic_scene(){}
 		phobic_scene(ros::NodeHandle NodeH): nodeH(NodeH)
 		{
-			pcl::PointCloud<pcl::PointXYZ> cloud2;
+			pcl::PointCloud<pcl::PointXYZRGBA> cloud2;
 			cloud=cloud2.makeShared();
+			start=true;
 			//Scena_info = nodeH.advertise<std_msgs::Float32MultiArray>("desperate_camera", "100");
 			//Scena_info = nodeH.advertise<std_msgs::Float32MultiArray>(nodeH.resolveName("markers_out"), 10);
 			
@@ -89,13 +99,13 @@ class phobic_scene
 // output: couple of point cloud
 //Description: this function fitting a plane into point cloud and remove it. The inlier into plane will be save into another point cloud
 			// In the end we have two point cloud, first with the object anc second with table
-std::pair <pcl::PointCloud<pcl::PointXYZ>,pcl::PointCloud<pcl::PointXYZ> > erase_table (pcl::PointCloud<pcl::PointXYZ>::Ptr PC_w_env);
+//std::pair <pcl::PointCloud<pcl::PointXYZ>,pcl::PointCloud<pcl::PointXYZ> > erase_table (pcl::PointCloud<pcl::PointXYZ>::Ptr PC_w_env);
 
 //Fucntion: erase_environment
 //input: ptr point cloud
 // output:  point cloud
 //Description: this function utilize a passthrough filter for cancel the environment
-pcl::PointCloud<pcl::PointXYZ>::Ptr erase_environment(pcl::PointCloud<pcl::PointXYZ>::Ptr  cloud );
+//pcl::PointCloud<pcl::PointXYZ>::Ptr erase_environment(pcl::PointCloud<pcl::PointXYZ>::Ptr  cloud );
 
 
 //Function: fitting
@@ -107,12 +117,12 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr erase_environment(pcl::PointCloud<pcl::Point
 //input: cylinder's coefficients
 //ouput: hand transformation
 //Description: this function return a hand-transformation
-tf::Transform CylToHand_Transform (const Eigen::VectorXf coeff);
+tf::Transform CylToHand_Transform (const std::vector<float>  coeff);
 
 //Function: visualization
 //input: point cloud
 //Description: this funciont called the pcl visualizer
-void visualization(const pcl::PointCloud<pcl::PointXYZ>::Ptr room_object);
+void visualization(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr room_object);
 
 
 
