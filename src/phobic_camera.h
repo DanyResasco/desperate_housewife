@@ -26,6 +26,8 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/segmentation/supervoxel_clustering.h>
+#include <pcl/segmentation/extract_clusters.h>
+#include <pcl/ModelCoefficients.h>
 
 #include <boost/thread/thread.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -51,6 +53,7 @@ class phobic_scene
 		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud ;
 		tf::Transform hand_tr;
 		std::list<pcl::PointCloud<pcl::PointXYZRGBA> > object_cluster;
+		std::list<pcl::PointCloud<pcl::PointXYZRGBA> > cyl_list;
 		bool start;
 
 
@@ -66,6 +69,7 @@ class phobic_scene
 		void erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  pc);
 		bool check_change_pc();
 		void getcluster();
+		void erase_table();
 		//void visualization();
 
 		// phobic_scene(){}

@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "desperate_housewife")
+set(desperate_housewife_MAINTAINER "manuelb <manuelb@todo.todo>")
+set(desperate_housewife_DEPRECATED "")
+set(desperate_housewife_VERSION "0.0.0")
+set(desperate_housewife_BUILD_DEPENDS )
+set(desperate_housewife_RUN_DEPENDS )
+set(desperate_housewife_BUILDTOOL_DEPENDS "catkin")

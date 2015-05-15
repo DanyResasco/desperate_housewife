@@ -45,6 +45,8 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr scene (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	pcl::fromROSMsg (msg, *scene);
 
+	// visualization(scene);
+
 	// phobic_scene_local.save_pointcloud(pcl::PointCloud<pcl::PointXYZ>::Ptr  scene );
 	// temp_point_cloud
 	//pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
@@ -55,11 +57,11 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 	//pcl::PointCloud<pcl::PointXYZ>::Ptr temp_pc2 (new pcl::PointCloud<pcl::PointXYZ>);
 
 	erase_environment(scene);
+	erase_table();
 	getcluster();
-	// std::cout<<"tolto ambiente"<<std::endl;
-	
   	
 	fitting();
+	
 	// send_msg();
 		//Move iterator forward to next label
     	// label_itr = supervoxel_clusters.upper_bound(supervoxel_label);	
@@ -108,33 +110,18 @@ void phobic_scene::erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  or
 
 	// copies point clound into another PointCloud (cloud is the class pc )
 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud_filtered, *cloud);
-	visualization(cloud_filtered);
+	
+	//visualization(cloud_filtered);
 
 	//std::cout<<"finito funzione togli ambiente"<<std::endl;
 
 }
 
 
-//pcl::PointCloud<pcl::PointXYZ>::Ptr 
-//tf::Transform phobic_scene::fitting (pcl::PointCloud<pcl::PointXYZ>::Ptr  object )
-//tf::Transform phobic_scene::fitting ()
-//void phobic_scene::fitting ()
 void phobic_scene::fitting ()
 {	
 	std::cout<<"sono nel fitting"<<std::endl;
-	// fitting pcl::SampleConsensusModelCylinder<Point, pcl::Normal>:
-	// pcl::PointCloud<pcl::PointXYZ>::Ptr object (new pcl::PointCloud<pcl::PointXYZ>);
-	// pcl::copyPointCloud<pcl::PointXYZ>( cloud_temp.begin(), object);
 	
-	//pcl::SampleConsensusModelCylinder<pcl::PointXYZ, pcl::Normal>::Ptr model_cylinder(new pcl::SampleConsensusModelCylinder<pcl::PointXYZ, pcl::Normal> (*cloud_temp.begin()));
-	// pcl::SampleConsensusModelCylinder<pcl::PointXYZ, pcl::Normal>::Ptr model_cylinder(new pcl::SampleConsensusModelCylinder<pcl::PointXYZ, pcl::Normal> (cloud));
-	// //pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
-
- //    std::vector<int> inliers;
- //    pcl::RandomSampleConsensus<pcl::PointXYZ> ransac (model_cylinder);
- //    ransac.setDistanceThreshold (.01);
- //    ransac.computeModel();
- //    ransac.getInliers(inliers);
 	pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
 	pcl::search::KdTree< pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree< pcl::PointXYZRGBA> ());
 	pcl::NormalEstimation< pcl::PointXYZRGBA, pcl::Normal> ne;
@@ -142,7 +129,6 @@ void phobic_scene::fitting ()
 	pcl::PointIndices::Ptr inliers_cylinder (new pcl::PointIndices);
 	pcl::ModelCoefficients::Ptr coefficients_cylinder (new pcl::ModelCoefficients);
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_first (new pcl::PointCloud<pcl::PointXYZRGBA>);
-
 	
 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *cloud_first);
 	std::cout<<"dimensione punti della prima pc"<<cloud_first->points.size()<<std::endl;
@@ -160,6 +146,14 @@ void phobic_scene::fitting ()
 	ne.setKSearch (100);
 	ne.compute (*cloud_normals);
 
+    std::cout << " number of input cloud" << cloud_normals->points.size() << std::endl;
+
+    if (cloud_normals->points.empty ())
+    {
+        std::cout<<"empty normal pointcloud"<<std::endl;
+
+    }
+
 	// Create the segmentation object for cylinder segmentation and set all the parameters
 	pcl::SACSegmentationFromNormals< pcl::PointXYZRGBA, pcl::Normal> seg;
 	seg.setOptimizeCoefficients (true);
@@ -168,44 +162,46 @@ void phobic_scene::fitting ()
 	seg.setNormalDistanceWeight (0.1);
 	seg.setMaxIterations (10000);
 	seg.setDistanceThreshold (0.05);
-	seg.setRadiusLimits (0, 0.1);
+    seg.setRadiusLimits (0, 0.2);
 	seg.setInputCloud (cloud_first);
-	// seg.setInputNormals (cloud_normals);
+	seg.setInputNormals (cloud_normals);
 
 	// // Obtain the cylinder inliers and coefficients
-	// seg.segment (*inliers_cylinder, *coefficients_cylinder);
-	// //std::cerr << "Cylinder coefficients: " << *coefficients_cylinder << std::endl;
-	// if (inliers_cylinder->indices.size() == 0)
+    seg.segment (*inliers_cylinder, *coefficients_cylinder);
+	std::cout << "Cylinder coefficients: " << *coefficients_cylinder << std::endl;
+    std::cout << "Number of inliers: " << inliers_cylinder->indices.size() << std::endl;
+	
+	if (inliers_cylinder->indices.size() == 0)
+	{
+	 	std::cout << "Could not find a cylinder in the scene." << std::endl;
+	}
+	
+	else
+	{
+		// Write the cylinder inliers to disk
+		std::cout << "cylinder found, extracting inliers" << std::endl;
+ 		extract.setInputCloud (cloud_first);
+	 	extract.setIndices (inliers_cylinder);
+	 	extract.setNegative (false);
+	 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZRGBA> ());
+	 	extract.filter (*cloud_cylinder);
 
-	// 	std::cout << "Could not find a cylinder in the scene." << std::endl;
+	 	if (cloud_cylinder->points.empty ())
+		{
+			std::cout<<"empty pointcloud"<<std::endl;
 
-	// else
-	// {
-	// 	// Write the cylinder inliers to disk
-	// 	extract.setInputCloud (cloud_first);
-	// 	extract.setIndices (inliers_cylinder);
-	// 	//extract.setNegative (false);
-	// 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZRGBA> ());
-	// 	extract.filter (*cloud_cylinder);
+	 	}
 
-	// 	if (cloud_cylinder->points.empty ())
-	// 	{
-	// 	std::cout<<"empty pointcloud"<<std::endl;
+	 	cyl_list.push_back(*cloud_cylinder);
+ 
 
-	// 	}
+	    //hand's info
 
-	//     // pcl::PointCloud<pcl::PointXYZ>::Ptr cylinder (new pcl::PointCloud<pcl::PointXYZ>);
-	//     // //::copyPointCloud<pcl::PointXYZ>(**(cloud_temp.begin()), inliers, *cylinder);
-	//     // pcl::copyPointCloud<pcl::PointXYZ>(*cloud, inliers, *cylinder);
-	// 	//visualization(cloud_cylinder);
-	// 	//cylinder's info
-	//     // Eigen::VectorXf info_cil;
-	//     // ransac.getModelCoefficients(info_cil);
+	    //tf::Transform CylToHand_tr;    	
+		hand_tr=CylToHand_Transform (coefficients_cylinder->values);
 
-	//     //hand's info
-
-	//      //tf::Transform CylToHand_tr;    	
-	// 	hand_tr=CylToHand_Transform (coefficients_cylinder->values);
+		std::cout<< "hand transformation rot "<< *hand_tr.getRotation()<< std::endl;
+		std::cout<< "hand transformation rot "<< *hand_tr.getOrigin()<< std::endl;
 
 		// remove the first elements in the list
 		object_cluster.pop_front();
@@ -214,7 +210,8 @@ void phobic_scene::fitting ()
 	  	//visualization(cylinder); 
 		
 		//return(CylToHand_tr);
-	//}
+	
+	}
 }
 
 
@@ -282,6 +279,43 @@ void phobic_scene::getcluster()
 	std::cout<<"sono dentro a getcluster"<<std::endl;
 	bool check=true;
 
+	// try with euclidean clusters
+	// Creating the KdTree object for the search method of the extraction
+  	pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBA>);
+  	tree->setInputCloud (cloud);
+
+  	std::vector<pcl::PointIndices> cluster_indices;
+  	pcl::EuclideanClusterExtraction<pcl::PointXYZRGBA> ec;
+  	ec.setClusterTolerance (0.02); // 2cm
+  	ec.setMinClusterSize (100);
+  	ec.setMaxClusterSize (25000);
+  	ec.setSearchMethod (tree);
+  	ec.setInputCloud (cloud);
+  	ec.extract (cluster_indices);
+
+  	
+  	for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
+  	{
+  		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGBA>);
+  		
+  		for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+      	{	
+      		cloud_cluster->points.push_back (cloud->points[*pit]); 
+      		cloud_cluster->width = cloud_cluster->points.size ();
+    		cloud_cluster->height = 1;
+    		cloud_cluster->is_dense = true;
+
+    	}
+	 	
+
+    		object_cluster.push_back(*cloud_cluster);
+    }
+
+	// pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_first (new pcl::PointCloud<pcl::PointXYZRGBA>);
+	// pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *cloud_first);
+    // visualization(cloud_first);
+    //object_cluster.pop_front();
+
 	// if (start!=true)
 	// {
 	// 	check=check_change_pc();
@@ -289,59 +323,59 @@ void phobic_scene::getcluster()
 	// }
 
 	// create a cluster if only the point cloud is change
-	if (check == true)
-	{
-		// date
-		float color_importance=2.0f;
-		float spatial_importance=0.4f;
-		float normal_importance=1.0f;
-		float seed_resolution = 0.1f;
-		float voxel_resolution = 0.08f;
+	// if (check == true)
+	// {
+	// 	// date
+	// 	float color_importance=2.0f;
+	// 	float spatial_importance=0.4f;
+	// 	float normal_importance=1.0f;
+	// 	float seed_resolution = 0.1f;
+	// 	float voxel_resolution = 0.08f;
 
-		pcl::SupervoxelClustering<pcl::PointXYZRGBA> super (voxel_resolution, seed_resolution);
-		std::map <uint32_t, pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr>  supervoxel_clusters;
+	// 	pcl::SupervoxelClustering<pcl::PointXYZRGBA> super (voxel_resolution, seed_resolution);
+	// 	std::map <uint32_t, pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr>  supervoxel_clusters;
 	  
-	   	super.setInputCloud (cloud);
-		super.setColorImportance (color_importance);
-	  	super.setSpatialImportance (spatial_importance);
-	  	super.setNormalImportance (normal_importance);
-		super.extract (supervoxel_clusters);
+	//    	super.setInputCloud (cloud);
+	// 	super.setColorImportance (color_importance);
+	//   	super.setSpatialImportance (spatial_importance);
+	//   	super.setNormalImportance (normal_importance);
+	// 	super.extract (supervoxel_clusters);
 
 		
-		std::multimap<uint32_t, uint32_t> supervoxel_adjacency;
-	  	super.getSupervoxelAdjacency (supervoxel_adjacency);
-	  	//To make a graph of the supervoxel adjacency, we need to iterate through the supervoxel adjacency multimap
-	  	std::multimap<uint32_t,uint32_t>::iterator label_itr = supervoxel_adjacency.begin ();
+	// 	std::multimap<uint32_t, uint32_t> supervoxel_adjacency;
+	//   	super.getSupervoxelAdjacency (supervoxel_adjacency);
+	//   	//To make a graph of the supervoxel adjacency, we need to iterate through the supervoxel adjacency multimap
+	//   	std::multimap<uint32_t,uint32_t>::iterator label_itr = supervoxel_adjacency.begin ();
 	  	
-	  	for ( ; label_itr != supervoxel_adjacency.end (); )
-	  	{
-	  		 //First get the label
-	   		uint32_t supervoxel_label = label_itr->first;
-	   		//Now get the supervoxel corresponding to the label
-	   		pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr supervoxel = supervoxel_clusters.at (supervoxel_label);
+	//   	for ( ; label_itr != supervoxel_adjacency.end (); )
+	//   	{
+	//   		 //First get the label
+	//    		uint32_t supervoxel_label = label_itr->first;
+	//    		//Now get the supervoxel corresponding to the label
+	//    		pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr supervoxel = supervoxel_clusters.at (supervoxel_label);
 
-	    	//Now we need to iterate through the adjacent supervoxels and make a point cloud of them
-	    	pcl::PointCloud<pcl::PointXYZRGBA> adjacent_supervoxel_centers;
-	    	std::multimap<uint32_t,uint32_t>::iterator adjacent_itr = supervoxel_adjacency.equal_range (supervoxel_label).first;
+	//     	//Now we need to iterate through the adjacent supervoxels and make a point cloud of them
+	//     	pcl::PointCloud<pcl::PointXYZRGBA> adjacent_supervoxel_centers;
+	//     	std::multimap<uint32_t,uint32_t>::iterator adjacent_itr = supervoxel_adjacency.equal_range (supervoxel_label).first;
 	    	
-	    	for ( ; adjacent_itr!=supervoxel_adjacency.equal_range (supervoxel_label).second; ++adjacent_itr)
-	    	{
-	    		  pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr neighbor_supervoxel = supervoxel_clusters.at (adjacent_itr->second);
-	    		  adjacent_supervoxel_centers.push_back (neighbor_supervoxel->centroid);
-	   		}
+	//     	for ( ; adjacent_itr!=supervoxel_adjacency.equal_range (supervoxel_label).second; ++adjacent_itr)
+	//     	{
+	//     		  pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr neighbor_supervoxel = supervoxel_clusters.at (adjacent_itr->second);
+	//     		  adjacent_supervoxel_centers.push_back (neighbor_supervoxel->centroid);
+	//    		}
 	   	
-	   		// adds supervoxel in the object class list
-	   		object_cluster.push_back(adjacent_supervoxel_centers);
-			//Move iterator forward to next label
-	   		label_itr = supervoxel_adjacency.upper_bound (supervoxel_label);
-	   	}
+	//    		// adds supervoxel in the object class list
+	//    		object_cluster.push_back(adjacent_supervoxel_centers);
+	// 		//Move iterator forward to next label
+	//    		label_itr = supervoxel_adjacency.upper_bound (supervoxel_label);
+	//    	}
 
-	   	std::cout<<"finito di creare cluster"<<std::endl;
-	   	std::cout<<"numero di cluster"<<object_cluster.size()<<std::endl;
+	//    	std::cout<<"finito di creare cluster"<<std::endl;
+	//    	std::cout<<"numero di cluster"<<object_cluster.size()<<std::endl;
 
-	   	start=false;
+	//    	start=false;
 	   
-	}
+	// }
 }
 
 // bool phobic_scene::check_change_pc()
@@ -369,38 +403,51 @@ void visualization(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr room_object)
 }
 
 
-/*
-std::pair<pcl::PointCloud<pcl::PointXYZ>,pcl::PointCloud<pcl::PointXYZ> > erase_table (pcl::PointCloud<pcl::PointXYZ>::Ptr PC_w_env)
+//std::pair<pcl::PointCloud<pcl::PointXYZRGBA>,pcl::PointCloud<pcl::PointXYZRGBA> > erase_table ()
+void phobic_scene::erase_table()
 {
-	// fitting
-
-  // created RandomSampleConsensus object and compute the appropriated model
-	pcl::SampleConsensusModelPlane<pcl::PointXYZ>::Ptr model_plane (new pcl::SampleConsensusModelPlane<pcl::PointXYZ> (PC_w_env));
+	// Create the segmentation object for the planar model and set all the parameters
+  	pcl::SACSegmentation<pcl::PointXYZRGBA> seg;
+  	pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+  	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+  	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_plane (new pcl::PointCloud<pcl::PointXYZRGBA> ());
  
-    std::vector<int> inliers;
+  	seg.setOptimizeCoefficients (true);
+  	seg.setModelType (pcl::SACMODEL_PLANE);
+ 	seg.setMethodType (pcl::SAC_RANSAC);
+ 	seg.setMaxIterations (100);
+ 	seg.setDistanceThreshold (0.02);
+
+  	// Segment the largest planar component from the remaining cloud
+    seg.setInputCloud (cloud);
+    seg.segment (*inliers, *coefficients);
     
-    pcl::RandomSampleConsensus<pcl::PointXYZ> ransac (model_plane);
-    ransac.setDistanceThreshold (.01);
-    ransac.computeModel();
-    ransac.getInliers(inliers);
+    if (inliers->indices.size () == 0)
+    {
+      std::cout << "Could not estimate a planar model for the given dataset." << std::endl;
+    
+    }
 
-    //pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_p (new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr table (new pcl::PointCloud<pcl::PointXYZ>);
+    // Extract the planar inliers from the input cloud
+    pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
+    extract.setInputCloud (cloud);
+    extract.setIndices (inliers);
+    extract.setNegative (false);
 
-    // Create the filtering object tolgo il tavolo dalla point cloud
-    // pcl::ExtractIndices<pcl::PointXYZ> F_extract;
-    // F_extract.setInputCloud (model_plane);
-    // F_extract.setIndices (inliers);
-    // F_extract.setNegative (true);	//true. takes data out of table point cloud
-    // F_extract.filter (*cloud_p);
+    // Get the points associated with the planar surface
+    extract.filter (*cloud_plane);
+    //std::cout << "PointCloud representing the planar component: " << cloud_plane->points.size () << " data points." << std::endl;
 
-    // copies all inliers of the model computed to another PointCloud
- 	pcl::copyPointCloud<pcl::PointXYZ>(*PC_w_env, inliers, *table);
+    // Remove the planar inliers, extract the rest
+    extract.setNegative (true);
+    extract.filter (*cloud);
+    
+  	//visualization(cloud);
  	
- 	std::pair<pcl::PointCloud<pcl::PointXYZ>,pcl::PointCloud<pcl::PointXYZ> > object_table;
- 	pcl::copyPointCloud<pcl::PointXYZ>( *PC_w_env, object_table.first);
-	pcl::copyPointCloud<pcl::PointXYZ>( *table, object_table.second);
+ // 	std::pair<pcl::PointCloud<pcl::PointXYZ>,pcl::PointCloud<pcl::PointXYZ> > object_table;
+ // 	pcl::copyPointCloud<pcl::PointXYZ>( *PC_w_env, object_table.first);
+	// pcl::copyPointCloud<pcl::PointXYZ>( *table, object_table.second);
 
-	return 	object_table;
+	// return 	object_table;
 
-}*/
+}
