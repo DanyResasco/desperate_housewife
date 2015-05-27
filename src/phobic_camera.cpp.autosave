@@ -275,111 +275,106 @@ void phobic_scene::getcluster()
 	std::cout<<"sono dentro a getcluster"<<std::endl;
 	bool check=true;
 
-	// // try with euclidean clusters
+	// try with euclidean clusters
 	// Creating the KdTree object for the search method of the extraction
-  	pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBA>);
-  	tree->setInputCloud (cloud);
+  	// pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBA>);
+  	// tree->setInputCloud (cloud);
 
-  	std::vector<pcl::PointIndices> cluster_indices;
-  	pcl::EuclideanClusterExtraction<pcl::PointXYZRGBA> ec;
-  	ec.setClusterTolerance (0.05); // 2cm
-  	ec.setMinClusterSize (100);
-  	ec.setMaxClusterSize (25000);
-  	ec.setSearchMethod (tree);
-  	ec.setInputCloud (cloud);
-  	ec.extract (cluster_indices);
+  	// std::vector<pcl::PointIndices> cluster_indices;
+  	// pcl::EuclideanClusterExtraction<pcl::PointXYZRGBA> ec;
+  	// ec.setClusterTolerance (0.02); // 2cm
+  	// ec.setMinClusterSize (100);
+  	// ec.setMaxClusterSize (25000);
+  	// ec.setSearchMethod (tree);
+  	// ec.setInputCloud (cloud);
+  	// ec.extract (cluster_indices);
 
   	
-  	for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
-  	{
-  		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGBA>);
+  	// for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
+  	// {
+  	// 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGBA>);
   		
-  		for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
-      	{	
-      		cloud_cluster->points.push_back (cloud->points[*pit]); 
-      		cloud_cluster->width = cloud_cluster->points.size ();
-    		cloud_cluster->height = 1;
-    		cloud_cluster->is_dense = true;
+  	// 	for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+   //    	{	
+   //    		cloud_cluster->points.push_back (cloud->points[*pit]); 
+   //    		cloud_cluster->width = cloud_cluster->points.size ();
+   //  		cloud_cluster->height = 1;
+   //  		cloud_cluster->is_dense = true;
 
-    	}
+   //  	}
 	 	
 
-    	object_cluster.push_back(*cloud_cluster);
-    }
+   //  	object_cluster.push_back(*cloud_cluster);
+   //  }
 
-    
+    // test with supervoxel cluster
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_first (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *cloud_first);
     visualization(cloud_first);
     object_cluster.pop_front();
 
-	// if (start!=true)
-	// {
-	// 	check=check_change_pc();
+	if (start!=true)
+	{
+		check=check_change_pc();
 
-	// }
-    //test with supervoxel cluster
-		//create a cluster if only the point cloud is change
-	// if (check == true)
-	// {
-	// 	// date
-	// 	float color_importance=0.4f;
-	// 	float spatial_importance=0.2f;
-	// 	float normal_importance=0.4f;
-	// 	float seed_resolution = 0.20f;
-	// 	float voxel_resolution = 0.01f;
+	}
 
-	// 	pcl::SupervoxelClustering<pcl::PointXYZRGBA> super (voxel_resolution, seed_resolution);
-	// 	std::map <uint32_t, pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr>  supervoxel_clusters;
+	//create a cluster if only the point cloud is change
+	if (check == true)
+	{
+		// date
+		float color_importance=2.0f;
+		float spatial_importance=0.4f;
+		float normal_importance=1.0f;
+		float seed_resolution = 0.1f;
+		float voxel_resolution = 0.08f;
+
+		pcl::SupervoxelClustering<pcl::PointXYZRGBA> super (voxel_resolution, seed_resolution);
+		std::map <uint32_t, pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr>  supervoxel_clusters;
 	  
-	//    	super.setInputCloud (cloud);
-	// 	super.setColorImportance (color_importance);
-	//   	super.setSpatialImportance (spatial_importance);
-	//   	super.setNormalImportance (normal_importance);
-	// 	super.extract (supervoxel_clusters);
+	   	super.setInputCloud (cloud);
+		super.setColorImportance (color_importance);
+	  	super.setSpatialImportance (spatial_importance);
+	  	super.setNormalImportance (normal_importance);
+		super.extract (supervoxel_clusters);
+		super.setMinClusterSize(100);
+        
 
 		
-	// 	std::multimap<uint32_t, uint32_t> supervoxel_adjacency;
-	//   	super.getSupervoxelAdjacency (supervoxel_adjacency);
-	//   	//To make a graph of the supervoxel adjacency, we need to iterate through the supervoxel adjacency multimap
+		std::multimap<uint32_t, uint32_t> supervoxel_adjacency;
+	  	super.getSupervoxelAdjacency (supervoxel_adjacency);
+	  	//To make a graph of the supervoxel adjacency, we need to iterate through the supervoxel adjacency multimap
+	  	std::multimap<uint32_t,uint32_t>::iterator label_itr = supervoxel_adjacency.begin ();
 	  	
+	  	for ( ; label_itr != supervoxel_adjacency.end (); )
+	  	{
+	  		 //First get the label
+	   		uint32_t supervoxel_label = label_itr->first;
+	   		//Now get the supervoxel corresponding to the label
+	   		pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr supervoxel = supervoxel_clusters.at (supervoxel_label);
 
-	//   	std::map<uint32_t, pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr>::iterator label_itr = supervoxel_clusters.begin ();
-
-	  		  	
-	//   	for ( ; label_itr != supervoxel_clusters.end (); )
-	//   	{
-	//   		 //First get the label
-	//    		uint32_t supervoxel_label = label_itr->first;
-	//    		//Now get the supervoxel corresponding to the label
-	//    		pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr supervoxel = supervoxel_clusters.at (supervoxel_label);
-
-	//     	//Now we need to iterate through the adjacent supervoxels and make a point cloud of them
-	//     	/*pcl::PointCloud<pcl::PointXYZRGBA> adjacent_supervoxel_centers;
-	//     	std::multimap<uint32_t,uint32_t>::iterator adjacent_itr = supervoxel_adjacency.equal_range (supervoxel_label).first;
-	//     	*/
-	//     	/*
-	//     	for ( ; adjacent_itr!=supervoxel_adjacency.equal_range (supervoxel_label).second; ++adjacent_itr)
-	//     	{
-	//     		pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr neighbor_supervoxel = supervoxel_clusters.at (adjacent_itr->second);
-	//     		adjacent_supervoxel_centers.push_back (neighbor_supervoxel->centroid_);
-	//    		}*/
+	    	//Now we need to iterate through the adjacent supervoxels and make a point cloud of them
+	    	pcl::PointCloud<pcl::PointXYZRGBA> adjacent_supervoxel_centers;
+	    	std::multimap<uint32_t,uint32_t>::iterator adjacent_itr = supervoxel_adjacency.equal_range (supervoxel_label).first;
+	    	
+	    	for ( ; adjacent_itr!=supervoxel_adjacency.equal_range (supervoxel_label).second; ++adjacent_itr)
+	    	{
+	    		  pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr neighbor_supervoxel = supervoxel_clusters.at (adjacent_itr->second);
+	    		  adjacent_supervoxel_centers.push_back (neighbor_supervoxel->centroid);
+	   		}
 	   	
-	//    		// adds supervoxel in the object class list
-	//    		object_cluster.push_back( *supervoxel->voxels_ );
-	// 		//Move iterator forward to next label
-	//    		// label_itr = supervoxel_adjacency.upper_bound (supervoxel_label);
-	//    	}
+	   		// adds supervoxel in the object class list
+	   		object_cluster.push_back(adjacent_supervoxel_centers);
+			//Move iterator forward to next label
+	   		label_itr = supervoxel_adjacency.upper_bound (supervoxel_label);
+	   	}
 
-	//  	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_first (new pcl::PointCloud<pcl::PointXYZRGBA>);
-	// 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *cloud_first);
- //  		visualization(cloud_first);
-	//    	std::cout<<"finito di creare cluster"<<std::endl;
-	//    	std::cout<<"numero di cluster"<<object_cluster.size()<<std::endl;
+	   	std::cout<<"finito di creare cluster"<<std::endl;
+	   	std::cout<<"numero di cluster"<<object_cluster.size()<<std::endl;
 
-	//    	start=false;
+	   	start=false;
 	   
-	// }
+	}
 }
 
 // bool phobic_scene::check_change_pc()
@@ -392,11 +387,10 @@ void visualization(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr room_object)
 {
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
 
-	viewer->setBackgroundColor (0, 255, 0);
-  	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(room_object, 0, 0, 0);
-  	viewer->addPointCloud<pcl::PointXYZRGBA> (room_object, single_color, "sample cloud");
-	viewer->addPointCloud<pcl::PointXYZRGBA > (room_object, "nome");
-
+  viewer->setBackgroundColor (0, 255, 0);
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(room_object, 0, 0, 0);
+  viewer->addPointCloud<pcl::PointXYZRGBA> (room_object, single_color, "sample cloud");
+	// viewer.->addPointCloud<pcl::PointXYZ> (room_object, "nome");
 
   	while (!viewer->wasStopped ())
 	{
@@ -454,4 +448,5 @@ void phobic_scene::erase_table()
 	// pcl::copyPointCloud<pcl::PointXYZ>( *table, object_table.second);
 
 	// return 	object_table;
+
 }
