@@ -34,6 +34,7 @@
 #include <pcl/common/transforms.h>
 #include <pcl/point_cloud.h>
 // #include <pcl_ros/transforms.h>
+#include <Eigen/LU>
 
 #include <boost/thread/thread.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -71,7 +72,9 @@ class phobic_scene
 		 	std::list<pcl::PointCloud<pcl::PointXYZRGBA> > cyl_list; 
 		 	double tetha;
 		 	double height;
-		 	tf::Transform hand_tr;
+		 //	tf::Transform hand_tr;
+		 	//Eigen::Matrix<double, 4,4 > M_rot; 
+		 	Eigen::Matrix<double, 4,4 > M_rot_inv;
 				 	
 		} CYLINDER;
 

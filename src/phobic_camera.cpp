@@ -198,10 +198,10 @@ void phobic_scene::fitting ()
 	  	
 
 	 	////hand's info
-		CYLINDER.hand_tr=CylToHand_Transform (coefficients_cylinder->values);
+		// CYLINDER.hand_tr=CylToHand_Transform (coefficients_cylinder->values);
 
-		std::cout<< "hand transformation rot "<< *CYLINDER.hand_tr.getRotation()<< std::endl;
-		std::cout<< "hand transformation rot "<<*CYLINDER.hand_tr.getOrigin()<< std::endl;
+		// std::cout<< "hand transformation rot "<< *CYLINDER.hand_tr.getRotation()<< std::endl;
+		// std::cout<< "hand transformation rot "<<*CYLINDER.hand_tr.getOrigin()<< std::endl;
 
 		// remove the first elements in the list
 		object_cluster.pop_front();
@@ -354,7 +354,9 @@ std::vector<float> phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::Poi
 	std::cout<<"finito di creare matrice di rotazione"<<std::endl;
 	//create a new cylinder pointcloud
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CYl_new_transf (new pcl::PointCloud<pcl::PointXYZRGBA>);
-	pcl::transformPointCloud(*pc_cyl, *CYl_new_transf, M_rot );
+	//Eigen::Matrix<double, 4,4 > M_rot_inv;
+	CYLINDER.M_rot_inv = M_rot.inverse();
+	pcl::transformPointCloud(*pc_cyl, *CYl_new_transf, CYLINDER.M_rot_inv);
 
 	//find height 
 	double z_min, z_max;
@@ -387,12 +389,12 @@ std::vector<float> phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::Poi
 
 	temp_old_cyl.col(0) << coeff[0], coeff[1], coeff[2], 0;
 		
-	Point_new_cyl=(M_rot*temp_old_cyl);
+	Point_new_cyl=(CYLINDER.M_rot_inv.inverse()*temp_old_cyl);
 	//std::cout<<"finito prima molt"<<std::endl;
 
 	temp_old_cyl.col(0) << coeff[3], coeff[4], coeff[5], 0;
 
-	Vers_new_cyl=(M_rot*temp_old_cyl);
+	Vers_new_cyl=(CYLINDER.M_rot_inv.inverse()*temp_old_cyl);
 	//std::cout<<"finito sec molt"<<std::endl;
 
 	std::vector<float> v;
@@ -418,30 +420,30 @@ std::vector<float> phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::Poi
 
 //tf::Transform CylToHand_Transform (const Eigen::VectorXf coeff)
 //dipende dal raggio del cilindro e dall'altezza. da riguardare in seguito con un euristica di presa
-tf::Transform CylToHand_Transform (const std::vector<float> coeff)
-{
- 	std::cout<<"creo matrice"<<std::endl;
-	  double x = coeff[0], y = coeff[1], z = coeff[2];
-	  double p_x = coeff[3], p_y = coeff[4], p_z = coeff[5];
-	  double r = coeff[6]; 
+// tf::Transform CylToHand_Transform (const std::vector<float> coeff)
+// {
+//  	std::cout<<"creo matrice"<<std::endl;
+// 	  double x = coeff[0], y = coeff[1], z = coeff[2];
+// 	  double p_x = coeff[3], p_y = coeff[4], p_z = coeff[5];
+// 	  double r = coeff[6]; 
 
-	  // The position is directly obtained from the coefficients, and will be corrected later
-	  tf::Vector3 position(x,y,z); //posizione a caso sull'asse del cilindro. meglio se prendo punto a z max o metà altezza
+// 	  // The position is directly obtained from the coefficients, and will be corrected later
+// 	  tf::Vector3 position(x,y,z); //posizione a caso sull'asse del cilindro. meglio se prendo punto a z max o metà altezza
 	  
-	  // w is the axis of the cylinder which will be aligned with the z reference frame of the cylinder
-	  tf::Vector3 w(p_x, p_y, p_z);
-	  tf::Vector3 u(1, 0, 0);	//allineo asse x uguale a quella della kinect
-	  tf::Vector3 v = w.cross(u).normalized();
-	  u = v.cross(w).normalized();
-	  tf::Matrix3x3 rotation;
-	  rotation[0] = u;  // x
-	  rotation[1] = v;  // y
-	  rotation[2] = w;  // z
-	  rotation = rotation.transpose(); //colum
+// 	  // w is the axis of the cylinder which will be aligned with the z reference frame of the cylinder
+// 	  tf::Vector3 w(p_x, p_y, p_z);
+// 	  tf::Vector3 u(1, 0, 0);	//allineo asse x uguale a quella della kinect
+// 	  tf::Vector3 v = w.cross(u).normalized();
+// 	  u = v.cross(w).normalized();
+// 	  tf::Matrix3x3 rotation;
+// 	  rotation[0] = u;  // x
+// 	  rotation[1] = v;  // y
+// 	  rotation[2] = w;  // z
+// 	  rotation = rotation.transpose(); //colum
 
-	  // Compose the transformation and return it
-	  return tf::Transform(rotation, position);
-}
+// 	  // Compose the transformation and return it
+// 	  return tf::Transform(rotation, position);
+// }
 
 
 // void  phobic_scene::send_msg()

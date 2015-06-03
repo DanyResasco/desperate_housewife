@@ -4,8 +4,9 @@ project(desperate_housewife)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED roscpp pcl_conversions pcl_ros pcl_msgs)
+find_package(catkin REQUIRED roscpp pcl_conversions pcl_ros pcl_msgs message_generation)
 find_package(PCL REQUIRED)
+
 
 
 include_directories(${PCL_INCLUDE_DIRS})
@@ -51,11 +52,11 @@ add_definitions(${PCL_DEFINITIONS})
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
+add_message_files(
+  FILES
+  cyl_info.msg
 #   Message2.msg
-# )
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -72,10 +73,10 @@ add_definitions(${PCL_DEFINITIONS})
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+   DEPENDENCIES
+   std_msgs  # Or other packages containing msgs
+ )
 
 ###################################
 ## catkin specific configuration ##
@@ -91,6 +92,7 @@ catkin_package(
 #  LIBRARIES desperate_housewife
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
+	CATKIN_DEPENDS message_runtime
 )
 
 ###########
