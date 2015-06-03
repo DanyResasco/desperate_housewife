@@ -1,8 +1,0 @@
-prefix=/usr/local
-
-Name: desperate_housewife
-Description: Description of desperate_housewife
-Version: 0.0.0
-Cflags: 
-Libs: -L/usr/local/lib 
-Requires: 

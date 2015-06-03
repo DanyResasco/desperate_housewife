@@ -1,8 +1,0 @@
-prefix=/home/dany/catkin_ws/src/desperate_housewife/build/devel
-
-Name: desperate_housewife
-Description: Description of desperate_housewife
-Version: 0.0.0
-Cflags: 
-Libs: -L/home/dany/catkin_ws/src/desperate_housewife/build/devel/lib 
-Requires: 
