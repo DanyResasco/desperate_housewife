@@ -69,7 +69,7 @@ class phobic_scene
 		void fitting ();
 		void send_msg();
 		void erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  pc);
-		bool check_change_pc();
+		// bool check_change_pc();
 		void getcluster();
 		void erase_table();
 		std::vector<float> makeInfoCyl(std::vector<float> vc);

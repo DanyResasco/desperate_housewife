@@ -1,7 +1,6 @@
 //#include "camera_desperatehousewife.h"
 #include "phobic_camera.h"
 using Eigen::VectorXf ;
-// #define PI 3.14159265
 
 
 
@@ -198,16 +197,11 @@ void phobic_scene::fitting ()
 	 	coeff_cyl=makeInfoCyl(coefficients_cylinder->values);
 	  	
 
-
-	    //hand's info	
+	    //hand's info
 		hand_tr=CylToHand_Transform (coefficients_cylinder->values);
 
 		std::cout<< "hand transformation rot "<< *hand_tr.getRotation()<< std::endl;
 		std::cout<< "hand transformation rot "<< *hand_tr.getOrigin()<< std::endl;
-
-
-
-
 
 		// remove the first elements in the list
 		object_cluster.pop_front();
@@ -436,8 +430,8 @@ void phobic_scene::getcluster()
 	// 	check=check_change_pc();
 
 	// }
-
-	// create a cluster if only the point cloud is change
+    //test with supervoxel cluster
+		//create a cluster if only the point cloud is change
 	// if (check == true)
 	// {
 	// 	// date
@@ -485,8 +479,15 @@ void phobic_scene::getcluster()
     			// move iterator forward to next label
     			// label_itr=supervoxel_cluster.upper_bound(supervoxel_label);
 
+	//  	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_first (new pcl::PointCloud<pcl::PointXYZRGBA>);
+	// 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *cloud_first);
+ //  		visualization(cloud_first);
+	//    	std::cout<<"finito di creare cluster"<<std::endl;
+	//    	std::cout<<"numero di cluster"<<object_cluster.size()<<std::endl;
+
+	//    	start=false;
 	   
-			// }
+	// }
 }
 
 // bool phobic_scene::check_change_pc()
@@ -499,10 +500,11 @@ void visualization(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr room_object)
 {
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
 
-  viewer->setBackgroundColor (0, 255, 0);
-  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(room_object, 0, 0, 0);
-  viewer->addPointCloud<pcl::PointXYZRGBA> (room_object, single_color, "sample cloud");
-	// viewer.->addPointCloud<pcl::PointXYZ> (room_object, "nome");
+	viewer->setBackgroundColor (0, 255, 0);
+  	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(room_object, 0, 0, 0);
+  	viewer->addPointCloud<pcl::PointXYZRGBA> (room_object, single_color, "sample cloud");
+	viewer->addPointCloud<pcl::PointXYZRGBA > (room_object, "nome");
+
 
   	while (!viewer->wasStopped ())
 	{
