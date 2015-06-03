@@ -337,6 +337,7 @@ std::vector<float> phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::Poi
 		std::cout<<"cambiato segno a theta"<<std::endl;
 		std::cout<<"thetha: "<<CYLINDER.tetha<<std::endl;
 
+
 	}
 
 
