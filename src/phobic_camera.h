@@ -28,12 +28,19 @@
 #include <pcl/segmentation/supervoxel_clustering.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/ModelCoefficients.h>
+#include <pcl/common/common.h>
+#include <pcl/common/eigen.h>
+#include <pcl/common/norms.h>
+#include <pcl/common/transforms.h>
+#include <pcl/point_cloud.h>
+// #include <pcl_ros/transforms.h>
 
 #include <boost/thread/thread.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <iostream>
 #include <utility>
 #include <list>
+#include <pcl/impl/point_types.hpp>
 // #include <chrono>
 // #include <thread>
 
@@ -51,13 +58,22 @@ class phobic_scene
 		ros::Publisher Scena_info;
 		//ros::Subscriber reader;
 		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud ;
-		pcl::PointCloud<pcl::Normal>::Ptr plane_normals;
-		tf::Transform hand_tr;
+		//pcl::PointCloud<pcl::Normal>::Ptr plane_normals;
+		std::vector<float> Plane_coeff;
+		//tf::Transform hand_tr;
 		std::list<pcl::PointCloud<pcl::PointXYZRGBA> > object_cluster;
-		std::list<pcl::PointCloud<pcl::PointXYZRGBA> > cyl_list;
-		bool start;
-		bool pos_cyl;
-
+		// std::list<pcl::PointCloud<pcl::PointXYZRGBA> > cyl_list;
+		//bool start;
+		//bool pos_cyl;
+		
+		struct Mod_cylinder
+		{
+		 	std::list<pcl::PointCloud<pcl::PointXYZRGBA> > cyl_list; 
+		 	double tetha;
+		 	double height;
+		 	tf::Transform hand_tr;
+				 	
+		} CYLINDER;
 
 	
 	public:
@@ -72,18 +88,20 @@ class phobic_scene
 		// bool check_change_pc();
 		void getcluster();
 		void erase_table();
-		std::vector<float> makeInfoCyl(std::vector<float> vc);
+		std::vector<float> makeInfoCyl(std::vector<float> coeff, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl);
 		//void visualization();
 
 		// phobic_scene(){}
 		phobic_scene(ros::NodeHandle NodeH): nodeH(NodeH)
 		{
+			
 			pcl::PointCloud<pcl::PointXYZRGBA> cloud2;
-			pcl::PointCloud<pcl::Normal> normals;
+			//pcl::PointCloud<pcl::Normal> normals;
 			cloud=cloud2.makeShared();
-			plane_normals=normals.makeShared();
-			start=true;
-			pos_cyl=true;
+			
+			//plane_normals=normals.makeShared();
+			// start=true;
+			// pos_cyl=true;
 			//Scena_info = nodeH.advertise<std_msgs::Float32MultiArray>("desperate_camera", "100");
 			//Scena_info = nodeH.advertise<std_msgs::Float32MultiArray>(nodeH.resolveName("markers_out"), 10);
 			
