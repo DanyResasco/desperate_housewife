@@ -355,6 +355,7 @@ std::vector<float> phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::Poi
 	//create a new cylinder pointcloud
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CYl_new_transf (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	//Eigen::Matrix<double, 4,4 > M_rot_inv;
+	
 	CYLINDER.M_rot_inv = M_rot.inverse();
 	pcl::transformPointCloud(*pc_cyl, *CYl_new_transf, CYLINDER.M_rot_inv);
 
@@ -381,7 +382,7 @@ std::vector<float> phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::Poi
 	CYLINDER.height= z_max - z_min;
 	std::cout<<"altezza: "<<CYLINDER.height<<std::endl;
 
-	//new coefficients with the new cylinder's frame 
+	//new coefficients with the new cylinder's frame (per me è inutile)
 
 	Eigen::Matrix<double, 4,1> Point_new_cyl;
 	Eigen::Matrix<double, 4,1> temp_old_cyl;
@@ -389,12 +390,12 @@ std::vector<float> phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::Poi
 
 	temp_old_cyl.col(0) << coeff[0], coeff[1], coeff[2], 0;
 		
-	Point_new_cyl=(CYLINDER.M_rot_inv.inverse()*temp_old_cyl);
+	Point_new_cyl=(CYLINDER.M_rot_inv * temp_old_cyl);
 	//std::cout<<"finito prima molt"<<std::endl;
 
 	temp_old_cyl.col(0) << coeff[3], coeff[4], coeff[5], 0;
 
-	Vers_new_cyl=(CYLINDER.M_rot_inv.inverse()*temp_old_cyl);
+	Vers_new_cyl=(CYLINDER.M_rot_inv * temp_old_cyl);
 	//std::cout<<"finito sec molt"<<std::endl;
 
 	std::vector<float> v;
@@ -416,6 +417,20 @@ std::vector<float> phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::Poi
 
 	return v;
 }
+
+ geometry_msgs::Pose phobic_scene::fromEigenToPose(TFmatrix)
+{
+	Eigen::Quaternion cyl_quat_eigen;
+	cyl_quat_eigen = Quaternion(TFmatrix);
+	orientation.x = cyl_quat_eigen.x();
+	orientation.y = cyl_quat_eigen.y();
+	orientation.z = cyl_quat_eigen.z();
+	orientation.w = cyl_quat_eigen.w();
+
+
+}
+
+
 
 
 //tf::Transform CylToHand_Transform (const Eigen::VectorXf coeff)

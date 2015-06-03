@@ -4,7 +4,7 @@ project(desperate_housewife)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED roscpp pcl_conversions pcl_ros pcl_msgs message_generation)
+find_package(catkin REQUIRED roscpp pcl_conversions pcl_ros pcl_msgs message_generation std_msgs geometry_msgs)
 find_package(PCL REQUIRED)
 
 

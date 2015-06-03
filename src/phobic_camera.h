@@ -75,6 +75,8 @@ class phobic_scene
 		 //	tf::Transform hand_tr;
 		 	//Eigen::Matrix<double, 4,4 > M_rot; 
 		 	Eigen::Matrix<double, 4,4 > M_rot_inv;
+		 	//Pose.Quaternion M_rot_inv;
+		 	geometry_msgs::Pose Cyl_quater
 				 	
 		} CYLINDER;
 
@@ -93,6 +95,7 @@ class phobic_scene
 		void erase_table();
 		std::vector<float> makeInfoCyl(std::vector<float> coeff, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl);
 		//void visualization();
+		geometry_msgs::Pose fromEigenToPose(& Eigen::Matrix<dobule, 4,4> tranfs_matrix);
 
 		// phobic_scene(){}
 		phobic_scene(ros::NodeHandle NodeH): nodeH(NodeH)
@@ -154,6 +157,8 @@ tf::Transform CylToHand_Transform (const std::vector<float>  coeff);
 //input: point cloud
 //Description: this funciont called the pcl visualizer
 void visualization(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr room_object);
+
+
 
 
 
