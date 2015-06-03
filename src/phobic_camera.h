@@ -51,10 +51,12 @@ class phobic_scene
 		ros::Publisher Scena_info;
 		//ros::Subscriber reader;
 		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud ;
+		pcl::PointCloud<pcl::Normal>::Ptr plane_normals;
 		tf::Transform hand_tr;
 		std::list<pcl::PointCloud<pcl::PointXYZRGBA> > object_cluster;
 		std::list<pcl::PointCloud<pcl::PointXYZRGBA> > cyl_list;
 		bool start;
+		bool pos_cyl;
 
 
 	
@@ -70,14 +72,18 @@ class phobic_scene
 		bool check_change_pc();
 		void getcluster();
 		void erase_table();
+		std::vector<float> makeInfoCyl(std::vector<float> vc);
 		//void visualization();
 
 		// phobic_scene(){}
 		phobic_scene(ros::NodeHandle NodeH): nodeH(NodeH)
 		{
 			pcl::PointCloud<pcl::PointXYZRGBA> cloud2;
+			pcl::PointCloud<pcl::Normal> normals;
 			cloud=cloud2.makeShared();
+			plane_normals=normals.makeShared();
 			start=true;
+			pos_cyl=true;
 			//Scena_info = nodeH.advertise<std_msgs::Float32MultiArray>("desperate_camera", "100");
 			//Scena_info = nodeH.advertise<std_msgs::Float32MultiArray>(nodeH.resolveName("markers_out"), 10);
 			

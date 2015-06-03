@@ -1,6 +1,7 @@
 //#include "camera_desperatehousewife.h"
 #include "phobic_camera.h"
 using Eigen::VectorXf ;
+// #define PI 3.14159265
 
 
 
@@ -59,8 +60,7 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 	erase_environment(scene);
 	erase_table();
 	getcluster();
-  	
-	fitting();
+  	fitting();
 	
 	// send_msg();
 		//Move iterator forward to next label
@@ -161,8 +161,8 @@ void phobic_scene::fitting ()
 	seg.setMethodType (pcl::SAC_RANSAC);
 	seg.setNormalDistanceWeight (0.1);
 	seg.setMaxIterations (10000);
-	seg.setDistanceThreshold (0.05);
-    seg.setRadiusLimits (0, 0.2);
+	seg.setDistanceThreshold (0.05);	//distance between two points
+    seg.setRadiusLimits (0, 0.2);	//cilynder's radius 20cm
 	seg.setInputCloud (cloud_first);
 	seg.setInputNormals (cloud_normals);
 
@@ -193,21 +193,27 @@ void phobic_scene::fitting ()
 	 	}
 
 	 	cyl_list.push_back(*cloud_cylinder);
- 
+ 		
+ 		std::vector<float> coeff_cyl;
+	 	coeff_cyl=makeInfoCyl(coefficients_cylinder->values);
+	  	
 
-	    //hand's info
 
-	    //tf::Transform CylToHand_tr;    	
+	    //hand's info	
 		hand_tr=CylToHand_Transform (coefficients_cylinder->values);
 
 		std::cout<< "hand transformation rot "<< *hand_tr.getRotation()<< std::endl;
 		std::cout<< "hand transformation rot "<< *hand_tr.getOrigin()<< std::endl;
 
+
+
+
+
 		// remove the first elements in the list
 		object_cluster.pop_front();
 		//hand_tr=CylToHand_Transform (info_cil);
-		
-	  	//visualization(cylinder); 
+		std::cout<<"disegno cilindro"<<std::endl;
+	  	visualization(cloud_cylinder); 
 		
 		//return(CylToHand_tr);
 	
@@ -215,31 +221,140 @@ void phobic_scene::fitting ()
 }
 
 
+std::vector<float> phobic_scene::makeInfoCyl(std::vector<float> coeff);
+{
+	// cylinder's coefficients
+	double x = coeff[0], y = coeff[1], z = coeff[2];	// cordinate di un punto sull asse
+	double p_x = coeff[3], p_y = coeff[4], p_z = coeff[5];	// componenti dell asse realtive alla telecamera
+	double r = coeff[6];
+
+	//create a so
+
+	Eigen::Vector3d Ax, Ay, Az;
+	//std::vector<double> Ax, Ay, Az;
+	bool OK=false;
+
+	Az.push_back(p_x, p_y, p_z);
+
+	/*  make a vectors orthogonal 
+		v=(a b c); v*w=0 -> w=(l m n) tc l=-b, m=a, n=0; if a,b!=0 || a,c!=0 !! b,c!=0
+	*/
+
+	// cerca di farlo meglio, porta tutto in eigen e usa le sue funzioni in più utilizza case swith al posto di questi for
+	if((p_x && p_y)!=0) 
+	{
+		Ax.push_back(-p_y);
+		Ax.push_back(p_x)
+		Ax.push_back(0)
+		OK=true;
+
+	}
+	
+	if (OK==false && (p_x && p_z)!=0)
+	{
+		Ax.push_back(-p_z);
+		Ax.push_back(0);
+		Ax.push_back(p_x);
+		OK=true;
+	}
+
+	if(OK==false && (p_y && pz)!=0)
+	{
+		Ax.push_back(0);
+		Ax.push_back(-p_z);
+		Ax.push_back(p_y);
+		OK=true;
+
+	}
+
+	/*y axis orthogonal z,x. 
+		vec vector;
+	    vector.x = (Ay*Bz)-(By*Az);
+	    vector.y = -(Ax*Bz)+(Bx*Az);
+	    vector.z = (Ax*By)-(Ay*Bx);
+ 	*/
+
+	double X,Y,Z;
+
+	X=Ax[1]*Az[2] - Az[1]* Ax[2];
+	Ay.push_back(X);
+
+	Y= - Ax[0]* Az[2] + Az[0]* Ax[2];
+	Ay.push_back(Y);
+
+	Z= Ax[0]* Az[1] - Ax[1]* Az[0];
+	Ay.push_back(Z);
+
+
+	/* orientation
+		a*b=mod(a)*mod(b)*cos(tetha) --> temp1= a*b, temp2=mod(a), temp3=mod(b), temp4=(a*b)/mod(a)*mod(b)
+	*/
+
+	double temp1, temp2, temp3, temp4;
+	double tetha;
+	double PI= 3.14159265;
+
+	temp1= plane_normals.x()*Az[0] + plane_normals.y()*Az[1] + plane_normals.z()*Az[2];
+	temp2=(std::sqrt(std::pow(Az[0],2) + std::pow(Az[1],2) + std::pow(Az[2],2));
+	temp3=(std::sqrt(std::pow(plane_normals.x(),2) + std::pow(plane_normals.y(),2) + std::pow(plane_normals.z(),2));
+	temp4= temp1/(temp2*temp3);
+	tetha= acos(temp4)* 180/PI;
+
+	if (tetha==0 || thetha <= 45)
+	{
+		pos_cyl=true; // cyl standing
+
+	}
+
+	else
+	{
+		pos_cyl=false; // cyl lying down
+	}
+
+	Eigen::MatrixXd M_rot(4,4);
+	//Block of size (p,q), starting at (i,j) matrix.block<p,q>(i,j)
+	M_rot.block<1,3>(1,1)=
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
 //tf::Transform CylToHand_Transform (const Eigen::VectorXf coeff)
 tf::Transform CylToHand_Transform (const std::vector<float> coeff)
 {
  	std::cout<<"creo matrice"<<std::endl;
-  double x = coeff[0], y = coeff[1], z = coeff[2];
-  double p_x = coeff[3], p_y = coeff[4], p_z = coeff[5];
-  double r = coeff[6]; 
+	  double x = coeff[0], y = coeff[1], z = coeff[2];
+	  double p_x = coeff[3], p_y = coeff[4], p_z = coeff[5];
+	  double r = coeff[6]; 
 
-  // The position is directly obtained from the coefficients, and will be corrected later
-  tf::Vector3 position(x,y,z);
-  
-  // w is the axis of the cylinder which will be aligned with the z reference frame of the cylinder
-  tf::Vector3 w(p_x, p_y, p_z);
-  tf::Vector3 u(1, 0, 0);
-  tf::Vector3 v = w.cross(u).normalized();
-  u = v.cross(w).normalized();
-  tf::Matrix3x3 rotation;
-  rotation[0] = u;  // x
-  rotation[1] = v;  // y
-  rotation[2] = w;  // z
-  rotation = rotation.transpose(); //colum
+	  // The position is directly obtained from the coefficients, and will be corrected later
+	  tf::Vector3 position(x,y,z);
+	  
+	  // w is the axis of the cylinder which will be aligned with the z reference frame of the cylinder
+	  tf::Vector3 w(p_x, p_y, p_z);
+	  tf::Vector3 u(1, 0, 0);
+	  tf::Vector3 v = w.cross(u).normalized();
+	  u = v.cross(w).normalized();
+	  tf::Matrix3x3 rotation;
+	  rotation[0] = u;  // x
+	  rotation[1] = v;  // y
+	  rotation[2] = w;  // z
+	  rotation = rotation.transpose(); //colum
 
-  // Compose the transformation and return it
-  return tf::Transform(rotation, position);
-}
+	  // Compose the transformation and return it
+	  return tf::Transform(rotation, position);
+	}
 
 
 void  phobic_scene::send_msg()
@@ -286,7 +401,7 @@ void phobic_scene::getcluster()
 
   	std::vector<pcl::PointIndices> cluster_indices;
   	pcl::EuclideanClusterExtraction<pcl::PointXYZRGBA> ec;
-  	ec.setClusterTolerance (0.02); // 2cm
+  	ec.setClusterTolerance (0.05); // 2cm
   	ec.setMinClusterSize (100);
   	ec.setMaxClusterSize (25000);
   	ec.setSearchMethod (tree);
@@ -311,9 +426,9 @@ void phobic_scene::getcluster()
     		object_cluster.push_back(*cloud_cluster);
     }
 
-	// pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_first (new pcl::PointCloud<pcl::PointXYZRGBA>);
-	// pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *cloud_first);
-    // visualization(cloud_first);
+	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_first (new pcl::PointCloud<pcl::PointXYZRGBA>);
+	pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *cloud_first);
+    visualization(cloud_first);
     //object_cluster.pop_front();
 
 	// if (start!=true)
@@ -326,11 +441,11 @@ void phobic_scene::getcluster()
 	// if (check == true)
 	// {
 	// 	// date
-	// 	float color_importance=2.0f;
-	// 	float spatial_importance=0.4f;
-	// 	float normal_importance=1.0f;
-	// 	float seed_resolution = 0.1f;
-	// 	float voxel_resolution = 0.08f;
+	// 	float color_importance=0.4f;
+	// 	float spatial_importance=0.2f;
+	// 	float normal_importance=0.4f;
+	// 	float seed_resolution = 0.20f;
+	// 	float voxel_resolution = 0.01f;
 
 	// 	pcl::SupervoxelClustering<pcl::PointXYZRGBA> super (voxel_resolution, seed_resolution);
 	// 	std::map <uint32_t, pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr>  supervoxel_clusters;
@@ -356,26 +471,22 @@ void phobic_scene::getcluster()
 
 	//     	//Now we need to iterate through the adjacent supervoxels and make a point cloud of them
 	//     	pcl::PointCloud<pcl::PointXYZRGBA> adjacent_supervoxel_centers;
-	//     	std::multimap<uint32_t,uint32_t>::iterator adjacent_itr = supervoxel_adjacency.equal_range (supervoxel_label).first;
-	    	
-	//     	for ( ; adjacent_itr!=supervoxel_adjacency.equal_range (supervoxel_label).second; ++adjacent_itr)
-	//     	{
-	//     		  pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr neighbor_supervoxel = supervoxel_clusters.at (adjacent_itr->second);
-	//     		  adjacent_supervoxel_centers.push_back (neighbor_supervoxel->centroid);
-	//    		}
-	   	
-	//    		// adds supervoxel in the object class list
-	//    		object_cluster.push_back(adjacent_supervoxel_centers);
-	// 		//Move iterator forward to next label
-	//    		label_itr = supervoxel_adjacency.upper_bound (supervoxel_label);
-	//    	}
+			////std::multimap<uint32_t,uint32_t>::iterator adjacent_itr = supervoxel_adjacency.equal_range (supervoxel_label).first;
+	    	//std::map <uint32_t, pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr> ::iterator label_itr=supervoxel_clusters.begin();
+	    
+		// for ( ; label_itr!=supervoxel_clusters.end())
+	 //    	{
+	 //    		 //first get the label
+    			// unit32_t supervoxel_label= label_itr->first;
+    			//now get hte supervoxel corresponding to the label
+    			//pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr supervoxel=supervoxel_cluster.at(supervoxel_label);
+    			// adds supervoxel in the object class list
+    			// object_cluster.push_back(*supervoxel->voxels_);
+    			// move iterator forward to next label
+    			// label_itr=supervoxel_cluster.upper_bound(supervoxel_label);
 
-	//    	std::cout<<"finito di creare cluster"<<std::endl;
-	//    	std::cout<<"numero di cluster"<<object_cluster.size()<<std::endl;
-
-	//    	start=false;
 	   
-	// }
+			// }
 }
 
 // bool phobic_scene::check_change_pc()
@@ -439,8 +550,17 @@ void phobic_scene::erase_table()
     //std::cout << "PointCloud representing the planar component: " << cloud_plane->points.size () << " data points." << std::endl;
 
     // Remove the planar inliers, extract the rest
-    extract.setNegative (true);
-    extract.filter (*cloud);
+    // extract.setNegative (true);
+    // extract.filter (*cloud);
+   
+   	// Estimate point normals
+    pcl::NormalEstimation< pcl::PointXYZRGBA, pcl::Normal> ne;
+    pcl::search::KdTree< pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree< pcl::PointXYZRGBA> ());   
+	
+	ne.setSearchMethod (tree);
+	ne.setInputCloud (cloud_plane);
+	ne.setKSearch (100);
+	ne.compute (*plane_normals);
     
   	//visualization(cloud);
  	
