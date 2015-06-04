@@ -9,7 +9,7 @@ find_package(PCL REQUIRED)
 
 
 
-include_directories(${PCL_INCLUDE_DIRS})
+include_directories(include ${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
@@ -89,7 +89,7 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+INCLUDE_DIRS include
 #  LIBRARIES desperate_housewife
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
@@ -102,7 +102,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+## include_directories(include)
 
 ## Declare a cpp library
 # add_library(desperate_housewife
@@ -111,7 +111,7 @@ catkin_package(
 
 ## Declare a cpp executable
 # add_executable(desperate_housewife_node src/desperate_housewife_node.cpp)
-add_executable(phobic_camera src/phobic_camera.cpp)
+add_executable(phobic_camera src/main.cpp src/phobic_camera.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes

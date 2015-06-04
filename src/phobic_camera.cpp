@@ -4,40 +4,6 @@ using Eigen::VectorXf ;
 
 
 
-int main(int argc, char** argv)
-{
-	std::cout<<"Sono nel main"<<std::endl<<std::flush;
-	ros::init(argc, argv, "Phobic_whife_scene");
-
-	// ros::Publisher Scena_info;
-	ros::Subscriber reader;
-	// std::cout<<"Sono nel main prima di aver creato ogetto classe"<<std::endl;
-	
-	ros::NodeHandle nodeH;
-	phobic_scene phobic_scene_local(nodeH); 
-	// std::cout<<"Sono nel main dopo aver creato ogetto classe"<<std::endl;
-
-	// //Subscribe to the camera/deepregistered/poins topic with the master. ROS will call 
-	// //the pointcloudCallback() function whenever a new message arrives. 
-	// //The 2nd argument is the queue size
-	reader = nodeH.subscribe(nodeH.resolveName("camera/depth_registered/points"), 10, &phobic_scene::pointcloudCallback, &phobic_scene_local);
-	// //  Scena_info = nodeH.advertise<std_msgs::Float32MultiArray>("desperate_camera", "100");
-	std::cout<<"Sono nel main dopo aver letto"<<std::endl;
-
-	//boost::this_thread::sleep(boost::posix_time::seconds(5));
-	// std::cout<<"Sono nel main dopo aver dormito 2s"<<std::endl;
-
-	
-	// //ros::Rate loop_rate(10);   	
-
-
-	ros::spin();
-	return 0;
-
-	
-}
-
-
 void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 {
 	std::cout<<"sono nella callback"<<std::endl;
@@ -56,11 +22,17 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 	// pcl::PointCloud<pcl::PointXYZ>::Ptr temp_pc1 (new pcl::PointCloud<pcl::PointXYZ>);
 	//pcl::PointCloud<pcl::PointXYZ>::Ptr temp_pc2 (new pcl::PointCloud<pcl::PointXYZ>);
 
+
 	erase_environment(scene);
+	visualization(true);
 	erase_table();
+	visualization(true);
 	getcluster();
+	visualization(false);
   	fitting();
-	send_msg();
+  	visualization(true);
+
+	// send_msg();
 		//Move iterator forward to next label
     	// label_itr = supervoxel_clusters.upper_bound(supervoxel_label);	
     	// send_msg();
@@ -104,10 +76,10 @@ void phobic_scene::erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  or
 	Filter_env.setFilterFieldName ("z");
 	Filter_env.setFilterLimits (0.2, 1.0);
 	// The indices_x array indexes all points of cloud_in that have x between 0.0, 1.0
-	Filter_env.filter (*cloud_filtered);
+	Filter_env.filter (*cloud);
 
 	// copies point clound into another PointCloud (cloud is the class pc )
-	pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud_filtered, *cloud);
+	//pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud_filtered, *cloud);
 	
 	//visualization(cloud_filtered);
 
@@ -189,6 +161,9 @@ void phobic_scene::fitting ()
 			std::cout<<"empty pointcloud"<<std::endl;
 
 	 	}
+
+	 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud_cylinder, *cloud);
+	
 
 	 	// cyl_list.push_back(CYLINDER);
 	 	//cyl_list.push_back(*cloud_cylinder);
@@ -518,7 +493,7 @@ void phobic_scene::getcluster()
 
   	std::vector<pcl::PointIndices> cluster_indices;
   	pcl::EuclideanClusterExtraction<pcl::PointXYZRGBA> ec;
-  	ec.setClusterTolerance (0.05); // 5cm
+  	ec.setClusterTolerance (0.07); // 5cm
   	ec.setMinClusterSize (100);
   	ec.setMaxClusterSize (cloud->points.size());
   	ec.setSearchMethod (tree);
@@ -629,12 +604,26 @@ void phobic_scene::getcluster()
 
 // // }
 
-void visualization(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr room_object)
-//void  phobic_scene::visualization()
+//void  phobic_scene::visualization(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr room_object, bool window )
+void  phobic_scene::visualization(bool window)
 {
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
-
 	viewer->setBackgroundColor (0, 255, 0);
+	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr room_object  (new pcl::PointCloud<pcl::PointXYZRGBA>);
+
+	if (window == true )
+	{
+		//room_object = cloud;
+		pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud, *room_object);
+	}
+
+	else
+	{
+		//room_object = object_cluster.begin();
+		pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *room_object);
+	}
+
+
   	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(room_object, 0, 0, 0);
   	viewer->addPointCloud<pcl::PointXYZRGBA> (room_object, single_color, "sample cloud");
 	// viewer->addPointCloud<pcl::PointXYZRGBA > (room_object, "nome");
@@ -642,8 +631,8 @@ void visualization(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr room_object)
 
   	while (!viewer->wasStopped ())
 	{
-   	viewer->spinOnce (100);
-   	boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+   		viewer->spinOnce (100);
+   		boost::this_thread::sleep (boost::posix_time::microseconds (100000));
 	}
 
 
