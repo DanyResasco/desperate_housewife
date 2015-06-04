@@ -451,6 +451,7 @@ bool phobic_scene::fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs
 void  phobic_scene::send_msg()
 {
  	std::cout<<"sono in send_msg"<<std::endl;
+ 	ros::Publisher phobic_talk;
  	//create a msg
 
  	for (int i=0; i <= cyl_list.size(); i++)
@@ -461,10 +462,19 @@ void  phobic_scene::send_msg()
  		msg.length = cyl_list[i].height;
  		msg.transformation.position = cyl_list[i].Cyl_pose.position;
  		msg.transformation.orientation = cyl_list[i].Cyl_pose.orientation;  
+ 		ROS_INFO("Info cylinder");
+
+		phobic_talk = nodeH.advertise<desperate_housewife::cyl_info>(nodeH.resolveName("phobic_info"), 10);	
+		phobic_talk.publish(msg); 
+
 
  	}
 
  	cyl_list.clear();
+
+ 	//send_msg
+ 	
+
 
 
 
