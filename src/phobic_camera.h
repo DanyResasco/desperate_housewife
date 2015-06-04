@@ -6,6 +6,10 @@
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float32MultiArray.h>
+#include <geometry_msgs/Point.h>
+#include <geometry_msgs/Quaternion.h>
+#include <desperate_housewife/cyl_info.h>
+
 
 //PCL
 #include <pcl/common/common_headers.h>
@@ -42,6 +46,8 @@
 #include <utility>
 #include <list>
 #include <pcl/impl/point_types.hpp>
+#include <Eigen/Dense>
+
 // #include <chrono>
 // #include <thread>
 
@@ -66,20 +72,24 @@ class phobic_scene
 		// std::list<pcl::PointCloud<pcl::PointXYZRGBA> > cyl_list;
 		//bool start;
 		//bool pos_cyl;
-		
+
 		struct Mod_cylinder
 		{
-		 	std::list<pcl::PointCloud<pcl::PointXYZRGBA> > cyl_list; 
+		 	// std::list<pcl::PointCloud<pcl::PointXYZRGBA> > cyl_list; 
 		 	double tetha;
 		 	double height;
-		 //	tf::Transform hand_tr;
+		 	pcl::PointXYZ point_Height;
+		 	pcl::PointXYZ point_HalfHeight;
+		 	//	tf::Transform hand_tr;
 		 	//Eigen::Matrix<double, 4,4 > M_rot; 
 		 	Eigen::Matrix<double, 4,4 > M_rot_inv;
 		 	//Pose.Quaternion M_rot_inv;
-		 	geometry_msgs::Pose Cyl_quater
+		 	geometry_msgs::Pose Cyl_pose;
 				 	
 		} CYLINDER;
 
+		std::vector<Mod_cylinder> cyl_list; 
+		
 	
 	public:
 		
@@ -93,9 +103,9 @@ class phobic_scene
 		// bool check_change_pc();
 		void getcluster();
 		void erase_table();
-		std::vector<float> makeInfoCyl(std::vector<float> coeff, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl);
+		void makeInfoCyl(std::vector<float> coeff, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl);
 		//void visualization();
-		geometry_msgs::Pose fromEigenToPose(& Eigen::Matrix<dobule, 4,4> tranfs_matrix);
+		bool fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose);
 
 		// phobic_scene(){}
 		phobic_scene(ros::NodeHandle NodeH): nodeH(NodeH)

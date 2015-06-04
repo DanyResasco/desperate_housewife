@@ -1,4 +1,4 @@
-Header header
+uint32 id
 uint32 angle
 uint32 length
-Eigen::Matrix transformation  
+geometry_msgs/Pose transformation  

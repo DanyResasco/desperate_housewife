@@ -60,8 +60,7 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 	erase_table();
 	getcluster();
   	fitting();
-	
-	// send_msg();
+	send_msg();
 		//Move iterator forward to next label
     	// label_itr = supervoxel_clusters.upper_bound(supervoxel_label);	
     	// send_msg();
@@ -165,7 +164,7 @@ void phobic_scene::fitting ()
 	seg.setInputCloud (cloud_first);
 	seg.setInputNormals (cloud_normals);
 
-	// // Obtain the cylinder inliers and coefficients
+	//// Obtain the cylinder inliers and coefficients
     seg.segment (*inliers_cylinder, *coefficients_cylinder);
 	std::cout << "Cylinder coefficients: " << *coefficients_cylinder << std::endl;
     std::cout << "Number of inliers: " << inliers_cylinder->indices.size() << std::endl;
@@ -191,12 +190,13 @@ void phobic_scene::fitting ()
 
 	 	}
 
-	 	CYLINDER.cyl_list.push_back(*cloud_cylinder);
+	 	// cyl_list.push_back(CYLINDER);
+	 	//cyl_list.push_back(*cloud_cylinder);
  		
- 		std::vector<float> coeff_cyl;
-	 	coeff_cyl=makeInfoCyl(coefficients_cylinder->values, cloud_cylinder);
-	  	
-
+ 		// std::vector<float> coeff_cyl;
+	 	// coeff_cyl=
+	 	makeInfoCyl(coefficients_cylinder->values, cloud_cylinder);
+	 
 	 	////hand's info
 		// CYLINDER.hand_tr=CylToHand_Transform (coefficients_cylinder->values);
 
@@ -206,7 +206,7 @@ void phobic_scene::fitting ()
 		// remove the first elements in the list
 		object_cluster.pop_front();
 		//hand_tr=CylToHand_Transform (info_cil);
-		std::cout<<"disegno cilindro"<<std::endl;
+		//std::cout<<"disegno cilindro"<<std::endl;
 	  	// visualization(cloud_cylinder); 
 		
 		//return(CylToHand_tr);
@@ -214,8 +214,8 @@ void phobic_scene::fitting ()
 	}
 }
 
-
-std::vector<float> phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl)
+void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl)
+//std::vector<float> phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl)
 {
 	// cylinder's coefficients
 	double x = coeff[0], y = coeff[1], z = coeff[2];	// cordinate di un punto sull asse
@@ -329,15 +329,13 @@ std::vector<float> phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::Poi
 	// }
 
 	CYLINDER.tetha= acos(temp4) * 180/PI;
-	std::cout<<"thetha: "<<CYLINDER.tetha<<std::endl;
+	std::cout<<"thetha: "<< CYLINDER.tetha <<std::endl;
 
 	if((CYLINDER.tetha > 90) && (CYLINDER.tetha < 180) )
 	{
 		CYLINDER.tetha = 180-CYLINDER.tetha;
 		std::cout<<"cambiato segno a theta"<<std::endl;
 		std::cout<<"thetha: "<<CYLINDER.tetha<<std::endl;
-
-
 	}
 
 
@@ -363,11 +361,12 @@ std::vector<float> phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::Poi
 	double z_min, z_max;
 	z_min= CYl_new_transf->points[0].z;
 	z_max= CYl_new_transf->points[0].z;
+	
 
 
 	for (int i=1; i< CYl_new_transf->points.size(); i++)
 	{
-		if(z_min > CYl_new_transf->points[i].z)
+		if(z_min > CYl_new_transf->points[i].z )
 		{	
 			z_min = CYl_new_transf->points[i].z;
 		}
@@ -381,98 +380,102 @@ std::vector<float> phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::Poi
 	// double 	height_cyl;
 	CYLINDER.height= z_max - z_min;
 	std::cout<<"altezza: "<<CYLINDER.height<<std::endl;
+	// std::vector<pcl::PointXYZRGBA> data = CYl_new_transf->points;
+	bool ok_transf=false;
+	ok_transf = fromEigenToPose(CYLINDER.M_rot_inv , CYLINDER.Cyl_pose );
+	cyl_list.push_back(CYLINDER);
 
-	//new coefficients with the new cylinder's frame (per me è inutile)
+	// //new coefficients with the new cylinder's frame (per me è inutile)
 
-	Eigen::Matrix<double, 4,1> Point_new_cyl;
-	Eigen::Matrix<double, 4,1> temp_old_cyl;
-	Eigen::Matrix<double, 4,1> Vers_new_cyl;
+	// Eigen::Matrix<double, 4,1> Point_new_cyl;
+	// Eigen::Matrix<double, 4,1> temp_old_cyl;
+	// Eigen::Matrix<double, 4,1> Vers_new_cyl;
 
-	temp_old_cyl.col(0) << coeff[0], coeff[1], coeff[2], 0;
+	// temp_old_cyl.col(0) << coeff[0], coeff[1], coeff[2], 0;
 		
-	Point_new_cyl=(CYLINDER.M_rot_inv * temp_old_cyl);
-	//std::cout<<"finito prima molt"<<std::endl;
+	// Point_new_cyl=(CYLINDER.M_rot_inv * temp_old_cyl);
+	// //std::cout<<"finito prima molt"<<std::endl;
 
-	temp_old_cyl.col(0) << coeff[3], coeff[4], coeff[5], 0;
+	// temp_old_cyl.col(0) << coeff[3], coeff[4], coeff[5], 0;
 
-	Vers_new_cyl=(CYLINDER.M_rot_inv * temp_old_cyl);
-	//std::cout<<"finito sec molt"<<std::endl;
+	// Vers_new_cyl=(CYLINDER.M_rot_inv * temp_old_cyl);
+	// //std::cout<<"finito sec molt"<<std::endl;
 
-	std::vector<float> v;
+	// std::vector<float> v;
 
-	v.push_back(Point_new_cyl(0,0));
-	v.push_back(Point_new_cyl(1,0));
-	v.push_back(Point_new_cyl(2,0));
-	v.push_back(Vers_new_cyl(0,0));
-	v.push_back(Vers_new_cyl(1,0));
-	v.push_back(Vers_new_cyl(2,0));
-	v.push_back(r);	//same radius
-	std::cout<<"finito creazione vettore "<<std::endl;
+	// v.push_back(Point_new_cyl(0,0));
+	// v.push_back(Point_new_cyl(1,0));
+	// v.push_back(Point_new_cyl(2,0));
+	// v.push_back(Vers_new_cyl(0,0));
+	// v.push_back(Vers_new_cyl(1,0));
+	// v.push_back(Vers_new_cyl(2,0));
+	// v.push_back(r);	//same radius
+	// std::cout<<"finito creazione vettore "<<std::endl;
 
-	for(int i=0; i<=v.size(); i++)
-	{
-		std::cout<<"dati vettore coef new: "<< v[i] <<std::endl;
+	// for(int i=0; i<=v.size(); i++)
+	// {
+	// 	std::cout<<"dati vettore coef new: "<< v[i] <<std::endl;
 
-	}
+	// }
 
-	return v;
+	// return v;
+
 }
-
- geometry_msgs::Pose phobic_scene::fromEigenToPose(TFmatrix)
+bool phobic_scene::fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose)
 {
-	Eigen::Quaternion cyl_quat_eigen;
-	cyl_quat_eigen = Quaternion(TFmatrix);
-	orientation.x = cyl_quat_eigen.x();
-	orientation.y = cyl_quat_eigen.y();
-	orientation.z = cyl_quat_eigen.z();
-	orientation.w = cyl_quat_eigen.w();
+	std::cout<<"dentro from"<<std::endl;
+	Eigen::Matrix<double,3,3> Tmatrix;
+	Tmatrix = tranfs_matrix.block<3,3>(0,0) ;
+	Eigen::Quaterniond cyl_quat_eigen(Tmatrix);
+	//std::cout<<"creato quaternione"<<std::endl;
+	//cyl_quat_eigen = Quaternion(Tmatrix);
+	pose.orientation.x = cyl_quat_eigen.x();
+	pose.orientation.y = cyl_quat_eigen.y();
+	pose.orientation.z = cyl_quat_eigen.z();
+	pose.orientation.w = cyl_quat_eigen.w();
+	pose.position.x = tranfs_matrix(0,3);
+	pose.position.y = tranfs_matrix(1,3);
+	pose.position.z = tranfs_matrix(2,3);
 
+
+	return true;
 
 }
 
 
 
 
-//tf::Transform CylToHand_Transform (const Eigen::VectorXf coeff)
-//dipende dal raggio del cilindro e dall'altezza. da riguardare in seguito con un euristica di presa
-// tf::Transform CylToHand_Transform (const std::vector<float> coeff)
-// {
-//  	std::cout<<"creo matrice"<<std::endl;
-// 	  double x = coeff[0], y = coeff[1], z = coeff[2];
-// 	  double p_x = coeff[3], p_y = coeff[4], p_z = coeff[5];
-// 	  double r = coeff[6]; 
-
-// 	  // The position is directly obtained from the coefficients, and will be corrected later
-// 	  tf::Vector3 position(x,y,z); //posizione a caso sull'asse del cilindro. meglio se prendo punto a z max o metà altezza
-	  
-// 	  // w is the axis of the cylinder which will be aligned with the z reference frame of the cylinder
-// 	  tf::Vector3 w(p_x, p_y, p_z);
-// 	  tf::Vector3 u(1, 0, 0);	//allineo asse x uguale a quella della kinect
-// 	  tf::Vector3 v = w.cross(u).normalized();
-// 	  u = v.cross(w).normalized();
-// 	  tf::Matrix3x3 rotation;
-// 	  rotation[0] = u;  // x
-// 	  rotation[1] = v;  // y
-// 	  rotation[2] = w;  // z
-// 	  rotation = rotation.transpose(); //colum
-
-// 	  // Compose the transformation and return it
-// 	  return tf::Transform(rotation, position);
-// }
 
 
-// void  phobic_scene::send_msg()
-// {
-//  	std::cout<<"sono in send_msg"<<std::endl;
-//  	//create a msg
-// 	//std_msgs::Float32 date_cyl;
-// 	std_msgs::Float32MultiArray array; // pos_ori
 
-//     	for (int i=0; i<=2; i++)
-//     	{
-//     		//date_cyl=hand_tr.getOrigin()[i];
-// 			array.data.push_back(hand_tr.getOrigin()[i]);
-//     	}
+void  phobic_scene::send_msg()
+{
+ 	std::cout<<"sono in send_msg"<<std::endl;
+ 	//create a msg
+
+ 	for (int i=0; i <= cyl_list.size(); i++)
+ 	{	
+ 		desperate_housewife::cyl_info msg;
+ 		msg.id = i;
+ 		msg.angle = cyl_list[i].tetha;
+ 		msg.length = cyl_list[i].height;
+ 		msg.transformation.position = cyl_list[i].Cyl_pose.position;
+ 		msg.transformation.orientation = cyl_list[i].Cyl_pose.orientation;  
+
+ 	}
+
+ 	cyl_list.clear();
+
+
+
+	//std_msgs::Float32 date_cyl;
+	// std_msgs::Float32MultiArray array; // pos_ori
+
+ //    	for (int i=0; i<=2; i++)
+ //    	{
+ //    		//date_cyl=hand_tr.getOrigin()[i];
+	// 		array.data.push_back(hand_tr.getOrigin()[i]);
+ //    	}
 
       	
 //     //date_cyl=hand_tr.getRotation().getX();
@@ -490,7 +493,7 @@ std::vector<float> phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::Poi
 // 	//Scena_info = nodeH.advertise<std_msgs::Float32MultiArray>("desperate_camera", "100");
 // 	Scena_info.publish(array); 
 
-// }
+}
 
 
 void phobic_scene::getcluster()
@@ -668,7 +671,7 @@ void phobic_scene::erase_table()
     extract.setIndices (inliers);
     extract.setNegative (true);
 
-    // // Get the points associated with the planar surface
+    // // Get the points associated without the planar surface
     extract.filter (*cloud);
     Plane_coeff=coefficients->values;
 
@@ -696,3 +699,31 @@ void phobic_scene::erase_table()
 	// return 	object_table;
 
 }
+
+
+//tf::Transform CylToHand_Transform (const Eigen::VectorXf coeff)
+//dipende dal raggio del cilindro e dall'altezza. da riguardare in seguito con un euristica di presa
+// tf::Transform CylToHand_Transform (const std::vector<float> coeff)
+// {
+//  	std::cout<<"creo matrice"<<std::endl;
+// 	  double x = coeff[0], y = coeff[1], z = coeff[2];
+// 	  double p_x = coeff[3], p_y = coeff[4], p_z = coeff[5];
+// 	  double r = coeff[6]; 
+
+// 	  // The position is directly obtained from the coefficients, and will be corrected later
+// 	  tf::Vector3 position(x,y,z); //posizione a caso sull'asse del cilindro. meglio se prendo punto a z max o metà altezza
+	  
+// 	  // w is the axis of the cylinder which will be aligned with the z reference frame of the cylinder
+// 	  tf::Vector3 w(p_x, p_y, p_z);
+// 	  tf::Vector3 u(1, 0, 0);	//allineo asse x uguale a quella della kinect
+// 	  tf::Vector3 v = w.cross(u).normalized();
+// 	  u = v.cross(w).normalized();
+// 	  tf::Matrix3x3 rotation;
+// 	  rotation[0] = u;  // x
+// 	  rotation[1] = v;  // y
+// 	  rotation[2] = w;  // z
+// 	  rotation = rotation.transpose(); //colum
+
+// 	  // Compose the transformation and return it
+// 	  return tf::Transform(rotation, position);
+// }
