@@ -10,19 +10,9 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 	// create a new pointcloud from msg
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr scene (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	pcl::fromROSMsg (msg, *scene);
-
-	// visualization(scene);
-
-	// phobic_scene_local.save_pointcloud(pcl::PointCloud<pcl::PointXYZ>::Ptr  scene );
-	// temp_point_cloud
-	//pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-	// std::pair< pcl::PointCloud<pcl::PointXYZ>, pcl::PointCloud<pcl::PointXYZ> > pc_temp;
-	// pcl::PointCloud<pcl::PointXYZ>::Ptr pc_table (new pcl::PointCloud<pcl::PointXYZ>);
-	// pcl::PointCloud<pcl::PointXYZ>::Ptr pc_object (new pcl::PointCloud<pcl::PointXYZ>);
-	// pcl::PointCloud<pcl::PointXYZ>::Ptr temp_pc1 (new pcl::PointCloud<pcl::PointXYZ>);
-	//pcl::PointCloud<pcl::PointXYZ>::Ptr temp_pc2 (new pcl::PointCloud<pcl::PointXYZ>);
-
-
+	
+	pcl::copyPointCloud<pcl::PointXYZRGBA>( *scene, *cloud);
+	visualization(true);
 	erase_environment(scene);
 	visualization(true);
 	erase_table();
@@ -31,18 +21,7 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 	visualization(false);
   	fitting();
   	visualization(true);
-
-	// send_msg();
-		//Move iterator forward to next label
-    	// label_itr = supervoxel_clusters.upper_bound(supervoxel_label);	
-    	// send_msg();
-	//cloud_temp.push_back(cloud);
-	// pc_temp=erase_table(cloud);
-	
-	// pcl::copyPointCloud<pcl::PointXYZ>( pc_temp.first, *pc_object);
-	// pcl::copyPointCloud<pcl::PointXYZ>( pc_temp.second, *pc_table);
-
-	// pcl::copyPointCloud<pcl::PointXYZ>( *pc_object, *cloud_temp);
+	send_msg();
 
 }
 
@@ -62,7 +41,7 @@ void phobic_scene::erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  or
 	Filter_env.setFilterFieldName ("x");
 	Filter_env.setFilterLimits (-0.2, 0.7);
 	Filter_env.filter (*cloud_filtered);
-	// The indices_x array indexes all points of cloud_in that have x between -1.0, 1.0
+	// The indices_x array indexes all points of cloud_in that have x between -0.2, 0.7
 	
 	//y
 	Filter_env.setInputCloud (cloud_filtered);
@@ -75,11 +54,9 @@ void phobic_scene::erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  or
 	Filter_env.setInputCloud (cloud_temp);
 	Filter_env.setFilterFieldName ("z");
 	Filter_env.setFilterLimits (0.2, 1.0);
-	// The indices_x array indexes all points of cloud_in that have x between 0.0, 1.0
+	// The indices_x array indexes all points of cloud_in that have x between 0.2, 1.0
 	Filter_env.filter (*cloud);
 
-	// copies point clound into another PointCloud (cloud is the class pc )
-	//pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud_filtered, *cloud);
 	
 	//visualization(cloud_filtered);
 
@@ -163,13 +140,8 @@ void phobic_scene::fitting ()
 	 	}
 
 	 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud_cylinder, *cloud);
-	
-
-	 	// cyl_list.push_back(CYLINDER);
-	 	//cyl_list.push_back(*cloud_cylinder);
- 		
- 		// std::vector<float> coeff_cyl;
-	 	// coeff_cyl=
+		 	
+	 	// take the coefficients and make a transformation matrix from camera_frame to axis_cylinder's_frame
 	 	makeInfoCyl(coefficients_cylinder->values, cloud_cylinder);
 	 
 	 	////hand's info
@@ -180,17 +152,12 @@ void phobic_scene::fitting ()
 
 		// remove the first elements in the list
 		object_cluster.pop_front();
-		//hand_tr=CylToHand_Transform (info_cil);
-		//std::cout<<"disegno cilindro"<<std::endl;
-	  	// visualization(cloud_cylinder); 
-		
-		//return(CylToHand_tr);
+	
 	
 	}
 }
 
 void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl)
-//std::vector<float> phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl)
 {
 	// cylinder's coefficients
 	double x = coeff[0], y = coeff[1], z = coeff[2];	// cordinate di un punto sull asse
@@ -296,13 +263,6 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	// temp3=std::sqrt(std::pow(plane_normals->normal_x,2) + std::pow(plane_normals->normal_y,2) + std::pow(plane_normals->normal_z,2));
 	temp4= temp1 / (temp2 * temp3);
 
-	//check for obtain  0<thetha<90;
-	// if((cos (temp4)* 180/PI)<0)
-	// {
-	// 	temp4 =temp4*-1;
-	// 	std::cout<<"cambiato segno"<<std::endl;
-	// }
-
 	CYLINDER.tetha= acos(temp4) * 180/PI;
 	std::cout<<"thetha: "<< CYLINDER.tetha <<std::endl;
 
@@ -317,18 +277,16 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	//transformation matrix
 	Eigen::Matrix<double, 4,4 > M_rot; 
 	std::cout<<"creato matrice rotazione"<<std::endl;
-	//Block of size (p,q), starting at (i,j). indices start at 0
 	M_rot.row(0) << Ax.x(), Ay.x(), Az.z(), -x;
 	M_rot.row(1) << Ax.y(), Ay.y(), Az.y(), -y;
 	M_rot.row(2) << Ax.z(), Ay.z(), Az.z(), -z;
 	M_rot.row(3) << 0, 0, 0, 1;
 
-
 	std::cout<<"finito di creare matrice di rotazione"<<std::endl;
+	
 	//create a new cylinder pointcloud
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CYl_new_transf (new pcl::PointCloud<pcl::PointXYZRGBA>);
-	//Eigen::Matrix<double, 4,4 > M_rot_inv;
-	
+		
 	CYLINDER.M_rot_inv = M_rot.inverse();
 	pcl::transformPointCloud(*pc_cyl, *CYl_new_transf, CYLINDER.M_rot_inv);
 
@@ -337,7 +295,6 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	z_min= CYl_new_transf->points[0].z;
 	z_max= CYl_new_transf->points[0].z;
 	
-
 
 	for (int i=1; i< CYl_new_transf->points.size(); i++)
 	{
@@ -352,7 +309,7 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 		}
 	}
 
-	// double 	height_cyl;
+
 	CYLINDER.height= z_max - z_min;
 	std::cout<<"altezza: "<<CYLINDER.height<<std::endl;
 	// std::vector<pcl::PointXYZRGBA> data = CYl_new_transf->points;
@@ -418,11 +375,6 @@ bool phobic_scene::fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs
 }
 
 
-
-
-
-
-
 void  phobic_scene::send_msg()
 {
  	std::cout<<"sono in send_msg"<<std::endl;
@@ -446,38 +398,6 @@ void  phobic_scene::send_msg()
  	}
 
  	cyl_list.clear();
-
- 	//send_msg
- 	
-
-
-
-
-	//std_msgs::Float32 date_cyl;
-	// std_msgs::Float32MultiArray array; // pos_ori
-
- //    	for (int i=0; i<=2; i++)
- //    	{
- //    		//date_cyl=hand_tr.getOrigin()[i];
-	// 		array.data.push_back(hand_tr.getOrigin()[i]);
- //    	}
-
-      	
-//     //date_cyl=hand_tr.getRotation().getX();
-// 	array.data.push_back(hand_tr.getRotation().getX());
-// 	//date_cyl=hand_tr.getRotation().getY();
-// 	array.data.push_back(hand_tr.getRotation().getY());
-// 	//date_cyl=hand_tr.getRotation().getZ();
-// 	array.data.push_back(hand_tr.getRotation().getZ());
-//     //date_cyl=hand_tr.getRotation().getW();
-// 	array.data.push_back(hand_tr.getRotation().getW());
-		
-// 	ROS_INFO("Info cylinder");
-// 	//send a msg 
-// 	Scena_info = nodeH.advertise<std_msgs::Float32MultiArray>(nodeH.resolveName("markers_out"), 10);	
-// 	//Scena_info = nodeH.advertise<std_msgs::Float32MultiArray>("desperate_camera", "100");
-// 	Scena_info.publish(array); 
-
 }
 
 
@@ -599,12 +519,7 @@ void phobic_scene::getcluster()
 	// }
 }
 
-// // bool phobic_scene::check_change_pc()
-// // {
 
-// // }
-
-//void  phobic_scene::visualization(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr room_object, bool window )
 void  phobic_scene::visualization(bool window)
 {
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
@@ -613,21 +528,18 @@ void  phobic_scene::visualization(bool window)
 
 	if (window == true )
 	{
-		//room_object = cloud;
 		pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud, *room_object);
 	}
 
 	else
 	{
-		//room_object = object_cluster.begin();
 		pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *room_object);
 	}
 
 
   	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(room_object, 0, 0, 0);
   	viewer->addPointCloud<pcl::PointXYZRGBA> (room_object, single_color, "sample cloud");
-	// viewer->addPointCloud<pcl::PointXYZRGBA > (room_object, "nome");
-
+	//viewer->addPointCloud<pcl::PointXYZRGBA > (room_object, "nome");
 
   	while (!viewer->wasStopped ())
 	{
@@ -639,7 +551,6 @@ void  phobic_scene::visualization(bool window)
 }
 
 
-//std::pair<pcl::PointCloud<pcl::PointXYZRGBA>,pcl::PointCloud<pcl::PointXYZRGBA> > erase_table ()
 void phobic_scene::erase_table()
 {
 	// Create the segmentation object for the planar model and set all the parameters
@@ -673,29 +584,6 @@ void phobic_scene::erase_table()
     // // Get the points associated without the planar surface
     extract.filter (*cloud);
     Plane_coeff=coefficients->values;
-
-    //std::cout << "PointCloud representing the planar component: " << cloud_plane->points.size () << " data points." << std::endl;
-
-    // Remove the planar inliers, extract the rest
-    // extract.setNegative (true);
-    // extract.filter (*cloud);
-   
-   	// Estimate point normals
- //    pcl::NormalEstimation< pcl::PointXYZRGBA, pcl::Normal> ne;
- //    pcl::search::KdTree< pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree< pcl::PointXYZRGBA> ());   
-	
-	// ne.setSearchMethod (tree);
-	// ne.setInputCloud (cloud_plane);
-	// ne.setKSearch (100);
-	// ne.compute (*plane_normals);
-    
-  	//visualization(cloud);
- 	
- // 	std::pair<pcl::PointCloud<pcl::PointXYZ>,pcl::PointCloud<pcl::PointXYZ> > object_table;
- // 	pcl::copyPointCloud<pcl::PointXYZ>( *PC_w_env, object_table.first);
-	// pcl::copyPointCloud<pcl::PointXYZ>( *table, object_table.second);
-
-	// return 	object_table;
 
 }
 
