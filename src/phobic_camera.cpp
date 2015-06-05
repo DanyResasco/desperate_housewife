@@ -12,15 +12,15 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 	pcl::fromROSMsg (msg, *scene);
 	
 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *scene, *cloud);
-	visualization(true);
+	//visualization(true , false);
 	erase_environment(scene);
-	visualization(true);
+	//visualization(true, false);
 	erase_table();
-	visualization(true);
+	//visualization(true, false);
 	getcluster();
-	visualization(false);
+	visualization(false, false);
   	fitting();
-  	visualization(true);
+  	visualization(true, true);
 	send_msg();
 
 }
@@ -160,110 +160,127 @@ void phobic_scene::fitting ()
 void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl)
 {
 	// cylinder's coefficients
-	double x = coeff[0], y = coeff[1], z = coeff[2];	// cordinate di un punto sull asse
-	double p_x = coeff[3], p_y = coeff[4], p_z = coeff[5];	// componenti dell asse realtive alla telecamera
-	double r = coeff[6];
+	// double x = coeff[0], y = coeff[1], z = coeff[2];	// cordinate di un punto sull asse
+	// double p_x = coeff[3], p_y = coeff[4], p_z = coeff[5];	// componenti dell asse realtive alla telecamera
+	// double r = coeff[6];
+
+	// CYLINDER.radius = r;
+	Eigen::Matrix<double,4,4> Matrix_transform;
+	Matrix_transform = Cyl_Transform( coeff);
+	CYLINDER.Matrix_transform_inv = Matrix_transform.inverse();
 
 	//create a new frame
 
-	Eigen::Vector3d Ax, Ay, Az;
-	Az.x()=p_x;
-	Az.y()=p_y;
-	Az.z()=p_z;
+	// Eigen::Vector3d Ax, Ay, Az;
+	// Az.x() = CYLINDER.Matrix_transform_inv(0,2);
+	// Az.y() = CYLINDER.Matrix_transform_inv(1,2);
+	// Az.z() = CYLINDER.Matrix_transform_inv(2,2);
 	
-	bool OK=false;
-	// std::vector<double> Ax, Ay, Az;
-	// Az.push_back(p_x, p_y, p_z);
 
-	/*  make a vectors orthogonal 
-		v=(a b c); v*w=0 -> w=(l m n) tc l=-b, m=a, n=0; if a,b!=0 || a,c!=0 !! b,c!=0
-	*/
-
-	// cerca di farlo meglio, porta tutto in eigen e usa le sue funzioni in più utilizza case swich al posto di questi for
-	//make a vectors orthogonal 
-	if((p_x && p_y)!=0) 
-	{
-		std::cout<<"caso 1"<<std::endl;
-
-		// Ax.push_back(-p_y);
-		// Ax.push_back(p_x)
-		// Ax.push_back(0)
-		OK=true;
-		Ax.x()=-p_y;
-		Ax.y()=p_x;
-		Ax.z()=0;
-
-	}
+	// Eigen::Vector3d Ax, Ay, Az;
+	// Az.x()=p_x;
+	// Az.y()=p_y;
+	// Az.z()=p_z;
 	
-	if (OK==false && (p_x && p_z)!=0)
-	 {
-	 		std::cout<<"caso 2"<<std::endl;
+	// bool OK=false;
+	// // std::vector<double> Ax, Ay, Az;
+	// // Az.push_back(p_x, p_y, p_z);
 
-	// 	Ax.push_back(-p_z);
-	// 	Ax.push_back(0);
-	// 	Ax.push_back(p_x);
-	 	OK=true;
-		Ax.x()=-p_z;
-		Ax.y()=0;
-		Ax.z()=p_x;
-	}
+	// /*  make a vectors orthogonal 
+	// 	v=(a b c); v*w=0 -> w=(l m n) tc l=-b, m=a, n=0; if a,b!=0 || a,c!=0 !! b,c!=0
+	// */
 
-	if(OK==false && (p_y && p_z)!=0)
-	{
-		// Ax.push_back(0);
-		// Ax.push_back(-p_z);
-		// Ax.push_back(p_y);
-		OK=true;
-		Ax.x()=0;
-		Ax.y()=-p_z;
-		Ax.z()=p_y;
-		std::cout<<"caso 3"<<std::endl;
+	// // cerca di farlo meglio, porta tutto in eigen e usa le sue funzioni in più utilizza case swich al posto di questi for
+	// //make a vectors orthogonal 
+	// if((p_x && p_y)!=0) 
+	// {
+	// 	std::cout<<"caso 1"<<std::endl;
 
+	// 	// Ax.push_back(-p_y);
+	// 	// Ax.push_back(p_x)
+	// 	// Ax.push_back(0)
+	// 	OK=true;
+	// 	Ax.x()=-p_y;
+	// 	Ax.y()=p_x;
+	// 	Ax.z()=0;
 
-	}
+	// }
+	
+	// if (OK==false && (p_x && p_z)!=0)
+	//  {
+	//  		std::cout<<"caso 2"<<std::endl;
 
-	/*y axis orthogonal z,x. 
-		vec vector;
-	    vector.x = (Ay*Bz)-(By*Az);
-	    vector.y = -(Ax*Bz)+(Bx*Az);
-	    vector.z = (Ax*By)-(Ay*Bx);
-	    // double X,Y,Z;
+	// // 	Ax.push_back(-p_z);
+	// // 	Ax.push_back(0);
+	// // 	Ax.push_back(p_x);
+	//  	OK=true;
+	// 	Ax.x()=-p_z;
+	// 	Ax.y()=0;
+	// 	Ax.z()=p_x;
+	// }
 
-		// X=Ax[1]*Az[2] - Az[1]* Ax[2];
-		// Ay.push_back(X);
-
-		// Y= - Ax[0]* Az[2] + Az[0]* Ax[2];
-		// Ay.push_back(Y);
-
-		// Z= Ax[0]* Az[1] - Ax[1]* Az[0];
-		// Ay.push_back(Z);
-
- 	*/
-
-	Ay=Ax.cross(Az);
-	std::cout<<"prodotto vettore"<<std::endl;
-
-	/* orientation
-		a*b=mod(a)*mod(b)*cos(tetha) --> temp1= a*b, temp2=mod(a), temp3=mod(b), temp4=(a*b)/mod(a)*mod(b)
-	*/
+	// if(OK==false && (p_y && p_z)!=0)
+	// {
+	// 	// Ax.push_back(0);
+	// 	// Ax.push_back(-p_z);
+	// 	// Ax.push_back(p_y);
+	// 	OK=true;
+	// 	Ax.x()=0;
+	// 	Ax.y()=-p_z;
+	// 	Ax.z()=p_y;
+	// 	std::cout<<"caso 3"<<std::endl;
 
 
-	double temp1, temp2, temp3, temp4;
+	// }
+
+	// /*y axis orthogonal z,x. 
+	// 	vec vector;
+	//     vector.x = (Ay*Bz)-(By*Az);
+	//     vector.y = -(Ax*Bz)+(Bx*Az);
+	//     vector.z = (Ax*By)-(Ay*Bx);
+	//     // double X,Y,Z;
+
+	// 	// X=Ax[1]*Az[2] - Az[1]* Ax[2];
+	// 	// Ay.push_back(X);
+
+	// 	// Y= - Ax[0]* Az[2] + Az[0]* Ax[2];
+	// 	// Ay.push_back(Y);
+
+	// 	// Z= Ax[0]* Az[1] - Ax[1]* Az[0];
+	// 	// Ay.push_back(Z);
+
+ // 	*/
+
+	// Ay=Ax.cross(Az);
+	// std::cout<<"prodotto vettore"<<std::endl;
+
+	// /* orientation
+	// 	a*b=mod(a)*mod(b)*cos(tetha) --> temp1= a*b, temp2=mod(a), temp3=mod(b), temp4=(a*b)/mod(a)*mod(b)
+	// */
+
+
+	// double temp1, temp2, temp3, temp4;
 	double PI= 3.14159265;
 
-	//take plane's normals (for one of normals plane_normals->points.normal_x)
-	double Plane_normal_x = Plane_coeff[0];
-	double Plane_normal_y = Plane_coeff[1];
-	double Plane_normal_z = Plane_coeff[2];
+	// //take plane's normals (for one of normals plane_normals->points.normal_x)
+	// double Plane_normal_x = Plane_coeff[0];
+	// double Plane_normal_y = Plane_coeff[1];
+	// double Plane_normal_z = Plane_coeff[2];
 
-	temp1= Plane_normal_x * Az.x() + Plane_normal_y * Az.y() + Plane_normal_z * Az.z();
-	temp2=std::sqrt(std::pow(Az.x(),2) + std::pow(Az.y(),2) + std::pow(Az.z(),2));
-	temp3=std::sqrt(std::pow(Plane_normal_x,2) + std::pow(Plane_normal_y,2) + std::pow(Plane_normal_z,2));	// temp1= plane_normals->normal_x * Az.x() + plane_normals->normal_y * Az.y() + plane_normals->normal_z * Az.z();
-	// temp2=std::sqrt(std::pow(Az.x(),2) + std::pow(Az.y(),2) + std::pow(Az.z(),2));
-	// temp3=std::sqrt(std::pow(plane_normals->normal_x,2) + std::pow(plane_normals->normal_y,2) + std::pow(plane_normals->normal_z,2));
-	temp4= temp1 / (temp2 * temp3);
+	// temp1= Plane_normal_x * 0 + Plane_normal_y * 0 + Plane_normal_z * 1;
+	// temp2=std::sqrt(std::pow(0,2) + std::pow(0,2) + std::pow(1,2));
+	// temp3=std::sqrt(std::pow(Plane_normal_x,2) + std::pow(Plane_normal_y,2) + std::pow(Plane_normal_z,2));	// temp1= plane_normals->normal_x * Az.x() + plane_normals->normal_y * Az.y() + plane_normals->normal_z * Az.z();
 
-	CYLINDER.tetha= acos(temp4) * 180/PI;
+	// temp4= temp1 / (temp2 * temp3); 
+
+	Eigen::Vector3d Plane_normal, u(0,0,1);
+	Plane_normal[0] = Plane_coeff [0];
+	Plane_normal[1] = Plane_coeff[1];
+	Plane_normal[2] = Plane_coeff[2];
+
+	// u << (0,0,1);
+
+	CYLINDER.tetha= acos(Plane_normal.dot(u)) * 180/PI;
 	std::cout<<"thetha: "<< CYLINDER.tetha <<std::endl;
 
 	if((CYLINDER.tetha > 90) && (CYLINDER.tetha < 180) )
@@ -275,23 +292,26 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 
 
 	//transformation matrix
-	Eigen::Matrix<double, 4,4 > M_rot; 
-	std::cout<<"creato matrice rotazione"<<std::endl;
-	M_rot.row(0) << Ax.x(), Ay.x(), Az.z(), -x;
-	M_rot.row(1) << Ax.y(), Ay.y(), Az.y(), -y;
-	M_rot.row(2) << Ax.z(), Ay.z(), Az.z(), -z;
-	M_rot.row(3) << 0, 0, 0, 1;
+	// Eigen::Matrix<double, 4,4 > M_rot; 
+	// std::cout<<"creato matrice rotazione"<<std::endl;
+	// M_rot.row(0) << Ax.x(), Ay.x(), Az.z(), -x;
+	// M_rot.row(1) << Ax.y(), Ay.y(), Az.y(), -y;
+	// M_rot.row(2) << Ax.z(), Ay.z(), Az.z(), -z;
+	// M_rot.row(3) << 0, 0, 0, 1;
 
 	std::cout<<"finito di creare matrice di rotazione"<<std::endl;
 	
 	//create a new cylinder pointcloud
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CYl_new_transf (new pcl::PointCloud<pcl::PointXYZRGBA>);
 		
-	CYLINDER.M_rot_inv = M_rot.inverse();
-	pcl::transformPointCloud(*pc_cyl, *CYl_new_transf, CYLINDER.M_rot_inv);
+	//CYLINDER.M_rot_inv = M_rot.inverse();
+	// pcl::transformPointCloud(*pc_cyl, *CYl_new_transf, CYLINDER.M_rot_inv);
+	pcl::transformPointCloud(*pc_cyl, *CYl_new_transf, CYLINDER.Matrix_transform_inv);
+	pcl::copyPointCloud<pcl::PointXYZRGBA>( *CYl_new_transf, *cloud);
+
 
 	//find height 
-	double z_min, z_max;
+	double z_min, z_max, index_up, index_down;
 	z_min= CYl_new_transf->points[0].z;
 	z_max= CYl_new_transf->points[0].z;
 	
@@ -301,19 +321,34 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 		if(z_min > CYl_new_transf->points[i].z )
 		{	
 			z_min = CYl_new_transf->points[i].z;
+			index_up = i;
+
 		}
 
 		if(z_max < CYl_new_transf->points[i].z)
 		{	
 			z_max = CYl_new_transf->points[i].z;
+			index_down = i; 
 		}
 	}
 
 
 	CYLINDER.height= z_max - z_min;
-	std::cout<<"altezza: "<<CYLINDER.height<<std::endl;
+	std::cout<< "altezza: "<< CYLINDER.height <<std::endl;
+
+
+	CYLINDER.info_disegno_cyl_up.x = CYl_new_transf->points[index_up].x; 
+	CYLINDER.info_disegno_cyl_dw.x = CYl_new_transf->points[index_down].x;
+	CYLINDER.info_disegno_cyl_up.y = CYl_new_transf->points[index_up].y; 
+	CYLINDER.info_disegno_cyl_dw.y = CYl_new_transf->points[index_down].y;
+	CYLINDER.info_disegno_cyl_up.z = z_max; 
+	CYLINDER.info_disegno_cyl_dw.z = z_min;
+
+	// std::cout<<"finito creare info cerchio"<<std::endl;
+
 	// std::vector<pcl::PointXYZRGBA> data = CYl_new_transf->points;
-	bool ok_transf=false;
+
+	bool ok_transf;
 	ok_transf = fromEigenToPose(CYLINDER.M_rot_inv , CYLINDER.Cyl_pose );
 	cyl_list.push_back(CYLINDER);
 
@@ -520,26 +555,55 @@ void phobic_scene::getcluster()
 }
 
 
-void  phobic_scene::visualization(bool window)
+void  phobic_scene::visualization(bool testing, bool circle)
 {
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
 	viewer->setBackgroundColor (0, 255, 0);
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr room_object  (new pcl::PointCloud<pcl::PointXYZRGBA>);
 
-	if (window == true )
+	if(circle == false)
 	{
-		pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud, *room_object);
-	}
+		if (testing == true )
+		{
+			pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud, *room_object);
+		}
 
-	else
-	{
-		pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *room_object);
-	}
+		else
+		{
+			pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *room_object);
+		}
 
 
-  	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(room_object, 0, 0, 0);
-  	viewer->addPointCloud<pcl::PointXYZRGBA> (room_object, single_color, "sample cloud");
-	//viewer->addPointCloud<pcl::PointXYZRGBA > (room_object, "nome");
+  		pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(room_object, 0, 0, 0);
+  		viewer->addPointCloud<pcl::PointXYZRGBA> (room_object, single_color, "sample cloud");
+		//viewer->addPointCloud<pcl::PointXYZRGBA > (room_object, "nome");
+		viewer->addCoordinateSystem(0.1);
+  	}
+
+  	else
+  	{
+  		pcl::PointXYZ point_sim_up, point_sim_dw;
+  		point_sim_up.x = CYLINDER.info_disegno_cyl_up.x + 2* CYLINDER.radius;
+  		point_sim_up.y = CYLINDER.info_disegno_cyl_up.y + 2* CYLINDER.radius;
+  		point_sim_up.z = CYLINDER.info_disegno_cyl_up.z + 2* CYLINDER.radius;
+
+  		point_sim_dw.x = CYLINDER.info_disegno_cyl_dw.x + 2* CYLINDER.radius;
+  		point_sim_dw.y = CYLINDER.info_disegno_cyl_dw.y + 2* CYLINDER.radius;
+  		point_sim_dw.z = CYLINDER.info_disegno_cyl_dw.z + 2* CYLINDER.radius;
+
+  		pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(cloud, 0, 0, 0);
+  		viewer->addPointCloud<pcl::PointXYZRGBA> (cloud, single_color, "sample cloud");
+  		viewer->addCoordinateSystem(0.1);
+  		viewer->addLine(CYLINDER.info_disegno_cyl_up, CYLINDER.info_disegno_cyl_dw, "line" );
+  		viewer->addLine(point_sim_up, point_sim_dw, "line2" );
+  		// pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(cloud, 0, 0, 0);
+  		// viewer->addPointCloud<pcl::PointXYZRGBA> (cloud, single_color, "sample cloud");
+  		// viewer->addLine(CYLINDER.info_coeff_circle_up.values[0], CYLINDER.info_coeff_circle_dw.values[0], "line" );
+  		// viewer->addLine(CYLINDER.info_coeff_circle_up.values[1], CYLINDER.info_coeff_circle_dw.values[1], "line" );
+
+  	}
+
+
 
   	while (!viewer->wasStopped ())
 	{
@@ -590,14 +654,58 @@ void phobic_scene::erase_table()
 
 //tf::Transform CylToHand_Transform (const Eigen::VectorXf coeff)
 //dipende dal raggio del cilindro e dall'altezza. da riguardare in seguito con un euristica di presa
-// tf::Transform CylToHand_Transform (const std::vector<float> coeff)
-// {
-//  	std::cout<<"creo matrice"<<std::endl;
-// 	  double x = coeff[0], y = coeff[1], z = coeff[2];
-// 	  double p_x = coeff[3], p_y = coeff[4], p_z = coeff[5];
-// 	  double r = coeff[6]; 
+//tf::Transform
+Eigen::Matrix4d Cyl_Transform (const std::vector<float> coeff)
+{
+ 	std::cout<<"creo matrice"<<std::endl;
+	  double x = coeff[0], y = coeff[1], z = coeff[2];
+	  double p_x = coeff[3], p_y = coeff[4], p_z = coeff[5];
+	  double r = coeff[6]; 
 
-// 	  // The position is directly obtained from the coefficients, and will be corrected later
+	  for(int i=0; i<7; i++ )
+	  {
+
+	  	std::cout<<"coefficienti: "<<coeff[i]<<std::endl;
+	  }
+
+
+
+	Eigen::Vector3d position(x,y,z); //posizione a caso sull'asse del cilindro. 
+		  // w is the axis of the cylinder which will be aligned with the z reference frame of the cylinder
+	Eigen::Vector3d w(p_x, p_y, p_z);
+	Eigen::Vector3d u(1, 0, 0);	//allineo asse x uguale a quella della kinect
+
+	std::cout<<"trovato w e u"<<std::endl;
+	Eigen::Vector3d v = w.cross(u).normalized();
+	//  u = v.cross(w).normalized();
+
+	std::cout<<"ho normalizzato"<<std::endl;  
+	Eigen::Matrix3d rotation;
+	rotation.col(0) = u;  // x
+	rotation.col(1) = v;  // y
+	rotation.col(2) = w;  // z
+
+	std::cout<<"ho creato rotazione"<<std::endl;
+	//rotation = rotation.transpose(); //colum
+
+	// for(int i=0; i<=3; i++)
+	// {
+	// 	std::cout<<"vettore posizione: "<<position[i]<<std::endl;
+
+	// }
+
+	  // Compose the transformation and return it
+	Eigen::Matrix<double,4,4> tranfs_matrix;
+	tranfs_matrix.row(0) << rotation.row(0), position[0];
+	tranfs_matrix.row(1) << rotation.row(1), position[1];
+	tranfs_matrix.row(2) << rotation.row(2), position[2]; 
+	tranfs_matrix.row(3) << 0,0,0, 1;
+
+	return tranfs_matrix;
+
+
+
+	  // The position is directly obtained from the coefficients, and will be corrected later
 // 	  tf::Vector3 position(x,y,z); //posizione a caso sull'asse del cilindro. meglio se prendo punto a z max o metà altezza
 	  
 // 	  // w is the axis of the cylinder which will be aligned with the z reference frame of the cylinder
@@ -613,4 +721,9 @@ void phobic_scene::erase_table()
 
 // 	  // Compose the transformation and return it
 // 	  return tf::Transform(rotation, position);
-// }
+
+
+
+
+
+ }

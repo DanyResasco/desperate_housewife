@@ -78,11 +78,20 @@ class phobic_scene
 		 	// std::list<pcl::PointCloud<pcl::PointXYZRGBA> > cyl_list; 
 		 	double tetha;
 		 	double height;
-		 	pcl::PointXYZ point_Height;
-		 	pcl::PointXYZ point_HalfHeight;
+		 	double radius;
+		 	// double Z_max_circle_up;
+		 	// double Z_min_circle_dw;
+		 	// // pcl::PointXYZ point_Cyl_up;
+		 	// // pcl::PointXYZ point_Cyl_dw;
+		 	// pcl::PointXYZ point_HalfHeight;
+		 	// pcl::ModelCoefficients info_coeff_circle_up;
+		 	// pcl::ModelCoefficients info_coeff_circle_dw;
+		 	pcl::PointXYZ info_disegno_cyl_up;
+		 	pcl::PointXYZ info_disegno_cyl_dw;
 		 	//	tf::Transform hand_tr;
 		 	//Eigen::Matrix<double, 4,4 > M_rot; 
 		 	Eigen::Matrix<double, 4,4 > M_rot_inv;
+		 		Eigen::Matrix<double,4,4> Matrix_transform_inv;
 		 	//Pose.Quaternion M_rot_inv;
 		 	geometry_msgs::Pose Cyl_pose;
 				 	
@@ -106,16 +115,19 @@ class phobic_scene
 		void makeInfoCyl(std::vector<float> coeff, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl);
 		//void visualization();
 		bool fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose);
-		void visualization( bool window );
+		void visualization( bool testing, bool circle );
 
 		// phobic_scene(){}
 		phobic_scene(ros::NodeHandle NodeH, bool test): nodeH(NodeH)
 		{
 			
 			pcl::PointCloud<pcl::PointXYZRGBA> cloud2;
+			//pcl::ModelCoefficients circle_info_dim;
+			//circle_info_dim.values.resize(3);
 			//pcl::PointCloud<pcl::Normal> normals;
 			cloud=cloud2.makeShared();
-			testing = test;
+			//testing = test;
+
 			//plane_normals=normals.makeShared();
 			// start=true;
 			// pos_cyl=true;
@@ -162,7 +174,7 @@ class phobic_scene
 //input: cylinder's coefficients
 //ouput: hand transformation
 //Description: this function return a hand-transformation
-tf::Transform CylToHand_Transform (const std::vector<float>  coeff);
+Eigen::Matrix4d Cyl_Transform (const std::vector<float>  coeff);
 
 //Function: visualization
 //input: point cloud
