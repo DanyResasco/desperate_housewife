@@ -164,7 +164,7 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	// double p_x = coeff[3], p_y = coeff[4], p_z = coeff[5];	// componenti dell asse realtive alla telecamera
 	// double r = coeff[6];
 
-	// CYLINDER.radius = r;
+	CYLINDER.radius = coeff[6];
 	Eigen::Matrix<double,4,4> Matrix_transform;
 	Matrix_transform = Cyl_Transform( coeff);
 	CYLINDER.Matrix_transform_inv = Matrix_transform.inverse();
@@ -321,14 +321,14 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 		if(z_min > CYl_new_transf->points[i].z )
 		{	
 			z_min = CYl_new_transf->points[i].z;
-			index_up = i;
+			index_down = i;
 
 		}
 
 		if(z_max < CYl_new_transf->points[i].z)
 		{	
 			z_max = CYl_new_transf->points[i].z;
-			index_down = i; 
+			index_up = i; 
 		}
 	}
 
@@ -349,8 +349,22 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	// std::vector<pcl::PointXYZRGBA> data = CYl_new_transf->points;
 
 	bool ok_transf;
-	ok_transf = fromEigenToPose(CYLINDER.M_rot_inv , CYLINDER.Cyl_pose );
-	cyl_list.push_back(CYLINDER);
+	ok_transf = fromEigenToPose(CYLINDER.Matrix_transform_inv , CYLINDER.Cyl_pose );
+	
+
+  		// pcl::ModelCoefficients cylinder_coeff;
+		CYLINDER.cylinder_coeff.values.resize (7);    // We need 7 values
+		CYLINDER.cylinder_coeff.values[0] = 0;
+		CYLINDER.cylinder_coeff.values[1] = 0;
+		CYLINDER.cylinder_coeff.values[2] = 0;
+		CYLINDER.cylinder_coeff.values[3] = 0;
+		CYLINDER.cylinder_coeff.values[4] = 0;
+		CYLINDER.cylinder_coeff.values[5] = 1;
+		CYLINDER.cylinder_coeff.values[6] = CYLINDER.radius;
+
+
+
+		cyl_list.push_back(CYLINDER);
 
 	// //new coefficients with the new cylinder's frame (per me è inutile)
 
@@ -388,6 +402,8 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	// return v;
 
 }
+
+
 bool phobic_scene::fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose)
 {
 	std::cout<<"dentro from"<<std::endl;
@@ -428,8 +444,6 @@ void  phobic_scene::send_msg()
 
 		phobic_talk = nodeH.advertise<desperate_housewife::cyl_info>(nodeH.resolveName("phobic_info"), 10);	
 		phobic_talk.publish(msg); 
-
-
  	}
 
  	cyl_list.clear();
@@ -561,6 +575,9 @@ void  phobic_scene::visualization(bool testing, bool circle)
 	viewer->setBackgroundColor (0, 255, 0);
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr room_object  (new pcl::PointCloud<pcl::PointXYZRGBA>);
 
+	double PI= 3.14159265;
+
+
 	if(circle == false)
 	{
 		if (testing == true )
@@ -582,20 +599,26 @@ void  phobic_scene::visualization(bool testing, bool circle)
 
   	else
   	{
-  		pcl::PointXYZ point_sim_up, point_sim_dw;
-  		point_sim_up.x = CYLINDER.info_disegno_cyl_up.x + 2* CYLINDER.radius;
-  		point_sim_up.y = CYLINDER.info_disegno_cyl_up.y + 2* CYLINDER.radius;
-  		point_sim_up.z = CYLINDER.info_disegno_cyl_up.z + 2* CYLINDER.radius;
+  		// pcl::PointXYZ point_sim_up, point_sim_dw; 
+  		// point_sim_up.x = CYLINDER.info_disegno_cyl_up.x + 2 * CYLINDER.radius;
+  		// point_sim_up.y = CYLINDER.info_disegno_cyl_up.y + 2 * CYLINDER.radius;
+  		// point_sim_up.z = CYLINDER.info_disegno_cyl_up.z;
+  		// point_sim_dw.x = CYLINDER.info_disegno_cyl_dw.x + 2 * CYLINDER.radius;
+  		// point_sim_dw.y = CYLINDER.info_disegno_cyl_dw.y + 2 * CYLINDER.radius;
+  		// point_sim_dw.z = CYLINDER.info_disegno_cyl_dw.z;
 
-  		point_sim_dw.x = CYLINDER.info_disegno_cyl_dw.x + 2* CYLINDER.radius;
-  		point_sim_dw.y = CYLINDER.info_disegno_cyl_dw.y + 2* CYLINDER.radius;
-  		point_sim_dw.z = CYLINDER.info_disegno_cyl_dw.z + 2* CYLINDER.radius;
 
   		pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(cloud, 0, 0, 0);
   		viewer->addPointCloud<pcl::PointXYZRGBA> (cloud, single_color, "sample cloud");
   		viewer->addCoordinateSystem(0.1);
+
+  		viewer-> addCylinder(CYLINDER.cylinder_coeff, "cyl");
   		viewer->addLine(CYLINDER.info_disegno_cyl_up, CYLINDER.info_disegno_cyl_dw, "line" );
-  		viewer->addLine(point_sim_up, point_sim_dw, "line2" );
+  		// viewer-> addCircle(CYLINDER.info_coeff_circle_up, "circle1");
+  		// vtkSmartPointer<vtkDataSet> data = pcl::visualization::create2DCircle (CYLINDER.info_coeff_circle_up, CYLINDER.info_disegno_cyl_up.z);
+  		// viewer-> addCircle(CYLINDER.info_coeff_circle_dw, "circle2");
+  		// vtkSmartPointer<vtkDataSet> data1 = pcl::visualization::create2DCircle (CYLINDER.info_coeff_circle_dw, CYLINDER.info_disegno_cyl_dw.z);
+  	  		//viewer->addLine(point_sim_up, point_sim_dw, "line2" );
   		// pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(cloud, 0, 0, 0);
   		// viewer->addPointCloud<pcl::PointXYZRGBA> (cloud, single_color, "sample cloud");
   		// viewer->addLine(CYLINDER.info_coeff_circle_up.values[0], CYLINDER.info_coeff_circle_dw.values[0], "line" );
@@ -610,8 +633,6 @@ void  phobic_scene::visualization(bool testing, bool circle)
    		viewer->spinOnce (100);
    		boost::this_thread::sleep (boost::posix_time::microseconds (100000));
 	}
-
-
 }
 
 

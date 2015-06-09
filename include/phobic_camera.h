@@ -79,19 +79,18 @@ class phobic_scene
 		 	double tetha;
 		 	double height;
 		 	double radius;
+		 	pcl::ModelCoefficients cylinder_coeff;
 		 	// double Z_max_circle_up;
 		 	// double Z_min_circle_dw;
 		 	// // pcl::PointXYZ point_Cyl_up;
 		 	// // pcl::PointXYZ point_Cyl_dw;
 		 	// pcl::PointXYZ point_HalfHeight;
-		 	// pcl::ModelCoefficients info_coeff_circle_up;
-		 	// pcl::ModelCoefficients info_coeff_circle_dw;
-		 	pcl::PointXYZ info_disegno_cyl_up;
+		  	pcl::PointXYZ info_disegno_cyl_up;
 		 	pcl::PointXYZ info_disegno_cyl_dw;
-		 	//	tf::Transform hand_tr;
+		 		//tf::Transform hand_tr;
 		 	//Eigen::Matrix<double, 4,4 > M_rot; 
-		 	Eigen::Matrix<double, 4,4 > M_rot_inv;
-		 		Eigen::Matrix<double,4,4> Matrix_transform_inv;
+		 	//Eigen::Matrix<double, 4,4 > M_rot_inv;
+		 	Eigen::Matrix<double,4,4> Matrix_transform_inv;
 		 	//Pose.Quaternion M_rot_inv;
 		 	geometry_msgs::Pose Cyl_pose;
 				 	
@@ -116,7 +115,7 @@ class phobic_scene
 		//void visualization();
 		bool fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose);
 		void visualization( bool testing, bool circle );
-
+		
 		// phobic_scene(){}
 		phobic_scene(ros::NodeHandle NodeH, bool test): nodeH(NodeH)
 		{
