@@ -12,11 +12,11 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 	pcl::fromROSMsg (msg, *scene);
 	
 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *scene, *cloud);
-	//visualization(true , false);
+	visualization(true , false);
 	erase_environment(scene);
-	//visualization(true, false);
+	visualization(true, false);
 	erase_table();
-	//visualization(true, false);
+	visualization(true, false);
 	getcluster();
 	visualization(false, false);
   	fitting();
@@ -57,9 +57,6 @@ void phobic_scene::erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  or
 	// The indices_x array indexes all points of cloud_in that have x between 0.2, 1.0
 	Filter_env.filter (*cloud);
 
-	
-	//visualization(cloud_filtered);
-
 	//std::cout<<"finito funzione togli ambiente"<<std::endl;
 
 }
@@ -79,8 +76,7 @@ void phobic_scene::fitting ()
 	
 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *cloud_first);
 	std::cout<<"dimensione punti della prima pc"<<cloud_first->points.size()<<std::endl;
-	// visualization(cloud_first);
-	
+		
 	if (cloud_first->points.empty ())
 	{
 		std::cout<<"empty pointcloud"<<std::endl;
@@ -144,12 +140,7 @@ void phobic_scene::fitting ()
 	 	// take the coefficients and make a transformation matrix from camera_frame to axis_cylinder's_frame
 	 	makeInfoCyl(coefficients_cylinder->values, cloud_cylinder);
 	 
-	 	////hand's info
-		// CYLINDER.hand_tr=CylToHand_Transform (coefficients_cylinder->values);
-
-		// std::cout<< "hand transformation rot "<< *CYLINDER.hand_tr.getRotation()<< std::endl;
-		// std::cout<< "hand transformation rot "<<*CYLINDER.hand_tr.getOrigin()<< std::endl;
-
+	 	
 		// remove the first elements in the list
 		object_cluster.pop_front();
 	
@@ -171,115 +162,14 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 
 	//create a new frame
 
-	// Eigen::Vector3d Ax, Ay, Az;
-	// Az.x() = CYLINDER.Matrix_transform_inv(0,2);
-	// Az.y() = CYLINDER.Matrix_transform_inv(1,2);
-	// Az.z() = CYLINDER.Matrix_transform_inv(2,2);
-	
-
-	// Eigen::Vector3d Ax, Ay, Az;
-	// Az.x()=p_x;
-	// Az.y()=p_y;
-	// Az.z()=p_z;
-	
-	// bool OK=false;
-	// // std::vector<double> Ax, Ay, Az;
-	// // Az.push_back(p_x, p_y, p_z);
-
-	// /*  make a vectors orthogonal 
-	// 	v=(a b c); v*w=0 -> w=(l m n) tc l=-b, m=a, n=0; if a,b!=0 || a,c!=0 !! b,c!=0
-	// */
-
-	// // cerca di farlo meglio, porta tutto in eigen e usa le sue funzioni in più utilizza case swich al posto di questi for
-	// //make a vectors orthogonal 
-	// if((p_x && p_y)!=0) 
-	// {
-	// 	std::cout<<"caso 1"<<std::endl;
-
-	// 	// Ax.push_back(-p_y);
-	// 	// Ax.push_back(p_x)
-	// 	// Ax.push_back(0)
-	// 	OK=true;
-	// 	Ax.x()=-p_y;
-	// 	Ax.y()=p_x;
-	// 	Ax.z()=0;
-
-	// }
-	
-	// if (OK==false && (p_x && p_z)!=0)
-	//  {
-	//  		std::cout<<"caso 2"<<std::endl;
-
-	// // 	Ax.push_back(-p_z);
-	// // 	Ax.push_back(0);
-	// // 	Ax.push_back(p_x);
-	//  	OK=true;
-	// 	Ax.x()=-p_z;
-	// 	Ax.y()=0;
-	// 	Ax.z()=p_x;
-	// }
-
-	// if(OK==false && (p_y && p_z)!=0)
-	// {
-	// 	// Ax.push_back(0);
-	// 	// Ax.push_back(-p_z);
-	// 	// Ax.push_back(p_y);
-	// 	OK=true;
-	// 	Ax.x()=0;
-	// 	Ax.y()=-p_z;
-	// 	Ax.z()=p_y;
-	// 	std::cout<<"caso 3"<<std::endl;
-
-
-	// }
-
-	// /*y axis orthogonal z,x. 
-	// 	vec vector;
-	//     vector.x = (Ay*Bz)-(By*Az);
-	//     vector.y = -(Ax*Bz)+(Bx*Az);
-	//     vector.z = (Ax*By)-(Ay*Bx);
-	//     // double X,Y,Z;
-
-	// 	// X=Ax[1]*Az[2] - Az[1]* Ax[2];
-	// 	// Ay.push_back(X);
-
-	// 	// Y= - Ax[0]* Az[2] + Az[0]* Ax[2];
-	// 	// Ay.push_back(Y);
-
-	// 	// Z= Ax[0]* Az[1] - Ax[1]* Az[0];
-	// 	// Ay.push_back(Z);
-
- // 	*/
-
-	// Ay=Ax.cross(Az);
-	// std::cout<<"prodotto vettore"<<std::endl;
-
-	// /* orientation
-	// 	a*b=mod(a)*mod(b)*cos(tetha) --> temp1= a*b, temp2=mod(a), temp3=mod(b), temp4=(a*b)/mod(a)*mod(b)
-	// */
-
-
-	// double temp1, temp2, temp3, temp4;
 	double PI= 3.14159265;
-
-	// //take plane's normals (for one of normals plane_normals->points.normal_x)
-	// double Plane_normal_x = Plane_coeff[0];
-	// double Plane_normal_y = Plane_coeff[1];
-	// double Plane_normal_z = Plane_coeff[2];
-
-	// temp1= Plane_normal_x * 0 + Plane_normal_y * 0 + Plane_normal_z * 1;
-	// temp2=std::sqrt(std::pow(0,2) + std::pow(0,2) + std::pow(1,2));
-	// temp3=std::sqrt(std::pow(Plane_normal_x,2) + std::pow(Plane_normal_y,2) + std::pow(Plane_normal_z,2));	// temp1= plane_normals->normal_x * Az.x() + plane_normals->normal_y * Az.y() + plane_normals->normal_z * Az.z();
-
-	// temp4= temp1 / (temp2 * temp3); 
 
 	Eigen::Vector3d Plane_normal, u(0,0,1);
 	Plane_normal[0] = Plane_coeff [0];
 	Plane_normal[1] = Plane_coeff[1];
 	Plane_normal[2] = Plane_coeff[2];
 
-	// u << (0,0,1);
-
+	
 	CYLINDER.tetha= acos(Plane_normal.dot(u)) * 180/PI;
 	std::cout<<"thetha: "<< CYLINDER.tetha <<std::endl;
 
@@ -289,23 +179,12 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 		std::cout<<"cambiato segno a theta"<<std::endl;
 		std::cout<<"thetha: "<<CYLINDER.tetha<<std::endl;
 	}
-
-
-	//transformation matrix
-	// Eigen::Matrix<double, 4,4 > M_rot; 
-	// std::cout<<"creato matrice rotazione"<<std::endl;
-	// M_rot.row(0) << Ax.x(), Ay.x(), Az.z(), -x;
-	// M_rot.row(1) << Ax.y(), Ay.y(), Az.y(), -y;
-	// M_rot.row(2) << Ax.z(), Ay.z(), Az.z(), -z;
-	// M_rot.row(3) << 0, 0, 0, 1;
-
+	
 	std::cout<<"finito di creare matrice di rotazione"<<std::endl;
 	
 	//create a new cylinder pointcloud
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CYl_new_transf (new pcl::PointCloud<pcl::PointXYZRGBA>);
-		
-	//CYLINDER.M_rot_inv = M_rot.inverse();
-	// pcl::transformPointCloud(*pc_cyl, *CYl_new_transf, CYLINDER.M_rot_inv);
+	
 	pcl::transformPointCloud(*pc_cyl, *CYl_new_transf, CYLINDER.Matrix_transform_inv);
 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *CYl_new_transf, *cloud);
 
@@ -345,8 +224,6 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	CYLINDER.info_disegno_cyl_dw.z = z_min;
 
 	// std::cout<<"finito creare info cerchio"<<std::endl;
-
-	// std::vector<pcl::PointXYZRGBA> data = CYl_new_transf->points;
 
 	bool ok_transf;
 	ok_transf = fromEigenToPose(CYLINDER.Matrix_transform_inv , CYLINDER.Cyl_pose );
@@ -434,14 +311,15 @@ void  phobic_scene::send_msg()
 
  	for (int i=0; i <= cyl_list.size(); i++)
  	{	
+ 		ROS_INFO("Info cylinder");
  		desperate_housewife::cyl_info msg;
  		msg.id = i;
  		msg.angle = cyl_list[i].tetha;
  		msg.length = cyl_list[i].height;
+ 		msg.radius = cyl_list[i].radius;
  		msg.transformation.position = cyl_list[i].Cyl_pose.position;
  		msg.transformation.orientation = cyl_list[i].Cyl_pose.orientation;  
- 		ROS_INFO("Info cylinder");
-
+ 		
 		phobic_talk = nodeH.advertise<desperate_housewife::cyl_info>(nodeH.resolveName("phobic_info"), 10);	
 		phobic_talk.publish(msg); 
  	}
@@ -483,7 +361,6 @@ void phobic_scene::getcluster()
 
     	}
 	 	
-
     	object_cluster.push_back(*cloud_cluster);
     }
 
@@ -599,31 +476,13 @@ void  phobic_scene::visualization(bool testing, bool circle)
 
   	else
   	{
-  		// pcl::PointXYZ point_sim_up, point_sim_dw; 
-  		// point_sim_up.x = CYLINDER.info_disegno_cyl_up.x + 2 * CYLINDER.radius;
-  		// point_sim_up.y = CYLINDER.info_disegno_cyl_up.y + 2 * CYLINDER.radius;
-  		// point_sim_up.z = CYLINDER.info_disegno_cyl_up.z;
-  		// point_sim_dw.x = CYLINDER.info_disegno_cyl_dw.x + 2 * CYLINDER.radius;
-  		// point_sim_dw.y = CYLINDER.info_disegno_cyl_dw.y + 2 * CYLINDER.radius;
-  		// point_sim_dw.z = CYLINDER.info_disegno_cyl_dw.z;
-
-
   		pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(cloud, 0, 0, 0);
   		viewer->addPointCloud<pcl::PointXYZRGBA> (cloud, single_color, "sample cloud");
   		viewer->addCoordinateSystem(0.1);
 
   		viewer-> addCylinder(CYLINDER.cylinder_coeff, "cyl");
   		viewer->addLine(CYLINDER.info_disegno_cyl_up, CYLINDER.info_disegno_cyl_dw, "line" );
-  		// viewer-> addCircle(CYLINDER.info_coeff_circle_up, "circle1");
-  		// vtkSmartPointer<vtkDataSet> data = pcl::visualization::create2DCircle (CYLINDER.info_coeff_circle_up, CYLINDER.info_disegno_cyl_up.z);
-  		// viewer-> addCircle(CYLINDER.info_coeff_circle_dw, "circle2");
-  		// vtkSmartPointer<vtkDataSet> data1 = pcl::visualization::create2DCircle (CYLINDER.info_coeff_circle_dw, CYLINDER.info_disegno_cyl_dw.z);
-  	  		//viewer->addLine(point_sim_up, point_sim_dw, "line2" );
-  		// pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(cloud, 0, 0, 0);
-  		// viewer->addPointCloud<pcl::PointXYZRGBA> (cloud, single_color, "sample cloud");
-  		// viewer->addLine(CYLINDER.info_coeff_circle_up.values[0], CYLINDER.info_coeff_circle_dw.values[0], "line" );
-  		// viewer->addLine(CYLINDER.info_coeff_circle_up.values[1], CYLINDER.info_coeff_circle_dw.values[1], "line" );
-
+  		
   	}
 
 
@@ -673,9 +532,6 @@ void phobic_scene::erase_table()
 }
 
 
-//tf::Transform CylToHand_Transform (const Eigen::VectorXf coeff)
-//dipende dal raggio del cilindro e dall'altezza. da riguardare in seguito con un euristica di presa
-//tf::Transform
 Eigen::Matrix4d Cyl_Transform (const std::vector<float> coeff)
 {
  	std::cout<<"creo matrice"<<std::endl;
