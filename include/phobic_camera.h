@@ -65,7 +65,7 @@ class phobic_scene
 		
 		struct Mod_cylinder
 		{
-		 	double tetha;
+		 	// double tetha;
 		 	double height;
 		 	double radius;
 		 	pcl::ModelCoefficients cylinder_coeff;

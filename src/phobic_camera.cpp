@@ -162,23 +162,23 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 
 	//create a new frame
 
-	double PI= 3.14159265;
+	// double PI= 3.14159265;
 
-	Eigen::Vector3d Plane_normal, u(0,0,1);
-	Plane_normal[0] = Plane_coeff [0];
-	Plane_normal[1] = Plane_coeff[1];
-	Plane_normal[2] = Plane_coeff[2];
+	// Eigen::Vector3d Plane_normal, u(0,0,1);
+	// Plane_normal[0] = Plane_coeff [0];
+	// Plane_normal[1] = Plane_coeff[1];
+	// Plane_normal[2] = Plane_coeff[2];
 
 	
-	CYLINDER.tetha= acos(Plane_normal.dot(u)) * 180/PI;
-	std::cout<<"thetha: "<< CYLINDER.tetha <<std::endl;
+	// CYLINDER.tetha= acos(Plane_normal.dot(u)) * 180/PI;
+	// std::cout<<"thetha: "<< CYLINDER.tetha <<std::endl;
 
-	if((CYLINDER.tetha > 90) && (CYLINDER.tetha < 180) )
-	{
-		CYLINDER.tetha = 180-CYLINDER.tetha;
-		std::cout<<"cambiato segno a theta"<<std::endl;
-		std::cout<<"thetha: "<<CYLINDER.tetha<<std::endl;
-	}
+	// if((CYLINDER.tetha > 90) && (CYLINDER.tetha < 180) )
+	// {
+	// 	CYLINDER.tetha = 180-CYLINDER.tetha;
+	// 	std::cout<<"cambiato segno a theta"<<std::endl;
+	// 	std::cout<<"thetha: "<<CYLINDER.tetha<<std::endl;
+	// }
 	
 	std::cout<<"finito di creare matrice di rotazione"<<std::endl;
 	
@@ -314,7 +314,7 @@ void  phobic_scene::send_msg()
  		ROS_INFO("Info cylinder");
  		desperate_housewife::cyl_info msg;
  		msg.id = i;
- 		msg.angle = cyl_list[i].tetha;
+ 		// msg.angle = cyl_list[i].tetha;
  		msg.length = cyl_list[i].height;
  		msg.radius = cyl_list[i].radius;
  		msg.transformation.position = cyl_list[i].Cyl_pose.position;
