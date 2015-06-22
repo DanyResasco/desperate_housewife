@@ -186,7 +186,7 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CYl_new_transf (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	
 	pcl::transformPointCloud(*pc_cyl, *CYl_new_transf, CYLINDER.Matrix_transform_inv);
-	pcl::copyPointCloud<pcl::PointXYZRGBA>( *CYl_new_transf, *cloud);
+	// pcl::copyPointCloud<pcl::PointXYZRGBA>( *CYl_new_transf, *cloud);
 
 
 	//find height 
@@ -215,7 +215,27 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	CYLINDER.height= z_max - z_min;
 	std::cout<< "altezza: "<< CYLINDER.height <<std::endl;
 
+	// find a center
+	CYLINDER.center.z = -(z_min +  (CYLINDER.height/2));
+	CYLINDER.center.x = 0;
+	CYLINDER.center.y = 0;
 
+	Eigen::Matrix4d M_center = Eigen::Matrix4d::Identity();
+	//M_center.block<3,3>(0,0) << Matrix3d::Identity();
+	M_center(0,3) = CYLINDER.center.x ;
+	M_center(1,3) = CYLINDER.center.y ;
+	M_center(2,3) = CYLINDER.center.z ;
+	
+	std::cout<<"la matrice nuova è"<<M_center<<std::endl;
+
+
+	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CYl_test (new pcl::PointCloud<pcl::PointXYZRGBA>);
+
+
+	pcl::transformPointCloud(*CYl_new_transf, *CYl_test, M_center);
+	pcl::copyPointCloud<pcl::PointXYZRGBA>( *CYl_test, *cloud);
+	  
+	// for draw a cylinder with 3d viewer
 	CYLINDER.info_disegno_cyl_up.x = CYl_new_transf->points[index_up].x; 
 	CYLINDER.info_disegno_cyl_dw.x = CYl_new_transf->points[index_down].x;
 	CYLINDER.info_disegno_cyl_up.y = CYl_new_transf->points[index_up].y; 
@@ -223,17 +243,21 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	CYLINDER.info_disegno_cyl_up.z = z_max; 
 	CYLINDER.info_disegno_cyl_dw.z = z_min;
 
+	
 	// std::cout<<"finito creare info cerchio"<<std::endl;
+	Eigen::Matrix4d test_M;
+	test_M = M_center*CYLINDER.Matrix_transform_inv;
+	
 
 	bool ok_transf;
-	ok_transf = fromEigenToPose(CYLINDER.Matrix_transform_inv , CYLINDER.Cyl_pose );
+	ok_transf = fromEigenToPose( test_M , CYLINDER.Cyl_pose );
 	
 
   		// pcl::ModelCoefficients cylinder_coeff;
 		CYLINDER.cylinder_coeff.values.resize (7);    // We need 7 values
 		CYLINDER.cylinder_coeff.values[0] = 0;
 		CYLINDER.cylinder_coeff.values[1] = 0;
-		CYLINDER.cylinder_coeff.values[2] = 0;
+		CYLINDER.cylinder_coeff.values[2] = -CYLINDER.height/2;
 		CYLINDER.cylinder_coeff.values[3] = 0;
 		CYLINDER.cylinder_coeff.values[4] = 0;
 		CYLINDER.cylinder_coeff.values[5] = 1;
@@ -333,7 +357,7 @@ void  phobic_scene::send_msg()
 void phobic_scene::getcluster()
 {
 	std::cout<<"sono dentro a getcluster"<<std::endl;
-	bool check=true;
+	// bool check=true;
 
 	// try with euclidean clusters
 	// Creating the KdTree object for the search method of the extraction
