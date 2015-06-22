@@ -12,13 +12,13 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 	pcl::fromROSMsg (msg, *scene);
 	
 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *scene, *cloud);
-	visualization(true , false);
+	//visualization(true , false);
 	erase_environment(scene);
-	visualization(true, false);
+	//visualization(true, false);
 	erase_table();
-	visualization(true, false);
+	//visualization(true, false);
 	getcluster();
-	visualization(false, false);
+	//visualization(false, false);
   	fitting();
   	visualization(true, true);
 	send_msg();
@@ -308,6 +308,7 @@ void  phobic_scene::send_msg()
  	std::cout<<"sono in send_msg"<<std::endl;
  	ros::Publisher phobic_talk;
  	//create a msg
+ 	phobic_talk = nodeH.advertise<desperate_housewife::cyl_info>("phobic_info", 10);	
 
  	for (int i=0; i <= cyl_list.size(); i++)
  	{	
@@ -320,7 +321,8 @@ void  phobic_scene::send_msg()
  		msg.transformation.position = cyl_list[i].Cyl_pose.position;
  		msg.transformation.orientation = cyl_list[i].Cyl_pose.orientation;  
  		
-		phobic_talk = nodeH.advertise<desperate_housewife::cyl_info>(nodeH.resolveName("phobic_info"), 10);	
+		//phobic_talk = nodeH.advertise<desperate_housewife::cyl_info>(nodeH.resolveName("phobic_info"), 10);
+		
 		phobic_talk.publish(msg); 
  	}
 
