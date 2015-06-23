@@ -13,6 +13,7 @@ using Eigen::VectorXf ;
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/extract_clusters.h>
+#include <visualization_msgs/Marker.h>
 
 
 void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
@@ -369,27 +370,60 @@ bool phobic_scene::fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs
 void  phobic_scene::send_msg()
 {
  	std::cout<<"sono in send_msg"<<std::endl;
- 	ros::Publisher phobic_talk;
- 	//create a msg
- 	phobic_talk = nodeH.advertise<desperate_housewife::cyl_info>("phobic_info", 10);	
+ 	// ros::Publisher phobic_talk;
+ 	// //create a msg
+ 	// phobic_talk = nodeH.advertise<visualization_msgs::Marker>("phobic_info", 10);	
+ 	ros::Publisher phobic_talk = nodeH.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
 
- 	for (int i=0; i <= cyl_list.size(); i++)
- 	{	
- 		ROS_INFO("Info cylinder");
- 		desperate_housewife::cyl_info msg;
- 		msg.id = i;
- 		// msg.angle = cyl_list[i].tetha;
- 		msg.length = cyl_list[i].height;
- 		msg.radius = cyl_list[i].radius;
- 		msg.transformation.position = cyl_list[i].Cyl_pose.position;
- 		msg.transformation.orientation = cyl_list[i].Cyl_pose.orientation;  
+ 	// for (int i=0; i <= cyl_list.size(); i++)
+ 	// {	
+ 	// 	ROS_INFO("Info cylinder");
+ 	// 	desperate_housewife::cyl_info msg;
+ 	// 	msg.id = i;
+ 	// 	// msg.angle = cyl_list[i].tetha;
+ 	// 	msg.length = cyl_list[i].height;
+ 	// 	msg.radius = cyl_list[i].radius;
+ 	// 	msg.transformation.position = cyl_list[i].Cyl_pose.position;
+ 	// 	msg.transformation.orientation = cyl_list[i].Cyl_pose.orientation;  
  		
-		//phobic_talk = nodeH.advertise<desperate_housewife::cyl_info>(nodeH.resolveName("phobic_info"), 10);
+		// //phobic_talk = nodeH.advertise<desperate_housewife::cyl_info>(nodeH.resolveName("phobic_info"), 10);
 		
-		phobic_talk.publish(msg); 
- 	}
+		// phobic_talk.publish(msg); 
+ 	// }
 
- 	cyl_list.clear();
+ 	// cyl_list.clear();
+
+ 	//for (int i=0; i <= cyl_list.size(); i++)
+
+		visualization_msgs::Marker marker;
+		marker.header.frame_id = "camera_link";
+		marker.header.stamp = ros::Time();
+		marker.ns = "";
+		marker.id = 0;
+		marker.type = visualization_msgs::Marker::CYLINDER;
+		marker.action = visualization_msgs::Marker::ADD;
+		marker.pose.position.x = cyl_list[0].Cyl_pose.position.x;
+		marker.pose.position.y = cyl_list[0].Cyl_pose.position.y;
+		marker.pose.position.z = cyl_list[0].Cyl_pose.position.z;
+		marker.pose.orientation.x = cyl_list[0].Cyl_pose.orientation.x;
+		marker.pose.orientation.y = cyl_list[0].Cyl_pose.orientation.y;
+		marker.pose.orientation.z = cyl_list[0].Cyl_pose.orientation.z;
+		marker.pose.orientation.w = cyl_list[0].Cyl_pose.orientation.w;
+		marker.scale.x = cyl_list[0].radius;
+		marker.scale.y = cyl_list[0].radius;
+		marker.scale.z = cyl_list[0].height;
+		marker.color.a = 0.0; // Don't forget to set the alpha!
+		marker.color.r = 0.0;
+		marker.color.g = 0.0;
+		marker.color.b = 1.0;
+
+		phobic_talk.publish(marker); 
+
+
+
+
+
+
 }
 
 
