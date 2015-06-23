@@ -2,7 +2,7 @@
 
 int main(int argc, char** argv)
 {
-	std::cout<<"Sono nel main"<<std::endl<<std::flush;
+	//std::cout<<"Sono nel main"<<std::endl<<std::flush;
 	ros::init(argc, argv, "Phobic_whife_scene");
 
 	ros::Subscriber reader;
@@ -13,7 +13,7 @@ int main(int argc, char** argv)
 	// std::cout<<"Sono nel main dopo aver creato ogetto classe"<<std::endl;
 
 	reader = nodeH.subscribe(nodeH.resolveName("camera/depth_registered/points"), 10, &phobic_scene::pointcloudCallback, &phobic_scene_local);
-	std::cout<<"Sono nel main dopo aver letto"<<std::endl;
+	//std::cout<<"Sono nel main dopo aver letto"<<std::endl;
 
 	
 	ros::spin();

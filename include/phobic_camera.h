@@ -1,6 +1,7 @@
 #ifndef dany_bicchi_test_classe_h
 #define dany_bicchi_test_classe_h
 
+//ros
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud_conversion.h>
@@ -9,7 +10,7 @@
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Quaternion.h>
 #include <desperate_housewife/cyl_info.h>
-
+#include <visualization_msgs/Marker.h>
 
 //PCL
 #include <pcl/common/common_headers.h>
@@ -37,16 +38,21 @@
 #include <pcl/common/norms.h>
 #include <pcl/common/transforms.h>
 #include <pcl/point_cloud.h>
-#include <Eigen/LU>
+#include <pcl/impl/point_types.hpp>
+#include <pcl/kdtree/kdtree.h>
+
 
 #include <boost/thread/thread.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <iostream>
 #include <utility>
 #include <list>
-#include <pcl/impl/point_types.hpp>
-#include <Eigen/Dense>
 
+//Eigen
+#include <Eigen/Dense>
+#include <Eigen/LU>
+
+//Tf
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
@@ -62,6 +68,7 @@ class phobic_scene
 		std::vector<float> Plane_coeff;
 		std::list<pcl::PointCloud<pcl::PointXYZRGBA> > object_cluster;
 		bool testing;
+		ros::Publisher phobic_talk;
 		
 		struct Mod_cylinder
 		{
@@ -97,6 +104,7 @@ class phobic_scene
 			
 			pcl::PointCloud<pcl::PointXYZRGBA> cloud2;
 			cloud=cloud2.makeShared();
+			phobic_talk = nodeH.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
 						
 		}
 

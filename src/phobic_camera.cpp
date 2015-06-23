@@ -2,65 +2,39 @@
 #include "phobic_camera.h"
 using Eigen::VectorXf ;
 
-#include <pcl/ModelCoefficients.h>
-#include <pcl/point_types.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/filters/extract_indices.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/kdtree/kdtree.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/segmentation/extract_clusters.h>
-#include <visualization_msgs/Marker.h>
-
 
 void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 {
 
-
-
-	std::cout<<"sono nella callback"<<std::endl;
+	//std::cout<<"sono nella callback"<<std::endl;
 	// create a new pointcloud from msg
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr scene (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	pcl::fromROSMsg (msg, *scene);
 
-
 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *scene, *cloud);
 
-	visualization(true , false);
+	//visualization(true , false);
 	ROS_INFO("Strating timer");
 	ros::Time begin = ros::Time::now();
 	erase_environment(scene);
 	ros::Duration left = ros::Time::now() - begin;
 	ROS_INFO("Time to Erase environment %lf", left.toSec());
-	visualization(true, false);
+	 // visualization(true, false);
 	begin = ros::Time::now();
 	erase_table();
 	left = ros::Time::now() - begin;
 	ROS_INFO("Time to Erase table environment %lf", left.toSec());
-	visualization(true, false);
+	//visualization(true, false);
 	begin = ros::Time::now();
 	getcluster();
 	left = ros::Time::now() - begin;
 	ROS_INFO("Time to get clusters environment %lf", left.toSec());
-	visualization(false, false);
+	//visualization(false, false);
 	begin = ros::Time::now();
 	fitting();
 	left = ros::Time::now() - begin;
 	ROS_INFO("Time to fitting environment %lf", left.toSec());
 
-	//visualization(true , false);
-	erase_environment(scene);
-	//visualization(true, false);
-	erase_table();
-	//visualization(true, false);
-	getcluster();
-	//visualization(false, false);
-  	fitting();
-
-  	visualization(true, true);
 	send_msg();
 
 }
@@ -69,7 +43,7 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 
 void phobic_scene::erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  original_pc)
 {
-	std::cout<<"funzione togli ambiente"<<std::endl;
+	//std::cout<<"funzione togli ambiente"<<std::endl;
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_temp (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	
@@ -104,7 +78,7 @@ void phobic_scene::erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  or
 
 void phobic_scene::fitting ()
 {	
-	std::cout<<"sono nel fitting"<<std::endl;
+	//std::cout<<"sono nel fitting"<<std::endl;
 	
 	pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
 	pcl::search::KdTree< pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree< pcl::PointXYZRGBA> ());
@@ -115,7 +89,7 @@ void phobic_scene::fitting ()
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_first (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	
 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *cloud_first);
-	std::cout<<"dimensione punti della prima pc"<<cloud_first->points.size()<<std::endl;
+	//std::cout<<"dimensione punti della prima pc"<<cloud_first->points.size()<<std::endl;
 		
 	if (cloud_first->points.empty ())
 	{
@@ -151,7 +125,7 @@ void phobic_scene::fitting ()
 
 	//// Obtain the cylinder inliers and coefficients
     seg.segment (*inliers_cylinder, *coefficients_cylinder);
-	std::cout << "Cylinder coefficients: " << *coefficients_cylinder << std::endl;
+	//std::cout << "Cylinder coefficients: " << *coefficients_cylinder << std::endl;
     std::cout << "Number of inliers: " << inliers_cylinder->indices.size() << std::endl;
 	
 	if (inliers_cylinder->indices.size() == 0)
@@ -194,33 +168,13 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	// double x = coeff[0], y = coeff[1], z = coeff[2];	// cordinate di un punto sull asse
 	// double p_x = coeff[3], p_y = coeff[4], p_z = coeff[5];	// componenti dell asse realtive alla telecamera
 	// double r = coeff[6];
-
+	//create a new frame
 	CYLINDER.radius = coeff[6];
 	Eigen::Matrix<double,4,4> Matrix_transform;
 	Matrix_transform = Cyl_Transform( coeff);
 	CYLINDER.Matrix_transform_inv = Matrix_transform.inverse();
-
-	//create a new frame
-
-	// double PI= 3.14159265;
-
-	// Eigen::Vector3d Plane_normal, u(0,0,1);
-	// Plane_normal[0] = Plane_coeff [0];
-	// Plane_normal[1] = Plane_coeff[1];
-	// Plane_normal[2] = Plane_coeff[2];
-
 	
-	// CYLINDER.tetha= acos(Plane_normal.dot(u)) * 180/PI;
-	// std::cout<<"thetha: "<< CYLINDER.tetha <<std::endl;
-
-	// if((CYLINDER.tetha > 90) && (CYLINDER.tetha < 180) )
-	// {
-	// 	CYLINDER.tetha = 180-CYLINDER.tetha;
-	// 	std::cout<<"cambiato segno a theta"<<std::endl;
-	// 	std::cout<<"thetha: "<<CYLINDER.tetha<<std::endl;
-	// }
-	
-	std::cout<<"finito di creare matrice di rotazione"<<std::endl;
+	//	std::cout<<"finito di creare matrice di rotazione"<<std::endl;
 	
 	//create a new cylinder pointcloud
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CYl_new_transf (new pcl::PointCloud<pcl::PointXYZRGBA>);
@@ -253,7 +207,7 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 
 
 	CYLINDER.height= z_max - z_min;
-	std::cout<< "altezza: "<< CYLINDER.height <<std::endl;
+	//std::cout<< "altezza: "<< CYLINDER.height <<std::endl;
 
 	// find a center
 	CYLINDER.center.z = -(z_min +  (CYLINDER.height/2));
@@ -261,93 +215,48 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	CYLINDER.center.y = 0;
 
 	Eigen::Matrix4d M_center = Eigen::Matrix4d::Identity();
-	//M_center.block<3,3>(0,0) << Matrix3d::Identity();
 	M_center(0,3) = CYLINDER.center.x ;
 	M_center(1,3) = CYLINDER.center.y ;
 	M_center(2,3) = CYLINDER.center.z ;
 	
-	std::cout<<"la matrice nuova è"<<M_center<<std::endl;
-
-
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CYl_test (new pcl::PointCloud<pcl::PointXYZRGBA>);
-
 
 	pcl::transformPointCloud(*CYl_new_transf, *CYl_test, M_center);
 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *CYl_test, *cloud);
 	  
 	// for draw a cylinder with 3d viewer
-	CYLINDER.info_disegno_cyl_up.x = CYl_new_transf->points[index_up].x; 
-	CYLINDER.info_disegno_cyl_dw.x = CYl_new_transf->points[index_down].x;
-	CYLINDER.info_disegno_cyl_up.y = CYl_new_transf->points[index_up].y; 
-	CYLINDER.info_disegno_cyl_dw.y = CYl_new_transf->points[index_down].y;
-	CYLINDER.info_disegno_cyl_up.z = z_max; 
-	CYLINDER.info_disegno_cyl_dw.z = z_min;
-
+	// CYLINDER.info_disegno_cyl_up.x = CYl_new_transf->points[index_up].x; 
+	// CYLINDER.info_disegno_cyl_dw.x = CYl_new_transf->points[index_down].x;
+	// CYLINDER.info_disegno_cyl_up.y = CYl_new_transf->points[index_up].y; 
+	// CYLINDER.info_disegno_cyl_dw.y = CYl_new_transf->points[index_down].y;
+	// CYLINDER.info_disegno_cyl_up.z = z_max; 
+	// CYLINDER.info_disegno_cyl_dw.z = z_min;
 	
-	// std::cout<<"finito creare info cerchio"<<std::endl;
 	Eigen::Matrix4d test_M;
 	test_M = M_center*CYLINDER.Matrix_transform_inv;
-	
 
 	bool ok_transf;
 	ok_transf = fromEigenToPose( test_M , CYLINDER.Cyl_pose );
 	
 
   		// pcl::ModelCoefficients cylinder_coeff;
-		CYLINDER.cylinder_coeff.values.resize (7);    // We need 7 values
-		CYLINDER.cylinder_coeff.values[0] = 0;
-		CYLINDER.cylinder_coeff.values[1] = 0;
-		CYLINDER.cylinder_coeff.values[2] = -CYLINDER.height/2;
-		CYLINDER.cylinder_coeff.values[3] = 0;
-		CYLINDER.cylinder_coeff.values[4] = 0;
-		CYLINDER.cylinder_coeff.values[5] = 1;
-		CYLINDER.cylinder_coeff.values[6] = CYLINDER.radius;
+	CYLINDER.cylinder_coeff.values.resize (7);    // We need 7 values
+	CYLINDER.cylinder_coeff.values[0] = 0;
+	CYLINDER.cylinder_coeff.values[1] = 0;
+	CYLINDER.cylinder_coeff.values[2] = -CYLINDER.height/2;
+	CYLINDER.cylinder_coeff.values[3] = 0;
+	CYLINDER.cylinder_coeff.values[4] = 0;
+	CYLINDER.cylinder_coeff.values[5] = 1;
+	CYLINDER.cylinder_coeff.values[6] = CYLINDER.radius;
 
-
-
-		cyl_list.push_back(CYLINDER);
-
-	// //new coefficients with the new cylinder's frame (per me è inutile)
-
-	// Eigen::Matrix<double, 4,1> Point_new_cyl;
-	// Eigen::Matrix<double, 4,1> temp_old_cyl;
-	// Eigen::Matrix<double, 4,1> Vers_new_cyl;
-
-	// temp_old_cyl.col(0) << coeff[0], coeff[1], coeff[2], 0;
-		
-	// Point_new_cyl=(CYLINDER.M_rot_inv * temp_old_cyl);
-	// //std::cout<<"finito prima molt"<<std::endl;
-
-	// temp_old_cyl.col(0) << coeff[3], coeff[4], coeff[5], 0;
-
-	// Vers_new_cyl=(CYLINDER.M_rot_inv * temp_old_cyl);
-	// //std::cout<<"finito sec molt"<<std::endl;
-
-	// std::vector<float> v;
-
-	// v.push_back(Point_new_cyl(0,0));
-	// v.push_back(Point_new_cyl(1,0));
-	// v.push_back(Point_new_cyl(2,0));
-	// v.push_back(Vers_new_cyl(0,0));
-	// v.push_back(Vers_new_cyl(1,0));
-	// v.push_back(Vers_new_cyl(2,0));
-	// v.push_back(r);	//same radius
-	// std::cout<<"finito creazione vettore "<<std::endl;
-
-	// for(int i=0; i<=v.size(); i++)
-	// {
-	// 	std::cout<<"dati vettore coef new: "<< v[i] <<std::endl;
-
-	// }
-
-	// return v;
+	cyl_list.push_back(CYLINDER);
 
 }
 
 
 bool phobic_scene::fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose)
 {
-	std::cout<<"dentro from"<<std::endl;
+	//::cout<<"dentro from"<<std::endl;
 	Eigen::Matrix<double,3,3> Tmatrix;
 	Tmatrix = tranfs_matrix.block<3,3>(0,0) ;
 	Eigen::Quaterniond cyl_quat_eigen(Tmatrix);
@@ -369,74 +278,41 @@ bool phobic_scene::fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs
 
 void  phobic_scene::send_msg()
 {
- 	std::cout<<"sono in send_msg"<<std::endl;
- 	// ros::Publisher phobic_talk;
- 	// //create a msg
- 	// phobic_talk = nodeH.advertise<visualization_msgs::Marker>("phobic_info", 10);	
- 	ros::Publisher phobic_talk = nodeH.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
+ 	ROS_INFO("Info cylinder");
+ 
+	visualization_msgs::Marker marker;
+	marker.header.frame_id = "camera_link";
+	marker.header.stamp = ros::Time();
+	marker.ns = "";
+	marker.id = 0;
+	marker.type = visualization_msgs::Marker::CYLINDER;
+	marker.action = visualization_msgs::Marker::ADD;
+	marker.pose.position.x = cyl_list[0].Cyl_pose.position.x;
+	marker.pose.position.y = cyl_list[0].Cyl_pose.position.y;
+	marker.pose.position.z = cyl_list[0].Cyl_pose.position.z;
+	marker.pose.orientation.x = cyl_list[0].Cyl_pose.orientation.x;
+	marker.pose.orientation.y = cyl_list[0].Cyl_pose.orientation.y;
+	marker.pose.orientation.z = cyl_list[0].Cyl_pose.orientation.z;
+	marker.pose.orientation.w = cyl_list[0].Cyl_pose.orientation.w;
+	marker.scale.x = cyl_list[0].radius;
+	marker.scale.y = cyl_list[0].radius;
+	marker.scale.z = cyl_list[0].height;
+	marker.color.a = 0.0; // Don't forget to set the alpha!
+	marker.color.r = 0.0;
+	marker.color.g = 0.0;
+	marker.color.b = 1.0;
 
- 	// for (int i=0; i <= cyl_list.size(); i++)
- 	// {	
- 	// 	ROS_INFO("Info cylinder");
- 	// 	desperate_housewife::cyl_info msg;
- 	// 	msg.id = i;
- 	// 	// msg.angle = cyl_list[i].tetha;
- 	// 	msg.length = cyl_list[i].height;
- 	// 	msg.radius = cyl_list[i].radius;
- 	// 	msg.transformation.position = cyl_list[i].Cyl_pose.position;
- 	// 	msg.transformation.orientation = cyl_list[i].Cyl_pose.orientation;  
- 		
-		// //phobic_talk = nodeH.advertise<desperate_housewife::cyl_info>(nodeH.resolveName("phobic_info"), 10);
-		
-		// phobic_talk.publish(msg); 
- 	// }
-
- 	// cyl_list.clear();
-
- 	//for (int i=0; i <= cyl_list.size(); i++)
-
-		visualization_msgs::Marker marker;
-		marker.header.frame_id = "camera_link";
-		marker.header.stamp = ros::Time();
-		marker.ns = "";
-		marker.id = 0;
-		marker.type = visualization_msgs::Marker::CYLINDER;
-		marker.action = visualization_msgs::Marker::ADD;
-		marker.pose.position.x = cyl_list[0].Cyl_pose.position.x;
-		marker.pose.position.y = cyl_list[0].Cyl_pose.position.y;
-		marker.pose.position.z = cyl_list[0].Cyl_pose.position.z;
-		marker.pose.orientation.x = cyl_list[0].Cyl_pose.orientation.x;
-		marker.pose.orientation.y = cyl_list[0].Cyl_pose.orientation.y;
-		marker.pose.orientation.z = cyl_list[0].Cyl_pose.orientation.z;
-		marker.pose.orientation.w = cyl_list[0].Cyl_pose.orientation.w;
-		marker.scale.x = cyl_list[0].radius;
-		marker.scale.y = cyl_list[0].radius;
-		marker.scale.z = cyl_list[0].height;
-		marker.color.a = 0.0; // Don't forget to set the alpha!
-		marker.color.r = 0.0;
-		marker.color.g = 0.0;
-		marker.color.b = 1.0;
-
-		phobic_talk.publish(marker); 
-
-
-
-
-
+	phobic_talk.publish(marker); 
+ 	cyl_list.clear();
 
 }
 
 
 void phobic_scene::getcluster()
 {
-	std::cout<<"sono dentro a getcluster"<<std::endl;
-	// bool check=true;
-
 	// try with euclidean clusters
 	// Creating the KdTree object for the search method of the extraction
   	pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBA>);
-
-
 
 	ROS_INFO("PointCloud before filtering has: %d data points.", cloud->points.size ());
 
@@ -448,18 +324,16 @@ void phobic_scene::getcluster()
 	vg.filter (*cloud_filtered);
 	ROS_INFO("PointCloud after filtering has: %d data points.", cloud_filtered->points.size ());
 
+    tree->setInputCloud (cloud_filtered);
 
-
-        tree->setInputCloud (cloud_filtered);
-
-        ROS_INFO("PointCloud in getcluster() has: %d data points.", cloud_filtered->points.size ());
+    ROS_INFO("PointCloud in getcluster() has: %d data points.", cloud_filtered->points.size ());
   	std::vector<pcl::PointIndices> cluster_indices;
   	pcl::EuclideanClusterExtraction<pcl::PointXYZRGBA> ec;
   	ec.setClusterTolerance (0.07); // 5cm
   	ec.setMinClusterSize (100);
-        ec.setMaxClusterSize (cloud_filtered->points.size());
+    ec.setMaxClusterSize (cloud_filtered->points.size());
   	ec.setSearchMethod (tree);
-        ec.setInputCloud (cloud_filtered);
+    ec.setInputCloud (cloud_filtered);
   	ec.extract (cluster_indices);
 
   	
@@ -469,7 +343,7 @@ void phobic_scene::getcluster()
   		
   		for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
       	{	
-                cloud_cluster->points.push_back (cloud_filtered->points[*pit]);
+            cloud_cluster->points.push_back (cloud_filtered->points[*pit]);
       		cloud_cluster->width = cloud_cluster->points.size ();
     		cloud_cluster->height = 1;
     		cloud_cluster->is_dense = true;
@@ -479,87 +353,75 @@ void phobic_scene::getcluster()
     	object_cluster.push_back(*cloud_cluster);
     }
 
-    ////for visualizer the clusters
-	// pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_first (new pcl::PointCloud<pcl::PointXYZRGBA>);
-	// pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *cloud_first);
-
-	// if(cloud_first->points.size()==0)
-	// {
-	// 	std::cout<<"pc vuota "<<std::endl;
-
-	// }
-
- //    visualization(cloud_first);
- //    std::cout<<"sono dentro get cluster e ho finito di creare i cluster"<<std::endl;
- //    object_cluster.pop_front();
-
-	// if (start!=true)
-	// {
-	// 	check=check_change_pc();
-
-	// }
-    //test with supervoxel cluster
-		//create a cluster if only the point cloud is change
-	// if (check == true)
-	// {
-	// 	// date
-		// float color_importance=0.4f;
-		// float spatial_importance=0.2f;
-		// float normal_importance=0.4f;
-		// float seed_resolution = 0.20f;
-		// float voxel_resolution = 0.01f;
-
-		// pcl::SupervoxelClustering<pcl::PointXYZRGBA> super (voxel_resolution, seed_resolution);
-		// std::map <uint32_t, pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr>  supervoxel_clusters;
-	  
-	 //   	super.setInputCloud (cloud);
-		// super.setColorImportance (color_importance);
-	 //  	super.setSpatialImportance (spatial_importance);
-	 //  	super.setNormalImportance (normal_importance);
-		// super.extract (supervoxel_clusters);
-
-		
-		// std::multimap<uint32_t, uint32_t> supervoxel_adjacency;
-	 //  	super.getSupervoxelAdjacency (supervoxel_adjacency);
-	 //  	//To make a graph of the supervoxel adjacency, we need to iterate through the supervoxel adjacency multimap
-	 //  	std::multimap<uint32_t,uint32_t>::iterator label_itr = supervoxel_adjacency.begin ();
-	  	
-	 //  	for ( ; label_itr != supervoxel_adjacency.end (); )
-	 //  	{
-	 //  		 //First get the label
-	 //   		uint32_t supervoxel_label = label_itr->first;
-	 //   		//Now get the supervoxel corresponding to the label
-	 //   		pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr supervoxel = supervoxel_clusters.at (supervoxel_label);
-
-	 //    	//Now we need to iterate through the adjacent supervoxels and make a point cloud of them
-	 //    	pcl::PointCloud<pcl::PointXYZRGBA> adjacent_supervoxel_centers;
-		// 	//std::multimap<uint32_t,uint32_t>::iterator adjacent_itr = supervoxel_adjacency.equal_range (supervoxel_label).first;
-	 //    	std::map <uint32_t, pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr> ::iterator label_itr=supervoxel_clusters.begin();
-	    
-		// for ( ; label_itr!=supervoxel_clusters.end();)
-	 //    	{
-	 //    		 //first get the label
-  //   			uint32_t supervoxel_label= label_itr->first;
-  //   			//now get hte supervoxel corresponding to the label
-  //   			pcl::Supervoxel<pcl::PointXYZRGBA>::Ptr supervoxel=supervoxel_clusters.at(supervoxel_label);
-  //   			//adds supervoxel in the object class list
-  //   			object_cluster.push_back(*supervoxel->voxels_);
-  //   			//move iterator forward to next label
-  //   			label_itr=supervoxel_clusters.upper_bound(supervoxel_label);
-  //   		}
-  //   	}
-
-	 // 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_first (new pcl::PointCloud<pcl::PointXYZRGBA>);
-		// pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *cloud_first);
-  // 		visualization(cloud_first);
-	 //   	std::cout<<"finito di creare cluster"<<std::endl;
-	 //   	std::cout<<"numero di cluster"<<object_cluster.size()<<std::endl;
-
-	   	//start=false;
-	   
-	// }
+    
 }
 
+
+void phobic_scene::erase_table()
+{
+	// Create the segmentation object for the planar model and set all the parameters
+  	pcl::SACSegmentation<pcl::PointXYZRGBA> seg;
+  	pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+  	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+  	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_plane (new pcl::PointCloud<pcl::PointXYZRGBA> ());
+ 
+  	seg.setOptimizeCoefficients (true);
+  	seg.setModelType (pcl::SACMODEL_PLANE);
+ 	seg.setMethodType (pcl::SAC_RANSAC);
+ 	seg.setMaxIterations (100);
+ 	seg.setDistanceThreshold (0.02);
+
+  	// Segment the largest planar component from the remaining cloud
+    seg.setInputCloud (cloud);
+    seg.segment (*inliers, *coefficients);
+    
+    if (inliers->indices.size () == 0)
+    {
+      std::cout << "Could not estimate a planar model for the given dataset." << std::endl;
+    
+    }
+
+    // Extract the planar inliers from the input cloud
+    pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
+    extract.setInputCloud (cloud);
+    extract.setIndices (inliers);
+    extract.setNegative (true);
+
+    // // Get the points associated without the planar surface
+    extract.filter (*cloud);
+    Plane_coeff=coefficients->values;
+
+}
+
+
+Eigen::Matrix4d Cyl_Transform (const std::vector<float> coeff)
+{
+ 	//std::cout<<"creo matrice"<<std::endl;
+	double x = coeff[0], y = coeff[1], z = coeff[2];
+	double p_x = coeff[3], p_y = coeff[4], p_z = coeff[5];
+	double r = coeff[6]; 
+
+	Eigen::Vector3d position(x,y,z); //posizione a caso sull'asse del cilindro. 
+	// w is the axis of the cylinder which will be aligned with the z reference frame of the cylinder
+	Eigen::Vector3d w(p_x, p_y, p_z);
+	Eigen::Vector3d u(1, 0, 0);	//allineo asse x uguale a quella della kinect
+
+	Eigen::Vector3d v = w.cross(u).normalized();
+	
+	Eigen::Matrix3d rotation;
+	rotation.col(0) = u;  // x
+	rotation.col(1) = v;  // y
+	rotation.col(2) = w;  // z
+
+	// Compose the transformation and return it
+	Eigen::Matrix<double,4,4> tranfs_matrix;
+	tranfs_matrix.row(0) << rotation.row(0), position[0];
+	tranfs_matrix.row(1) << rotation.row(1), position[1];
+	tranfs_matrix.row(2) << rotation.row(2), position[2]; 
+	tranfs_matrix.row(3) << 0,0,0, 1;
+
+	return tranfs_matrix;
+}
 
 void  phobic_scene::visualization(bool testing, bool circle)
 {
@@ -608,114 +470,3 @@ void  phobic_scene::visualization(bool testing, bool circle)
    		boost::this_thread::sleep (boost::posix_time::microseconds (100000));
 	}
 }
-
-
-void phobic_scene::erase_table()
-{
-	// Create the segmentation object for the planar model and set all the parameters
-  	pcl::SACSegmentation<pcl::PointXYZRGBA> seg;
-  	pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
-  	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
-  	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_plane (new pcl::PointCloud<pcl::PointXYZRGBA> ());
- 
-  	seg.setOptimizeCoefficients (true);
-  	seg.setModelType (pcl::SACMODEL_PLANE);
- 	seg.setMethodType (pcl::SAC_RANSAC);
- 	seg.setMaxIterations (100);
- 	seg.setDistanceThreshold (0.02);
-
-  	// Segment the largest planar component from the remaining cloud
-    seg.setInputCloud (cloud);
-    seg.segment (*inliers, *coefficients);
-    
-    if (inliers->indices.size () == 0)
-    {
-      std::cout << "Could not estimate a planar model for the given dataset." << std::endl;
-    
-    }
-
-    // Extract the planar inliers from the input cloud
-    pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
-    extract.setInputCloud (cloud);
-    extract.setIndices (inliers);
-    extract.setNegative (true);
-
-    // // Get the points associated without the planar surface
-    extract.filter (*cloud);
-    Plane_coeff=coefficients->values;
-
-}
-
-
-Eigen::Matrix4d Cyl_Transform (const std::vector<float> coeff)
-{
- 	std::cout<<"creo matrice"<<std::endl;
-	  double x = coeff[0], y = coeff[1], z = coeff[2];
-	  double p_x = coeff[3], p_y = coeff[4], p_z = coeff[5];
-	  double r = coeff[6]; 
-
-	  for(int i=0; i<7; i++ )
-	  {
-
-	  	std::cout<<"coefficienti: "<<coeff[i]<<std::endl;
-	  }
-
-
-
-	Eigen::Vector3d position(x,y,z); //posizione a caso sull'asse del cilindro. 
-		  // w is the axis of the cylinder which will be aligned with the z reference frame of the cylinder
-	Eigen::Vector3d w(p_x, p_y, p_z);
-	Eigen::Vector3d u(1, 0, 0);	//allineo asse x uguale a quella della kinect
-
-	std::cout<<"trovato w e u"<<std::endl;
-	Eigen::Vector3d v = w.cross(u).normalized();
-	//  u = v.cross(w).normalized();
-
-	std::cout<<"ho normalizzato"<<std::endl;  
-	Eigen::Matrix3d rotation;
-	rotation.col(0) = u;  // x
-	rotation.col(1) = v;  // y
-	rotation.col(2) = w;  // z
-
-	std::cout<<"ho creato rotazione"<<std::endl;
-	//rotation = rotation.transpose(); //colum
-
-	// for(int i=0; i<=3; i++)
-	// {
-	// 	std::cout<<"vettore posizione: "<<position[i]<<std::endl;
-
-	// }
-
-	  // Compose the transformation and return it
-	Eigen::Matrix<double,4,4> tranfs_matrix;
-	tranfs_matrix.row(0) << rotation.row(0), position[0];
-	tranfs_matrix.row(1) << rotation.row(1), position[1];
-	tranfs_matrix.row(2) << rotation.row(2), position[2]; 
-	tranfs_matrix.row(3) << 0,0,0, 1;
-
-	return tranfs_matrix;
-
-
-
-	  // The position is directly obtained from the coefficients, and will be corrected later
-// 	  tf::Vector3 position(x,y,z); //posizione a caso sull'asse del cilindro. meglio se prendo punto a z max o metà altezza
-	  
-// 	  // w is the axis of the cylinder which will be aligned with the z reference frame of the cylinder
-// 	  tf::Vector3 w(p_x, p_y, p_z);
-// 	  tf::Vector3 u(1, 0, 0);	//allineo asse x uguale a quella della kinect
-// 	  tf::Vector3 v = w.cross(u).normalized();
-// 	  u = v.cross(w).normalized();
-// 	  tf::Matrix3x3 rotation;
-// 	  rotation[0] = u;  // x
-// 	  rotation[1] = v;  // y
-// 	  rotation[2] = w;  // z
-// 	  rotation = rotation.transpose(); //colum
-
-// 	  // Compose the transformation and return it
-// 	  return tf::Transform(rotation, position);
-
-
-
-
-
- }
