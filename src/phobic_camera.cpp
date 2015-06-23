@@ -27,7 +27,7 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 
 
 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *scene, *cloud);
-<<<<<<< HEAD
+
 	visualization(true , false);
 	ROS_INFO("Strating timer");
 	ros::Time begin = ros::Time::now();
@@ -49,7 +49,7 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 	fitting();
 	left = ros::Time::now() - begin;
 	ROS_INFO("Time to fitting environment %lf", left.toSec());
-=======
+
 	//visualization(true , false);
 	erase_environment(scene);
 	//visualization(true, false);
@@ -58,7 +58,7 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 	getcluster();
 	//visualization(false, false);
   	fitting();
->>>>>>> 18c95b312d4090c90c544de1742124dad0dec4d1
+
   	visualization(true, true);
 	send_msg();
 
