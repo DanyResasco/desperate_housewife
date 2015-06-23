@@ -2,24 +2,52 @@
 #include "phobic_camera.h"
 using Eigen::VectorXf ;
 
+#include <pcl/ModelCoefficients.h>
+#include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/kdtree/kdtree.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/segmentation/extract_clusters.h>
 
 
 void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 {
+
+
+
 	std::cout<<"sono nella callback"<<std::endl;
 	// create a new pointcloud from msg
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr scene (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	pcl::fromROSMsg (msg, *scene);
-	
+
+
 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *scene, *cloud);
 	visualization(true , false);
+	ROS_INFO("Strating timer");
+	ros::Time begin = ros::Time::now();
 	erase_environment(scene);
+	ros::Duration left = ros::Time::now() - begin;
+	ROS_INFO("Time to Erase environment %lf", left.toSec());
 	visualization(true, false);
+	begin = ros::Time::now();
 	erase_table();
+	left = ros::Time::now() - begin;
+	ROS_INFO("Time to Erase table environment %lf", left.toSec());
 	visualization(true, false);
+	begin = ros::Time::now();
 	getcluster();
+	left = ros::Time::now() - begin;
+	ROS_INFO("Time to get clusters environment %lf", left.toSec());
 	visualization(false, false);
-  	fitting();
+	begin = ros::Time::now();
+	fitting();
+	left = ros::Time::now() - begin;
+	ROS_INFO("Time to fitting environment %lf", left.toSec());
   	visualization(true, true);
 	send_msg();
 
@@ -336,15 +364,31 @@ void phobic_scene::getcluster()
 	// try with euclidean clusters
 	// Creating the KdTree object for the search method of the extraction
   	pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBA>);
-  	tree->setInputCloud (cloud);
 
+
+
+	ROS_INFO("PointCloud before filtering has: %d data points.", cloud->points.size ());
+
+	// Create the filtering object: downsample the dataset using a leaf size of 1cm
+	pcl::VoxelGrid<pcl::PointXYZRGBA> vg;
+	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>);
+	vg.setInputCloud (cloud);
+	vg.setLeafSize (0.01f, 0.01f, 0.01f);
+	vg.filter (*cloud_filtered);
+	ROS_INFO("PointCloud after filtering has: %d data points.", cloud_filtered->points.size ());
+
+
+
+        tree->setInputCloud (cloud_filtered);
+
+        ROS_INFO("PointCloud in getcluster() has: %d data points.", cloud_filtered->points.size ());
   	std::vector<pcl::PointIndices> cluster_indices;
   	pcl::EuclideanClusterExtraction<pcl::PointXYZRGBA> ec;
   	ec.setClusterTolerance (0.07); // 5cm
   	ec.setMinClusterSize (100);
-  	ec.setMaxClusterSize (cloud->points.size());
+        ec.setMaxClusterSize (cloud_filtered->points.size());
   	ec.setSearchMethod (tree);
-  	ec.setInputCloud (cloud);
+        ec.setInputCloud (cloud_filtered);
   	ec.extract (cluster_indices);
 
   	
@@ -354,7 +398,7 @@ void phobic_scene::getcluster()
   		
   		for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
       	{	
-      		cloud_cluster->points.push_back (cloud->points[*pit]); 
+                cloud_cluster->points.push_back (cloud_filtered->points[*pit]);
       		cloud_cluster->width = cloud_cluster->points.size ();
     		cloud_cluster->height = 1;
     		cloud_cluster->is_dense = true;
