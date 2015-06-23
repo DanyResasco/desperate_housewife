@@ -71,6 +71,7 @@ class phobic_scene
 		 	pcl::ModelCoefficients cylinder_coeff;
 		  	pcl::PointXYZ info_disegno_cyl_up;
 		 	pcl::PointXYZ info_disegno_cyl_dw;
+		 	pcl::PointXYZ center;
 		 	Eigen::Matrix<double,4,4> Matrix_transform_inv;
 		 	geometry_msgs::Pose Cyl_pose;
 				 	

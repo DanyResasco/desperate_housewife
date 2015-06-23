@@ -27,6 +27,7 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 
 
 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *scene, *cloud);
+<<<<<<< HEAD
 	visualization(true , false);
 	ROS_INFO("Strating timer");
 	ros::Time begin = ros::Time::now();
@@ -48,6 +49,16 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 	fitting();
 	left = ros::Time::now() - begin;
 	ROS_INFO("Time to fitting environment %lf", left.toSec());
+=======
+	//visualization(true , false);
+	erase_environment(scene);
+	//visualization(true, false);
+	erase_table();
+	//visualization(true, false);
+	getcluster();
+	//visualization(false, false);
+  	fitting();
+>>>>>>> 18c95b312d4090c90c544de1742124dad0dec4d1
   	visualization(true, true);
 	send_msg();
 
@@ -214,7 +225,7 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CYl_new_transf (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	
 	pcl::transformPointCloud(*pc_cyl, *CYl_new_transf, CYLINDER.Matrix_transform_inv);
-	pcl::copyPointCloud<pcl::PointXYZRGBA>( *CYl_new_transf, *cloud);
+	// pcl::copyPointCloud<pcl::PointXYZRGBA>( *CYl_new_transf, *cloud);
 
 
 	//find height 
@@ -243,7 +254,27 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	CYLINDER.height= z_max - z_min;
 	std::cout<< "altezza: "<< CYLINDER.height <<std::endl;
 
+	// find a center
+	CYLINDER.center.z = -(z_min +  (CYLINDER.height/2));
+	CYLINDER.center.x = 0;
+	CYLINDER.center.y = 0;
 
+	Eigen::Matrix4d M_center = Eigen::Matrix4d::Identity();
+	//M_center.block<3,3>(0,0) << Matrix3d::Identity();
+	M_center(0,3) = CYLINDER.center.x ;
+	M_center(1,3) = CYLINDER.center.y ;
+	M_center(2,3) = CYLINDER.center.z ;
+	
+	std::cout<<"la matrice nuova è"<<M_center<<std::endl;
+
+
+	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CYl_test (new pcl::PointCloud<pcl::PointXYZRGBA>);
+
+
+	pcl::transformPointCloud(*CYl_new_transf, *CYl_test, M_center);
+	pcl::copyPointCloud<pcl::PointXYZRGBA>( *CYl_test, *cloud);
+	  
+	// for draw a cylinder with 3d viewer
 	CYLINDER.info_disegno_cyl_up.x = CYl_new_transf->points[index_up].x; 
 	CYLINDER.info_disegno_cyl_dw.x = CYl_new_transf->points[index_down].x;
 	CYLINDER.info_disegno_cyl_up.y = CYl_new_transf->points[index_up].y; 
@@ -251,17 +282,21 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	CYLINDER.info_disegno_cyl_up.z = z_max; 
 	CYLINDER.info_disegno_cyl_dw.z = z_min;
 
+	
 	// std::cout<<"finito creare info cerchio"<<std::endl;
+	Eigen::Matrix4d test_M;
+	test_M = M_center*CYLINDER.Matrix_transform_inv;
+	
 
 	bool ok_transf;
-	ok_transf = fromEigenToPose(CYLINDER.Matrix_transform_inv , CYLINDER.Cyl_pose );
+	ok_transf = fromEigenToPose( test_M , CYLINDER.Cyl_pose );
 	
 
   		// pcl::ModelCoefficients cylinder_coeff;
 		CYLINDER.cylinder_coeff.values.resize (7);    // We need 7 values
 		CYLINDER.cylinder_coeff.values[0] = 0;
 		CYLINDER.cylinder_coeff.values[1] = 0;
-		CYLINDER.cylinder_coeff.values[2] = 0;
+		CYLINDER.cylinder_coeff.values[2] = -CYLINDER.height/2;
 		CYLINDER.cylinder_coeff.values[3] = 0;
 		CYLINDER.cylinder_coeff.values[4] = 0;
 		CYLINDER.cylinder_coeff.values[5] = 1;
@@ -336,6 +371,7 @@ void  phobic_scene::send_msg()
  	std::cout<<"sono in send_msg"<<std::endl;
  	ros::Publisher phobic_talk;
  	//create a msg
+ 	phobic_talk = nodeH.advertise<desperate_housewife::cyl_info>("phobic_info", 10);	
 
  	for (int i=0; i <= cyl_list.size(); i++)
  	{	
@@ -348,7 +384,8 @@ void  phobic_scene::send_msg()
  		msg.transformation.position = cyl_list[i].Cyl_pose.position;
  		msg.transformation.orientation = cyl_list[i].Cyl_pose.orientation;  
  		
-		phobic_talk = nodeH.advertise<desperate_housewife::cyl_info>(nodeH.resolveName("phobic_info"), 10);	
+		//phobic_talk = nodeH.advertise<desperate_housewife::cyl_info>(nodeH.resolveName("phobic_info"), 10);
+		
 		phobic_talk.publish(msg); 
  	}
 
@@ -359,7 +396,7 @@ void  phobic_scene::send_msg()
 void phobic_scene::getcluster()
 {
 	std::cout<<"sono dentro a getcluster"<<std::endl;
-	bool check=true;
+	// bool check=true;
 
 	// try with euclidean clusters
 	// Creating the KdTree object for the search method of the extraction
