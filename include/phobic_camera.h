@@ -91,7 +91,7 @@ class phobic_scene
 		
 		void pointcloudCallback(sensor_msgs::PointCloud2 msg);
 		void fitting ();
-		void send_msg();
+		void send_msg( int cyl_id = 0 );
 		void erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  pc);
 		void getcluster();
 		void erase_table();

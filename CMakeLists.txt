@@ -112,6 +112,7 @@ INCLUDE_DIRS include
 ## Declare a cpp executable
 # add_executable(desperate_housewife_node src/desperate_housewife_node.cpp)
 add_executable(phobic_camera src/main.cpp src/phobic_camera.cpp)
+add_executable(cylinder_test test/cylinder_test.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -119,6 +120,11 @@ add_executable(phobic_camera src/main.cpp src/phobic_camera.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(phobic_camera
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+)
+
+target_link_libraries(cylinder_test
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
 )

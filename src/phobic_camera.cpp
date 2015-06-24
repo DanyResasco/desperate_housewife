@@ -11,31 +11,48 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr scene (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	pcl::fromROSMsg (msg, *scene);
 
-	pcl::copyPointCloud<pcl::PointXYZRGBA>( *scene, *cloud);
+	// pcl::copyPointCloud<pcl::PointXYZRGBA>( *scene, *cloud);
 
 	//visualization(true , false);
-	ROS_INFO("Strating timer");
-	ros::Time begin = ros::Time::now();
+	// ROS_INFO("Strating timer");
+	// ros::Time begin = ros::Time::now();
 	erase_environment(scene);
-	ros::Duration left = ros::Time::now() - begin;
-	ROS_INFO("Time to Erase environment %lf", left.toSec());
-	 // visualization(true, false);
-	begin = ros::Time::now();
-	erase_table();
-	left = ros::Time::now() - begin;
-	ROS_INFO("Time to Erase table environment %lf", left.toSec());
-	//visualization(true, false);
-	begin = ros::Time::now();
-	getcluster();
-	left = ros::Time::now() - begin;
-	ROS_INFO("Time to get clusters environment %lf", left.toSec());
-	//visualization(false, false);
-	begin = ros::Time::now();
-	fitting();
-	left = ros::Time::now() - begin;
-	ROS_INFO("Time to fitting environment %lf", left.toSec());
+	// if (scene->points.empty ())
+	// {
+	// 	ROS_INFO( "Empty point cloud" );
+	// }
 
-	send_msg();
+	// ros::Duration left = ros::Time::now() - begin;
+	// ROS_INFO("Time to Erase environment %lf", left.toSec());
+	 // visualization(true, false);
+	// begin = ros::Time::now();
+	erase_table();
+
+	if (scene->points.empty ())
+	{
+		ROS_INFO( "Empty point cloud" );
+	}
+	else
+	{
+		// left = ros::Time::now() - begin;
+		// ROS_INFO("Time to Erase table environment %lf", left.toSec());
+		//visualization(true, false);
+		// begin = ros::Time::now();
+		getcluster();
+		// left = ros::Time::now() - begin;
+		// ROS_INFO("Time to get clusters environment %lf", left.toSec());
+		//visualization(false, false);
+		// begin = ros::Time::now();
+		if ( object_cluster.size() > 0)
+		{
+			fitting();
+			// left = ros::Time::now() - begin;
+			// ROS_INFO("Time to fitting environment %lf", left.toSec());
+
+			// send_msg();
+
+		}
+	}
 
 }
 
@@ -88,77 +105,71 @@ void phobic_scene::fitting ()
 	pcl::ModelCoefficients::Ptr coefficients_cylinder (new pcl::ModelCoefficients);
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_first (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	
-	pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *cloud_first);
-	//std::cout<<"dimensione punti della prima pc"<<cloud_first->points.size()<<std::endl;
-		
-	if (cloud_first->points.empty ())
+	int a = 0;
+	while ( object_cluster.size() > 0 )
 	{
-		std::cout<<"empty pointcloud"<<std::endl;
 
-	}
+		pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *cloud_first);
 
-	// Estimate point normals
-	ne.setSearchMethod (tree);
-	ne.setInputCloud (cloud_first);
-	ne.setKSearch (100);
-	ne.compute (*cloud_normals);
+		ne.setSearchMethod (tree);
+		ne.setInputCloud (cloud_first);
+		ne.setKSearch (100);
+		ne.compute (*cloud_normals);
 
-    std::cout << " number of input cloud" << cloud_normals->points.size() << std::endl;
+    // std::cout << " number of input cloud" << cloud_normals->points.size() << std::endl;
 
-    if (cloud_normals->points.empty ())
-    {
-        std::cout<<"empty normal pointcloud"<<std::endl;
-
-    }
+	    if (cloud_normals->points.empty ())
+	    {
+	        ROS_INFO( "Not possible to get normals from cluster" );
+	        continue;
+	    }
 
 	// Create the segmentation object for cylinder segmentation and set all the parameters
-	pcl::SACSegmentationFromNormals< pcl::PointXYZRGBA, pcl::Normal> seg;
-	seg.setOptimizeCoefficients (true);
-	seg.setModelType (pcl::SACMODEL_CYLINDER);
-	seg.setMethodType (pcl::SAC_RANSAC);
-	seg.setNormalDistanceWeight (0.1);
-	seg.setMaxIterations (10000);
-	seg.setDistanceThreshold (0.05);	//distance between two points
-    seg.setRadiusLimits (0, 0.2);	//cilynder's radius 20cm
-	seg.setInputCloud (cloud_first);
-	seg.setInputNormals (cloud_normals);
+		pcl::SACSegmentationFromNormals< pcl::PointXYZRGBA, pcl::Normal> seg;
+		seg.setOptimizeCoefficients (true);
+		seg.setModelType (pcl::SACMODEL_CYLINDER);
+		seg.setMethodType (pcl::SAC_RANSAC);
+		seg.setNormalDistanceWeight (0.1);
+		seg.setMaxIterations (10000);
+		seg.setDistanceThreshold (0.05);	//distance between two points
+	    seg.setRadiusLimits (0, 0.2);	//cilynder's radius 20cm
+		seg.setInputCloud (cloud_first);
+		seg.setInputNormals (cloud_normals);
 
-	//// Obtain the cylinder inliers and coefficients
-    seg.segment (*inliers_cylinder, *coefficients_cylinder);
-	//std::cout << "Cylinder coefficients: " << *coefficients_cylinder << std::endl;
-    std::cout << "Number of inliers: " << inliers_cylinder->indices.size() << std::endl;
-	
-	if (inliers_cylinder->indices.size() == 0)
-	{
-	 	std::cout << "Could not find a cylinder in the scene." << std::endl;
-	}
-	
-	else
-	{
-		// Write the cylinder inliers to disk
-		std::cout << "cylinder found, extracting inliers" << std::endl;
- 		extract.setInputCloud (cloud_first);
-	 	extract.setIndices (inliers_cylinder);
-	 	extract.setNegative (false);
-	 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZRGBA> ());
-	 	extract.filter (*cloud_cylinder);
-
-	 	if (cloud_cylinder->points.empty ())
+		//// Obtain the cylinder inliers and coefficients
+	    seg.segment (*inliers_cylinder, *coefficients_cylinder);
+		//std::cout << "Cylinder coefficients: " << *coefficients_cylinder << std::endl;
+	    // std::cout << "Number of inliers: " << inliers_cylinder->indices.size() << std::endl;
+		
+		if (inliers_cylinder->indices.size() == 0)
 		{
-			std::cout<<"empty pointcloud"<<std::endl;
-
-	 	}
-
-	 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud_cylinder, *cloud);
-		 	
-	 	// take the coefficients and make a transformation matrix from camera_frame to axis_cylinder's_frame
-	 	makeInfoCyl(coefficients_cylinder->values, cloud_cylinder);
-	 
-	 	
-		// remove the first elements in the list
-		object_cluster.pop_front();
-	
-	
+		 	ROS_INFO( "Could not find a cylinder in the cluster." );
+		 	continue;
+		}
+		else
+		{
+			// Write the cylinder inliers to disk
+	 		extract.setInputCloud (cloud_first);
+		 	extract.setIndices (inliers_cylinder);
+		 	extract.setNegative (false);
+		 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZRGBA> ());
+		 	extract.filter (*cloud_cylinder);
+		 // 	if (cloud_cylinder->points.empty ())
+			// {
+			// 	ROS_INFO("empty pointcloud");
+			// 	continue;
+		 // 	}
+		 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud_cylinder, *cloud);
+			 	
+		 	// take the coefficients and make a transformation matrix from camera_frame to axis_cylinder's_frame
+		 	makeInfoCyl(coefficients_cylinder->values, cloud_cylinder);
+		 
+		 	send_msg( a );
+		 	a = a + 1;
+			// remove the first elements in the list
+			object_cluster.pop_front();	
+		
+		}
 	}
 }
 
@@ -170,16 +181,17 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	// double r = coeff[6];
 	//create a new frame
 	CYLINDER.radius = coeff[6];
-	Eigen::Matrix<double,4,4> Matrix_transform;
-	Matrix_transform = Cyl_Transform( coeff);
-	CYLINDER.Matrix_transform_inv = Matrix_transform.inverse();
+	//k = kinect frame, c = cylinder frame
+	Eigen::Matrix<double,4,4> Matrix_transform; //T_k_c 
+	Matrix_transform = Cyl_Transform( coeff); 
+	CYLINDER.Matrix_transform_inv = Matrix_transform.inverse(); //T_c_k
 	
 	//	std::cout<<"finito di creare matrice di rotazione"<<std::endl;
 	
 	//create a new cylinder pointcloud
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CYl_new_transf (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	
-	pcl::transformPointCloud(*pc_cyl, *CYl_new_transf, CYLINDER.Matrix_transform_inv);
+	pcl::transformPointCloud(*pc_cyl, *CYl_new_transf, CYLINDER.Matrix_transform_inv); // point cloud in T_c
 	// pcl::copyPointCloud<pcl::PointXYZRGBA>( *CYl_new_transf, *cloud);
 
 
@@ -194,14 +206,14 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 		if(z_min > CYl_new_transf->points[i].z )
 		{	
 			z_min = CYl_new_transf->points[i].z;
-			index_down = i;
+			//index_down = i;
 
 		}
 
 		if(z_max < CYl_new_transf->points[i].z)
 		{	
 			z_max = CYl_new_transf->points[i].z;
-			index_up = i; 
+			//index_up = i; 
 		}
 	}
 
@@ -210,18 +222,18 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	//std::cout<< "altezza: "<< CYLINDER.height <<std::endl;
 
 	// find a center
-	CYLINDER.center.z = -(z_min +  (CYLINDER.height/2));
+	CYLINDER.center.z = 1.*(z_min +  (CYLINDER.height/2));
 	CYLINDER.center.x = 0;
 	CYLINDER.center.y = 0;
-
-	Eigen::Matrix4d M_center = Eigen::Matrix4d::Identity();
+	// g = center of the cylinder
+	Eigen::Matrix4d M_center = Eigen::Matrix4d::Identity(); // T_c_g
 	M_center(0,3) = CYLINDER.center.x ;
 	M_center(1,3) = CYLINDER.center.y ;
 	M_center(2,3) = CYLINDER.center.z ;
 	
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CYl_test (new pcl::PointCloud<pcl::PointXYZRGBA>);
 
-	pcl::transformPointCloud(*CYl_new_transf, *CYl_test, M_center);
+	pcl::transformPointCloud(*CYl_new_transf, *CYl_test, M_center); //Point cloud in T_g
 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *CYl_test, *cloud);
 	  
 	// for draw a cylinder with 3d viewer
@@ -233,8 +245,13 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	// CYLINDER.info_disegno_cyl_dw.z = z_min;
 	
 	Eigen::Matrix4d test_M;
-	test_M = M_center*CYLINDER.Matrix_transform_inv;
-
+	//test_M = M_center*CYLINDER.Matrix_transform_inv;
+	test_M = Matrix_transform * M_center; // T_k_g
+	//test_M = Eigen::Matrix4d::Identity(); // T_c_g
+	// test_M(0,3) = 1. ;
+	// test_M(1,3) = 1. ;
+	// test_M(2,3) = 1. ;
+	
 	bool ok_transf;
 	ok_transf = fromEigenToPose( test_M , CYLINDER.Cyl_pose );
 	
@@ -276,15 +293,15 @@ bool phobic_scene::fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs
 }
 
 
-void  phobic_scene::send_msg()
+void  phobic_scene::send_msg( int cyl_id )
 {
- 	ROS_INFO("Info cylinder");
+ 	// ROS_INFO("Info cylinder");
  
 	visualization_msgs::Marker marker;
-	marker.header.frame_id = "camera_link";
+	marker.header.frame_id = "camera_rgb_optical_frame";
 	marker.header.stamp = ros::Time();
 	marker.ns = "";
-	marker.id = 0;
+	marker.id = cyl_id;
 	marker.type = visualization_msgs::Marker::CYLINDER;
 	marker.action = visualization_msgs::Marker::ADD;
 	marker.pose.position.x = cyl_list[0].Cyl_pose.position.x;
@@ -294,16 +311,16 @@ void  phobic_scene::send_msg()
 	marker.pose.orientation.y = cyl_list[0].Cyl_pose.orientation.y;
 	marker.pose.orientation.z = cyl_list[0].Cyl_pose.orientation.z;
 	marker.pose.orientation.w = cyl_list[0].Cyl_pose.orientation.w;
-	marker.scale.x = cyl_list[0].radius;
-	marker.scale.y = cyl_list[0].radius;
+	marker.scale.x = cyl_list[0].radius * 2.;
+	marker.scale.y = cyl_list[0].radius * 2.;
 	marker.scale.z = cyl_list[0].height;
-	marker.color.a = 0.0; // Don't forget to set the alpha!
+	marker.color.a = 1.0; // Don't forget to set the alpha!
 	marker.color.r = 0.0;
 	marker.color.g = 0.0;
 	marker.color.b = 1.0;
 
 	phobic_talk.publish(marker); 
- 	cyl_list.clear();
+ 	//cyl_list.clear();
 
 }
 
@@ -314,19 +331,27 @@ void phobic_scene::getcluster()
 	// Creating the KdTree object for the search method of the extraction
   	pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBA>);
 
-	ROS_INFO("PointCloud before filtering has: %d data points.", cloud->points.size ());
+	// ROS_INFO("PointCloud before filtering has: %d data points.", cloud->points.size ());
 
 	// Create the filtering object: downsample the dataset using a leaf size of 1cm
 	pcl::VoxelGrid<pcl::PointXYZRGBA> vg;
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	vg.setInputCloud (cloud);
-	vg.setLeafSize (0.01f, 0.01f, 0.01f);
+	vg.setLeafSize (0.005f, 0.005f, 0.005f);
 	vg.filter (*cloud_filtered);
-	ROS_INFO("PointCloud after filtering has: %d data points.", cloud_filtered->points.size ());
+	// ROS_INFO("PointCloud after filtering has: %d data points.", cloud_filtered->points.size ());
+	if (cloud_filtered->points.empty())
+	{
+		ROS_INFO( "Empty cloud after downsampling");
+    	
+    	return;
+    }
 
     tree->setInputCloud (cloud_filtered);
+	// pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud, *cloud_filtered);
 
-    ROS_INFO("PointCloud in getcluster() has: %d data points.", cloud_filtered->points.size ());
+
+    // ROS_INFO("PointCloud in getcluster() has: %d data points.", cloud_filtered->points.size ());
   	std::vector<pcl::PointIndices> cluster_indices;
   	pcl::EuclideanClusterExtraction<pcl::PointXYZRGBA> ec;
   	ec.setClusterTolerance (0.07); // 5cm
@@ -336,23 +361,32 @@ void phobic_scene::getcluster()
     ec.setInputCloud (cloud_filtered);
   	ec.extract (cluster_indices);
 
-  	
-  	for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
+  	ROS_INFO( "Number of clusters in the scene %d", cluster_indices.size());
+
+  	if (cluster_indices.size() > 0)
   	{
-  		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGBA>);
-  		
-  		for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
-      	{	
-            cloud_cluster->points.push_back (cloud_filtered->points[*pit]);
-      		cloud_cluster->width = cloud_cluster->points.size ();
-    		cloud_cluster->height = 1;
-    		cloud_cluster->is_dense = true;
 
-    	}
-	 	
-    	object_cluster.push_back(*cloud_cluster);
-    }
+	  	object_cluster.clear();
 
+	  	for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
+	  	{
+	  		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGBA>);
+	  		
+	  		for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+	      	{	
+	            cloud_cluster->points.push_back (cloud_filtered->points[*pit]);
+	      		cloud_cluster->width = cloud_cluster->points.size ();
+	    		cloud_cluster->height = 1;
+	    		cloud_cluster->is_dense = true;
+
+	    	}
+		 	
+	    	object_cluster.push_back(*cloud_cluster);
+	    }
+	}
+
+    
+	ROS_INFO( "Number of object clustered in the scene %d", object_cluster.size());
     
 }
 
@@ -377,7 +411,7 @@ void phobic_scene::erase_table()
     
     if (inliers->indices.size () == 0)
     {
-      std::cout << "Could not estimate a planar model for the given dataset." << std::endl;
+      ROS_INFO( "Could not estimate a planar model for the given dataset." );
     
     }
 
@@ -423,50 +457,50 @@ Eigen::Matrix4d Cyl_Transform (const std::vector<float> coeff)
 	return tranfs_matrix;
 }
 
-void  phobic_scene::visualization(bool testing, bool circle)
-{
-	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
-	viewer->setBackgroundColor (0, 255, 0);
-	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr room_object  (new pcl::PointCloud<pcl::PointXYZRGBA>);
+// void  phobic_scene::visualization(bool testing, bool circle)
+// {
+// 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+// 	viewer->setBackgroundColor (0, 255, 0);
+// 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr room_object  (new pcl::PointCloud<pcl::PointXYZRGBA>);
 
-	double PI= 3.14159265;
-
-
-	if(circle == false)
-	{
-		if (testing == true )
-		{
-			pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud, *room_object);
-		}
-
-		else
-		{
-			pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *room_object);
-		}
+// 	double PI= 3.14159265;
 
 
-  		pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(room_object, 0, 0, 0);
-  		viewer->addPointCloud<pcl::PointXYZRGBA> (room_object, single_color, "sample cloud");
-		//viewer->addPointCloud<pcl::PointXYZRGBA > (room_object, "nome");
-		viewer->addCoordinateSystem(0.1);
-  	}
+// 	if(circle == false)
+// 	{
+// 		if (testing == true )
+// 		{
+// 			pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud, *room_object);
+// 		}
 
-  	else
-  	{
-  		pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(cloud, 0, 0, 0);
-  		viewer->addPointCloud<pcl::PointXYZRGBA> (cloud, single_color, "sample cloud");
-  		viewer->addCoordinateSystem(0.1);
+// 		else
+// 		{
+// 			pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *room_object);
+// 		}
 
-  		viewer-> addCylinder(CYLINDER.cylinder_coeff, "cyl");
-  		viewer->addLine(CYLINDER.info_disegno_cyl_up, CYLINDER.info_disegno_cyl_dw, "line" );
+
+//   		pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(room_object, 0, 0, 0);
+//   		viewer->addPointCloud<pcl::PointXYZRGBA> (room_object, single_color, "sample cloud");
+// 		//viewer->addPointCloud<pcl::PointXYZRGBA > (room_object, "nome");
+// 		viewer->addCoordinateSystem(0.1);
+//   	}
+
+//   	else
+//   	{
+//   		pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(cloud, 0, 0, 0);
+//   		viewer->addPointCloud<pcl::PointXYZRGBA> (cloud, single_color, "sample cloud");
+//   		viewer->addCoordinateSystem(0.1);
+
+//   		viewer-> addCylinder(CYLINDER.cylinder_coeff, "cyl");
+//   		viewer->addLine(CYLINDER.info_disegno_cyl_up, CYLINDER.info_disegno_cyl_dw, "line" );
   		
-  	}
+//   	}
 
 
 
-  	while (!viewer->wasStopped ())
-	{
-   		viewer->spinOnce (100);
-   		boost::this_thread::sleep (boost::posix_time::microseconds (100000));
-	}
-}
+//   	while (!viewer->wasStopped ())
+// 	{
+//    		viewer->spinOnce (100);
+//    		boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+// 	}
+// }

@@ -12,7 +12,7 @@ int main(int argc, char** argv)
 	phobic_scene phobic_scene_local(nodeH, true); 
 	// std::cout<<"Sono nel main dopo aver creato ogetto classe"<<std::endl;
 
-	reader = nodeH.subscribe(nodeH.resolveName("camera/depth_registered/points"), 10, &phobic_scene::pointcloudCallback, &phobic_scene_local);
+	reader = nodeH.subscribe(nodeH.resolveName("camera/depth_registered/points"), 1, &phobic_scene::pointcloudCallback, &phobic_scene_local);
 	//std::cout<<"Sono nel main dopo aver letto"<<std::endl;
 
 	
