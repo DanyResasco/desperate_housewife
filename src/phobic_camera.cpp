@@ -70,7 +70,7 @@ void phobic_scene::erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  or
 	// x
 	Filter_env.setInputCloud (original_pc);
 	Filter_env.setFilterFieldName ("x");
-	Filter_env.setFilterLimits (-0.2, 0.7);
+	Filter_env.setFilterLimits (-0.5, 0.5);
 	Filter_env.filter (*cloud_filtered);
 	// The indices_x array indexes all points of cloud_in that have x between -0.2, 0.7
 	
@@ -342,7 +342,7 @@ void phobic_scene::getcluster()
 	pcl::VoxelGrid<pcl::PointXYZRGBA> vg;
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	vg.setInputCloud (cloud);
-	vg.setLeafSize (0.005f, 0.005f, 0.005f);
+	vg.setLeafSize (0.01f, 0.01f, 0.01f);
 	vg.filter (*cloud_filtered);
 	// ROS_INFO("PointCloud after filtering has: %d data points.", cloud_filtered->points.size ());
 	if (cloud_filtered->points.empty())
