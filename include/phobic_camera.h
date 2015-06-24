@@ -61,54 +61,54 @@
 class phobic_scene
 {
 	
-	private:
-		ros::NodeHandle nodeH;
-		ros::Publisher Scena_info;
-		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud ;
-		std::vector<float> Plane_coeff;
-		std::list<pcl::PointCloud<pcl::PointXYZRGBA> > object_cluster;
-		bool testing;
-		ros::Publisher phobic_talk;
-		
-		struct Mod_cylinder
-		{
+private:
+	ros::NodeHandle nodeH;
+	ros::Publisher Scena_info;
+	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud ;
+	std::vector<float> Plane_coeff;
+	std::list<pcl::PointCloud<pcl::PointXYZRGBA> > object_cluster;
+	bool testing;
+	ros::Publisher phobic_talk;
+
+	struct Mod_cylinder
+	{
 		 	// double tetha;
-		 	double height;
-		 	double radius;
-		 	pcl::ModelCoefficients cylinder_coeff;
-		  	pcl::PointXYZ info_disegno_cyl_up;
-		 	pcl::PointXYZ info_disegno_cyl_dw;
-		 	pcl::PointXYZ center;
-		 	Eigen::Matrix<double,4,4> Matrix_transform_inv;
-		 	geometry_msgs::Pose Cyl_pose;
-				 	
-		} CYLINDER;
+		double height;
+		double radius;
+		pcl::ModelCoefficients cylinder_coeff;
+		pcl::PointXYZ info_disegno_cyl_up;
+		pcl::PointXYZ info_disegno_cyl_dw;
+		pcl::PointXYZ center;
+		Eigen::Matrix<double,4,4> Matrix_transform_inv;
+		geometry_msgs::Pose Cyl_pose;
 
-		std::vector<Mod_cylinder> cyl_list; 
-		
+	} CYLINDER;
+
+	std::vector<Mod_cylinder> cyl_list; 
+
 	
-	public:
-		
-		void pointcloudCallback(sensor_msgs::PointCloud2 msg);
-		void fitting ();
-		void send_msg( int cyl_id = 0 );
-		void erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  pc);
-		void getcluster();
-		void erase_table();
-		void makeInfoCyl(std::vector<float> coeff, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl);
-		bool fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose);
-		void visualization( bool testing, bool circle );
-		
-		phobic_scene(ros::NodeHandle NodeH, bool test): nodeH(NodeH)
-		{
-			
-			pcl::PointCloud<pcl::PointXYZRGBA> cloud2;
-			cloud=cloud2.makeShared();
-			phobic_talk = nodeH.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
-						
-		}
+public:
 
-		~phobic_scene(){}
+	void pointcloudCallback(sensor_msgs::PointCloud2 msg);
+	void fitting ();
+	void send_msg( int cyl_id = 0 );
+	void erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  pc);
+	void getcluster();
+	void erase_table();
+	void makeInfoCyl(std::vector<float> coeff, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl);
+	bool fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose);
+	void visualization( bool testing, bool circle );
+
+	phobic_scene(ros::NodeHandle NodeH, bool test): nodeH(NodeH)
+	{
+
+		pcl::PointCloud<pcl::PointXYZRGBA> cloud2;
+		cloud=cloud2.makeShared();
+		phobic_talk = nodeH.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
+
+	}
+
+	~phobic_scene(){}
 
 
 };

@@ -1,2 +1,12 @@
 
-<node name="desperate_house_eife_demo" pkg="rospy_tutorials" type="listener.py" args="--test" respawn="true" />
+<launch>
+
+
+	<node name="desperate_house_eife_demo" pkg="desperate_housewife" type="phobic_camera" respawn="false" output="screen" />
+
+	 <node name="my_rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find desperate_housewife)/launch/rviz_config.rviz" output="screen">
+  </node>
+
+
+</launch>
+
