@@ -4,12 +4,14 @@
 	<arg name="spin_rate" default="1" />
 	<arg name="camera_topic" default="camera/depth_registered/points" />
 	<arg name="down_sample_size" default="0.01" />
+	<arg name="pc_save" default="0" />
 
 	<node name="desperate_house_eife_demo" pkg="desperate_housewife" type="phobic_camera" respawn="false" output="screen" >
  		
 		<param name="camera_topic" value="$(arg camera_topic)" />
 		<param name="down_sample_size" type="double" value="$(arg down_sample_size)"/>
 		<param name="spin_rate" value="$(arg spin_rate)" />
+		<param name="pc_save" value="$(arg pc_save)" />
 
 	</node>
 

@@ -18,7 +18,7 @@ int main(int argc, char** argv)
 
 	std::string camera_topic;
 	ros::param::get("~camera_topic",camera_topic);
-	ROS_INFO( "Spin Rate %s", camera_topic.c_str());
+	ROS_INFO( "camera_topic %s", camera_topic.c_str());
 
 	reader = nodeH.subscribe(nodeH.resolveName(camera_topic), 1, &phobic_scene::pointcloudCallback, &phobic_scene_local);
 	//std::cout<<"Sono nel main dopo aver letto"<<std::endl;
@@ -33,7 +33,7 @@ int main(int argc, char** argv)
 		ros::spinOnce();
 
 	}
-
+	// ros::spin();
 	return 0;
 
 	

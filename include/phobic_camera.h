@@ -75,6 +75,7 @@ private:
 	ros::Publisher phobic_talk;
 	ros::Publisher pub_cloud_object;
 	double down_sample_size;
+	double pc_save;
 
 	struct Mod_cylinder
 	{
@@ -115,6 +116,8 @@ public:
 
 		ros::param::get("~down_sample_size", down_sample_size);
 		ROS_INFO("Down sample size %lf", down_sample_size);
+		ros::param::get("~pc_save", pc_save);
+
 
 	}
 

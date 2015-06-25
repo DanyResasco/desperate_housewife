@@ -5,13 +5,20 @@ using Eigen::VectorXf ;
 
 void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 {
-
 	//std::cout<<"sono nella callback"<<std::endl;
 	// create a new pointcloud from msg
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr scene (new pcl::PointCloud<pcl::PointXYZRGBA>);
-	pcl::fromROSMsg (msg, *scene);
 
-	// pcl::copyPointCloud<pcl::PointXYZRGBA>( *scene, *cloud);
+
+	if(pc_save == 1)
+	{
+		pcl::io::loadPCDFile("/home/daniela/Desktop/dany_bicchi/test_pcd.pcd", *scene);
+	}
+	
+	else
+	{	
+		pcl::fromROSMsg (msg, *scene);
+	}
 
 	//visualization(true , false);
 	// ROS_INFO("Strating timer");
@@ -32,6 +39,7 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 	{
 		ROS_INFO( "Empty point cloud" );
 	}
+	
 	else
 	{
 		// left = ros::Time::now() - begin;
@@ -112,8 +120,6 @@ void phobic_scene::fitting ()
 
 		pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *cloud_first);
 
-
-
 		 // pcl::PointCloud<pcl::PointXYZRGBA>::Ptr msg (new pcl::PointCloud<pcl::PointXYZRGBA>);
 		 // msg->header.frame_id = "camera_rgb_optical_frame";
 		 //  msg->height = msg->width = 1;
@@ -152,7 +158,7 @@ void phobic_scene::fitting ()
 
 		//// Obtain the cylinder inliers and coefficients
 		seg.segment (*inliers_cylinder, *coefficients_cylinder);
-		std::cout << "Cylinder coefficients: " << *coefficients_cylinder << std::endl;
+		// std::cout << "Cylinder coefficients: " << *coefficients_cylinder << std::endl;
 
 		if (inliers_cylinder->indices.size() == 0)
 		{
@@ -160,6 +166,7 @@ void phobic_scene::fitting ()
 		  	object_cluster.pop_front();
 		  	continue;
 		}
+		
 		else
 		{
 			// Write the cylinder inliers to disk
@@ -173,11 +180,11 @@ void phobic_scene::fitting ()
 			// 	ROS_INFO("empty pointcloud");
 			// 	continue;
 			// 	}
-		  	pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud_cylinder, *cloud);
+		  	// pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud_cylinder, *cloud);
 
 			// take the coefficients and make a transformation matrix from camera_frame to axis_cylinder's_frame
 		  	makeInfoCyl(coefficients_cylinder->values, cloud_cylinder);
-
+		  	std::cout << "Cluster"<< a <<"Cylinder coefficients: " << *coefficients_cylinder << std::endl;
 		  	send_msg( a );
 		  	a = a + 1;
 		  	// remove the first elements in the list
@@ -267,7 +274,7 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	//test_M = M_center*CYLINDER.Matrix_transform_inv;
 	test_M = Matrix_transform * M_center; // T_k_g
 	//////testing///////
-	test_M = Eigen::Matrix4d::Identity();
+	//test_M = Eigen::Matrix4d::Identity();
 	
 	bool ok_transf;
 	ok_transf = fromEigenToPose( test_M , CYLINDER.Cyl_pose );
@@ -331,11 +338,11 @@ void  phobic_scene::send_msg( int cyl_id )
 	marker.scale.x = cyl_list[cyl_id].radius * 2.;
 	marker.scale.y = cyl_list[cyl_id].radius * 2.;
 	marker.scale.z = cyl_list[cyl_id].height;
-	marker.color.a = 1.0; // Don't forget to set the alpha!
+	marker.color.a = 1.0; // for the clearness
 	marker.color.r = 0.0;
 	marker.color.g = 0.0;
 	marker.color.b = 1.0;
-	// marker.lifetime = ros::Duration(1);
+	marker.lifetime = ros::Duration(1);
 
 	phobic_talk.publish(marker); 
  	//cyl_list.clear();
@@ -369,7 +376,7 @@ void phobic_scene::getcluster()
 	// pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud, *cloud_filtered);
 
 
-    // ROS_INFO("PointCloud in getcluster() has: %d data points.", cloud_filtered->points.size ());
+    ROS_INFO("PointCloud in getcluster() has: %d data points.", cloud_filtered->points.size ());
 	std::vector<pcl::PointIndices> cluster_indices;
 	pcl::EuclideanClusterExtraction<pcl::PointXYZRGBA> ec;
   	ec.setClusterTolerance (0.07); // 5cm
@@ -420,7 +427,7 @@ void phobic_scene::getcluster()
   	seg.setModelType (pcl::SACMODEL_PLANE);
   	seg.setMethodType (pcl::SAC_RANSAC);
   	seg.setMaxIterations (100);
-  	seg.setDistanceThreshold (0.02);
+  	seg.setDistanceThreshold (0.005);
 
   	// Segment the largest planar component from the remaining cloud
   	seg.setInputCloud (cloud);
@@ -432,6 +439,7 @@ void phobic_scene::getcluster()
 
   	}
 
+  	pcl::PointCloud<pcl::PointXYZRGBA> tmp;
     // Extract the planar inliers from the input cloud
   	pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
   	extract.setInputCloud (cloud);
@@ -439,7 +447,8 @@ void phobic_scene::getcluster()
   	extract.setNegative (true);
 
     // // Get the points associated without the planar surface
-  	extract.filter (*cloud);
+  	extract.filter (tmp);
+  	pcl::copyPointCloud(tmp, *cloud);
   	Plane_coeff=coefficients->values;
 
   }
@@ -455,13 +464,21 @@ void phobic_scene::getcluster()
 	Eigen::Vector3d position(x,y,z); //posizione a caso sull'asse del cilindro. 
 	// w is the axis of the cylinder which will be aligned with the z reference frame of the cylinder
 	Eigen::Vector3d w(p_x, p_y, p_z);
-	Eigen::Vector3d u(1, 0, 0);	//allineo asse x uguale a quella della kinect
+	Eigen::Vector3d u(0, -1, 0); // -y kinect 	
 
-	Eigen::Vector3d v = w.cross(u).normalized();
+	// is object if twisted the z axis is the same to x axis. we change the x axis with a orthogonal vector
+	
+	if((u.dot(w) < 0))
+	{
+		w = w * -1; //change sign
+	}
+
+	Eigen::Vector3d x_new = (w.cross(u)).normalized();
+	Eigen::Vector3d y_new = (x_new.cross(w)).normalized();
 	
 	Eigen::Matrix3d rotation;
-	rotation.col(0) = u;  // x
-	rotation.col(1) = v;  // y
+	rotation.col(0) = - x_new;  // x
+	rotation.col(1) = y_new;  // y
 	rotation.col(2) = w;  // z
 
 	// Compose the transformation and return it
