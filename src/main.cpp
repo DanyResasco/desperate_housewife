@@ -16,7 +16,16 @@ int main(int argc, char** argv)
 	//std::cout<<"Sono nel main dopo aver letto"<<std::endl;
 
 	
-	ros::spin();
+	ros::Rate loop_rate(2); // 5Hz
+
+  while (ros::ok())
+  {
+
+    loop_rate.sleep();
+    ros::spinOnce();
+    
+  }
+
 	return 0;
 
 	
