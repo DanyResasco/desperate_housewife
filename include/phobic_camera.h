@@ -41,6 +41,10 @@
 #include <pcl/impl/point_types.hpp>
 #include <pcl/kdtree/kdtree.h>
 
+// #include <ros/ros.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
+
 
 #include <boost/thread/thread.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -69,6 +73,8 @@ private:
 	std::list<pcl::PointCloud<pcl::PointXYZRGBA> > object_cluster;
 	bool testing;
 	ros::Publisher phobic_talk;
+	ros::Publisher pub_cloud_object;
+	double down_sample_size;
 
 	struct Mod_cylinder
 	{
@@ -105,6 +111,10 @@ public:
 		pcl::PointCloud<pcl::PointXYZRGBA> cloud2;
 		cloud=cloud2.makeShared();
 		phobic_talk = nodeH.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
+		pub_cloud_object = nodeH.advertise<pcl::PointCloud<pcl::PointXYZRGBA> >( "object_cloud", 1 );
+
+		ros::param::get("~down_sample_size", down_sample_size);
+		ROS_INFO("Down sample size %lf", down_sample_size);
 
 	}
 

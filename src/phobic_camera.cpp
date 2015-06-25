@@ -112,6 +112,18 @@ void phobic_scene::fitting ()
 
 		pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *cloud_first);
 
+
+
+		 // pcl::PointCloud<pcl::PointXYZRGBA>::Ptr msg (new pcl::PointCloud<pcl::PointXYZRGBA>);
+		 // msg->header.frame_id = "camera_rgb_optical_frame";
+		 //  msg->height = msg->width = 1;
+		 //  msg->points.push_back (pcl::PointXYZ(1.0, 2.0, 3.0));
+
+		cloud_first->header.frame_id = "camera_rgb_optical_frame";
+
+		pub_cloud_object.publish( cloud_first  ); 
+
+
 		ne.setSearchMethod (tree);
 		ne.setInputCloud (cloud_first);
 		ne.setKSearch (100);
@@ -140,6 +152,7 @@ void phobic_scene::fitting ()
 
 		//// Obtain the cylinder inliers and coefficients
 		seg.segment (*inliers_cylinder, *coefficients_cylinder);
+		std::cout << "Cylinder coefficients: " << *coefficients_cylinder << std::endl;
 
 		if (inliers_cylinder->indices.size() == 0)
 		{
@@ -188,6 +201,8 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	//k = kinect frame, c = cylinder frame
 	Eigen::Matrix<double,4,4> Matrix_transform; //T_k_c 
 	Matrix_transform = Cyl_Transform( coeff); 
+
+
 	CYLINDER.Matrix_transform_inv = Matrix_transform.inverse(); //T_c_k
 	
 	//	std::cout<<"finito di creare matrice di rotazione"<<std::endl;
@@ -251,10 +266,8 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	Eigen::Matrix4d test_M;
 	//test_M = M_center*CYLINDER.Matrix_transform_inv;
 	test_M = Matrix_transform * M_center; // T_k_g
-	//test_M = Eigen::Matrix4d::Identity(); // T_c_g
-	// test_M(0,3) = 1. ;
-	// test_M(1,3) = 1. ;
-	// test_M(2,3) = 1. ;
+	//////testing///////
+	test_M = Eigen::Matrix4d::Identity();
 	
 	bool ok_transf;
 	ok_transf = fromEigenToPose( test_M , CYLINDER.Cyl_pose );
@@ -322,7 +335,7 @@ void  phobic_scene::send_msg( int cyl_id )
 	marker.color.r = 0.0;
 	marker.color.g = 0.0;
 	marker.color.b = 1.0;
-	marker.lifetime = ros::Duration(1);
+	// marker.lifetime = ros::Duration(1);
 
 	phobic_talk.publish(marker); 
  	//cyl_list.clear();
@@ -342,7 +355,7 @@ void phobic_scene::getcluster()
 	pcl::VoxelGrid<pcl::PointXYZRGBA> vg;
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	vg.setInputCloud (cloud);
-	vg.setLeafSize (0.01f, 0.01f, 0.01f);
+	vg.setLeafSize (down_sample_size, down_sample_size, down_sample_size);
 	vg.filter (*cloud_filtered);
 	// ROS_INFO("PointCloud after filtering has: %d data points.", cloud_filtered->points.size ());
 	if (cloud_filtered->points.empty())
@@ -390,7 +403,7 @@ void phobic_scene::getcluster()
   	}
 
 
-  	ROS_INFO( "Number of object clustered in the scene %d", object_cluster.size());
+  	// ROS_INFO( "Number of object clustered in the scene %d", object_cluster.size());
 
   }
 

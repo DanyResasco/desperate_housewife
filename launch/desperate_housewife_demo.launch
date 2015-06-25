@@ -1,10 +1,20 @@
 
 <launch>
 
+	<arg name="spin_rate" default="1" />
+	<arg name="camera_topic" default="camera/depth_registered/points" />
+	<arg name="down_sample_size" default="0.01" />
 
-	<node name="desperate_house_eife_demo" pkg="desperate_housewife" type="phobic_camera" respawn="false" output="screen" />
+	<node name="desperate_house_eife_demo" pkg="desperate_housewife" type="phobic_camera" respawn="false" output="screen" >
+ 		
+		<param name="camera_topic" value="$(arg camera_topic)" />
+		<param name="down_sample_size" type="double" value="$(arg down_sample_size)"/>
+		<param name="spin_rate" value="$(arg spin_rate)" />
 
-	 <node name="my_rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find desperate_housewife)/launch/rviz_config.rviz" output="screen">
+	</node>
+
+	<node name="my_rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find desperate_housewife)/launch/rviz_config.rviz" output="screen">
+
   </node>
 
 
