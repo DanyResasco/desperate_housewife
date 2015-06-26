@@ -7,6 +7,8 @@
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float32MultiArray.h>
+#include "std_msgs/UInt32.h"
+
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Quaternion.h>
 #include <desperate_housewife/cyl_info.h>
@@ -51,6 +53,7 @@
 #include <iostream>
 #include <utility>
 #include <list>
+#include <string>
 
 //Eigen
 #include <Eigen/Dense>
@@ -68,14 +71,18 @@ class phobic_scene
 private:
 	ros::NodeHandle nodeH;
 	ros::Publisher Scena_info;
+	tf::TransformBroadcaster tf_br;
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud ;
 	std::vector<float> Plane_coeff;
 	std::list<pcl::PointCloud<pcl::PointXYZRGBA> > object_cluster;
 	bool testing;
 	ros::Publisher phobic_talk;
 	ros::Publisher pub_cloud_object;
+	ros::Publisher tf_pose_cyl;
+	ros::Publisher num_cyl;
 	double down_sample_size;
 	double pc_save;
+
 
 	struct Mod_cylinder
 	{
@@ -88,6 +95,7 @@ private:
 		pcl::PointXYZ center;
 		Eigen::Matrix<double,4,4> Matrix_transform_inv;
 		geometry_msgs::Pose Cyl_pose;
+		tf::Transform cyl_tf_pose;
 
 	} CYLINDER;
 
@@ -113,7 +121,7 @@ public:
 		cloud=cloud2.makeShared();
 		phobic_talk = nodeH.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
 		pub_cloud_object = nodeH.advertise<pcl::PointCloud<pcl::PointXYZRGBA> >( "object_cloud", 1 );
-
+		num_cyl = nodeH.advertise<std_msgs::UInt32 >( "cyl_N", 1 );
 		ros::param::get("~down_sample_size", down_sample_size);
 		ROS_INFO("Down sample size %lf", down_sample_size);
 		ros::param::get("~pc_save", pc_save);

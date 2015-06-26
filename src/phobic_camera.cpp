@@ -60,6 +60,11 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 			// send_msg();
 
 		}
+
+		std_msgs::UInt32 N_cil;
+		N_cil.data = cyl_list.size();
+		num_cyl.publish(N_cil);
+
 	}
 
 }
@@ -185,7 +190,13 @@ void phobic_scene::fitting ()
 			// take the coefficients and make a transformation matrix from camera_frame to axis_cylinder's_frame
 		  	makeInfoCyl(coefficients_cylinder->values, cloud_cylinder);
 		  	std::cout << "Cluster"<< a <<"Cylinder coefficients: " << *coefficients_cylinder << std::endl;
+		  	// send a pose_msg for the visualizer markker
 		  	send_msg( a );
+		  	// send a tf_msg for the motion planning 
+		  	
+		  	std::string cyl= "cilindro_" + std::to_string(a);
+		  	tf_br.sendTransform(tf::StampedTransform(cyl_list[a].cyl_tf_pose, ros::Time::now(), "/camera_rgb_optical_frame", cyl.c_str()));
+
 		  	a = a + 1;
 		  	// remove the first elements in the list
 			object_cluster.pop_front();
@@ -278,6 +289,8 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	
 	bool ok_transf;
 	ok_transf = fromEigenToPose( test_M , CYLINDER.Cyl_pose );
+
+	tf::poseMsgToTF(CYLINDER.Cyl_pose, CYLINDER.cyl_tf_pose );
 	
 
   	// pcl::ModelCoefficients cylinder_coeff;
@@ -343,7 +356,7 @@ void  phobic_scene::send_msg( int cyl_id )
 	marker.color.g = 0.0;
 	marker.color.b = 1.0;
 	marker.lifetime = ros::Duration(1);
-
+	
 	phobic_talk.publish(marker); 
  	//cyl_list.clear();
 

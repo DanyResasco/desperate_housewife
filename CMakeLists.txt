@@ -14,7 +14,7 @@ link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 
-#add_definitions(-std=c++11) 
+add_definitions(-std=c++11) 
 
 
 
@@ -113,6 +113,7 @@ INCLUDE_DIRS include
 # add_executable(desperate_housewife_node src/desperate_housewife_node.cpp)
 add_executable(phobic_camera src/main.cpp src/phobic_camera.cpp)
 add_executable(cylinder_test test/cylinder_test.cpp)
+add_executable(phobic_motion_planning src/phobic_motion_planning.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -128,6 +129,11 @@ target_link_libraries(cylinder_test
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
 )
+target_link_libraries(phobic_motion_planning
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+)
+
 
 
 #############
