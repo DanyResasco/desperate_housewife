@@ -42,7 +42,14 @@ class phobic_mp
 		tf::TransformListener listener_info;
 		std::vector<tf::StampedTransform> Goal;
 		ros::NodeHandle nodeH;
+		bool first, insert;
+		double PF_goal, PF_robot;
+		std::vector<double> cyl_height;
+		std::vector<double> cyl_radius;
+		pcl::PointXYZ goal_position, obstacle_position;
 
+		
+		
 		struct Robot
 		{
 			std::vector<tf::StampedTransform> Link_right;
@@ -57,10 +64,15 @@ class phobic_mp
 	public:
 
 		void MotionPlanningCallback(std_msgs::UInt32 Num_cyl_msg);
+		double SetPotentialField( tf::StampedTransform object);
+		double SetPotentialField_robot();
+		bool objectORostacles();
 
 
 		phobic_mp(ros::NodeHandle node_mp): nodeH(node_mp)
 		{
+			first = true;
+			insert = true;
 
 
 		}

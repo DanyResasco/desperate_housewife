@@ -61,9 +61,18 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 
 		}
 
-		std_msgs::UInt32 N_cil;
-		N_cil.data = cyl_list.size();
-		num_cyl.publish(N_cil);
+		phobic_camera::cyl_info msg;
+		msg.lenght.resize(cyl_list.size());
+		msg.radius.resize(cyl_list.size());
+		msg.dimension = cyl_list.size();
+		for(int i=0; i<cyl_list.size(),i++)
+		{
+			msg.lenght[i] = cyl_list[i].height;
+			msg.radius[i] = cyl_list[i].radius;
+
+		}
+
+		num_cyl.publish(msg);
 
 	}
 
