@@ -26,12 +26,14 @@
 //Eigen
 #include <Eigen/Dense>
 #include <Eigen/LU>
+#include <Eigen/Geometry> 
+
 
 //Tf
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
-
+#include <desperate_housewife/cyl_info.h>
 
 class phobic_mp
 {
@@ -43,10 +45,16 @@ class phobic_mp
 		std::vector<tf::StampedTransform> Goal;
 		ros::NodeHandle nodeH;
 		bool first, insert;
-		double PF_goal, PF_robot;
 		std::vector<double> cyl_height;
 		std::vector<double> cyl_radius;
 		pcl::PointXYZ goal_position, obstacle_position;
+		double P_hand = 0.5;
+		double P_obj = -1;
+		double P_goal = 1;	
+		double influence = 4;	// distanza di influenza del ostacolo
+		std::vector<double> distance;
+		std::vector<double> Force_attractive;
+		std::vector<double> Force_repulsion;
 
 		
 		
@@ -56,6 +64,7 @@ class phobic_mp
 			std::vector<tf::StampedTransform> Link_left;
 			tf::StampedTransform SoftHand_r;
 			tf::StampedTransform SoftHand_l;
+			std::vector<pcl::PointXYZ> robot_position_left, robot_position_right;
 			
 		} Vito_desperate;
 
@@ -63,10 +72,14 @@ class phobic_mp
 	
 	public:
 
-		void MotionPlanningCallback(std_msgs::UInt32 Num_cyl_msg);
+		void MotionPlanningCallback(const desperate_housewife::cyl_info cyl_msg);
 		double SetPotentialField( tf::StampedTransform object);
-		double SetPotentialField_robot();
+		void SetPotentialField_robot(std::vector<double> Force_repulsion);
 		bool objectORostacles();
+		void Calculate_force( pcl::PointXYZ Pos);
+		pcl::PointXYZ  Take_Pos(tf::StampedTransform M_tf);
+		std::pair<double, pcl::PointXYZ> GetDistance(pcl::PointXYZ obj1,pcl::PointXYZ obj2 );
+
 
 
 		phobic_mp(ros::NodeHandle node_mp): nodeH(node_mp)
@@ -90,7 +103,7 @@ class phobic_mp
 
 
 
-
+Eigen::Matrix4d FromTFtoEigen(tf::StampedTransform object);
 
 
 
