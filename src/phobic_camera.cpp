@@ -61,14 +61,16 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 
 		}
 
-		phobic_camera::cyl_info msg;
-		msg.lenght.resize(cyl_list.size());
+		desperate_housewife::cyl_info msg;
+
+		msg.length.resize(cyl_list.size());
 		msg.radius.resize(cyl_list.size());
-		msg.dimension = cyl_list.size();
-		for(int i=0; i<cyl_list.size(),i++)
+		msg.dimension= cyl_list.size();
+
+		for(int i=0; i<cyl_list.size();i++)
 		{
-			msg.lenght[i] = cyl_list[i].height;
-			msg.radius[i] = cyl_list[i].radius;
+			msg.length.push_back(cyl_list[i].height);
+			msg.radius.push_back(cyl_list[i].radius);
 
 		}
 

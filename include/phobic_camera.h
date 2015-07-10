@@ -65,6 +65,8 @@
 #include <tf/transform_datatypes.h>
 
 
+
+
 class phobic_scene
 {
 	
@@ -121,7 +123,7 @@ public:
 		cloud=cloud2.makeShared();
 		phobic_talk = nodeH.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
 		pub_cloud_object = nodeH.advertise<pcl::PointCloud<pcl::PointXYZRGBA> >( "object_cloud", 1 );
-		num_cyl = nodeH.advertise<phobic_camera::cyl_info>( "INFO_CYLINDER", 1 );
+		num_cyl = nodeH.advertise<desperate_housewife::cyl_info>( "INFO_CYLINDER", 1 );
 		ros::param::get("~down_sample_size", down_sample_size);
 		ROS_INFO("Down sample size %lf", down_sample_size);
 		ros::param::get("~pc_save", pc_save);

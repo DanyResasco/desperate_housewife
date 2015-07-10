@@ -55,7 +55,6 @@ add_definitions(-std=c++11)
 add_message_files(
   FILES
   cyl_info.msg
-#   Message2.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -75,8 +74,7 @@ add_message_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
    DEPENDENCIES
-   std_msgs  # Or other packages containing msgs
-   geometry_msgs
+   std_msgs
  )
 
 ###################################
@@ -93,7 +91,7 @@ INCLUDE_DIRS include
 #  LIBRARIES desperate_housewife
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
-	CATKIN_DEPENDS message_runtime
+	CATKIN_DEPENDS message_runtime message_generation std_msgs
 )
 
 ###########
@@ -117,7 +115,8 @@ add_executable(phobic_motion_planning src/phobic_motion_planning.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(desperate_housewife_node desperate_housewife_generate_messages_cpp)
+add_dependencies(phobic_camera desperate_housewife_gencpp)
+add_dependencies(phobic_motion_planning desperate_housewife_gencpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(phobic_camera

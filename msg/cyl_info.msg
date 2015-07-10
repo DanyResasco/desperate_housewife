@@ -1,3 +1,3 @@
-uint32 dimension
-double[] length
-double[] radius
+uint16 dimension
+float64[] length
+float64[] radius
