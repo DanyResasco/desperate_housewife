@@ -15,6 +15,11 @@
 
 	</node>
 
+	<node name="desperate_housewife_MP" pkg="desperate_housewife" type="phobic_motion_planning" respawn="false" output="screen" >
+	
+	</node>
+
+
 	<node name="my_rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find desperate_housewife)/launch/rviz_config.rviz" output="screen">
 
   </node>

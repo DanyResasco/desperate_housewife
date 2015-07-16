@@ -48,10 +48,12 @@ class phobic_mp
 		std::vector<double> cyl_height;
 		std::vector<double> cyl_radius;
 		pcl::PointXYZ goal_position, obstacle_position;
+		pcl::PointXYZ Pos_HAND;
 		double P_hand = 0.5;
 		double P_obj = -1;
 		double P_goal = 1;	
 		double influence = 4;	// distanza di influenza del ostacolo
+		double Force;
 		std::vector<double> distance;
 		std::vector<double> Force_attractive;
 		std::vector<double> Force_repulsion;
@@ -73,10 +75,13 @@ class phobic_mp
 	public:
 
 		void MotionPlanningCallback(const desperate_housewife::cyl_info cyl_msg);
-		double SetPotentialField( tf::StampedTransform object);
-		void SetPotentialField_robot(std::vector<double> Force_repulsion);
+		double SetrepulsiveField( tf::StampedTransform object);
+		void SetPotentialField_robot(std::vector<double> &Force_repulsion);
 		bool objectORostacles();
-		void Calculate_force( pcl::PointXYZ Pos);
+		void Calculate_force();
+		void SetAttraciveField( pcl::PointXYZ Pos);
+		void SetPotentialField( tf::StampedTransform object);
+		void SetRepulsiveFiled(pcl::PointXYZ Pos);
 		pcl::PointXYZ  Take_Pos(tf::StampedTransform M_tf);
 		std::pair<double, pcl::PointXYZ> GetDistance(pcl::PointXYZ obj1,pcl::PointXYZ obj2 );
 
@@ -84,8 +89,8 @@ class phobic_mp
 
 		phobic_mp(ros::NodeHandle node_mp): nodeH(node_mp)
 		{
-			first = true;
-			insert = true;
+			
+		
 
 
 		}

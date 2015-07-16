@@ -2,11 +2,21 @@
 
 int main(int argc, char** argv)
 {
-	
+	ros::init(argc, argv, "Phobic_whife_MP");
 	ros::NodeHandle node_mp;
 	phobic_mp phobic_local_mp(node_mp); 
 	ros::Subscriber reader;
 	reader = node_mp.subscribe(node_mp.resolveName("INFO_CYLINDER"), 1, &phobic_mp::MotionPlanningCallback, &phobic_local_mp);
+
+	ros::Rate loop_rate( 1 ); // 5Hz
+	while (ros::ok())
+	{
+
+		loop_rate.sleep();
+		ros::spinOnce();
+
+	}
+	
 
 	return 0;
 	
@@ -23,7 +33,10 @@ void phobic_mp::MotionPlanningCallback(const desperate_housewife::cyl_info cyl_m
 	}
 	else
 	{
+		ROS_INFO("There are a objects in the scene, start the motion planning");
+		
 		Goal.resize(cyl_msg.dimension);
+		
 		//read the cylinder informations in tf::StampedTransform
 		for (int i = 0; i < cyl_msg.dimension; i++)
 		{
@@ -62,14 +75,12 @@ void phobic_mp::MotionPlanningCallback(const desperate_housewife::cyl_info cyl_m
 
 }
 
-double phobic_mp::SetPotentialField( tf::StampedTransform object)
+void phobic_mp::SetPotentialField( tf::StampedTransform object)
 {
-	//Set robot potential fields only first time
-	// if(first == true )
-	// {
-	// 	SetPotentialField_robot();
-	// 	first= false;
-	// }
+	//Set robot potential fields 
+	
+	SetPotentialField_robot(Force_repulsion);
+
 
 	// test for setting the potential field
 	bool Test_obj = true;
@@ -88,7 +99,8 @@ double phobic_mp::SetPotentialField( tf::StampedTransform object)
 		goal_position.y = frame_kinect(1,3);
 		goal_position.z = frame_kinect(2,3);
 
-	//	Calculate_force( goal_position);
+		SetAttraciveField( goal_position);
+		SetRepulsiveFiled( goal_position);
 	
 
 	}
@@ -103,10 +115,11 @@ double phobic_mp::SetPotentialField( tf::StampedTransform object)
 	}
 
 
-
+	Calculate_force();
 
 
 	Goal.erase(Goal.begin());
+
 
 
 
@@ -151,21 +164,20 @@ Eigen::Matrix4d FromTFtoEigen(tf::StampedTransform object)
 }
 
 
-// // // void phobic_mp::Calculate_force( pcl::PointXYZ Pos);
-// // // {
+void phobic_mp::SetAttraciveField( pcl::PointXYZ Pos)
+{
 	
+	std::pair<double, pcl::PointXYZ> distance_HtO;
+
+	Pos_HAND = Take_Pos( Vito_desperate.SoftHand_l);
+
+	distance_HtO = GetDistance(Pos_HAND, Pos );
+
+	Force_attractive.push_back(0.5*P_goal*pow(distance_HtO.first,2));
+}
 
 
-
-
-
-
-
-
-// // }
-
-
-void phobic_mp::SetPotentialField_robot(std::vector<double> Force_repulsion)
+void phobic_mp::SetPotentialField_robot(std::vector<double> &Force_repulsion)
 {
 	std::vector<std::pair<double, pcl::PointXYZ>> distance_link_left;
 		
@@ -207,6 +219,43 @@ void phobic_mp::SetPotentialField_robot(std::vector<double> Force_repulsion)
 
 }
 
+void phobic_mp::SetRepulsiveFiled(pcl::PointXYZ Pos)
+{
+	std::vector<std::pair<double, pcl::PointXYZ>> distance_local_obj;
+
+
+	for (int i=2; i <= Vito_desperate.robot_position_left.size();i++)
+	{	
+		distance_local_obj.push_back(std::make_pair(GetDistance(Pos,Vito_desperate.robot_position_left[i]).first, GetDistance(Pos,Vito_desperate.robot_position_left[i]).second)); 
+
+	}
+
+	for (int i=0; i <= distance_local_obj.size(); i++)
+	{
+		std::vector<double> vec_Temp;
+		vec_Temp.push_back(distance_local_obj[i].second.x);
+		vec_Temp.push_back(distance_local_obj[i].second.y);
+		vec_Temp.push_back(distance_local_obj[i].second.z);
+
+		Force_repulsion.push_back( (P_obj/pow(distance_local_obj[i].first,2)) * (1/distance_local_obj[i].first - 1/influence) * vec_Temp[i] );
+	}
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 std::pair<double, pcl::PointXYZ> phobic_mp::GetDistance(pcl::PointXYZ obj1, pcl::PointXYZ obj2 )
 {
 	std::pair<double, pcl::PointXYZ> distance_local;
@@ -220,9 +269,6 @@ std::pair<double, pcl::PointXYZ> phobic_mp::GetDistance(pcl::PointXYZ obj1, pcl:
 
 	return distance_local;
 }
-
-
-
 
 
 
@@ -241,4 +287,36 @@ pcl::PointXYZ phobic_mp::Take_Pos(tf::StampedTransform M_tf)
 	
 }
 
+
+
+
+
+void phobic_mp::Calculate_force()
+{
+	double repulsive_local;
+	double attractive_local;
+	
+	for(int i=0;i < Force_repulsion.size();i++)
+	{
+		repulsive_local = Force_repulsion[i] +  Force_repulsion[i+1];
+
+	}
+
+	if(Force_attractive.size() > 1)
+	{
+		for (int i=0; i< Force_attractive.size(); i++)
+		{
+			attractive_local = Force_attractive[i] +  Force_attractive[i+1];
+		}
+	}
+
+	else
+	{
+		attractive_local = *Force_attractive.begin();
+
+	}
+
+
+	Force = attractive_local + repulsive_local;
+}
 
