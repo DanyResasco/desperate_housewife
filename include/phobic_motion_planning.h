@@ -48,15 +48,16 @@ class phobic_mp
 		std::vector<double> cyl_height;
 		std::vector<double> cyl_radius;
 		pcl::PointXYZ goal_position, obstacle_position;
-		pcl::PointXYZ Pos_HAND;
+		Eigen::Matrix4d frame_kinect;
 		double P_hand = 0.5;
 		double P_obj = -1;
 		double P_goal = 1;	
-		double influence = 4;	// distanza di influenza del ostacolo
+		double influence ;	// limit distance of the potential filed influence
 		double Force;
 		std::vector<double> distance;
 		std::vector<double> Force_attractive;
 		std::vector<double> Force_repulsion;
+		bool Arm;
 
 		
 		
@@ -67,6 +68,7 @@ class phobic_mp
 			tf::StampedTransform SoftHand_r;
 			tf::StampedTransform SoftHand_l;
 			std::vector<pcl::PointXYZ> robot_position_left, robot_position_right;
+			pcl::PointXYZ Pos_HAND_r,Pos_HAND_l;
 			
 		} Vito_desperate;
 
@@ -87,10 +89,12 @@ class phobic_mp
 
 
 
+
 		phobic_mp(ros::NodeHandle node_mp): nodeH(node_mp)
 		{
 			
-		
+			ros::param::get("~influence", influence);
+			ROS_INFO("influence %lf", influence);
 
 
 		}

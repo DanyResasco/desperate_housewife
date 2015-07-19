@@ -15,7 +15,11 @@
 
 	</node>
 
+	<arg name="influence" default="4" />
+
 	<node name="desperate_housewife_MP" pkg="desperate_housewife" type="phobic_motion_planning" respawn="false" output="screen" >
+
+		<param name="influence" value="$(arg influence)" />
 	
 	</node>
 

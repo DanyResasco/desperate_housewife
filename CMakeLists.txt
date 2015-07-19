@@ -5,7 +5,7 @@ project(desperate_housewife)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED roscpp pcl_conversions pcl_ros pcl_msgs message_generation std_msgs geometry_msgs)
-find_package(PCL REQUIRED)
+find_package(PCL 1.7.2 REQUIRED)
 
 
 

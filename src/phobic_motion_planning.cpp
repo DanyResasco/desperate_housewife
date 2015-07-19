@@ -79,6 +79,10 @@ void phobic_mp::SetPotentialField( tf::StampedTransform object)
 {
 	//Set robot potential fields 
 	
+	Eigen::Matrix4d frame_eigen;
+	frame_eigen = FromTFtoEigen(object);
+	frame_kinect = frame_eigen.inverse();
+
 	SetPotentialField_robot(Force_repulsion);
 
 
@@ -88,11 +92,6 @@ void phobic_mp::SetPotentialField( tf::StampedTransform object)
 
 	//Test_obj = objectORostacles(object)
 	
-	Eigen::Matrix4d frame_eigen, frame_kinect;
-	frame_eigen = FromTFtoEigen(object);
-	frame_kinect = frame_eigen.inverse();
-
-
 	if(Test_obj == true)
 	{	
 		goal_position.x = frame_kinect(0,3);
@@ -101,8 +100,6 @@ void phobic_mp::SetPotentialField( tf::StampedTransform object)
 
 		SetAttraciveField( goal_position);
 		SetRepulsiveFiled( goal_position);
-	
-
 	}
 
 	else
@@ -111,7 +108,6 @@ void phobic_mp::SetPotentialField( tf::StampedTransform object)
 		obstacle_position.x = frame_kinect(0,3);
 		obstacle_position.y = frame_kinect(1,3);
 		obstacle_position.z = frame_kinect(2,3);
-
 	}
 
 
@@ -168,10 +164,28 @@ void phobic_mp::SetAttraciveField( pcl::PointXYZ Pos)
 {
 	
 	std::pair<double, pcl::PointXYZ> distance_HtO;
+	
 
-	Pos_HAND = Take_Pos( Vito_desperate.SoftHand_l);
+	Vito_desperate.Pos_HAND_l = Take_Pos( Vito_desperate.SoftHand_l);
+	Vito_desperate.Pos_HAND_r = Take_Pos( Vito_desperate.SoftHand_r);
+	double dist_lTo, dist_rTo;
 
-	distance_HtO = GetDistance(Pos_HAND, Pos );
+	dist_lTo = GetDistance(goal_position, Vito_desperate.Pos_HAND_l).first;
+	dist_rTo = GetDistance(goal_position, Vito_desperate.Pos_HAND_r).first;
+
+	if(dist_lTo <= dist_rTo)
+	{
+		Arm = true; 
+		distance_HtO = GetDistance(Vito_desperate.Pos_HAND_l, Pos );
+		ROS_INFO("LEFT ARM");
+	}
+	else
+	{
+		Arm = false;
+		distance_HtO = GetDistance(Vito_desperate.Pos_HAND_r, Pos );
+		ROS_INFO("RIGHT ARM");
+	}	
+
 
 	Force_attractive.push_back(0.5*P_goal*pow(distance_HtO.first,2));
 }
@@ -179,45 +193,59 @@ void phobic_mp::SetAttraciveField( pcl::PointXYZ Pos)
 
 void phobic_mp::SetPotentialField_robot(std::vector<double> &Force_repulsion)
 {
-	std::vector<std::pair<double, pcl::PointXYZ>> distance_link_left;
-		
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[2], Vito_desperate.robot_position_left[1]).first,GetDistance(Vito_desperate.robot_position_left[2], Vito_desperate.robot_position_left[1]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[3], Vito_desperate.robot_position_left[1]).first,GetDistance(Vito_desperate.robot_position_left[3], Vito_desperate.robot_position_left[1]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[3], Vito_desperate.robot_position_left[2]).first,GetDistance(Vito_desperate.robot_position_left[3], Vito_desperate.robot_position_left[2]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[4], Vito_desperate.robot_position_left[1]).first,GetDistance(Vito_desperate.robot_position_left[4], Vito_desperate.robot_position_left[1]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[4], Vito_desperate.robot_position_left[2]).first,GetDistance(Vito_desperate.robot_position_left[4], Vito_desperate.robot_position_left[2]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[4], Vito_desperate.robot_position_left[3]).first,GetDistance(Vito_desperate.robot_position_left[4], Vito_desperate.robot_position_left[3]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[5], Vito_desperate.robot_position_left[1]).first,GetDistance(Vito_desperate.robot_position_left[5], Vito_desperate.robot_position_left[1]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[5], Vito_desperate.robot_position_left[2]).first,GetDistance(Vito_desperate.robot_position_left[5], Vito_desperate.robot_position_left[2]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[5], Vito_desperate.robot_position_left[3]).first,GetDistance(Vito_desperate.robot_position_left[5], Vito_desperate.robot_position_left[3]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[5], Vito_desperate.robot_position_left[4]).first,GetDistance(Vito_desperate.robot_position_left[5], Vito_desperate.robot_position_left[4]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[6], Vito_desperate.robot_position_left[1]).first,GetDistance(Vito_desperate.robot_position_left[6], Vito_desperate.robot_position_left[1]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[6], Vito_desperate.robot_position_left[2]).first,GetDistance(Vito_desperate.robot_position_left[6], Vito_desperate.robot_position_left[2]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[6], Vito_desperate.robot_position_left[3]).first,GetDistance(Vito_desperate.robot_position_left[6], Vito_desperate.robot_position_left[3]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[6], Vito_desperate.robot_position_left[4]).first,GetDistance(Vito_desperate.robot_position_left[6], Vito_desperate.robot_position_left[4]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[6], Vito_desperate.robot_position_left[5]).first,GetDistance(Vito_desperate.robot_position_left[6], Vito_desperate.robot_position_left[5]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[7], Vito_desperate.robot_position_left[1]).first,GetDistance(Vito_desperate.robot_position_left[7], Vito_desperate.robot_position_left[1]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[7], Vito_desperate.robot_position_left[2]).first,GetDistance(Vito_desperate.robot_position_left[7], Vito_desperate.robot_position_left[2]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[7], Vito_desperate.robot_position_left[3]).first,GetDistance(Vito_desperate.robot_position_left[7], Vito_desperate.robot_position_left[3]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[7], Vito_desperate.robot_position_left[4]).first,GetDistance(Vito_desperate.robot_position_left[7], Vito_desperate.robot_position_left[4]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[7], Vito_desperate.robot_position_left[5]).first,GetDistance(Vito_desperate.robot_position_left[7], Vito_desperate.robot_position_left[5]).second));
-	distance_link_left.push_back(std::make_pair(GetDistance(Vito_desperate.robot_position_left[7], Vito_desperate.robot_position_left[6]).first,GetDistance(Vito_desperate.robot_position_left[7], Vito_desperate.robot_position_left[6]).second));
+	
+	std::vector<std::pair<double, pcl::PointXYZ>> distance_link;
+	std::vector<pcl::PointXYZ>* robot_link_position;
+	//robot_link_position->resize(Vito_desperate.robot_position_left.size());
+	
+	//Arm=true is left arm, Arm = false is right arm
+	if(Arm = true)
+	{
+		robot_link_position = &Vito_desperate.robot_position_left;
+
+	}
+	else
+	{
+		robot_link_position = &Vito_desperate.robot_position_right;
+	}	
+
+
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[2], (*robot_link_position)[1]).first,GetDistance((*robot_link_position)[2], (*robot_link_position)[1]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[3], (*robot_link_position)[1]).first,GetDistance((*robot_link_position)[3], (*robot_link_position)[1]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[3], (*robot_link_position)[2]).first,GetDistance((*robot_link_position)[3], (*robot_link_position)[2]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[4], (*robot_link_position)[1]).first,GetDistance((*robot_link_position)[4], (*robot_link_position)[1]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[4], (*robot_link_position)[2]).first,GetDistance((*robot_link_position)[4], (*robot_link_position)[2]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[4], (*robot_link_position)[3]).first,GetDistance((*robot_link_position)[4], (*robot_link_position)[3]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[5], (*robot_link_position)[1]).first,GetDistance((*robot_link_position)[5], (*robot_link_position)[1]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[5], (*robot_link_position)[2]).first,GetDistance((*robot_link_position)[5], (*robot_link_position)[2]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[5], (*robot_link_position)[3]).first,GetDistance((*robot_link_position)[5], (*robot_link_position)[3]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[5], (*robot_link_position)[4]).first,GetDistance((*robot_link_position)[5], (*robot_link_position)[4]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[6], (*robot_link_position)[1]).first,GetDistance((*robot_link_position)[6], (*robot_link_position)[1]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[6], (*robot_link_position)[2]).first,GetDistance((*robot_link_position)[6], (*robot_link_position)[2]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[6], (*robot_link_position)[3]).first,GetDistance((*robot_link_position)[6], (*robot_link_position)[3]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[6], (*robot_link_position)[4]).first,GetDistance((*robot_link_position)[6], (*robot_link_position)[4]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[6], (*robot_link_position)[5]).first,GetDistance((*robot_link_position)[6], (*robot_link_position)[5]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[7], (*robot_link_position)[1]).first,GetDistance((*robot_link_position)[7], (*robot_link_position)[1]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[7], (*robot_link_position)[2]).first,GetDistance((*robot_link_position)[7], (*robot_link_position)[2]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[7], (*robot_link_position)[3]).first,GetDistance((*robot_link_position)[7], (*robot_link_position)[3]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[7], (*robot_link_position)[4]).first,GetDistance((*robot_link_position)[7], (*robot_link_position)[4]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[7], (*robot_link_position)[5]).first,GetDistance((*robot_link_position)[7], (*robot_link_position)[5]).second));
+	distance_link.push_back(std::make_pair(GetDistance((*robot_link_position)[7], (*robot_link_position)[6]).first,GetDistance((*robot_link_position)[7], (*robot_link_position)[6]).second));
 	
 	// Repulsive fields = K/distance^2 (1/distance -1/influence) partial_derivative_vector
 
-	for (int i=0; i <= distance_link_left.size(); i++)
+	for (int i=0; i <= distance_link.size(); i++)
 	{
 		std::vector<double> vec_Temp;
-		vec_Temp.push_back(distance_link_left[i].second.x);
-		vec_Temp.push_back(distance_link_left[i].second.y);
-		vec_Temp.push_back(distance_link_left[i].second.z);
+		vec_Temp.push_back(distance_link[i].second.x);
+		vec_Temp.push_back(distance_link[i].second.y);
+		vec_Temp.push_back(distance_link[i].second.z);
 
-		Force_repulsion.push_back( (P_obj/pow(distance_link_left[i].first,2)) * (1/distance_link_left[i].first - 1/influence) * vec_Temp[i] );
+		Force_repulsion.push_back( (P_obj/pow(distance_link[i].first,2)) * (1/distance_link[i].first - 1/influence) * vec_Temp[i] );
 	}
-
-	//
-
 }
+
+
 
 void phobic_mp::SetRepulsiveFiled(pcl::PointXYZ Pos)
 {
@@ -237,23 +265,17 @@ void phobic_mp::SetRepulsiveFiled(pcl::PointXYZ Pos)
 		vec_Temp.push_back(distance_local_obj[i].second.y);
 		vec_Temp.push_back(distance_local_obj[i].second.z);
 
-		Force_repulsion.push_back( (P_obj/pow(distance_local_obj[i].first,2)) * (1/distance_local_obj[i].first - 1/influence) * vec_Temp[i] );
+		if(distance_local_obj[i].first <= influence)
+		{
+			Force_repulsion.push_back( (P_obj/pow(distance_local_obj[i].first,2)) * (1/distance_local_obj[i].first - 1/influence) * vec_Temp[i] );
+		}
+		else
+		{
+			Force_repulsion.push_back(0);
+		}
 	}
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 std::pair<double, pcl::PointXYZ> phobic_mp::GetDistance(pcl::PointXYZ obj1, pcl::PointXYZ obj2 )
@@ -284,7 +306,6 @@ pcl::PointXYZ phobic_mp::Take_Pos(tf::StampedTransform M_tf)
 	Pos_vito.z = Link_eigen(2,3);
 
 	return Pos_vito;
-	
 }
 
 
