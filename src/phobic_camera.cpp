@@ -63,18 +63,23 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 
 		desperate_housewife::cyl_info msg;
 
-		msg.length.resize(cyl_list.size());
-		msg.radius.resize(cyl_list.size());
-		msg.dimension= cyl_list.size();
+		//msg.length.resize(cyl_list.size());
+		//msg.radius.resize(cyl_list.size());
+		msg.dimension = cyl_list.size();
 
 		for(int i=0; i<cyl_list.size();i++)
 		{
 			msg.length.push_back(cyl_list[i].height);
 			msg.radius.push_back(cyl_list[i].radius);
 
-		}
 
+		}
+		std::cout<<"cyl_msg.dimension: "<<msg.dimension<<std::endl;
+		std::cout<<"cyl_msg.length: "<<msg.length.size()<<std::endl;
+		std::cout<<"cyl_msg.radius: "<<msg.radius.size()<<std::endl;
 		num_cyl.publish(msg);
+		msg.length.clear();
+		msg.radius.clear();
 
 	}
 
@@ -200,7 +205,7 @@ void phobic_scene::fitting ()
 
 			// take the coefficients and make a transformation matrix from camera_frame to axis_cylinder's_frame
 		  	makeInfoCyl(coefficients_cylinder->values, cloud_cylinder);
-		  	std::cout << "Cluster"<< a <<"Cylinder coefficients: " << *coefficients_cylinder << std::endl;
+		  	//std::cout << "Cluster"<< a <<"Cylinder coefficients: " << *coefficients_cylinder << std::endl;
 		  	// send a pose_msg for the visualizer markker
 		  	send_msg( a );
 		  	// send a tf_msg for the motion planning 
