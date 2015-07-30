@@ -36,16 +36,18 @@ void phobic_mp::MotionPlanningCallback(const desperate_housewife::cyl_info cyl_m
 		ROS_INFO("There are a objects in the scene, start the motion planning");
 		
 		Goal.resize(cyl_msg.dimension);
-		
+		cyl_radius.resize(cyl_msg.dimension);
+		cyl_height.resize(cyl_msg.dimension);
+	
 		//read the cylinder informations in tf::StampedTransform
 		for (int i = 0; i < cyl_msg.dimension; i++)
 		{
 
 			listener_info.lookupTransform("/camera_rgb_optical_frame", "cilindro_" + std::to_string(i) , ros::Time(0), Goal[i] );
-			//cyl_height[i] = cyl_msg.length[i];
-			//cyl_radius[i] = cyl_msg.radius[i];
+			cyl_height.push_back(cyl_msg.length[i]);
+			cyl_radius.push_back(cyl_msg.radius[i]);
 		}
-				
+						
 		//read the robot informations in tf::StampedTransform. Vito has 7 link and 6 joint
 		if(check_robot == true)
 		{
@@ -57,7 +59,7 @@ void phobic_mp::MotionPlanningCallback(const desperate_housewife::cyl_info cyl_m
 				Vito_desperate.robot_position_right.push_back(Take_Pos(Vito_desperate.Link_right[i]));
 			}
 
-			// //Soft Hand information
+			////Soft Hand information
 
 			listener_info.lookupTransform("/camera_rgb_optical_frame", "right_hand_palm_link" , ros::Time(0), Vito_desperate.SoftHand_r );
 			listener_info.lookupTransform("/camera_rgb_optical_frame", "left_hand_palm_link" , ros::Time(0), Vito_desperate.SoftHand_l );
@@ -74,8 +76,8 @@ void phobic_mp::MotionPlanningCallback(const desperate_housewife::cyl_info cyl_m
 				Vito_desperate.robot_position_right.push_back(r);
 			}
 	    }
-		// // with this informations we can make a MP 
-
+		
+		//// with this informations we can make a MP 
 		for (int i = 0; i <  cyl_msg.dimension; i++)
 		{
 			SetPotentialField( *Goal.begin());
@@ -101,10 +103,10 @@ void phobic_mp::SetPotentialField( tf::StampedTransform object)
 
 
 	// test for setting the potential field
-	bool Test_obj = true;
+	bool Test_obj;
 	// if true the object is a goal, otherwise is a obstacles
 
-	//Test_obj = objectORostacles(object)
+	Test_obj = objectORostacles();
 	
 	if(Test_obj == true)
 	{	
@@ -136,20 +138,24 @@ void phobic_mp::SetPotentialField( tf::StampedTransform object)
 }
 
 
-// bool phobic_mp::objectORostacles(tf::StampedTransform frame)
-// {
+bool phobic_mp::objectORostacles()
+{
+	bool OrO;
 
-	
-// 	cyl_height.front() ;
-// 	cyl_radius[i] =cyl_msg.radius;
+	if((cyl_radius.front() > max_radius) && (cyl_height.front() > max_lenght))
+	{
+		OrO= false;
+		ROS_INFO("object is a obstacles");
+	}
+	else
+	{
+		OrO = true;
+	}
+	cyl_radius.erase(cyl_radius.begin());
+	cyl_height.erase(cyl_height.begin());
 
-
-
-
-
-
-// 	return true;
-// }
+	return OrO;
+}
 
 
 

@@ -71,12 +71,8 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 		{
 			msg.length.push_back(cyl_list[i].height);
 			msg.radius.push_back(cyl_list[i].radius);
-
-
 		}
-		std::cout<<"cyl_msg.dimension: "<<msg.dimension<<std::endl;
-		std::cout<<"cyl_msg.length: "<<msg.length.size()<<std::endl;
-		std::cout<<"cyl_msg.radius: "<<msg.radius.size()<<std::endl;
+		
 		num_cyl.publish(msg);
 		msg.length.clear();
 		msg.radius.clear();
