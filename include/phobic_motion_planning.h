@@ -53,11 +53,16 @@ class phobic_mp
 		double P_obj = -1;
 		double P_goal = 1;	
 		double influence ;	// limit distance of the potential filed influence
-		double Force;
+		std::vector<pcl::PointXYZ> Force;
+		double dissipative;
 		std::vector<double> distance;
-		std::vector<double> Force_attractive;
-		std::vector<double> Force_repulsion;
+		std::vector<pcl::PointXYZ> Force_attractive;
+		std::vector<pcl::PointXYZ> Force_repulsion;
 		bool Arm;
+		double velocity_max;
+		double v_lim;
+		pcl::PointXYZ velocity;
+		bool check_robot;
 
 		
 		
@@ -78,7 +83,7 @@ class phobic_mp
 
 		void MotionPlanningCallback(const desperate_housewife::cyl_info cyl_msg);
 		double SetrepulsiveField( tf::StampedTransform object);
-		void SetPotentialField_robot(std::vector<double> &Force_repulsion);
+		void SetPotentialField_robot(std::vector<pcl::PointXYZ> &Force_repulsion);
 		bool objectORostacles();
 		void Calculate_force();
 		void SetAttraciveField( pcl::PointXYZ Pos);
@@ -86,6 +91,7 @@ class phobic_mp
 		void SetRepulsiveFiled(pcl::PointXYZ Pos);
 		pcl::PointXYZ  Take_Pos(tf::StampedTransform M_tf);
 		std::pair<double, pcl::PointXYZ> GetDistance(pcl::PointXYZ obj1,pcl::PointXYZ obj2 );
+		void SetLimitation(pcl::PointXYZ &vel_d);
 
 
 
@@ -95,6 +101,12 @@ class phobic_mp
 			
 			ros::param::get("~influence", influence);
 			ROS_INFO("influence %lf", influence);
+			ros::param::get("~velocity_max", velocity_max);
+			ROS_INFO("velocity_max %lf", velocity_max);
+			
+			check_robot  = false;
+
+
 
 
 		}
