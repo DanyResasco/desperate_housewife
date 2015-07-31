@@ -62,20 +62,20 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 		}
 
 		desperate_housewife::cyl_info msg;
-
-		//msg.length.resize(cyl_list.size());
-		//msg.radius.resize(cyl_list.size());
 		msg.dimension = cyl_list.size();
 
 		for(int i=0; i<cyl_list.size();i++)
 		{
 			msg.length.push_back(cyl_list[i].height);
 			msg.radius.push_back(cyl_list[i].radius);
+			msg.Info.push_back(cyl_list[i].Info);
+			std::cout<<"info "<< cyl_list[i].Info <<std::endl;
 		}
 		
 		num_cyl.publish(msg);
 		msg.length.clear();
 		msg.radius.clear();
+		msg.Info.clear();
 
 	}
 
@@ -120,8 +120,6 @@ void phobic_scene::erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  or
 
 void phobic_scene::fitting ()
 {	
-	//std::cout<<"sono nel fitting"<<std::endl;
-	
 	int a = 0;
 	cyl_list.clear();
 	while ( object_cluster.size() > 0 )
@@ -223,11 +221,13 @@ void phobic_scene::fitting ()
 void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl)
 {
 	// cylinder's coefficients
+	//Eigen::Vector3f position(coeff[3], coeff[4], coeff[5]);
 	// double x = coeff[0], y = coeff[1], z = coeff[2];	// cordinate di un punto sull asse
 	// double p_x = coeff[3], p_y = coeff[4], p_z = coeff[5];	// componenti dell asse realtive alla telecamera
 	// double r = coeff[6];
 	//create a new frame
 	CYLINDER.radius = coeff[6];
+
 	//k = kinect frame, c = cylinder frame
 	Eigen::Matrix<double,4,4> Matrix_transform; //T_k_c 
 	Matrix_transform = Cyl_Transform( coeff); 
@@ -255,14 +255,13 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 		if(z_min > CYl_new_transf->points[i].z )
 		{	
 			z_min = CYl_new_transf->points[i].z;
-			//index_down = i;
-
+			
 		}
 
 		if(z_max < CYl_new_transf->points[i].z)
 		{	
 			z_max = CYl_new_transf->points[i].z;
-			//index_up = i; 
+			
 		}
 	}
 
@@ -285,14 +284,7 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	pcl::transformPointCloud(*CYl_new_transf, *CYl_test, M_center); //Point cloud in T_g
 	pcl::copyPointCloud<pcl::PointXYZRGBA>( *CYl_test, *cloud);
 
-	// for draw a cylinder with 3d viewer
-	// CYLINDER.info_disegno_cyl_up.x = CYl_new_transf->points[index_up].x; 
-	// CYLINDER.info_disegno_cyl_dw.x = CYl_new_transf->points[index_down].x;
-	// CYLINDER.info_disegno_cyl_up.y = CYl_new_transf->points[index_up].y; 
-	// CYLINDER.info_disegno_cyl_dw.y = CYl_new_transf->points[index_down].y;
-	// CYLINDER.info_disegno_cyl_up.z = z_max; 
-	// CYLINDER.info_disegno_cyl_dw.z = z_min;
-	
+
 	Eigen::Matrix4d test_M;
 	//test_M = M_center*CYLINDER.Matrix_transform_inv;
 	test_M = Matrix_transform * M_center; // T_k_g
@@ -479,7 +471,7 @@ void phobic_scene::getcluster()
   }
 
 
-  Eigen::Matrix4d Cyl_Transform (const std::vector<float> coeff)
+  Eigen::Matrix4d phobic_scene::Cyl_Transform (const std::vector<float> coeff)
   {
  	//std::cout<<"creo matrice"<<std::endl;
   	double x = coeff[0], y = coeff[1], z = coeff[2];
@@ -498,6 +490,23 @@ void phobic_scene::getcluster()
 		w = w * -1; //change sign
 	}
 
+	Eigen::Vector3d plane_coeff_eigen;
+	plane_coeff_eigen(0) = Plane_coeff[0];
+	plane_coeff_eigen(1) = Plane_coeff[1];
+	plane_coeff_eigen(2) = Plane_coeff[2];
+	
+	double theta = plane_coeff_eigen.dot(w);
+	std::cout<<"theta"<<theta<<std::endl;
+	if(((theta >= 0) && (theta<45)) || ((theta <=0) && (theta>-45)))
+	{
+		CYLINDER.Info = 0;
+	}
+	else 
+	{	
+		CYLINDER.Info = 1;
+	}
+
+
 	Eigen::Vector3d x_new = (w.cross(u)).normalized();
 	Eigen::Vector3d y_new = (x_new.cross(w)).normalized();
 	
@@ -512,6 +521,7 @@ void phobic_scene::getcluster()
 	tranfs_matrix.row(1) << rotation.row(1), position[1];
 	tranfs_matrix.row(2) << rotation.row(2), position[2]; 
 	tranfs_matrix.row(3) << 0,0,0, 1;
+
 
 	return tranfs_matrix;
 }

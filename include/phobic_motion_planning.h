@@ -44,9 +44,10 @@ class phobic_mp
 		tf::TransformListener listener_info;
 		std::vector<tf::StampedTransform> Goal;
 		ros::NodeHandle nodeH;
-		bool first, insert;
+		//bool first, insert;
 		std::vector<double> cyl_height;
 		std::vector<double> cyl_radius;
+		std::vector<double> cyl_info;
 		pcl::PointXYZ goal_position, obstacle_position;
 		Eigen::Matrix4d frame_kinect;
 		double P_hand = 0.5;
@@ -63,6 +64,7 @@ class phobic_mp
 		double v_lim;
 		pcl::PointXYZ velocity;
 		bool check_robot;
+		double max_radius, max_lenght;
 
 		
 		
@@ -74,6 +76,7 @@ class phobic_mp
 			tf::StampedTransform SoftHand_l;
 			std::vector<pcl::PointXYZ> robot_position_left, robot_position_right;
 			pcl::PointXYZ Pos_HAND_r,Pos_HAND_l;
+			pcl::PointXYZ Pos_final_hand_r, Pos_final_hand_r;
 			
 		} Vito_desperate;
 
@@ -82,16 +85,18 @@ class phobic_mp
 	public:
 
 		void MotionPlanningCallback(const desperate_housewife::cyl_info cyl_msg);
-		double SetrepulsiveField( tf::StampedTransform object);
+		double SetrepulsiveField( tf::StampedTransform &object);
 		void SetPotentialField_robot(std::vector<pcl::PointXYZ> &Force_repulsion);
 		bool objectORostacles();
 		void Calculate_force();
-		void SetAttraciveField( pcl::PointXYZ Pos);
-		void SetPotentialField( tf::StampedTransform object);
-		void SetRepulsiveFiled(pcl::PointXYZ Pos);
-		pcl::PointXYZ  Take_Pos(tf::StampedTransform M_tf);
-		std::pair<double, pcl::PointXYZ> GetDistance(pcl::PointXYZ obj1,pcl::PointXYZ obj2 );
+		void SetAttraciveField( pcl::PointXYZ &Pos);
+		void SetPotentialField( tf::StampedTransform &object);
+		void SetRepulsiveFiled(pcl::PointXYZ &Pos);
+		pcl::PointXYZ  Take_Pos(tf::StampedTransform &M_tf);
+		std::pair<double, pcl::PointXYZ> GetDistance(pcl::PointXYZ &obj1,pcl::PointXYZ &obj2 );
 		void SetLimitation(pcl::PointXYZ &vel_d);
+		//SetCommandVector();
+		//SetHandPosition();
 
 
 
@@ -103,7 +108,10 @@ class phobic_mp
 			ROS_INFO("influence %lf", influence);
 			ros::param::get("~velocity_max", velocity_max);
 			ROS_INFO("velocity_max %lf", velocity_max);
-			
+			ros::param::get("~max_radius", max_radius);
+			ROS_INFO("max_radius %lf", max_radius);
+			ros::param::get("~max_lenght", max_lenght);
+			ROS_INFO("max_lenght %lf", max_lenght);
 			check_robot  = false;
 
 
@@ -124,7 +132,7 @@ class phobic_mp
 
 
 
-Eigen::Matrix4d FromTFtoEigen(tf::StampedTransform object);
+Eigen::Matrix4d FromTFtoEigen(tf::StampedTransform &object);
 
 
 

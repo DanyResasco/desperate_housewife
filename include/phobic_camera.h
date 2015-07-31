@@ -88,7 +88,7 @@ private:
 
 	struct Mod_cylinder
 	{
-		 	// double tetha;
+		double Info;
 		double height;
 		double radius;
 		pcl::ModelCoefficients cylinder_coeff;
@@ -115,6 +115,7 @@ public:
 	void makeInfoCyl(std::vector<float> coeff, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl);
 	bool fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose);
 	void visualization( bool testing, bool circle );
+	Eigen::Matrix4d Cyl_Transform (const std::vector<float>  coeff);
 
 	phobic_scene(ros::NodeHandle NodeH, bool test): nodeH(NodeH)
 	{
@@ -169,7 +170,7 @@ public:
 //input: cylinder's coefficients
 //ouput: hand transformation
 //Description: this function return a hand-transformation
-Eigen::Matrix4d Cyl_Transform (const std::vector<float>  coeff);
+
 
 //Function: visualization
 //input: point cloud

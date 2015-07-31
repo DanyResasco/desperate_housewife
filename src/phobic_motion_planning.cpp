@@ -46,6 +46,7 @@ void phobic_mp::MotionPlanningCallback(const desperate_housewife::cyl_info cyl_m
 			listener_info.lookupTransform("/camera_rgb_optical_frame", "cilindro_" + std::to_string(i) , ros::Time(0), Goal[i] );
 			cyl_height.push_back(cyl_msg.length[i]);
 			cyl_radius.push_back(cyl_msg.radius[i]);
+			cyl_info.push_back(cyl_msg.Info[i]);
 		}
 						
 		//read the robot informations in tf::StampedTransform. Vito has 7 link and 6 joint
@@ -65,7 +66,7 @@ void phobic_mp::MotionPlanningCallback(const desperate_housewife::cyl_info cyl_m
 			listener_info.lookupTransform("/camera_rgb_optical_frame", "left_hand_palm_link" , ros::Time(0), Vito_desperate.SoftHand_l );
 	    }
 	    else
-	    {	for (int i=0;i<10;i++)
+	    {	for (int i=0;i<10;i++) //numeri a caso per provarlo
 	    	{
 	    		pcl::PointXYZ r;
 	    		r.x = i;
@@ -83,15 +84,14 @@ void phobic_mp::MotionPlanningCallback(const desperate_housewife::cyl_info cyl_m
 			SetPotentialField( *Goal.begin());
 		}
 
+	//SetCommandVector();
+	
 
 	}
 
-		
-
-
 }
 
-void phobic_mp::SetPotentialField( tf::StampedTransform object)
+void phobic_mp::SetPotentialField( tf::StampedTransform &object)
 {	
 	ROS_INFO("calculate the potential field");
 	//Set robot potential fields 
@@ -115,27 +115,35 @@ void phobic_mp::SetPotentialField( tf::StampedTransform object)
 		goal_position.z = frame_kinect(2,3);
 
 		SetAttraciveField( goal_position);
-		SetRepulsiveFiled( goal_position);
+		SetRepulsiveFiled(  0 goal_position);
+		//SetHandPosition();
 	}
 
 	else
-	{	//set obstacles repulsion force
-		
+	{	//set obstacles repulsion force		
 		obstacle_position.x = frame_kinect(0,3);
 		obstacle_position.y = frame_kinect(1,3);
 		obstacle_position.z = frame_kinect(2,3);
+		SetRepulsiveFiled( obstacle_position);
 	}
-
 
 	Calculate_force();
 
-
 	Goal.erase(Goal.begin());
 
+}
+void phobic_mp::SetHandPosition()
+{
+	pcl::PointXYZ pos_final_local;
+	if((cyl_info == 0) && (cyl_v == 0))
+	{
+		pos_final_local.z =  
 
 
+	}
 
 }
+
 
 
 bool phobic_mp::objectORostacles()
@@ -158,10 +166,7 @@ bool phobic_mp::objectORostacles()
 }
 
 
-
-
-
-Eigen::Matrix4d FromTFtoEigen(tf::StampedTransform object)
+Eigen::Matrix4d FromTFtoEigen(tf::StampedTransform &object)
 {	
 	Eigen::Quaterniond transf_quad(object.getRotation().getW(),object.getRotation().getX(),object.getRotation().getY(),object.getRotation().getZ());
 	transf_quad.normalize();
@@ -180,7 +185,7 @@ Eigen::Matrix4d FromTFtoEigen(tf::StampedTransform object)
 }
 
 
-void phobic_mp::SetAttraciveField( pcl::PointXYZ Pos)
+void phobic_mp::SetAttraciveField( pcl::PointXYZ &Pos)
 {
 	
 	std::pair<double, pcl::PointXYZ> distance_HtO;
@@ -307,7 +312,7 @@ void phobic_mp::SetPotentialField_robot(std::vector<pcl::PointXYZ> &Force_repuls
 
 
 
-void phobic_mp::SetRepulsiveFiled(pcl::PointXYZ Pos)
+void phobic_mp::SetRepulsiveFiled(pcl::PointXYZ &Pos)
 {
 	std::vector<std::pair<double, pcl::PointXYZ>> distance_local_obj;
 
@@ -344,7 +349,7 @@ void phobic_mp::SetRepulsiveFiled(pcl::PointXYZ Pos)
 }
 
 
-std::pair<double, pcl::PointXYZ> phobic_mp::GetDistance(pcl::PointXYZ obj1, pcl::PointXYZ obj2 )
+std::pair<double, pcl::PointXYZ> phobic_mp::GetDistance(pcl::PointXYZ &obj1, pcl::PointXYZ &obj2 )
 {
 	std::pair<double, pcl::PointXYZ> distance_local;
 	pcl::PointXYZ local_point;
@@ -360,7 +365,7 @@ std::pair<double, pcl::PointXYZ> phobic_mp::GetDistance(pcl::PointXYZ obj1, pcl:
 
 
 
-pcl::PointXYZ phobic_mp::Take_Pos(tf::StampedTransform M_tf)
+pcl::PointXYZ phobic_mp::Take_Pos(tf::StampedTransform &M_tf)
 {
 	pcl::PointXYZ Pos_vito;
 	Eigen::Matrix4d Link_eigen;
