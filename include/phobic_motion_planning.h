@@ -44,10 +44,11 @@ class phobic_mp
 		tf::TransformListener listener_info;
 		std::vector<tf::StampedTransform> Goal;
 		ros::NodeHandle nodeH;
-		//bool first, insert;
 		std::vector<double> cyl_height;
 		std::vector<double> cyl_radius;
 		std::vector<double> cyl_info;
+		std::vector<double> cyl_v;
+		std::vector<geometry_msgs::Pose> cyl_transf;
 		pcl::PointXYZ goal_position, obstacle_position;
 		Eigen::Matrix4d frame_kinect;
 		double P_hand = 0.5;
@@ -64,7 +65,7 @@ class phobic_mp
 		double v_lim;
 		pcl::PointXYZ velocity;
 		bool check_robot;
-		double max_radius, max_lenght;
+		double max_radius=0.2, max_lenght=0.2;
 
 		
 		
@@ -76,7 +77,7 @@ class phobic_mp
 			tf::StampedTransform SoftHand_l;
 			std::vector<pcl::PointXYZ> robot_position_left, robot_position_right;
 			pcl::PointXYZ Pos_HAND_r,Pos_HAND_l;
-			pcl::PointXYZ Pos_final_hand_r, Pos_final_hand_r;
+			Eigen::Matrix4d Pos_final_hand_r, Pos_final_hand_l;
 			
 		} Vito_desperate;
 
@@ -96,7 +97,7 @@ class phobic_mp
 		std::pair<double, pcl::PointXYZ> GetDistance(pcl::PointXYZ &obj1,pcl::PointXYZ &obj2 );
 		void SetLimitation(pcl::PointXYZ &vel_d);
 		//SetCommandVector();
-		//SetHandPosition();
+		void SetHandPosition();
 
 
 

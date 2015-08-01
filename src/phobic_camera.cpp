@@ -69,13 +69,18 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 			msg.length.push_back(cyl_list[i].height);
 			msg.radius.push_back(cyl_list[i].radius);
 			msg.Info.push_back(cyl_list[i].Info);
-			std::cout<<"info "<< cyl_list[i].Info <<std::endl;
+			msg.vol.push_back(cyl_list[i].vol);
+			msg.Transform.poses.push_back(cyl_list[i].Cyl_pose);
+			std::cout<<"info radius "<< cyl_list[i].radius <<std::endl;
+			std::cout<<"info empty "<< cyl_list[i].vol <<std::endl;
 		}
 		
 		num_cyl.publish(msg);
 		msg.length.clear();
 		msg.radius.clear();
 		msg.Info.clear();
+		msg.vol.clear();
+		//msg.Transform.clear();
 
 	}
 
@@ -245,7 +250,7 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 
 
 	//find height 
-	double z_min, z_max, index_up, index_down;
+	double z_min, z_max;
 	z_min= CYl_new_transf->points[0].z;
 	z_max= CYl_new_transf->points[0].z;
 	
@@ -266,8 +271,19 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	}
 
 
-	CYLINDER.height= z_max - z_min;
+	CYLINDER.height = z_max - z_min;
 	//std::cout<< "altezza: "<< CYLINDER.height <<std::endl;
+
+	if (CYLINDER.Info == 0)
+	{
+		CYLINDER.vol = FullorEmpty(CYl_new_transf);
+
+	}
+	else
+	{
+		CYLINDER.vol = 1;
+	}
+
 
 	// find a center
 	CYLINDER.center.z = 1.*(z_min +  (CYLINDER.height/2));
@@ -308,6 +324,39 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	CYLINDER.cylinder_coeff.values[6] = CYLINDER.radius;
 
 	cyl_list.push_back(CYLINDER);
+
+}
+
+
+int phobic_scene::FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud)
+{
+	pcl::PointXYZRGBA retta; //punto in mezzo
+	retta.x = 0;
+	retta.y = 0;
+	retta.z = 1 + CYLINDER.height;
+
+	std::vector< int >  k_indices;
+	std::vector< float > k_sqr_distances;
+	int test_v;
+	double dim_s;
+
+	pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBA>);
+  	tree->setInputCloud (cloud);
+
+  	dim_s = CYLINDER.radius/3;
+
+	tree->radiusSearch(retta, dim_s, k_indices, k_sqr_distances,0 );
+
+	if(k_indices.size() < 10)
+	{
+		test_v = 0;
+	}
+	else
+	{
+		test_v = 1;
+	}
+
+	return test_v;
 
 }
 

@@ -47,6 +47,8 @@ void phobic_mp::MotionPlanningCallback(const desperate_housewife::cyl_info cyl_m
 			cyl_height.push_back(cyl_msg.length[i]);
 			cyl_radius.push_back(cyl_msg.radius[i]);
 			cyl_info.push_back(cyl_msg.Info[i]);
+			cyl_v.push_back(cyl_msg.vol[i]);
+			cyl_transf.push_back(cyl_msg.Transform.poses[i]);
 		}
 						
 		//read the robot informations in tf::StampedTransform. Vito has 7 link and 6 joint
@@ -60,7 +62,7 @@ void phobic_mp::MotionPlanningCallback(const desperate_housewife::cyl_info cyl_m
 				Vito_desperate.robot_position_right.push_back(Take_Pos(Vito_desperate.Link_right[i]));
 			}
 
-			////Soft Hand information
+			////Soft Hand information M_k_H 
 
 			listener_info.lookupTransform("/camera_rgb_optical_frame", "right_hand_palm_link" , ros::Time(0), Vito_desperate.SoftHand_r );
 			listener_info.lookupTransform("/camera_rgb_optical_frame", "left_hand_palm_link" , ros::Time(0), Vito_desperate.SoftHand_l );
@@ -115,8 +117,8 @@ void phobic_mp::SetPotentialField( tf::StampedTransform &object)
 		goal_position.z = frame_kinect(2,3);
 
 		SetAttraciveField( goal_position);
-		SetRepulsiveFiled(  0 goal_position);
-		//SetHandPosition();
+		SetRepulsiveFiled( goal_position);
+		SetHandPosition();
 	}
 
 	else
@@ -132,15 +134,100 @@ void phobic_mp::SetPotentialField( tf::StampedTransform &object)
 	Goal.erase(Goal.begin());
 
 }
+
 void phobic_mp::SetHandPosition()
 {
-	pcl::PointXYZ pos_final_local;
-	if((cyl_info == 0) && (cyl_v == 0))
+	
+	Eigen::Matrix4d M_desired_local; // in cyl frame
+	Eigen::Vector4d Point_desired,Pos_ori_hand; //in cyl frame
+	Eigen::Vector4d translation; //in cyl frame
+	Eigen::Vector3d x(1,0,0);
+	Eigen::Vector3d y(0,1,0),prova;
+	Eigen::Matrix4d T_K_H;
+	
+	if (Arm == true)
 	{
-		pos_final_local.z =  
-
-
+		M_desired_local.col(0) << - x, 0;
+		prova = (-x.cross(y));
+		T_K_H = FromTFtoEigen(Vito_desperate.SoftHand_l);
+		
 	}
+	else
+	{
+		M_desired_local.col(0) << x, 0;
+		prova = (x.cross(y));
+		T_K_H = FromTFtoEigen(Vito_desperate.SoftHand_r);
+	}
+	
+	if((cyl_info.front() == 0) && (cyl_v.front() == 0)) //se cilindro dritto (o leggermente piegato) e senza tappo
+	{
+		Point_desired(0) = cyl_radius.front() + 0.05;
+		Point_desired(1) = cyl_height.front();
+		Point_desired(2) = cyl_radius.front() + 0.05;	//da rivedere!!
+		Point_desired(3) = 0; 
+		ROS_INFO("cyl dritto e vuoto");
+	}
+	if(((cyl_info.front() == 0) && (cyl_v.front() != 0)) && (cyl_radius.front() < max_radius))
+	{
+		Point_desired(0) = 0;
+		Point_desired(1) = cyl_height.front()+ 0.05;
+		Point_desired(2) = 0; //da rivedere
+		Point_desired(3) = 0; 
+		ROS_INFO("cyl dritto e pieno");
+	}
+
+	if(cyl_info.front() != 0)
+	{
+		Point_desired(0) = cyl_height.front() + 0.05;
+		Point_desired(1) = cyl_radius.front() + 0.05;
+		Point_desired(2) = 0; //da rivedere
+		Point_desired(3) = 0; 
+		ROS_INFO("cyl piegato");
+	}
+
+	
+	ROS_INFO("Set hand final position");
+	Eigen::Quaterniond cyl_quat_eigen;
+	Eigen::Matrix3d  CYL_tranf;
+	Eigen::Vector3d tranfs_matrix;
+	Eigen::Matrix4d cyl_c_k = Eigen::Matrix4d::Identity();
+	Eigen::Matrix4d T_C_H;
+
+	// From pose to eigen
+	cyl_quat_eigen.x() = cyl_transf.front().orientation.x;
+	cyl_quat_eigen.y() = cyl_transf.front().orientation.y;
+	cyl_quat_eigen.z() = cyl_transf.front().orientation.z;
+	cyl_quat_eigen.w() = cyl_transf.front().orientation.w;
+	tranfs_matrix(0) = cyl_transf.front().position.x;
+	tranfs_matrix(1) = cyl_transf.front().position.y;
+	tranfs_matrix(2) = cyl_transf.front().position.z;
+
+
+	CYL_tranf = cyl_quat_eigen.toRotationMatrix();
+	cyl_c_k.block<3,3>(0,0) << CYL_tranf;
+	cyl_c_k.row(3) << 0,0,0,1;
+	cyl_c_k.col(3) << tranfs_matrix, 1; 
+
+	// transformation matrix for the softhand in cyl frame
+	T_C_H =  cyl_c_k * T_K_H;
+	
+	Pos_ori_hand = T_K_H.col(3);
+	Eigen::Vector4d local;
+	local = Pos_ori_hand.transpose()*T_C_H;
+
+	translation(0) = Point_desired(0) - local(0);
+	translation(1) = Point_desired(1) - local(1);
+	translation(2) = Point_desired(2) - local(2);
+	translation(3) = Point_desired(3) - local(3);
+
+	M_desired_local.col(1) << -y, 0;
+	M_desired_local.col(2) <<  prova, 0;
+	M_desired_local.col(3) << translation;
+	M_desired_local.normalize();
+
+	//std::cout<<"translation"<<translation(3)<<std::endl;
+	ROS_INFO("translation: %d", translation(3));
+
 
 }
 
