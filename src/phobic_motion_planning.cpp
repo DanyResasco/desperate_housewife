@@ -48,7 +48,7 @@ void phobic_mp::MotionPlanningCallback(const desperate_housewife::cyl_info cyl_m
 			cyl_radius.push_back(cyl_msg.radius[i]);
 			cyl_info.push_back(cyl_msg.Info[i]);
 			cyl_v.push_back(cyl_msg.vol[i]);
-			cyl_transf.push_back(cyl_msg.Transform.poses[i]);
+			//cyl_transf.push_back(cyl_msg.Transform.poses[i]);
 		}
 						
 		//read the robot informations in tf::StampedTransform. Vito has 7 link and 6 joint
@@ -98,16 +98,14 @@ void phobic_mp::SetPotentialField( tf::StampedTransform &object)
 	ROS_INFO("calculate the potential field");
 	//Set robot potential fields 
 	Eigen::Matrix4d frame_eigen;
-	frame_eigen = FromTFtoEigen(object);
-	frame_kinect = frame_eigen.inverse();
+	frame_eigen = FromTFtoEigen(object); //T_k_c
+	frame_kinect = frame_eigen.inverse(); //T_c_k
 	
 	SetPotentialField_robot(Force_repulsion);
-
 
 	// test for setting the potential field
 	bool Test_obj;
 	// if true the object is a goal, otherwise is a obstacles
-
 	Test_obj = objectORostacles();
 	
 	if(Test_obj == true)
@@ -118,7 +116,7 @@ void phobic_mp::SetPotentialField( tf::StampedTransform &object)
 
 		SetAttraciveField( goal_position);
 		SetRepulsiveFiled( goal_position);
-		SetHandPosition();
+		SetHandPosition();		
 	}
 
 	else
@@ -130,6 +128,7 @@ void phobic_mp::SetPotentialField( tf::StampedTransform &object)
 	}
 
 	Calculate_force();
+	
 
 	Goal.erase(Goal.begin());
 
@@ -142,20 +141,20 @@ void phobic_mp::SetHandPosition()
 	Eigen::Vector4d Point_desired,Pos_ori_hand; //in cyl frame
 	Eigen::Vector4d translation; //in cyl frame
 	Eigen::Vector3d x(1,0,0);
-	Eigen::Vector3d y(0,1,0),prova;
+	Eigen::Vector3d y(0,1,0),z_d;
 	Eigen::Matrix4d T_K_H;
 	
 	if (Arm == true)
 	{
 		M_desired_local.col(0) << - x, 0;
-		prova = (-x.cross(y));
-		T_K_H = FromTFtoEigen(Vito_desperate.SoftHand_l);
-		
+		z_d = (-x.cross(y));
+		T_K_H = FromTFtoEigen(Vito_desperate.SoftHand_l);		
 	}
+
 	else
 	{
 		M_desired_local.col(0) << x, 0;
-		prova = (x.cross(y));
+		z_d = (x.cross(y));
 		T_K_H = FromTFtoEigen(Vito_desperate.SoftHand_r);
 	}
 	
@@ -187,29 +186,10 @@ void phobic_mp::SetHandPosition()
 
 	
 	ROS_INFO("Set hand final position");
-	Eigen::Quaterniond cyl_quat_eigen;
-	Eigen::Matrix3d  CYL_tranf;
-	Eigen::Vector3d tranfs_matrix;
-	Eigen::Matrix4d cyl_c_k = Eigen::Matrix4d::Identity();
 	Eigen::Matrix4d T_C_H;
 
-	// From pose to eigen
-	cyl_quat_eigen.x() = cyl_transf.front().orientation.x;
-	cyl_quat_eigen.y() = cyl_transf.front().orientation.y;
-	cyl_quat_eigen.z() = cyl_transf.front().orientation.z;
-	cyl_quat_eigen.w() = cyl_transf.front().orientation.w;
-	tranfs_matrix(0) = cyl_transf.front().position.x;
-	tranfs_matrix(1) = cyl_transf.front().position.y;
-	tranfs_matrix(2) = cyl_transf.front().position.z;
-
-
-	CYL_tranf = cyl_quat_eigen.toRotationMatrix();
-	cyl_c_k.block<3,3>(0,0) << CYL_tranf;
-	cyl_c_k.row(3) << 0,0,0,1;
-	cyl_c_k.col(3) << tranfs_matrix, 1; 
-
-	// transformation matrix for the softhand in cyl frame
-	T_C_H =  cyl_c_k * T_K_H;
+	// transformation matrix for the softhand in cyl frame t_c_h = t_c_k * t_k_h
+	T_C_H =  frame_kinect * T_K_H;
 	
 	Pos_ori_hand = T_K_H.col(3);
 	Eigen::Vector4d local;
@@ -221,13 +201,18 @@ void phobic_mp::SetHandPosition()
 	translation(3) = Point_desired(3) - local(3);
 
 	M_desired_local.col(1) << -y, 0;
-	M_desired_local.col(2) <<  prova, 0;
+	M_desired_local.col(2) <<  z_d, 0;
 	M_desired_local.col(3) << translation;
 	M_desired_local.normalize();
 
 	//std::cout<<"translation"<<translation(3)<<std::endl;
 	ROS_INFO("translation: %d", translation(3));
 
+	//devo portare il tutto in word frame
+
+	cyl_radius.erase(cyl_radius.begin());
+	cyl_height.erase(cyl_height.begin());
+	cyl_info.erase(cyl_info.begin());
 
 }
 
@@ -276,24 +261,25 @@ void phobic_mp::SetAttraciveField( pcl::PointXYZ &Pos)
 {
 	
 	std::pair<double, pcl::PointXYZ> distance_HtO;
-	
+	//Hand position respect kinect frame
 	Vito_desperate.Pos_HAND_l = Take_Pos( Vito_desperate.SoftHand_l);
 	Vito_desperate.Pos_HAND_r = Take_Pos( Vito_desperate.SoftHand_r);
-	double dist_lTo, dist_rTo;
+	
+	double dist_lTo, dist_rTo;	//in kinect frame
 
-	dist_lTo = GetDistance(goal_position, Vito_desperate.Pos_HAND_l).first;
-	dist_rTo = GetDistance(goal_position, Vito_desperate.Pos_HAND_r).first;
+	dist_lTo = GetDistance(Pos, Vito_desperate.Pos_HAND_l).first;
+	dist_rTo = GetDistance(Pos, Vito_desperate.Pos_HAND_r).first;
 
 	if(dist_lTo <= dist_rTo)
 	{
 		Arm = true; 
-		distance_HtO = GetDistance(Vito_desperate.Pos_HAND_l, Pos );
+		distance_HtO = GetDistance(Pos, Vito_desperate.Pos_HAND_l);
 		ROS_INFO("Vito uses a: LEFT ARM");
 	}
 	else
 	{
 		Arm = false;
-		distance_HtO = GetDistance(Vito_desperate.Pos_HAND_r, Pos );
+		distance_HtO = GetDistance(Pos ,Vito_desperate.Pos_HAND_r );
 		ROS_INFO("Vito uses a: RIGHT ARM");
 	}	
 
@@ -345,9 +331,7 @@ void phobic_mp::SetLimitation(pcl::PointXYZ &vel_d)
 
 void phobic_mp::SetPotentialField_robot(std::vector<pcl::PointXYZ> &Force_repulsion)
 {
-	
 	std::vector<std::pair<double, pcl::PointXYZ>> distance_link;
-	
 	std::vector<pcl::PointXYZ>* robot_link_position;
 	//robot_link_position->resize(Vito_desperate.robot_position_left.size());
 	
@@ -402,7 +386,6 @@ void phobic_mp::SetPotentialField_robot(std::vector<pcl::PointXYZ> &Force_repuls
 void phobic_mp::SetRepulsiveFiled(pcl::PointXYZ &Pos)
 {
 	std::vector<std::pair<double, pcl::PointXYZ>> distance_local_obj;
-
 
 	for (int i=2; i <= Vito_desperate.robot_position_left.size();i++)
 	{	
@@ -466,10 +449,6 @@ pcl::PointXYZ phobic_mp::Take_Pos(tf::StampedTransform &M_tf)
 	return Pos_vito;
 }
 
-
-
-
-
 void phobic_mp::Calculate_force()
 {
 	pcl::PointXYZ repulsive_local;
@@ -480,7 +459,6 @@ void phobic_mp::Calculate_force()
 		repulsive_local.x = Force_repulsion[i].x +  Force_repulsion[i+1].x;
 		repulsive_local.y = Force_repulsion[i].y +  Force_repulsion[i+1].y;
 		repulsive_local.z = Force_repulsion[i].z +  Force_repulsion[i+1].z;
-
 	}
 
 	if(Force_attractive.size() > 1)

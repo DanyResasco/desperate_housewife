@@ -70,7 +70,7 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 			msg.radius.push_back(cyl_list[i].radius);
 			msg.Info.push_back(cyl_list[i].Info);
 			msg.vol.push_back(cyl_list[i].vol);
-			msg.Transform.poses.push_back(cyl_list[i].Cyl_pose);
+			//msg.Transform.poses.push_back(cyl_list[i].Cyl_pose);
 			std::cout<<"info radius "<< cyl_list[i].radius <<std::endl;
 			std::cout<<"info empty "<< cyl_list[i].vol <<std::endl;
 		}
@@ -343,8 +343,14 @@ int phobic_scene::FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud)
 	pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBA>);
   	tree->setInputCloud (cloud);
 
-  	dim_s = CYLINDER.radius/3;
-
+  	if(CYLINDER.radius <= 0.05)
+  	{
+  		dim_s = CYLINDER.radius;
+  	}
+  	else
+  	{
+  		dim_s = CYLINDER.radius/3;
+  	}
 	tree->radiusSearch(retta, dim_s, k_indices, k_sqr_distances,0 );
 
 	if(k_indices.size() < 10)

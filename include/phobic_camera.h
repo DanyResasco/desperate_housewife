@@ -91,6 +91,7 @@ private:
 		double Info;
 		double height;
 		double radius;
+		double vol;
 		pcl::ModelCoefficients cylinder_coeff;
 		pcl::PointXYZ info_disegno_cyl_up;
 		pcl::PointXYZ info_disegno_cyl_dw;
@@ -116,6 +117,7 @@ public:
 	bool fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose);
 	void visualization( bool testing, bool circle );
 	Eigen::Matrix4d Cyl_Transform (const std::vector<float>  coeff);
+	int FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud);
 
 	phobic_scene(ros::NodeHandle NodeH, bool test): nodeH(NodeH)
 	{
