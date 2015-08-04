@@ -27,6 +27,7 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/point_types.h>
 #include <pcl/sample_consensus/ransac.h>
+#include <pcl/sample_consensus/lmeds.h>
 #include <pcl/ModelCoefficients.h>
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
@@ -84,6 +85,7 @@ private:
 	ros::Publisher num_cyl;
 	double down_sample_size;
 	double pc_save;
+	Eigen::Matrix4d T_k_g;
 
 
 	struct Mod_cylinder
@@ -113,11 +115,11 @@ public:
 	void erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  pc);
 	void getcluster();
 	void erase_table();
-	void makeInfoCyl(std::vector<float> coeff, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl);
+	void makeInfoCyl(std::vector<float> coeff, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_scene);
 	bool fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose);
 	void visualization( bool testing, bool circle );
 	Eigen::Matrix4d Cyl_Transform (const std::vector<float>  coeff);
-	int FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud);
+	int FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud2);
 
 	phobic_scene(ros::NodeHandle NodeH, bool test): nodeH(NodeH)
 	{

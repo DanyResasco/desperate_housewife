@@ -24,6 +24,7 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 	// ROS_INFO("Strating timer");
 	// ros::Time begin = ros::Time::now();
 	erase_environment(scene);
+	/*pcl::copyPointCloud<pcl::PointXYZRGBA>(*scene, *cloud_scene);*/
 	// if (scene->points.empty ())
 	// {
 	// 	ROS_INFO( "Empty point cloud" );
@@ -72,7 +73,7 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 			msg.vol.push_back(cyl_list[i].vol);
 			//msg.Transform.poses.push_back(cyl_list[i].Cyl_pose);
 			std::cout<<"info radius "<< cyl_list[i].radius <<std::endl;
-			std::cout<<"info empty "<< cyl_list[i].vol <<std::endl;
+			std::cout<<"info empty "<< cyl_list[i].vol <<std::endl;	// 0 in empty 1 is full
 		}
 		
 		num_cyl.publish(msg);
@@ -100,7 +101,7 @@ void phobic_scene::erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  or
 	// x
 	Filter_env.setInputCloud (original_pc);
 	Filter_env.setFilterFieldName ("x");
-	Filter_env.setFilterLimits (-0.5, 0.5);
+	Filter_env.setFilterLimits (-0.3, 0.3);
 	Filter_env.filter (*cloud_filtered);
 	// The indices_x array indexes all points of cloud_in that have x between -0.2, 0.7
 	
@@ -139,7 +140,6 @@ void phobic_scene::fitting ()
 		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_first (new pcl::PointCloud<pcl::PointXYZRGBA>);
 
 		pcl::copyPointCloud<pcl::PointXYZRGBA>( *object_cluster.begin(), *cloud_first);
-
 		 // pcl::PointCloud<pcl::PointXYZRGBA>::Ptr msg (new pcl::PointCloud<pcl::PointXYZRGBA>);
 		 // msg->header.frame_id = "camera_rgb_optical_frame";
 		 //  msg->height = msg->width = 1;
@@ -168,11 +168,12 @@ void phobic_scene::fitting ()
 		pcl::SACSegmentationFromNormals< pcl::PointXYZRGBA, pcl::Normal> seg;
 		seg.setOptimizeCoefficients (true);
 		seg.setModelType (pcl::SACMODEL_CYLINDER);
-		seg.setMethodType (pcl::SAC_RANSAC);
-		seg.setNormalDistanceWeight (0.1);
+		//seg.setMethodType (pcl::SAC_RANSAC);
+		seg.setMethodType (pcl::SAC_LMEDS );
+		// seg.setNormalDistanceWeight (0.1);
 		seg.setMaxIterations (10000);
 		seg.setDistanceThreshold (0.05);	//distance between two points
-	    seg.setRadiusLimits (0, 0.2);	//cilynder's radius 20cm
+	    // seg.setRadiusLimits (0, 0.2);	//cilynder's radius 20cm
 	 	seg.setInputCloud (cloud_first);
 	  	seg.setInputNormals (cloud_normals);
 
@@ -203,7 +204,7 @@ void phobic_scene::fitting ()
 		  	// pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud_cylinder, *cloud);
 
 			// take the coefficients and make a transformation matrix from camera_frame to axis_cylinder's_frame
-		  	makeInfoCyl(coefficients_cylinder->values, cloud_cylinder);
+		  	makeInfoCyl(coefficients_cylinder->values, cloud_cylinder, cloud_first);
 		  	//std::cout << "Cluster"<< a <<"Cylinder coefficients: " << *coefficients_cylinder << std::endl;
 		  	// send a pose_msg for the visualizer markker
 		  	send_msg( a );
@@ -223,7 +224,7 @@ void phobic_scene::fitting ()
 	}
 }
 
-void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl)
+void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_scene)
 {
 	// cylinder's coefficients
 	//Eigen::Vector3f position(coeff[3], coeff[4], coeff[5]);
@@ -234,20 +235,16 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	CYLINDER.radius = coeff[6];
 
 	//k = kinect frame, c = cylinder frame
-	Eigen::Matrix<double,4,4> Matrix_transform; //T_k_c 
+	Eigen::Matrix<double,4,4> Matrix_transform; //T_k_c  
 	Matrix_transform = Cyl_Transform( coeff); 
 
-
 	CYLINDER.Matrix_transform_inv = Matrix_transform.inverse(); //T_c_k
-	
-	//	std::cout<<"finito di creare matrice di rotazione"<<std::endl;
 	
 	//create a new cylinder pointcloud
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CYl_new_transf (new pcl::PointCloud<pcl::PointXYZRGBA>);
 	
 	pcl::transformPointCloud(*pc_cyl, *CYl_new_transf, CYLINDER.Matrix_transform_inv); // point cloud in T_c
 	// pcl::copyPointCloud<pcl::PointXYZRGBA>( *CYl_new_transf, *cloud);
-
 
 	//find height 
 	double z_min, z_max;
@@ -270,20 +267,8 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 		}
 	}
 
-
 	CYLINDER.height = z_max - z_min;
 	//std::cout<< "altezza: "<< CYLINDER.height <<std::endl;
-
-	if (CYLINDER.Info == 0)
-	{
-		CYLINDER.vol = FullorEmpty(CYl_new_transf);
-
-	}
-	else
-	{
-		CYLINDER.vol = 1;
-	}
-
 
 	// find a center
 	CYLINDER.center.z = 1.*(z_min +  (CYLINDER.height/2));
@@ -294,21 +279,38 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	M_center(0,3) = CYLINDER.center.x ;
 	M_center(1,3) = CYLINDER.center.y ;
 	M_center(2,3) = CYLINDER.center.z ;
-	
-	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CYl_test (new pcl::PointCloud<pcl::PointXYZRGBA>);
-
-	pcl::transformPointCloud(*CYl_new_transf, *CYl_test, M_center); //Point cloud in T_g
-	pcl::copyPointCloud<pcl::PointXYZRGBA>( *CYl_test, *cloud);
 
 
-	Eigen::Matrix4d test_M;
-	//test_M = M_center*CYLINDER.Matrix_transform_inv;
-	test_M = Matrix_transform * M_center; // T_k_g
+	//T_k_g = M_center*CYLINDER.Matrix_transform_inv;
+	T_k_g = Matrix_transform * M_center; // T_k_g
 	//////testing///////
-	//test_M = Eigen::Matrix4d::Identity();
+	//T_k_g = Eigen::Matrix4d::Identity();
+	Eigen::Matrix4d t_g_k;
+	t_g_k= T_k_g.inverse();
+
+	//pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CYl_test (new pcl::PointCloud<pcl::PointXYZRGBA>);
+
+	//pcl::transformPointCloud(*CYl_new_transf, *CYl_test, CYLINDER.Matrix_transform_inv); //Point cloud in T_g
+	//pcl::copyPointCloud<pcl::PointXYZRGBA>( *CYl_test, *cloud);
+
+
+	if (CYLINDER.Info == 0) // solo sse è dritto guardo se è vuoto (mi servira per sapere dove mettere la mano)
+	{	
+		
+		pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_test (new pcl::PointCloud<pcl::PointXYZRGBA>);
+		pcl::transformPointCloud(*cloud_scene, *cloud_test, t_g_k);
+		CYLINDER.vol = FullorEmpty(cloud_test);
+
+	}
+	else
+	{
+		CYLINDER.vol = 1;
+	}
+
+
 	
 	bool ok_transf;
-	ok_transf = fromEigenToPose( test_M , CYLINDER.Cyl_pose );
+	ok_transf = fromEigenToPose( T_k_g , CYLINDER.Cyl_pose );
 
 	tf::poseMsgToTF(CYLINDER.Cyl_pose, CYLINDER.cyl_tf_pose );
 	
@@ -328,12 +330,36 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 }
 
 
-int phobic_scene::FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud)
+int phobic_scene::FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud22)
 {
 	pcl::PointXYZRGBA retta; //punto in mezzo
-	retta.x = 0;
-	retta.y = 0;
-	retta.z = 1 + CYLINDER.height;
+	// retta.x = CYLINDER.center.x;
+	// retta.y = CYLINDER.center.y;
+	// // retta.z = 1 + CYLINDER.height;
+	// retta.z = CYLINDER.center.z + CYLINDER.height/2;
+
+	double z_min, z_max;
+	z_min= cloud22->points[0].z;
+	z_max= cloud22->points[0].z;
+	
+	for (int i=1; i< cloud22->points.size(); i++)
+	{
+		if(z_min > cloud22->points[i].z )
+		{	
+			z_min = cloud22->points[i].z;
+			
+		}
+
+		if(z_max < cloud22->points[i].z)
+		{	
+			z_max = cloud22->points[i].z;
+			
+		}
+	}
+	
+	retta.x = 0;//CYLINDER.center.x;
+	retta.y = 0;//CYLINDER.center.y;
+	retta.z = z_max;
 
 	std::vector< int >  k_indices;
 	std::vector< float > k_sqr_distances;
@@ -341,25 +367,28 @@ int phobic_scene::FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud)
 	double dim_s;
 
 	pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBA>);
-  	tree->setInputCloud (cloud);
+  	tree->setInputCloud (cloud22);
 
-  	if(CYLINDER.radius <= 0.05)
-  	{
-  		dim_s = CYLINDER.radius;
-  	}
-  	else
-  	{
-  		dim_s = CYLINDER.radius/3;
-  	}
+  	// if(CYLINDER.radius <= 0.05)
+  	// {
+  	// 	dim_s = CYLINDER.radius;
+  	// }
+  	// else
+  	// {
+  	// 	dim_s = CYLINDER.radius/3;
+  	// }
+  	dim_s = CYLINDER.radius*0.6;
+  	//	dim_s = CYLINDER.radius;
 	tree->radiusSearch(retta, dim_s, k_indices, k_sqr_distances,0 );
+	ROS_INFO("k_indices %d", k_indices.size());
 
-	if(k_indices.size() < 10)
+	if(k_indices.size() < (dim_s*300))
 	{
-		test_v = 0;
+		test_v = 0; // vuoto
 	}
 	else
 	{
-		test_v = 1;
+		test_v = 1; // Pieno
 	}
 
 	return test_v;
@@ -436,6 +465,7 @@ void phobic_scene::getcluster()
 	vg.setInputCloud (cloud);
 	vg.setLeafSize (down_sample_size, down_sample_size, down_sample_size);
 	vg.filter (*cloud_filtered);
+
 	// ROS_INFO("PointCloud after filtering has: %d data points.", cloud_filtered->points.size ());
 	if (cloud_filtered->points.empty())
 	{
