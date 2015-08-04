@@ -55,6 +55,7 @@
 #include <utility>
 #include <list>
 #include <string>
+#include <math.h> 
 
 //Eigen
 #include <Eigen/Dense>

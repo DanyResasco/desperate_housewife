@@ -73,7 +73,9 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 			msg.vol.push_back(cyl_list[i].vol);
 			//msg.Transform.poses.push_back(cyl_list[i].Cyl_pose);
 			std::cout<<"info radius "<< cyl_list[i].radius <<std::endl;
-			std::cout<<"info empty "<< cyl_list[i].vol <<std::endl;	// 0 in empty 1 is full
+			ROS_INFO("cyl is empty (=0) or full (1): %g", cyl_list[i].vol);
+			ROS_INFO("info=0 cylinder if stand up else is crooked: %g", cyl_list[i].Info);
+			//std::cout<<"info empty "<< cyl_list[i].vol <<std::endl;	// 0 in empty 1 is full
 		}
 		
 		num_cyl.publish(msg);
@@ -288,6 +290,47 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	Eigen::Matrix4d t_g_k;
 	t_g_k= T_k_g.inverse();
 
+
+	Eigen::Vector3d u(0,-1,0);
+	Eigen::Vector3d plane_coeff_kinect_frame, temp_n2;
+	Eigen::Vector4d normal_plane_cyl_frame, temp_normal_plane;
+	plane_coeff_kinect_frame(0) = Plane_coeff[0];
+	plane_coeff_kinect_frame(1) = Plane_coeff[1];
+	plane_coeff_kinect_frame(2) = Plane_coeff[2];
+
+
+	if ((u.dot(plane_coeff_kinect_frame)) <0) // in kinect frame
+	{
+		plane_coeff_kinect_frame = plane_coeff_kinect_frame * -1;
+	}
+
+	// in cyl frame
+	temp_normal_plane << plane_coeff_kinect_frame, 1;
+	normal_plane_cyl_frame = t_g_k * temp_normal_plane;
+	normal_plane_cyl_frame.normalize();
+	
+	Eigen::Vector3d axis_cyl_frame(0,0,1);
+	temp_n2(0) = normal_plane_cyl_frame(0);
+	temp_n2(1) = normal_plane_cyl_frame(1);
+	temp_n2(2) = normal_plane_cyl_frame(2);
+
+	temp_n2.normalize();
+	double dotproduct = temp_n2.dot(axis_cyl_frame);
+
+	double theta = std::acos(dotproduct);
+	std::cout<<"theta: "<<theta<<std::endl;
+	if(((theta >= 0) && (theta<20*(3.14/180))) || ((theta <0) && (theta > -20*(3.14/180))))
+	{
+		CYLINDER.Info = 0;
+	}
+	else 
+	{	
+		CYLINDER.Info = 1;
+	}
+
+
+
+
 	//pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CYl_test (new pcl::PointCloud<pcl::PointXYZRGBA>);
 
 	//pcl::transformPointCloud(*CYl_new_transf, *CYl_test, CYLINDER.Matrix_transform_inv); //Point cloud in T_g
@@ -332,11 +375,11 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 
 int phobic_scene::FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud22)
 {
-	pcl::PointXYZRGBA retta; //punto in mezzo
-	// retta.x = CYLINDER.center.x;
-	// retta.y = CYLINDER.center.y;
-	// // retta.z = 1 + CYLINDER.height;
-	// retta.z = CYLINDER.center.z + CYLINDER.height/2;
+	pcl::PointXYZRGBA point_center; //punto in mezzo
+	// point_center.x = CYLINDER.center.x;
+	// point_center.y = CYLINDER.center.y;
+	// // point_center.z = 1 + CYLINDER.height;
+	// point_center.z = CYLINDER.center.z + CYLINDER.height/2;
 
 	double z_min, z_max;
 	z_min= cloud22->points[0].z;
@@ -357,9 +400,9 @@ int phobic_scene::FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud22)
 		}
 	}
 	
-	retta.x = 0;//CYLINDER.center.x;
-	retta.y = 0;//CYLINDER.center.y;
-	retta.z = z_max;
+	point_center.x = CYLINDER.center.x;
+	point_center.y = CYLINDER.center.y;
+	point_center.z = z_max;
 
 	std::vector< int >  k_indices;
 	std::vector< float > k_sqr_distances;
@@ -379,7 +422,7 @@ int phobic_scene::FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud22)
   	// }
   	dim_s = CYLINDER.radius*0.6;
   	//	dim_s = CYLINDER.radius;
-	tree->radiusSearch(retta, dim_s, k_indices, k_sqr_distances,0 );
+	tree->radiusSearch(point_center, dim_s, k_indices, k_sqr_distances,0 );
 	ROS_INFO("k_indices %d", k_indices.size());
 
 	if(k_indices.size() < (dim_s*300))
@@ -392,6 +435,7 @@ int phobic_scene::FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud22)
 	}
 
 	return test_v;
+
 
 }
 
@@ -573,22 +617,6 @@ void phobic_scene::getcluster()
 	if((u.dot(w) < 0))
 	{
 		w = w * -1; //change sign
-	}
-
-	Eigen::Vector3d plane_coeff_eigen;
-	plane_coeff_eigen(0) = Plane_coeff[0];
-	plane_coeff_eigen(1) = Plane_coeff[1];
-	plane_coeff_eigen(2) = Plane_coeff[2];
-	
-	double theta = plane_coeff_eigen.dot(w);
-	std::cout<<"theta"<<theta<<std::endl;
-	if(((theta >= 0) && (theta<45)) || ((theta <=0) && (theta>-45)))
-	{
-		CYLINDER.Info = 0;
-	}
-	else 
-	{	
-		CYLINDER.Info = 1;
 	}
 
 
