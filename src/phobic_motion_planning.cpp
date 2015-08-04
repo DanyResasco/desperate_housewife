@@ -38,6 +38,11 @@ void phobic_mp::MotionPlanningCallback(const desperate_housewife::cyl_info cyl_m
 		Goal.resize(cyl_msg.dimension);
 		cyl_radius.resize(cyl_msg.dimension);
 		cyl_height.resize(cyl_msg.dimension);
+		//check the vector dimension	
+		ROS_INFO("cyl_msg size: %d", cyl_msg.dimension);
+		ROS_INFO("goal size: %d", Goal.size());
+		ROS_INFO("cyl_radius size: %d", cyl_radius.size());
+		ROS_INFO("cyl_height size: %d", cyl_height.size());
 	
 		//read the cylinder informations in tf::StampedTransform
 		for (int i = 0; i < cyl_msg.dimension; i++)
@@ -78,6 +83,15 @@ void phobic_mp::MotionPlanningCallback(const desperate_housewife::cyl_info cyl_m
 	    		Vito_desperate.robot_position_left.push_back(r);
 				Vito_desperate.robot_position_right.push_back(r);
 			}
+
+			
+	    	Vito_desperate.Pos_HAND_r.x = 0.1;
+	    	Vito_desperate.Pos_HAND_r.y = -0.1;
+	    	Vito_desperate.Pos_HAND_r.z = 0.2;
+			
+			Vito_desperate.Pos_HAND_l.x = -0.1;
+	    	Vito_desperate.Pos_HAND_l.y = -0.1;
+	    	Vito_desperate.Pos_HAND_l.z = 0.2;
 	    }
 		
 		//// with this informations we can make a MP 
@@ -97,9 +111,9 @@ void phobic_mp::SetPotentialField( tf::StampedTransform &object)
 {	
 	ROS_INFO("calculate the potential field");
 	//Set robot potential fields 
-	Eigen::Matrix4d frame_eigen;
-	frame_eigen = FromTFtoEigen(object); //T_k_c
-	frame_kinect = frame_eigen.inverse(); //T_c_k
+	Eigen::Matrix4d frame_kinect;
+	frame_kinect = FromTFtoEigen(object); //T_k_c
+	frame_cylinder = frame_kinect.inverse(); //T_c_k
 	
 	SetPotentialField_robot(Force_repulsion);
 
@@ -110,20 +124,25 @@ void phobic_mp::SetPotentialField( tf::StampedTransform &object)
 	
 	if(Test_obj == true)
 	{	
-		goal_position.x = frame_kinect(0,3);
-		goal_position.y = frame_kinect(1,3);
-		goal_position.z = frame_kinect(2,3);
+		goal_position.x = frame_cylinder(0,3);
+		goal_position.y = frame_cylinder(1,3);
+		goal_position.z = frame_cylinder(2,3);
 
-		SetAttraciveField( goal_position);
-		SetRepulsiveFiled( goal_position);
+		pcl::PointXYZ goal_kinect_frame;
+		goal_kinect_frame.x = frame_kinect(0,3);
+		goal_kinect_frame.y = frame_kinect(1,3);
+		goal_kinect_frame.z = frame_kinect(2,3);
+
+		SetAttraciveField( goal_kinect_frame);
+		SetRepulsiveFiled( goal_kinect_frame);
 		SetHandPosition();		
 	}
 
 	else
 	{	//set obstacles repulsion force		
-		obstacle_position.x = frame_kinect(0,3);
-		obstacle_position.y = frame_kinect(1,3);
-		obstacle_position.z = frame_kinect(2,3);
+		obstacle_position.x = frame_cylinder(0,3);
+		obstacle_position.y = frame_cylinder(1,3);
+		obstacle_position.z = frame_cylinder(2,3);
 		SetRepulsiveFiled( obstacle_position);
 	}
 
@@ -144,16 +163,16 @@ void phobic_mp::SetHandPosition()
 	Eigen::Vector3d y(0,1,0),z_d;
 	Eigen::Matrix4d T_K_H;
 	
-	if (Arm == true)
+	if (Arm == true) //left arm
 	{
-		M_desired_local.col(0) << - x, 0;
+		M_desired_local.col(0) << x, 0;
 		z_d = (-x.cross(y));
 		T_K_H = FromTFtoEigen(Vito_desperate.SoftHand_l);		
 	}
 
 	else
 	{
-		M_desired_local.col(0) << x, 0;
+		M_desired_local.col(0) << -x, 0;	//right arm
 		z_d = (x.cross(y));
 		T_K_H = FromTFtoEigen(Vito_desperate.SoftHand_r);
 	}
@@ -166,7 +185,7 @@ void phobic_mp::SetHandPosition()
 		Point_desired(3) = 0; 
 		ROS_INFO("cyl dritto e vuoto");
 	}
-	if(((cyl_info.front() == 0) && (cyl_v.front() != 0)) && (cyl_radius.front() < max_radius))
+	else if(((cyl_info.front() == 0) && (cyl_v.front() != 0)) && (cyl_radius.front() < max_radius))
 	{
 		Point_desired(0) = 0;
 		Point_desired(1) = cyl_height.front()+ 0.05;
@@ -175,7 +194,7 @@ void phobic_mp::SetHandPosition()
 		ROS_INFO("cyl dritto e pieno");
 	}
 
-	if(cyl_info.front() != 0)
+	else if ((cyl_info.front() != 0) && (cyl_radius.front() < max_radius))
 	{
 		Point_desired(0) = cyl_height.front() + 0.05;
 		Point_desired(1) = cyl_radius.front() + 0.05;
@@ -183,13 +202,16 @@ void phobic_mp::SetHandPosition()
 		Point_desired(3) = 0; 
 		ROS_INFO("cyl piegato");
 	}
+	else
+	{
+		ROS_INFO("caso non contemplato");
+	}
 
-	
 	ROS_INFO("Set hand final position");
 	Eigen::Matrix4d T_C_H;
 
 	// transformation matrix for the softhand in cyl frame t_c_h = t_c_k * t_k_h
-	T_C_H =  frame_kinect * T_K_H;
+	T_C_H =  frame_cylinder * T_K_H;
 	
 	Pos_ori_hand = T_K_H.col(3);
 	Eigen::Vector4d local;
@@ -210,13 +232,14 @@ void phobic_mp::SetHandPosition()
 
 	//devo portare il tutto in word frame
 
+
+	//cancello primo elemento della lista
 	cyl_radius.erase(cyl_radius.begin());
 	cyl_height.erase(cyl_height.begin());
 	cyl_info.erase(cyl_info.begin());
+	cyl_v.erase(cyl_v.begin());
 
 }
-
-
 
 bool phobic_mp::objectORostacles()
 {
@@ -230,9 +253,8 @@ bool phobic_mp::objectORostacles()
 	else
 	{
 		OrO = true;
+		ROS_INFO("object is a goal");
 	}
-	cyl_radius.erase(cyl_radius.begin());
-	cyl_height.erase(cyl_height.begin());
 
 	return OrO;
 }
@@ -253,24 +275,23 @@ Eigen::Matrix4d FromTFtoEigen(tf::StampedTransform &object)
 	Matrix_transf.row(3) << 0,0,0,1;
 
 	return Matrix_transf;
-
 }
 
 
-void phobic_mp::SetAttraciveField( pcl::PointXYZ &Pos)
+void phobic_mp::SetAttraciveField( pcl::PointXYZ &Pos) //calculate respect kinect frame
 {
 	
 	std::pair<double, pcl::PointXYZ> distance_HtO;
 	//Hand position respect kinect frame
-	Vito_desperate.Pos_HAND_l = Take_Pos( Vito_desperate.SoftHand_l);
-	Vito_desperate.Pos_HAND_r = Take_Pos( Vito_desperate.SoftHand_r);
+	//Vito_desperate.Pos_HAND_l = Take_Pos( Vito_desperate.SoftHand_l);
+	//Vito_desperate.Pos_HAND_r = Take_Pos( Vito_desperate.SoftHand_r);
 	
 	double dist_lTo, dist_rTo;	//in kinect frame
 
 	dist_lTo = GetDistance(Pos, Vito_desperate.Pos_HAND_l).first;
 	dist_rTo = GetDistance(Pos, Vito_desperate.Pos_HAND_r).first;
 
-	if(dist_lTo <= dist_rTo)
+	if(dist_lTo < dist_rTo)
 	{
 		Arm = true; 
 		distance_HtO = GetDistance(Pos, Vito_desperate.Pos_HAND_l);
@@ -314,18 +335,15 @@ void phobic_mp::SetLimitation(pcl::PointXYZ &vel_d)
 
 	double coeff;
 	coeff = (velocity_max/sqrt(VEL_eigen.transpose() * VEL_eigen));
-
-	if(1<coeff)
+	//v_lim = min(1,(v_max/sqrt(V_d.transpose * V_d)));
+	if(1 < coeff)
 	{
-		v_lim=1;
+		v_lim = 1;
 	}
 	else
 	{
-		v_lim=coeff;
+		v_lim = coeff;
 	}
-
-	
-
 }
 
 
@@ -474,7 +492,6 @@ void phobic_mp::Calculate_force()
 	else
 	{
 		attractive_local = *Force_attractive.begin();
-
 	}
 
 	pcl::PointXYZ local_force;

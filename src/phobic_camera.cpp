@@ -74,7 +74,7 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 			//msg.Transform.poses.push_back(cyl_list[i].Cyl_pose);
 			std::cout<<"info radius "<< cyl_list[i].radius <<std::endl;
 			ROS_INFO("cyl is empty (=0) or full (1): %g", cyl_list[i].vol);
-			ROS_INFO("info=0 cylinder if stand up else is crooked: %g", cyl_list[i].Info);
+			ROS_INFO("cylinder if standind (=0) or is lying: %g", cyl_list[i].Info);
 			//std::cout<<"info empty "<< cyl_list[i].vol <<std::endl;	// 0 in empty 1 is full
 		}
 		
@@ -319,7 +319,7 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 
 	double theta = std::acos(dotproduct);
 	std::cout<<"theta: "<<theta<<std::endl;
-	if(((theta >= 0) && (theta<20*(3.14/180))) || ((theta <0) && (theta > -20*(3.14/180))))
+	if(((theta >= 0) && (theta<30*(3.14/180))) || ((theta <0) && (theta > -30*(3.14/180))))
 	{
 		CYLINDER.Info = 0;
 	}
