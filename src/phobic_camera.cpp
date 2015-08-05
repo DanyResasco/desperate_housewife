@@ -248,32 +248,38 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	pcl::transformPointCloud(*pc_cyl, *CYl_new_transf, CYLINDER.Matrix_transform_inv); // point cloud in T_c
 	// pcl::copyPointCloud<pcl::PointXYZRGBA>( *CYl_new_transf, *cloud);
 
+
 	//find height 
-	double z_min, z_max;
-	z_min= CYl_new_transf->points[0].z;
-	z_max= CYl_new_transf->points[0].z;
+	// double z_min, z_max;
+	std::vector<double> height_vect;
+	height_vect = findHeight(CYl_new_transf);
+	// height_vecté(0) --> Zmax;
+	// height_vecté(1) --> z_min;
+
+	// z_min= CYl_new_transf->points[0].z;
+	// z_max= CYl_new_transf->points[0].z;
 	
 
-	for (int i=1; i< CYl_new_transf->points.size(); i++)
-	{
-		if(z_min > CYl_new_transf->points[i].z )
-		{	
-			z_min = CYl_new_transf->points[i].z;
+	// for (int i=1; i< CYl_new_transf->points.size(); i++)
+	// {
+	// 	if(z_min > CYl_new_transf->points[i].z )
+	// 	{	
+	// 		z_min = CYl_new_transf->points[i].z;
 			
-		}
+	// 	}
 
-		if(z_max < CYl_new_transf->points[i].z)
-		{	
-			z_max = CYl_new_transf->points[i].z;
+	// 	if(z_max < CYl_new_transf->points[i].z)
+	// 	{	
+	// 		z_max = CYl_new_transf->points[i].z;
 			
-		}
-	}
-
-	CYLINDER.height = z_max - z_min;
+	// 	}
+	// }
+	CYLINDER.height = height_vect[0] - height_vect [1]; 
+	//CYLINDER.height = z_max - z_min; // findHeight(CYl_new_transf)
 	//std::cout<< "altezza: "<< CYLINDER.height <<std::endl;
 
 	// find a center
-	CYLINDER.center.z = 1.*(z_min +  (CYLINDER.height/2));
+	CYLINDER.center.z = 1.*(height_vect[1] +  (CYLINDER.height/2));
 	CYLINDER.center.x = 0;
 	CYLINDER.center.y = 0;
 	// g = center of the cylinder
@@ -289,44 +295,45 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	//T_k_g = Eigen::Matrix4d::Identity();
 	Eigen::Matrix4d t_g_k;
 	t_g_k= T_k_g.inverse();
+	StandingOrLying(t_g_k);
 
 
-	Eigen::Vector3d u(0,-1,0);
-	Eigen::Vector3d plane_coeff_kinect_frame, temp_n2;
-	Eigen::Vector4d normal_plane_cyl_frame, temp_normal_plane;
-	plane_coeff_kinect_frame(0) = Plane_coeff[0];
-	plane_coeff_kinect_frame(1) = Plane_coeff[1];
-	plane_coeff_kinect_frame(2) = Plane_coeff[2];
+	// Eigen::Vector3d u(0,-1,0);
+	// Eigen::Vector3d plane_coeff_kinect_frame, temp_n2;
+	// Eigen::Vector4d normal_plane_cyl_frame, temp_normal_plane;
+	// plane_coeff_kinect_frame(0) = Plane_coeff[0];
+	// plane_coeff_kinect_frame(1) = Plane_coeff[1];
+	// plane_coeff_kinect_frame(2) = Plane_coeff[2];
 
 
-	if ((u.dot(plane_coeff_kinect_frame)) <0) // in kinect frame
-	{
-		plane_coeff_kinect_frame = plane_coeff_kinect_frame * -1;
-	}
+	// if ((u.dot(plane_coeff_kinect_frame)) <0) // in kinect frame
+	// {
+	// 	plane_coeff_kinect_frame = plane_coeff_kinect_frame * -1;
+	// }
 
-	// in cyl frame
-	temp_normal_plane << plane_coeff_kinect_frame, 1;
-	normal_plane_cyl_frame = t_g_k * temp_normal_plane;
-	normal_plane_cyl_frame.normalize();
+	// // in cyl frame
+	// temp_normal_plane << plane_coeff_kinect_frame, 1;
+	// normal_plane_cyl_frame = t_g_k * temp_normal_plane;
+	// normal_plane_cyl_frame.normalize();
 	
-	Eigen::Vector3d axis_cyl_frame(0,0,1);
-	temp_n2(0) = normal_plane_cyl_frame(0);
-	temp_n2(1) = normal_plane_cyl_frame(1);
-	temp_n2(2) = normal_plane_cyl_frame(2);
+	// Eigen::Vector3d axis_cyl_frame(0,0,1);
+	// temp_n2(0) = normal_plane_cyl_frame(0);
+	// temp_n2(1) = normal_plane_cyl_frame(1);
+	// temp_n2(2) = normal_plane_cyl_frame(2);
 
-	temp_n2.normalize();
-	double dotproduct = temp_n2.dot(axis_cyl_frame);
+	// temp_n2.normalize();
+	// double dotproduct = temp_n2.dot(axis_cyl_frame);
 
-	double theta = std::acos(dotproduct);
-	std::cout<<"theta: "<<theta<<std::endl;
-	if(((theta >= 0) && (theta<30*(3.14/180))) || ((theta <0) && (theta > -30*(3.14/180))))
-	{
-		CYLINDER.Info = 0;
-	}
-	else 
-	{	
-		CYLINDER.Info = 1;
-	}
+	// double theta = std::acos(dotproduct);
+	// std::cout<<"theta: "<<theta<<std::endl;
+	// if(((theta >= 0) && (theta<30*(3.14/180))) || ((theta <0) && (theta > -30*(3.14/180))))
+	// {
+	// 	CYLINDER.Info = 0;
+	// }
+	// else 
+	// {	
+	// 	CYLINDER.Info = 1;
+	// }
 
 
 
@@ -372,6 +379,79 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 
 }
 
+void  phobic_scene::StandingOrLying(Eigen::Matrix4d &T_G_K)
+{
+
+
+	Eigen::Vector3d u(0,-1,0);
+	Eigen::Vector3d plane_coeff_kinect_frame, temp_n2;
+	Eigen::Vector4d normal_plane_cyl_frame, temp_normal_plane;
+	plane_coeff_kinect_frame(0) = Plane_coeff[0];
+	plane_coeff_kinect_frame(1) = Plane_coeff[1];
+	plane_coeff_kinect_frame(2) = Plane_coeff[2];
+
+
+	if ((u.dot(plane_coeff_kinect_frame)) <0) // in kinect frame
+	{
+		plane_coeff_kinect_frame = plane_coeff_kinect_frame * -1;
+	}
+
+	// in cyl frame
+	temp_normal_plane << plane_coeff_kinect_frame, 1;
+	normal_plane_cyl_frame = T_G_K * temp_normal_plane;
+	normal_plane_cyl_frame.normalize();
+	
+	Eigen::Vector3d axis_cyl_frame(0,0,1);
+	temp_n2(0) = normal_plane_cyl_frame(0);
+	temp_n2(1) = normal_plane_cyl_frame(1);
+	temp_n2(2) = normal_plane_cyl_frame(2);
+
+	temp_n2.normalize();
+	double dotproduct = temp_n2.dot(axis_cyl_frame);
+
+	double theta = std::acos(dotproduct);
+	std::cout<<"theta: "<<theta<<std::endl;
+	if(((theta >= 0) && (theta<30*(3.14/180))) || ((theta <0) && (theta > -30*(3.14/180))))
+	{
+		CYLINDER.Info = 0;
+	}
+	else 
+	{	
+		CYLINDER.Info = 1;
+	}
+}
+
+
+std::vector<double> findHeight(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_t)
+{
+	double z_min, z_max;
+	std::vector<double> V_height;
+	z_min= cloud_t->points[0].z;
+	z_max= cloud_t->points[0].z;
+	
+
+	for (int i=1; i< cloud_t->points.size(); i++)
+	{
+		if(z_min > cloud_t->points[i].z )
+		{	
+			z_min = cloud_t->points[i].z;
+			
+		}
+
+		if(z_max < cloud_t->points[i].z)
+		{	
+			z_max = cloud_t->points[i].z;
+			
+		}
+	}
+
+	V_height.push_back(z_max);
+	V_height.push_back(z_min);
+
+	return V_height;
+
+}
+
 
 int phobic_scene::FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud22)
 {
@@ -381,28 +461,33 @@ int phobic_scene::FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud22)
 	// // point_center.z = 1 + CYLINDER.height;
 	// point_center.z = CYLINDER.center.z + CYLINDER.height/2;
 
-	double z_min, z_max;
-	z_min= cloud22->points[0].z;
-	z_max= cloud22->points[0].z;
-	
-	for (int i=1; i< cloud22->points.size(); i++)
-	{
-		if(z_min > cloud22->points[i].z )
-		{	
-			z_min = cloud22->points[i].z;
-			
-		}
+	std::vector<double> height_vect;
+	height_vect = findHeight(cloud22);
+	// height_vect(0) --> Zmax;
+	// height_vect(1) --> z_min;
 
-		if(z_max < cloud22->points[i].z)
-		{	
-			z_max = cloud22->points[i].z;
+	// double z_min, z_max;
+	// z_min= cloud22->points[0].z;
+	// z_max= cloud22->points[0].z;
+	
+	// for (int i=1; i< cloud22->points.size(); i++)
+	// {
+	// 	if(z_min > cloud22->points[i].z )
+	// 	{	
+	// 		z_min = cloud22->points[i].z;
 			
-		}
-	}
+	// 	}
+
+	// 	if(z_max < cloud22->points[i].z)
+	// 	{	
+	// 		z_max = cloud22->points[i].z;
+			
+	// 	}
+	// }
 	
 	point_center.x = CYLINDER.center.x;
 	point_center.y = CYLINDER.center.y;
-	point_center.z = z_max;
+	point_center.z = height_vect[0];
 
 	std::vector< int >  k_indices;
 	std::vector< float > k_sqr_distances;
@@ -420,34 +505,29 @@ int phobic_scene::FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud22)
   	// {
   	// 	dim_s = CYLINDER.radius/3;
   	// }
-  	dim_s = CYLINDER.radius*0.6;
-  	//	dim_s = CYLINDER.radius;
+  	dim_s = CYLINDER.radius*0.6; //less than half
+  	
 	tree->radiusSearch(point_center, dim_s, k_indices, k_sqr_distances,0 );
 	ROS_INFO("k_indices %d", k_indices.size());
 
 	if(k_indices.size() < (dim_s*300))
 	{
-		test_v = 0; // vuoto
+		test_v = 0; // empty
 	}
 	else
 	{
-		test_v = 1; // Pieno
+		test_v = 1; // full
 	}
 
 	return test_v;
-
-
 }
 
 
 bool phobic_scene::fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose)
 {
-	//::cout<<"dentro from"<<std::endl;
 	Eigen::Matrix<double,3,3> Tmatrix;
 	Tmatrix = tranfs_matrix.block<3,3>(0,0) ;
 	Eigen::Quaterniond cyl_quat_eigen(Tmatrix);
-	//std::cout<<"creato quaternione"<<std::endl;
-	//cyl_quat_eigen = Quaternion(Tmatrix);
 	pose.orientation.x = cyl_quat_eigen.x();
 	pose.orientation.y = cyl_quat_eigen.y();
 	pose.orientation.z = cyl_quat_eigen.z();
@@ -458,13 +538,12 @@ bool phobic_scene::fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs
 
 
 	return true;
-
 }
 
 
 void  phobic_scene::send_msg( int cyl_id )
 {
- 	// ROS_INFO("Info cylinder");
+ 	ROS_INFO("send a marker msg");
 
 	visualization_msgs::Marker marker;
 	marker.header.frame_id = "camera_rgb_optical_frame";
@@ -490,8 +569,6 @@ void  phobic_scene::send_msg( int cyl_id )
 	marker.lifetime = ros::Duration(1);
 	
 	phobic_talk.publish(marker); 
- 	//cyl_list.clear();
-
 }
 
 
@@ -519,8 +596,6 @@ void phobic_scene::getcluster()
 	}
 
 	tree->setInputCloud (cloud_filtered);
-	// pcl::copyPointCloud<pcl::PointXYZRGBA>( *cloud, *cloud_filtered);
-
 
     ROS_INFO("PointCloud in getcluster() has: %d data points.", cloud_filtered->points.size ());
 	std::vector<pcl::PointIndices> cluster_indices;
@@ -554,15 +629,12 @@ void phobic_scene::getcluster()
   			object_cluster.push_back(*cloud_cluster);
   		}
   	}
-
-
   	// ROS_INFO( "Number of object clustered in the scene %d", object_cluster.size());
+}
 
-  }
 
-
-  void phobic_scene::erase_table()
-  {
+void phobic_scene::erase_table()
+{
 	// Create the segmentation object for the planar model and set all the parameters
   	pcl::SACSegmentation<pcl::PointXYZRGBA> seg;
   	pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
@@ -592,22 +664,21 @@ void phobic_scene::getcluster()
   	extract.setIndices (inliers);
   	extract.setNegative (true);
 
-    // // Get the points associated without the planar surface
+    // Get the points associated without the planar surface
   	extract.filter (tmp);
   	pcl::copyPointCloud(tmp, *cloud);
   	Plane_coeff=coefficients->values;
 
-  }
+}
 
 
-  Eigen::Matrix4d phobic_scene::Cyl_Transform (const std::vector<float> coeff)
-  {
- 	//std::cout<<"creo matrice"<<std::endl;
-  	double x = coeff[0], y = coeff[1], z = coeff[2];
+Eigen::Matrix4d phobic_scene::Cyl_Transform (const std::vector<float> coeff)
+{
+ 	double x = coeff[0], y = coeff[1], z = coeff[2];
   	double p_x = coeff[3], p_y = coeff[4], p_z = coeff[5];
   	double r = coeff[6]; 
 
-	Eigen::Vector3d position(x,y,z); //posizione a caso sull'asse del cilindro. 
+	Eigen::Vector3d position(x,y,z); //random position on the axis
 	// w is the axis of the cylinder which will be aligned with the z reference frame of the cylinder
 	Eigen::Vector3d w(p_x, p_y, p_z);
 	Eigen::Vector3d u(0, -1, 0); // -y kinect 	

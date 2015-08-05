@@ -121,6 +121,7 @@ public:
 	void visualization( bool testing, bool circle );
 	Eigen::Matrix4d Cyl_Transform (const std::vector<float>  coeff);
 	int FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud2);
+	void StandingOrLying(Eigen::Matrix4d &T_G_K);
 
 	phobic_scene(ros::NodeHandle NodeH, bool test): nodeH(NodeH)
 	{
@@ -142,7 +143,10 @@ public:
 
 };
 
-
+//function: findHeight
+//input: point cloud and two double for the Zmax and Zmin
+//Description: this function calculate the height of input point cloud
+std::vector<double> findHeight(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_t);
 
 //function:pointcloudCallback
 //input: sensor_msgs by kinect
