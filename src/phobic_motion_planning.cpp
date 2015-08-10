@@ -59,18 +59,21 @@ void phobic_mp::MotionPlanningCallback(const desperate_housewife::cyl_info cyl_m
 		//read the robot informations in tf::StampedTransform. Vito has 7 link and 6 joint
 		if(check_robot == true)
 		{
-			for(int i = 0; i<=7 ; i++)
-			{
-				listener_info.lookupTransform("/camera_rgb_optical_frame", "left_arm_" + std::to_string(i) + "_joint" , ros::Time(0), Vito_desperate.Link_left[i] );
-				listener_info.lookupTransform("/camera_rgb_optical_frame", "right_arm_" + std::to_string(i) + "_joint" , ros::Time(0), Vito_desperate.Link_right[i] );
-				Vito_desperate.robot_position_left.push_back(Take_Pos(Vito_desperate.Link_left[i]));
-				Vito_desperate.robot_position_right.push_back(Take_Pos(Vito_desperate.Link_right[i]));
-			}
+			//SetRobotParam();
 
-			////Soft Hand information M_k_H 
+			// for(int i = 0; i<=7 ; i++)
+			// {	
 
-			listener_info.lookupTransform("/camera_rgb_optical_frame", "right_hand_palm_link" , ros::Time(0), Vito_desperate.SoftHand_r );
-			listener_info.lookupTransform("/camera_rgb_optical_frame", "left_hand_palm_link" , ros::Time(0), Vito_desperate.SoftHand_l );
+			// 	listener_info.lookupTransform("/camera_rgb_optical_frame", "left_arm_" + std::to_string(i) + "_link" , ros::Time(0), Vito_desperate.Link_left[i] );
+			// 	listener_info.lookupTransform("/camera_rgb_optical_frame", "right_arm_" + std::to_string(i) + "_link" , ros::Time(0), Vito_desperate.Link_right[i] );
+			// 	Vito_desperate.robot_position_left.push_back(Take_Pos(Vito_desperate.Link_left[i]));
+			// 	Vito_desperate.robot_position_right.push_back(Take_Pos(Vito_desperate.Link_right[i]));
+			// }
+
+			// ////Soft Hand information M_k_H 
+
+			// listener_info.lookupTransform("/camera_rgb_optical_frame", "right_hand_palm_link" , ros::Time(0), Vito_desperate.SoftHand_r );
+			// listener_info.lookupTransform("/camera_rgb_optical_frame", "left_hand_palm_link" , ros::Time(0), Vito_desperate.SoftHand_l );
 	    }
 	    else
 	    {	for (int i=0;i<10;i++) //numeri a caso per provarlo
@@ -106,6 +109,8 @@ void phobic_mp::MotionPlanningCallback(const desperate_housewife::cyl_info cyl_m
 	}
 
 }
+
+
 
 void phobic_mp::SetPotentialField( tf::StampedTransform &object)
 {	
@@ -155,7 +160,6 @@ void phobic_mp::SetPotentialField( tf::StampedTransform &object)
 
 void phobic_mp::SetHandPosition()
 {
-	
 	Eigen::Matrix4d M_desired_local; // in cyl frame
 	Eigen::Vector4d Point_desired,Pos_ori_hand; //in cyl frame
 	Eigen::Vector4d translation; //in cyl frame
@@ -217,10 +221,11 @@ void phobic_mp::SetHandPosition()
 	Eigen::Vector4d local;
 	local = Pos_ori_hand.transpose()*T_C_H;
 
-	translation(0) = Point_desired(0) - local(0);
-	translation(1) = Point_desired(1) - local(1);
-	translation(2) = Point_desired(2) - local(2);
-	translation(3) = Point_desired(3) - local(3);
+	translation = Point_desired - local;
+	// translation(0) = Point_desired(0) - local(0);
+	// translation(1) = Point_desired(1) - local(1);
+	// translation(2) = Point_desired(2) - local(2);
+	// translation(3) = Point_desired(3) - local(3);
 
 	M_desired_local.col(1) << -y, 0;
 	M_desired_local.col(2) <<  z_d, 0;
@@ -399,8 +404,6 @@ void phobic_mp::SetPotentialField_robot(std::vector<pcl::PointXYZ> &Force_repuls
 	}
 }
 
-
-
 void phobic_mp::SetRepulsiveFiled(pcl::PointXYZ &Pos)
 {
 	std::vector<std::pair<double, pcl::PointXYZ>> distance_local_obj;
@@ -502,4 +505,3 @@ void phobic_mp::Calculate_force()
 	ROS_INFO(" FORCE: %d", Force.front());
 	
 }
-

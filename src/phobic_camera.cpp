@@ -9,7 +9,7 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 	// create a new pointcloud from msg
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr scene (new pcl::PointCloud<pcl::PointXYZRGBA>);
 
-
+	//if camera doesn't present (set this param during the launch)
 	if(pc_save == 1)
 	{
 		pcl::io::loadPCDFile("/home/daniela/Desktop/dany_bicchi/test_pcd.pcd", *scene);
@@ -411,7 +411,7 @@ void  phobic_scene::StandingOrLying(Eigen::Matrix4d &T_G_K)
 
 	double theta = std::acos(dotproduct);
 	std::cout<<"theta: "<<theta<<std::endl;
-	if(((theta >= 0) && (theta<30*(3.14/180))) || ((theta <0) && (theta > -30*(3.14/180))))
+	if(((theta >= 0) && (theta<45*(3.14/180))) || ((theta <0) && (theta > -45*(3.14/180))))
 	{
 		CYLINDER.Info = 0;
 	}

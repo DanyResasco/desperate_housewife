@@ -35,6 +35,15 @@
 #include <tf/transform_datatypes.h>
 #include <desperate_housewife/cyl_info.h>
 
+// KDL
+#include <kdl/tree.hpp>
+#include <kdl/jntarray.hpp>
+#include <kdl_conversions/kdl_msg.h>
+#include <kdl_parser/kdl_parser.hpp>
+#include <kdl/chainjnttojacsolver.hpp>
+#include <kdl/chainfksolver.hpp>
+#include <kdl/chainfksolverpos_recursive.hpp>
+
 class phobic_mp
 {
 
@@ -42,15 +51,15 @@ class phobic_mp
 	private:
 
 		tf::TransformListener listener_info;
+		ros::Subscriber  joint_lissen;
 		std::vector<tf::StampedTransform> Goal;
 		ros::NodeHandle nodeH;
 		std::vector<double> cyl_height;
 		std::vector<double> cyl_radius;
 		std::vector<double> cyl_info;
 		std::vector<double> cyl_v;
-		std::vector<geometry_msgs::Pose> cyl_transf;
 		pcl::PointXYZ goal_position, obstacle_position;
-		Eigen::Matrix4d frame_kinect;
+		Eigen::Matrix4d frame_cylinder; //M_c_k
 		double P_hand = 0.5;
 		double P_obj = -1;
 		double P_goal = 1;	
@@ -65,12 +74,14 @@ class phobic_mp
 		double v_lim;
 		pcl::PointXYZ velocity;
 		bool check_robot;
-		double max_radius=0.2, max_lenght=0.2;
+		double max_radius=0.1, max_lenght=0.20;
+		 std::string root_name;
 
 		
 		
 		struct Robot
-		{
+		{	
+			//sensor_msgs::JointState joint_state;
 			std::vector<tf::StampedTransform> Link_right;
 			std::vector<tf::StampedTransform> Link_left;
 			tf::StampedTransform SoftHand_r;
@@ -78,6 +89,10 @@ class phobic_mp
 			std::vector<pcl::PointXYZ> robot_position_left, robot_position_right;
 			pcl::PointXYZ Pos_HAND_r,Pos_HAND_l;
 			Eigen::Matrix4d Pos_final_hand_r, Pos_final_hand_l;
+			//KDL::Tree Robot_tree;
+			 //make a model
+    		//urdf::Model urdf_model;
+    		//std::vector< KDL::Jacobian > link_left_jac, link_right_jac; 
 			
 		} Vito_desperate;
 
@@ -98,6 +113,11 @@ class phobic_mp
 		void SetLimitation(pcl::PointXYZ &vel_d);
 		//SetCommandVector();
 		void SetHandPosition();
+		void SetRobotParam();
+		//void Robot_Callback_left(sensor_msgs::JointState msg);
+		//void Robot_Callback_right(sensor_msgs::JointState msg);
+		//void SetRobotPosition(sensor_msgs::JointState msg.position, std::vector<pcl::PointXYZ> Pos);
+		//void phobic_mp::GetJacobian(std::vector<pcl::PointXYZ> Pos, std::vector<KDL::Jacobian> link_jac_)
 
 
 
@@ -114,6 +134,8 @@ class phobic_mp
 			ros::param::get("~max_lenght", max_lenght);
 			ROS_INFO("max_lenght %lf", max_lenght);
 			check_robot  = false;
+			//LINK_jac_= KDL::Jacobian(link_chain_[i].getNrOfJoints());
+			//link_jac_ = Link_jack;
 
 
 
