@@ -58,7 +58,7 @@ void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
 	    	Pos_HAND_l.z = 0.2;
 	    }
 	
-	    	//read the cylinder informations in tf::StampedTransform
+    	//read the cylinder informations in tf::StampedTransform
 		for (int i = 0; i < cyl_msg.dimension; i++)
 		{
 
@@ -67,12 +67,15 @@ void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
 			cyl_radius.push_back(cyl_msg.radius[i]);
 			cyl_info.push_back(cyl_msg.Info[i]);
 			cyl_v.push_back(cyl_msg.vol[i]);
-			//cyl_transf.push_back(cyl_msg.Transform.poses[i]);
+
+			GetCylPos(*Goal.begin());
+			Goal.erase(Goal.begin());
+			
 		}	
 		
-		GetCylPos(*Goal.begin());
+		
 		Send();
-		Goal.erase(Goal.begin());
+		
 		
 	}
 }
@@ -98,11 +101,12 @@ void phobic_hand::GetCylPos( tf::StampedTransform &object)
 		goal_position.y = frame_cylinder(1,3);
 		goal_position.z = frame_cylinder(2,3);
 
-		WhichArm(goal_position);
-		// pcl::PointXYZ goal_kinect_frame;
-		// goal_kinect_frame.x = frame_kinect(0,3);
-		// goal_kinect_frame.y = frame_kinect(1,3);
-		// goal_kinect_frame.z = frame_kinect(2,3);
+		
+		pcl::PointXYZ goal_kinect_frame;
+		goal_kinect_frame.x = frame_kinect(0,3);
+		goal_kinect_frame.y = frame_kinect(1,3);
+		goal_kinect_frame.z = frame_kinect(2,3);
+		WhichArm(goal_kinect_frame);
 
 		SetHandPosition();		
 	}
@@ -181,10 +185,6 @@ void phobic_hand::SetHandPosition()
 	local = Pos_ori_hand.transpose()*T_C_H;
 
 	translation = Point_desired - local;
-	// translation(0) = Point_desired(0) - local(0);
-	// translation(1) = Point_desired(1) - local(1);
-	// translation(2) = Point_desired(2) - local(2);
-	// translation(3) = Point_desired(3) - local(3);
 
 	M_desired_local.col(1) << -y, 0;
 	M_desired_local.col(2) <<  z_d, 0;
@@ -194,7 +194,7 @@ void phobic_hand::SetHandPosition()
 	//std::cout<<"translation"<<translation(3)<<std::endl;
 	ROS_INFO("translation: %d", translation(3));
 
-	//devo portare il tutto in word frame e metterla in stampedTrasform
+	//devo portare il tutto in word frame 
 
 	//fromEigenToPose( T_w_c , Hand_pose);
 
@@ -303,30 +303,34 @@ pcl::PointXYZ phobic_hand::Take_Pos(tf::StampedTransform &M_tf)
 void phobic_hand::Send()
 { 	
 	desperate_housewife::hand msg;
-
-	if(Test_obj == true) // if is object
+	
+	for (int i = 0; i < Hand_pose.size(); i++)
 	{
-		if(Arm == true)//left
+		if(Test_obj == true) // if is object
 		{
-			msg.whichArm = 0;
-		}
+			if(Arm == true)//left
+			{
+				msg.whichArm.push_back(0);
+			}
 
+			else
+			{
+				msg.whichArm.push_back(1); //right
+			}
+			
+			msg.hand_Pose.push_back(Hand_pose[i]);
+		}
 		else
 		{
-			msg.whichArm = 1; //right
+			msg.whichArm.push_back(2); //obstacles VA CAMBIATO IL FRAME ORA È IN CYL VA MESSO IN WORD
+			//msg.hand_Pose.position.push_back(obstacle_position);
+			msg.hand_Pose[i].position.x = obstacle_position.x;
+			msg.hand_Pose[i].position.y = obstacle_position.y;
+			msg.hand_Pose[i].position.z = obstacle_position.z;
 		}
-		
-		msg.hand_Pose = Hand_pose;
-	}
-	else
-	{
-		msg.whichArm = 2; //obstacles
-		msg.hand_Pose.position.x = obstacle_position.x;
-		msg.hand_Pose.position.y = obstacle_position.y;
-		msg.hand_Pose.position.z = obstacle_position.z;
-	}
 
-	hand_info.publish(msg);
+		hand_info.publish(msg);
+	}
 }
 
 

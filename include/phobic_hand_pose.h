@@ -13,6 +13,8 @@
 #include <visualization_msgs/Marker.h>
 #include <std_msgs/UInt32.h>
 #include <desperate_housewife/hand.h>
+#include <geometry_msgs/PoseArray.h>
+
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
@@ -68,7 +70,7 @@ class phobic_hand
 		double max_radius=0.1, max_lenght=0.20;
 		pcl::PointXYZ Pos_HAND_r,Pos_HAND_l;
 		Eigen::Matrix4d Pos_final_hand_r, Pos_final_hand_l;
-		geometry_msgs::Pose Hand_pose;
+		std::vector<geometry_msgs::Pose> Hand_pose;
 		//tf::StampedTransform hand_tf_pose;
 		tf::StampedTransform SoftHand_r;
 		tf::StampedTransform SoftHand_l;
