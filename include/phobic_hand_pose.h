@@ -57,10 +57,14 @@ class phobic_hand
 		std::vector<tf::StampedTransform> Goal;
 		//tf::TransformBroadcaster tf_br;
 		ros::NodeHandle nodeH;
-		std::vector<double> cyl_height;
-		std::vector<double> cyl_radius;
-		std::vector<double> cyl_info;
-		std::vector<double> cyl_v;
+		// std::vector<double> cyl_height;
+		// std::vector<double> cyl_radius;
+		// std::vector<double> cyl_info;
+		// std::vector<double> cyl_v;
+		double cyl_height;
+		double cyl_radius;
+		double cyl_info;
+		double cyl_v;
 		pcl::PointXYZ goal_position, obstacle_position;
 		Eigen::Matrix4d frame_cylinder; //M_c_k
 		std::vector<double> distance;

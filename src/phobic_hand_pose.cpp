@@ -31,13 +31,13 @@ void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
 		ROS_INFO("There are a objects in the scene, start the motion planning");
 		
 		Goal.resize(cyl_msg.dimension);
-		cyl_radius.resize(cyl_msg.dimension);
-		cyl_height.resize(cyl_msg.dimension);
+		//cyl_radius.resize(cyl_msg.dimension);
+		//cyl_height.resize(cyl_msg.dimension);
 		//check the vector dimension	
 		ROS_INFO("cyl_msg size: %d", cyl_msg.dimension);
-		ROS_INFO("goal size: %d", Goal.size());
-		ROS_INFO("cyl_radius size: %d", cyl_radius.size());
-		ROS_INFO("cyl_height size: %d", cyl_height.size());
+		// ROS_INFO("goal size: %d", Goal.size());
+		// ROS_INFO("cyl_radius size: %d", cyl_radius.size());
+		// ROS_INFO("cyl_height size: %d", cyl_height.size());
 	
 				
 		//read the robot informations in tf::StampedTransform. Vito has 7 link and 6 joint
@@ -56,25 +56,34 @@ void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
 			Pos_HAND_l.x = -0.1;
 	    	Pos_HAND_l.y = -0.1;
 	    	Pos_HAND_l.z = 0.2;
+	    	ROS_INFO("dentro else");
 	    }
 	
     	//read the cylinder informations in tf::StampedTransform
 		for (int i = 0; i < cyl_msg.dimension; i++)
 		{
-
+			ROS_INFO("dentro if");
 			listener_info.lookupTransform("/camera_rgb_optical_frame", "cilindro_" + std::to_string(i) , ros::Time(0), Goal[i] );
-			cyl_height.push_back(cyl_msg.length[i]);
-			cyl_radius.push_back(cyl_msg.radius[i]);
-			cyl_info.push_back(cyl_msg.Info[i]);
-			cyl_v.push_back(cyl_msg.vol[i]);
+			ROS_INFO("prims dei push");
+			// cyl_height.push_back(cyl_msg.length[i]);
+			// cyl_radius.push_back(cyl_msg.radius[i]);
+			// cyl_info.push_back(cyl_msg.Info[i]); //standing or liyng
+			// cyl_v.push_back(cyl_msg.vol[i]); // full or empty
 
-			GetCylPos(*Goal.begin());
-			Goal.erase(Goal.begin());
+			cyl_height = cyl_msg.length[i];
+			cyl_radius = cyl_msg.radius[i];
+			cyl_info = cyl_msg.Info[i]; //standing or liyng
+			cyl_v = cyl_msg.vol[i]; // full or empty
+
+			ROS_INFO("prima di getcyl");
+			
+			GetCylPos(Goal[i]);
+			//Goal.erase(Goal.begin());
 			
 		}	
 		
-		
-		Send();
+		Goal.clear();
+		//Send();
 		
 		
 	}
@@ -144,27 +153,30 @@ void phobic_hand::SetHandPosition()
 		T_K_H = FromTFtoEigen(SoftHand_r);
 	}
 	
-	if((cyl_info.front() == 0) && (cyl_v.front() == 0)) //se cilindro dritto (o leggermente piegato) e senza tappo
+	// if((cyl_info.front() == 0) && (cyl_v.front() == 0)) //se cilindro dritto (o leggermente piegato) e senza tappo
+	if((cyl_info == 0) && (cyl_v == 0))
 	{
-		Point_desired(0) = cyl_radius.front() + 0.05;
-		Point_desired(1) = cyl_height.front();
-		Point_desired(2) = cyl_radius.front() + 0.05;	//da rivedere!!
+		Point_desired(0) = cyl_radius + 0.05;
+		Point_desired(1) = cyl_height;
+		Point_desired(2) = cyl_radius + 0.05;	//da rivedere!!
 		Point_desired(3) = 0; 
 		ROS_INFO("cyl dritto e vuoto");
 	}
-	else if(((cyl_info.front() == 0) && (cyl_v.front() != 0)) && (cyl_radius.front() < max_radius))
+	// else if(((cyl_info.front() == 0) && (cyl_v.front() != 0)) && (cyl_radius.front() < max_radius))
+	else if(((cyl_info == 0) && (cyl_v != 0)) && (cyl_radius< max_radius))
 	{
 		Point_desired(0) = 0;
-		Point_desired(1) = cyl_height.front()+ 0.05;
+		Point_desired(1) = cyl_height + 0.05;
 		Point_desired(2) = 0; //da rivedere
 		Point_desired(3) = 0; 
 		ROS_INFO("cyl dritto e pieno");
 	}
 
-	else if ((cyl_info.front() != 0) && (cyl_radius.front() < max_radius))
+	// else if ((cyl_info.front() != 0) && (cyl_radius.front() < max_radius))
+	else if ((cyl_info != 0) && (cyl_radius < max_radius))
 	{
-		Point_desired(0) = cyl_height.front() + 0.05;
-		Point_desired(1) = cyl_radius.front() + 0.05;
+		Point_desired(0) = cyl_height + 0.05;
+		Point_desired(1) = cyl_radius + 0.05;
 		Point_desired(2) = 0; //da rivedere
 		Point_desired(3) = 0; 
 		ROS_INFO("cyl piegato");
@@ -200,10 +212,10 @@ void phobic_hand::SetHandPosition()
 
 
 	//cancello primo elemento della lista
-	cyl_radius.erase(cyl_radius.begin());
-	cyl_height.erase(cyl_height.begin());
-	cyl_info.erase(cyl_info.begin());
-	cyl_v.erase(cyl_v.begin());
+	// cyl_radius.erase(cyl_radius.begin());
+	// cyl_height.erase(cyl_height.begin());
+	// cyl_info.erase(cyl_info.begin());
+	// cyl_v.erase(cyl_v.begin());
 
 }
 
@@ -222,13 +234,13 @@ void phobic_hand::WhichArm(pcl::PointXYZ Pos)
 	if(dist_lTo < dist_rTo)
 	{
 		Arm = true; 
-		distance_HtO = GetDistance(Pos, Pos_HAND_l);
+		//distance_HtO = GetDistance(Pos, Pos_HAND_l);
 		ROS_INFO("Vito uses a: LEFT ARM");
 	}
 	else
 	{
 		Arm = false;
-		distance_HtO = GetDistance(Pos ,Pos_HAND_r );
+		//distance_HtO = GetDistance(Pos ,Pos_HAND_r );
 		ROS_INFO("Vito uses a: RIGHT ARM");
 	}
 }
@@ -252,7 +264,8 @@ bool phobic_hand::objectORostacles()
 {
 	bool OrO;
 
-	if((cyl_radius.front() > max_radius) && (cyl_height.front() > max_lenght))
+	// if((cyl_radius.front() > max_radius) && (cyl_height.front() > max_lenght))
+	if((cyl_radius > max_radius) && (cyl_height > max_lenght))
 	{
 		OrO= false;
 		ROS_INFO("object is a obstacles");
