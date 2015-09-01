@@ -80,17 +80,20 @@ class phobic_hand
 		tf::StampedTransform SoftHand_l;
 		ros::Publisher hand_info;
 		bool Test_obj;
+		Eigen::Matrix4d T_w_c;
+		
+
 
 	
 	public:
 
 		void HandPoseCallback(const desperate_housewife::cyl_info cyl_msg);
-		void GetCylPos(tf::StampedTransform &object);
+		void GetCylPos(tf::StampedTransform &object, int &i);
 		void WhichArm(pcl::PointXYZ Pos);
 		bool objectORostacles();
 		pcl::PointXYZ  Take_Pos(tf::StampedTransform &M_tf);
 		std::pair<double, pcl::PointXYZ> GetDistance(pcl::PointXYZ &obj1,pcl::PointXYZ &obj2 );
-		void SetHandPosition();
+		void SetHandPosition(int &u);
 		void Send();
 		void fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose);
 		

@@ -8,7 +8,7 @@ int main(int argc, char** argv)
 	ros::Subscriber reader;
 	reader = node_hand.subscribe(node_hand.resolveName("INFO_CYLINDER"), 1, &phobic_hand::HandPoseCallback, &phobic_local_hand);
 
-	ros::Rate loop_rate( 1 ); // 5Hz
+	ros::Rate loop_rate( 1 ); // 1Hz
 	while (ros::ok())
 	{
 
@@ -56,15 +56,13 @@ void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
 			Pos_HAND_l.x = -0.1;
 	    	Pos_HAND_l.y = -0.1;
 	    	Pos_HAND_l.z = 0.2;
-	    	ROS_INFO("dentro else");
 	    }
 	
     	//read the cylinder informations in tf::StampedTransform
 		for (int i = 0; i < cyl_msg.dimension; i++)
 		{
-			ROS_INFO("dentro if");
 			listener_info.lookupTransform("/camera_rgb_optical_frame", "cilindro_" + std::to_string(i) , ros::Time(0), Goal[i] );
-			ROS_INFO("prims dei push");
+			
 			// cyl_height.push_back(cyl_msg.length[i]);
 			// cyl_radius.push_back(cyl_msg.radius[i]);
 			// cyl_info.push_back(cyl_msg.Info[i]); //standing or liyng
@@ -77,13 +75,13 @@ void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
 
 			ROS_INFO("prima di getcyl");
 			
-			GetCylPos(Goal[i]);
+			GetCylPos(Goal[i], i);
 			//Goal.erase(Goal.begin());
 			
 		}	
 		
 		Goal.clear();
-		//Send();
+		Send();
 		
 		
 	}
@@ -91,7 +89,7 @@ void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
 
 
 
-void phobic_hand::GetCylPos( tf::StampedTransform &object)
+void phobic_hand::GetCylPos( tf::StampedTransform &object, int &i)
 {	
 	ROS_INFO("get goal position");
 	//Set robot potential fields 
@@ -117,7 +115,7 @@ void phobic_hand::GetCylPos( tf::StampedTransform &object)
 		goal_kinect_frame.z = frame_kinect(2,3);
 		WhichArm(goal_kinect_frame);
 
-		SetHandPosition();		
+		SetHandPosition(i);		
 	}
 
 	else
@@ -129,7 +127,7 @@ void phobic_hand::GetCylPos( tf::StampedTransform &object)
 	}
 }
 
-void phobic_hand::SetHandPosition()
+void phobic_hand::SetHandPosition(int &u)
 {
 	
 	Eigen::Matrix4d M_desired_local; // in cyl frame
@@ -138,6 +136,7 @@ void phobic_hand::SetHandPosition()
 	Eigen::Vector3d x(1,0,0);
 	Eigen::Vector3d y(0,1,0),z_d;
 	Eigen::Matrix4d T_K_H;
+	tf::StampedTransform T_K_vito_ancor;
 	
 	if (Arm == true) //left arm
 	{
@@ -197,18 +196,23 @@ void phobic_hand::SetHandPosition()
 	local = Pos_ori_hand.transpose()*T_C_H;
 
 	translation = Point_desired - local;
-
-	M_desired_local.col(1) << -y, 0;
+	//T_C_SOFTHAND	
+	M_desired_local.col(1) << -y, 0;	
 	M_desired_local.col(2) <<  z_d, 0;
 	M_desired_local.col(3) << translation;
 	M_desired_local.normalize();
 
 	//std::cout<<"translation"<<translation(3)<<std::endl;
-	ROS_INFO("translation: %d", translation(3));
+	//ROS_INFO("translation: %d", translation(3));
 
-	//devo portare il tutto in word frame 
-
-	//fromEigenToPose( T_w_c , Hand_pose);
+	//devo portare il tutto in word frame RICONTROLLA!!
+	Eigen::Matrix4d T_K_VA_eigen;
+	listener_info.lookupTransform("/camera_rgb_optical_frame", "vito_anchor" , ros::Time(0), T_K_vito_ancor );
+	T_K_VA_eigen = FromTFtoEigen(T_K_vito_ancor);
+	
+	T_w_c = T_K_VA_eigen.inverse() * T_K_H * M_desired_local.inverse();
+	
+	fromEigenToPose( T_w_c , Hand_pose[u]);
 
 
 	//cancello primo elemento della lista
@@ -315,6 +319,7 @@ pcl::PointXYZ phobic_hand::Take_Pos(tf::StampedTransform &M_tf)
 
 void phobic_hand::Send()
 { 	
+	ROS_INFO("send pose hand msg");
 	desperate_housewife::hand msg;
 	
 	for (int i = 0; i < Hand_pose.size(); i++)
@@ -337,9 +342,13 @@ void phobic_hand::Send()
 		{
 			msg.whichArm.push_back(2); //obstacles VA CAMBIATO IL FRAME ORA È IN CYL VA MESSO IN WORD
 			//msg.hand_Pose.position.push_back(obstacle_position);
-			msg.hand_Pose[i].position.x = obstacle_position.x;
-			msg.hand_Pose[i].position.y = obstacle_position.y;
-			msg.hand_Pose[i].position.z = obstacle_position.z;
+			Eigen::Vector4d ob_pos_word, local_ob_pos;
+			local_ob_pos << obstacle_position.x, obstacle_position.y, obstacle_position.z, 0;
+			ob_pos_word << local_ob_pos.transpose() * T_w_c;
+			msg.hand_Pose[i].position.x = ob_pos_word[0];
+			msg.hand_Pose[i].position.y = ob_pos_word[1];
+			msg.hand_Pose[i].position.z = ob_pos_word[2];
+			
 		}
 
 		hand_info.publish(msg);

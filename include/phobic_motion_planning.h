@@ -12,6 +12,7 @@
 #include <desperate_housewife/cyl_info.h>
 #include <visualization_msgs/Marker.h>
 #include <std_msgs/UInt32.h>
+#include <sensor_msgs/JointState.h>
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
@@ -23,6 +24,10 @@
 #include <list>
 #include <string>
 
+//msg
+#include <desperate_housewife/cyl_info.h>
+#include <desperate_housewife/hand.h>
+
 //Eigen
 #include <Eigen/Dense>
 #include <Eigen/LU>
@@ -33,7 +38,7 @@
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
-#include <desperate_housewife/cyl_info.h>
+
 
 // KDL
 #include <kdl/tree.hpp>
@@ -44,53 +49,73 @@
 #include <kdl/chainfksolver.hpp>
 #include <kdl/chainfksolverpos_recursive.hpp>
 
+// Gazebo
+#include <gazebo/gazebo.hh>
+#include <gazebo/physics/physics.hh>
+#include <gazebo/common/common.hh>
+#include <urdf/model.h> 
+
 class phobic_mp
 {
 
 
 	private:
 
-		tf::TransformListener listener_info;
-		ros::Subscriber  joint_lissen;
-		std::vector<tf::StampedTransform> Goal;
+		// tf::TransformListener listener_info;
+		// ros::Subscriber  joint_lissen;
+		
 		ros::NodeHandle nodeH;
-		std::vector<double> cyl_height;
-		std::vector<double> cyl_radius;
-		std::vector<double> cyl_info;
-		std::vector<double> cyl_v;
+		// Node Handles
+  		ros::NodeHandle model_nh_; // namespaces to robot name
+  		// Strings
+		std::string robot_namespace_;
+  		std::string robot_description_;
+  		//geometry_msgs/Pose[] hand_pose_desired;
+  		std::vector<int> whichArm;
+		
 		pcl::PointXYZ goal_position, obstacle_position;
 		Eigen::Matrix4d frame_cylinder; //M_c_k
 		double P_hand = 0.5;
 		double P_obj = -1;
 		double P_goal = 1;	
 		double influence ;	// limit distance of the potential filed influence
-		std::vector<pcl::PointXYZ> Force;
+		Eigen::VectorXd Force;
 		double dissipative;
 		std::vector<double> distance;
-		std::vector<pcl::PointXYZ> Force_attractive;
-		std::vector<pcl::PointXYZ> Force_repulsion;
+		Eigen::VectorXd Force_attractive;
+		Eigen::VectorXd Force_repulsion;
 		bool Arm;
 		double velocity_max;
-		double v_lim;
-		pcl::PointXYZ velocity;
+		//double v_lim;
 		bool check_robot;
 		double max_radius=0.1, max_lenght=0.20;
-		 std::string root_name;
+		std::string root_name;
+		std::vector<KDL::Frame> Hand_pose_kdl_l, Hand_pose_kdl_r;
+
 
 		
 		
 		struct Robot
 		{	
 			//sensor_msgs::JointState joint_state;
-			std::vector<tf::StampedTransform> Link_right;
-			std::vector<tf::StampedTransform> Link_left;
-			tf::StampedTransform SoftHand_r;
-			tf::StampedTransform SoftHand_l;
-			std::vector<pcl::PointXYZ> robot_position_left, robot_position_right;
-			pcl::PointXYZ Pos_HAND_r,Pos_HAND_l;
+			//std::vector<tf::StampedTransform> Link_right;
+			//std::vector<tf::StampedTransform> Link_left;
+			tf::StampedTransform left_arm_base_link, left_arm_softhand;
+			tf::StampedTransform right_arm_base_link, right_arm_softhand ;
+			std::vector<double> robot_position_left, robot_position_right;
+			std::vector<double> Vel_l, Vel_r;
+			std::vector<KDL::Jacobian> link_jac_;
+			std::vector<KDL::Frame> link_frame_;
+			std::vector<KDL::ChainJntToJacSolver*> link_jac_solver_;
+			std::vector<KDL::ChainFkSolverPos_recursive*> link_fk_solver_;
+			std::vector<KDL::JntArray> link_joints_;
+			std::vector<KDL::Chain> link_chain_;
+			//std::vector<pcl::PointXYZ> robot_position_left, robot_position_right;
+			std::vector<Eigen::VectorXd> Pos_HAND_r,Pos_HAND_l;
 			Eigen::Matrix4d Pos_final_hand_r, Pos_final_hand_l;
-			//KDL::Tree Robot_tree;
+			
 			 //make a model
+			KDL::Tree Robot_tree;
     		//urdf::Model urdf_model;
     		//std::vector< KDL::Jacobian > link_left_jac, link_right_jac; 
 			
@@ -99,25 +124,29 @@ class phobic_mp
 
 	
 	public:
-
-		void MotionPlanningCallback(const desperate_housewife::cyl_info cyl_msg);
-		double SetrepulsiveField( tf::StampedTransform &object);
-		void SetPotentialField_robot(std::vector<pcl::PointXYZ> &Force_repulsion);
+		 
+		void MPCallback(const desperate_housewife::hand hand_msg);		
+		double SetrepulsiveField( tf::StampedTransform &object, int &p);
+		void SetPotentialField_robot(std::vector<pcl::PointXYZ> &Force_repulsion, int &p);
 		bool objectORostacles();
-		void Calculate_force();
-		void SetAttraciveField( pcl::PointXYZ &Pos);
+		//void Calculate_force();
+		void SetAttractiveField( int &p, int &i);
 		void SetPotentialField( tf::StampedTransform &object);
 		void SetRepulsiveFiled(pcl::PointXYZ &Pos);
-		pcl::PointXYZ  Take_Pos(tf::StampedTransform &M_tf);
-		std::pair<double, pcl::PointXYZ> GetDistance(pcl::PointXYZ &obj1,pcl::PointXYZ &obj2 );
-		void SetLimitation(pcl::PointXYZ &vel_d);
-		//SetCommandVector();
-		void SetHandPosition();
-		void SetRobotParam();
-		//void Robot_Callback_left(sensor_msgs::JointState msg);
+		//pcl::PointXYZ  Take_Pos(tf::StampedTransform &M_tf);
+		//std::pair<double, pcl::PointXYZ> GetDistance(pcl::PointXYZ &obj1,pcl::PointXYZ &obj2 );
+		double SetLimitation(Eigen::VectorXd &vel_d);
+		void SetCommandVector();
+		
+		bool GetVitoUrdf();
+		void GetEuleroAngle(KDL::Frame &Hand_kdl, int &p);
+		void Robot_Callback_left(sensor_msgs::JointState msg);
+		void Robot_Callback_right(sensor_msgs::JointState msg);
 		//void Robot_Callback_right(sensor_msgs::JointState msg);
-		//void SetRobotPosition(sensor_msgs::JointState msg.position, std::vector<pcl::PointXYZ> Pos);
-		//void phobic_mp::GetJacobian(std::vector<pcl::PointXYZ> Pos, std::vector<KDL::Jacobian> link_jac_)
+		//void SetRobotPosition(std::vector<double> msg.position);
+		void GetJacobian();
+		void SetPseudoInvJac();
+		std::string getURDF(std::string param_name) const;
 
 
 
@@ -136,6 +165,8 @@ class phobic_mp
 			check_robot  = false;
 			//LINK_jac_= KDL::Jacobian(link_chain_[i].getNrOfJoints());
 			//link_jac_ = Link_jack;
+			tf::TransformListener listener_info;
+			ros::Subscriber  joint_lissen;
 
 
 

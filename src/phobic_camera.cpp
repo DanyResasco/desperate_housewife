@@ -20,6 +20,9 @@ void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 		pcl::fromROSMsg (msg, *scene);
 	}
 
+
+	
+
 	//visualization(true , false);
 	// ROS_INFO("Strating timer");
 	// ros::Time begin = ros::Time::now();
@@ -149,7 +152,7 @@ void phobic_scene::fitting ()
 
 		cloud_first->header.frame_id = "camera_rgb_optical_frame";
 
-		pub_cloud_object.publish( cloud_first  ); 
+		pub_cloud_object.publish( cloud_first  ); //for visualizer in rviz
 
 
 		ne.setSearchMethod (tree);
