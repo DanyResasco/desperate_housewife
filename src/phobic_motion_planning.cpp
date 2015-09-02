@@ -10,15 +10,13 @@ int main(int argc, char** argv)
 	ros::Subscriber reader; //pose in word frame!!
 	reader = node_mp.subscribe(node_mp.resolveName("SoftHand_Pose"), 1, &phobic_mp::MPCallback, &phobic_local_mp);
 	//left arm
-	listener_info.lookupTransform("/camera_rgb_optical_frame", "left_arm_base_link" , ros::Time(0), Vito_desperate.left_arm_base_link );
-	listener_info.lookupTransform("/camera_rgb_optical_frame", "left_arm_softhand" , ros::Time(0), Vito_desperate.left_arm_softhand );
+	
 	//joint_listen();//ritonrna msg joint_State pos,vel,acc,coppia
-	joint_listen = node_mp.subscribe("left_arm/joint_states", 1, &phobic_mp::Robot_Callback_left, &phobic_local_mp);
+	phobic_local_mp.joint_listen = node_mp.subscribe("left_arm/joint_states", 1, &phobic_mp::Robot_Callback_left, &phobic_local_mp);
 	//left arm
-	listener_info.lookupTransform("/camera_rgb_optical_frame", "right_arm_base_link" , ros::Time(0),Vito_desperate.right_arm_base_link );
-	listener_info.lookupTransform("/camera_rgb_optical_frame", "left_arm_softhand" , ros::Time(0), Vito_desperate.right_arm_softhand );
+	
 	//joint_listen();//ritonrna msg joint_State pos,vel,acc,coppia
-	joint_listen = node_mp.subscribe("right_arm/joint_states", 1, &phobic_mp::Robot_Callback_right, &phobic_local_mp);
+	phobic_local_mp.joint_listen = node_mp.subscribe("right_arm/joint_states", 1, &phobic_mp::Robot_Callback_right, &phobic_local_mp);
 
 
 	ros::Rate loop_rate( 1 ); // 1Hz
@@ -27,7 +25,6 @@ int main(int argc, char** argv)
 		phobic_local_mp.Esegui();
 		loop_rate.sleep();
 		ros::spinOnce();
-
 	}
 	
 	return 0;
@@ -36,11 +33,18 @@ int main(int argc, char** argv)
 
 void phobic_mp::MPCallback(const desperate_housewife::hand hand_msg)
 {	
-	//make a robot model
+	// //make a robot model
+	// hardware_interface::PositionJointInterface *robot;
+	// ros::NodeHandle n;
+	// lwr_controllers::KinematicChainControllerBase<hardware_interface::EffortJointInterface>::init(robot, n);
+	
 	bool check_urdf;
 	check_urdf = GetVitoUrdf();
 	if (check_urdf == true)
 	{
+		KDL::Frame local_frame_sh;
+		KDL::Frame local_frame_base;
+
 		//set reference frame
 	    //const std::string& robot_namespace;
 	    //root_name = robot_namespace + std::string("vito_anchor"); //it's the word frame
@@ -52,23 +56,52 @@ void phobic_mp::MPCallback(const desperate_housewife::hand hand_msg)
 			{
 				case 0: //left arm
 					ROS_INFO("Vito use left arm");
-					tf::poseMsgToKDL(const desperate_housewife::hand hand_msg.*hand_Pose[i], Hand_pose_kdl_l[i]);
-					GetEuleroAngle(Hand_pose_kdl_l[i],0);
-	    		
+					
+					tf::poseMsgToKDL(hand_msg.hand_Pose[i], Hand_pose_kdl_l[i]);
+					GetEuleroAngle(Hand_pose_kdl_l[i], Vito_desperate.Pos_HAND_l_xd[i]);
+
+					listener_info.lookupTransform("/camera_rgb_optical_frame", "left_arm_base_link" , ros::Time(0), Vito_desperate.left_arm_base_link_st );
+					listener_info.lookupTransform("/camera_rgb_optical_frame", "left_hand_palm_link" , ros::Time(0), Vito_desperate.left_arm_softhand_st[i] );
+
+					//from stampedtrasform-->tf::transform-->KDL::frame 
+					
+					local_frame_sh = FromTFtoKDL(Vito_desperate.left_arm_softhand_st[i]);
+
+					GetEuleroAngle(local_frame_sh, Vito_desperate.Pos_HAND_l_x[i]);
+
+					local_frame_base = FromTFtoKDL(Vito_desperate.left_arm_base_link_st );
+					GetEuleroAngle(local_frame_base, Vito_desperate.pos_base_l);
+					// tf::Transform hand_tf(left_arm_softhand_st[i].getRotation(), left_arm_softhand_st[i].getOrigin());
+					// TransformTFToKDL (hand_tf, hand_frame);
+
 				break;
 
 				case 1: //right arm
+
 					ROS_INFO("Vito use right arm");
-					tf::poseMsgToKDL(const desperate_housewife::hand hand_msg.*hand_Pose[i], Hand_pose_kdl);
-					GetEuleroAngle(Hand_pose_kdl_r[i],1);
-			
+					
+					tf::poseMsgToKDL( hand_msg.hand_Pose[i], Hand_pose_kdl_r[i]);
+					GetEuleroAngle(Hand_pose_kdl_r[i], Vito_desperate.Pos_HAND_r_xd[i]);
+
+					listener_info.lookupTransform("/camera_rgb_optical_frame", "right_arm_base_link" , ros::Time(0), Vito_desperate.right_arm_base_link_st );
+					listener_info.lookupTransform("/camera_rgb_optical_frame", "right_hand_palm_link" , ros::Time(0), Vito_desperate.right_arm_softhand_st[i] );
+					
+					//from stampedtrasform-->tf::transform-->KDL::frame 
+					
+					local_frame_sh = FromTFtoKDL(Vito_desperate.right_arm_softhand_st[i]);	
+
+					GetEuleroAngle(local_frame_sh, Vito_desperate.Pos_HAND_r_x[i]);
+					
+					local_frame_base = FromTFtoKDL(Vito_desperate.left_arm_base_link_st );
+					GetEuleroAngle(local_frame_base, Vito_desperate.pos_base_l);
+
 				break;
 
 				case 2: //obstacles
 					ROS_INFO("The object is obstacles");
-					obstacle_position.x = hand_Pose[i].position.x;
-					obstacle_position.y = hand_Pose[i].position.y;
-					obstacle_position.z = hand_Pose[i].position.z;
+					Eigen::Vector3d local_pos(hand_msg.hand_Pose[i].position.x, hand_msg.hand_Pose[i].position.y, hand_msg.hand_Pose[i].position.z);
+					obstacle_position.push_back(local_pos);
+					
 
 					//SetRepulsiveFiled(hand_msg.*hand_Pose.begin().position);
 
@@ -78,8 +111,8 @@ void phobic_mp::MPCallback(const desperate_housewife::hand hand_msg)
 			whichArm.push_back(hand_msg.whichArm[i]);
 		}
 
-		hand_msg.hand_Pose.clear();
-		hand_msg.whichArm.clear();
+		// hand_msg.hand_Pose.clear();
+		// hand_msg.whichArm.clear();
 	}
 	else
 	{
@@ -87,7 +120,14 @@ void phobic_mp::MPCallback(const desperate_housewife::hand hand_msg)
 	}
 }
 
+KDL::Frame FromTFtoKDL(tf::StampedTransform st_transf)
+{
+	KDL::Frame hand_frame;
+	tf::Transform hand_tf(st_transf.getRotation(), st_transf.getOrigin());
+	tf::TransformTFToKDL(hand_tf, hand_frame);
 
+	return hand_frame;
+}
 
 void phobic_mp::Esegui()
 {
@@ -95,13 +135,38 @@ void phobic_mp::Esegui()
 	{	
 		if(whichArm[i] == 2)
 		{
-			SetRepulsiveFiled();
+			int arm_c;
+
+			if((i==0) || (i == whichArm.size()-1))
+			{
+				continue;
+			}
+			else
+			{	switch(whichArm[i+1] == 0)
+				{
+					case 0:
+					
+						arm_c = 0; 
+					break;
+					case 1;
+
+						arm_c =1;
+					break;
+					case 2:
+						continue;
+					break;
+				}
+			}
+
+			SetRepulsiveFiled(obstacle_position[i], arm_c); 
+			SetPotentialField_robot(Force_repulsion, arm_c);
+
 		}
 		else
 		{
 			GetJacobian(whichArm[i]);
 			SetPotentialField_robot(Force_repulsion, whichArm[i]);
-			SendetAttractiveField(whichArm[i], i);
+			SetAttractiveField(whichArm[i], i);
 		}
 	}
 
@@ -109,24 +174,17 @@ void phobic_mp::Esegui()
 	Send();
 }
 
-void phobic_mp::GetEuleroAngle(KDL::Frame &Hand_kdl, int &p)
+void phobic_mp::GetEuleroAngle(KDL::Frame &Hand_kdl_xd, Eigen::VectorXd pos_cartisian)
 {
 	//KDL::Frame hand_kdl_pose_l;
 	double x, y,z,w;
 	double roll, pitch, yaw;
-	KDL::Rotation::GetRPY(roll, pitch, yaw);
-	KDL::Rotation::GetQuaternion(x,y,z,w);
+	Hand_kdl_xd.GetRPY(roll, pitch, yaw);
+	Hand_kdl_xd.GetQuaternion(x,y,z,w);
 
-	if (int p == 0 )//left
-	{	
-		Vito_desperate.Pos_HAND_l.push_back(x,y,z,roll,pitch,yaw);	//x_d in word frame
-		
-	}
-	else //right
-	{
-		Vito_desperate.Pos_HAND_r.push_back(x,y,z,roll,pitch,yaw);	//x_d in word frame
-	}
-
+	
+	pos_cartisian << x,y,z,roll,pitch,yaw;	//x_d in word frame		
+	
 }
 
 
@@ -149,28 +207,36 @@ Eigen::Matrix4d FromTFtoEigen(tf::StampedTransform &object)
 
 void phobic_mp::SetAttractiveField(int &p, int &i ) //calculate respect word frame
 {		
-	Eigen::VectorXd pos_Hand;
+	Eigen::VectorXd pos_Hand_xd, Vel;
+	Eigen::VectorXd Pos_hand_x;
+
+//Eigen::Vector3d phobic_mp::Take_Pos(tf::StampedTransform &M_tf)
 
 	if(p == 0)
 	{
-		pos_Hand = &Vito_desperate.Pos_HAND_l[i];
+		pos_Hand_xd = Vito_desperate.Pos_HAND_l_xd[i]; //6d
+		Vel  = Vito_desperate.Vel_l[7];
+		Pos_hand_x = Vito_desperate.Pos_HAND_l_x[i];
 	}
+
 	else
 	{
-		pos_Hand = &Vito_desperate.Pos_HAND_r[i];
+		pos_Hand_xd = Vito_desperate.Pos_HAND_r_xd[i];
+		Vel  = Vito_desperate.Vel_r[7];
+		Pos_hand_x = Vito_desperate.Pos_HAND_r_x[i]; //6d
 	}
 
 	// To calculate the attractive force -dissipative(velocity-V_limit*desired_velocity)
 
 	Eigen::VectorXd vel_servo_control; //xd_point
 	
-	vel_servo_control << P_goal/dissipative * (pos_Hand - Vito_desperate.link_frame_[7]);
+	vel_servo_control << P_goal/dissipative * (pos_Hand_xd - Pos_hand_x);
 
 	double v_lim;
 	v_lim = SetLimitation(vel_servo_control);
 
 	Eigen::VectorXd velocity;
-	velocity << (Vito_desperate.link_jac_[7] * Vito_desperate.Vel[7]);  //x_point = jac*q_point
+	velocity << (Vito_desperate.link_jac_[7] * Vel);  //x_point = jac*q_point
 
 	Force_attractive << (- dissipative *(velocity - v_lim * vel_servo_control)); //in vito frame
 
@@ -217,68 +283,96 @@ void phobic_mp::SetCommandVector()
 }
 
 
-// void phobic_mp::SetRepulsiveFiled(pcl::PointXYZ &Pos)
-// {
-// 	std::vector<std::pair<double, pcl::PointXYZ>> distance_local_obj;
-
-// 	for (int i=2; i <= Vito_desperate.robot_position_left.size();i++)
-// 	{	
-// 		distance_local_obj.push_back(GetDistance(Pos,Vito_desperate.robot_position_left[i])); 
-
-// 	}
-
-// 	for (int i=0; i <= distance_local_obj.size(); i++)
-// 	{
-// 		pcl::PointXYZ vec_Temp;
-// 		vec_Temp.x = distance_local_obj[i].second.x;
-// 		vec_Temp.y = distance_local_obj[i].second.y;
-// 		vec_Temp.z = distance_local_obj[i].second.z;
-
-// 		if(distance_local_obj[i].first <= influence)
-// 		{
-// 			vec_Temp.x = (P_obj/pow(distance_local_obj[i].first,2)) * (1/distance_local_obj[i].first - 1/influence) * vec_Temp.x;
-// 			vec_Temp.y = (P_obj/pow(distance_local_obj[i].first,2)) * (1/distance_local_obj[i].first - 1/influence) * vec_Temp.y;
-// 			vec_Temp.z = (P_obj/pow(distance_local_obj[i].first,2)) * (1/distance_local_obj[i].first - 1/influence) * vec_Temp.z;
-// 			Force_repulsion.push_back(vec_Temp);
-// 		}
-// 		else
-// 		{
-// 			vec_Temp.x = 0;
-// 			vec_Temp.y= 0;
-// 			vec_Temp.z= 0;
-// 			Force_repulsion.push_back(vec_Temp);
-// 		}
-// 	}
-
-// }
-
-
-// std::pair<double, pcl::PointXYZ> phobic_mp::GetDistance(pcl::PointXYZ &obj1, pcl::PointXYZ &obj2 )
-// {
-// 	std::pair<double, pcl::PointXYZ> distance_local;
-// 	pcl::PointXYZ local_point;
-	
-// 	distance_local.first = sqrt(pow(obj1.x-obj2.x,2) + pow(obj1.y-obj2.y,2) + pow(obj1.z-obj2.z,2));  
-// 	local_point.x = (obj1.x-obj2.x);
-// 	local_point.y = (obj1.y-obj2.y);
-// 	local_point.z = (obj1.z-obj2.z);
-// 	distance_local.second =  local_point;
-
-// 	return distance_local;
-// }
-
-
-
-pcl::PointXYZ phobic_mp::Take_Pos(tf::StampedTransform &M_tf)
+void phobic_mp::SetRepulsiveFiled(Eigen::Vector3d &Pos, int &p)
 {
-	pcl::PointXYZ Pos_vito;
+	std::vector<Eigen::Vector3d> distance_local_obj;
+	std::vector<Eigen::VectorXd>* local_arm; 
+
+	for(int t = 1; t<7; t++ )
+	{
+		if(p == 0) //left
+		{
+			 GetEuleroAngle(Vito_desperate.robot_position_left[t], local_arm );
+		}
+		else
+		{
+			 GetEuleroAngle(Vito_desperate.robot_position_righ[t], local_arm );
+
+		}
+	
+		distance_local_obj.push_back(GetDistance(Pos,*local_arm[i])); 
+
+	}
+
+	std::vector<double>  min_d;
+
+	for (int i=0; i <= distance_local_obj.size(); i++)
+	{
+		
+		if(distance_local_obj <= influence )
+		{
+			min_d = distance_local_obj[i].norm();
+		}
+
+		else
+		{
+			continue;
+		}
+	}
+
+	double min_distance;
+	Eigen::Vector3d distance_der_partial;
+	Eigen::Vector3d vec_Temp;
+
+	for (int i=0; i< min_d.size()-1;i++)
+	{
+		if(min_d[i] < min_d[i+1])
+		{
+			min_distance = min_d[i];
+
+        	distance_der_partial[0] =  min_d[i](0) / sqrt(pow(min_d[i](0))+ pow(min_d[i](1)) + pow(min_d[i](2)));
+       		distance_der_partial[1] =  min_d[i](1) / sqrt(pow(min_d[i](0))+ pow(min_d[i](1)) + pow(min_d[i](2)));
+       		distance_der_partial[2] =  min_d[i](2) / sqrt(pow(min_d[i](0))+ pow(min_d[i](1)) + pow(min_d[i](2)));
+			vec_Temp = (P_obj/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
+			Force_repulsion.push_back(vec_Temp);
+		}
+
+		else
+		{
+			continue;
+		}
+
+	}
+}
+
+
+Eigen::Vector3d phobic_mp::GetDistance(Eigen::VectorXd &obj1, Eigen::VectorXd &obj2 )
+{
+	Eigen::Vector3d distance_local;
+	//pcl::PointXYZ local_point;
+	
+	distance_local = sqrt(pow(obj1[0]-obj2[0],2) + pow(obj1[1]-obj2[1],2) + pow(obj1[2]-obj2[2],2));  
+	// local_point.x = (obj1.x-obj2.x);
+	// local_point.y = (obj1.y-obj2.y);
+	// local_point.z = (obj1.z-obj2.z);
+	// distance_local.second =  local_point;
+
+	return distance_local;
+}
+
+
+
+
+Eigen::Vector3d phobic_mp::Take_Pos(tf::StampedTransform &M_tf)
+{
+	Eigen::Vector3d Pos_vito;
 	Eigen::Matrix4d Link_eigen;
 	
 	Link_eigen = FromTFtoEigen(M_tf);
 
-	Pos_vito.x = Link_eigen(0,3);
-	Pos_vito.y = Link_eigen(1,3);
-	Pos_vito.z = Link_eigen(2,3);
+	Pos_vito[0] = Link_eigen(0,3);
+	Pos_vito[1] = Link_eigen(1,3);
+	Pos_vito[2] = Link_eigen(2,3);
 
 	return Pos_vito;
 }
