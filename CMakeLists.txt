@@ -4,7 +4,7 @@ project(desperate_housewife)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED gazebo REQUIRED  roscpp pcl_conversions pcl_ros pcl_msgs message_generation std_msgs geometry_msgs sensor_msgs)
+find_package(catkin REQUIRED roscpp pcl_conversions pcl_ros tf_conversions pcl_msgs message_generation std_msgs geometry_msgs sensor_msgs)
 find_package(PCL 1.7.2 REQUIRED)
 
 
@@ -115,15 +115,15 @@ INCLUDE_DIRS include
 # add_executable(desperate_housewife_node src/desperate_housewife_node.cpp)
 add_executable(phobic_camera src/main.cpp src/phobic_camera.cpp)
 add_executable(cylinder_test test/cylinder_test.cpp)
-# add_executable(phobic_motion_planning src/Robot_description.cpp src/phobic_motion_planning.cpp)
+#add_executable(phobic_motion_planning src/Robot_description.cpp src/phobic_motion_planning.cpp)
 add_executable(phobic_hand_pose src/phobic_hand_pose.cpp)
-
+add_executable(prova_mp src/prova_robot.cpp src/prova_mp.cpp)
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 add_dependencies(phobic_camera desperate_housewife_gencpp)
-# add_dependencies(phobic_motion_planning desperate_housewife_gencpp)
+#add_dependencies(phobic_motion_planning desperate_housewife_gencpp)
 add_dependencies(phobic_hand_pose desperate_housewife_gencpp)
-
+add_dependencies(prova_mp desperate_housewife_gencpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(phobic_camera
@@ -139,6 +139,13 @@ target_link_libraries(cylinder_test
 #   ${catkin_LIBRARIES}
 #   ${PCL_LIBRARIES}
 # )
+
+target_link_libraries(prova_mp
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+)
+
+
 
 target_link_libraries(phobic_hand_pose
   ${catkin_LIBRARIES}
