@@ -117,13 +117,11 @@ class phobic_mp
 
 	public:
 
-		
-
 		ros::Subscriber  joint_listen;
 		void Esegui();
 		void MPCallback(const desperate_housewife::hand hand_msg);		
 		//double SetrepulsiveField( tf::StampedTransform &object, int &p);
-		void SetPotentialField_robot(std::vector<Eigen::VectorXd> &Force_repulsion, int p);
+		void SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p);
 		//bool objectORostacles();
 		
 		void SetAttractiveField(Eigen::VectorXd &pos_Hand_xd, Eigen::VectorXd &Vel, Eigen::VectorXd &Pos_hand_x, Eigen::VectorXd &Force_attractive,  KDL::Jacobian &link_jac_);
@@ -144,8 +142,6 @@ class phobic_mp
 		void SetPseudoInvJac();
 		std::string getURDF(std::string param_name);
 		void InfoSoftHand(tf::StampedTransform &SoftHand_orBase_tf, Eigen::VectorXd &Eulero_angle );
-
-
 
 
 		phobic_mp(ros::NodeHandle node_mp): nodeH(node_mp)

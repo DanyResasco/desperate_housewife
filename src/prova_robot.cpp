@@ -142,7 +142,7 @@ void phobic_mp::GetJacobian(int p)
 }
 
 
-void phobic_mp::SetPotentialField_robot(std::vector<Eigen::VectorXd> &Force_repulsion, int p)
+void phobic_mp::SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p)
 {
     std::vector<Eigen::Vector3d> distance_link; //Only position
 
@@ -237,14 +237,16 @@ void phobic_mp::SetPotentialField_robot(std::vector<Eigen::VectorXd> &Force_repu
         distance_der_partial[2] =  distance_link[i](2) / sqrt(pow(distance_link[i](0),2)+ pow(distance_link[i](1),2) +pow(distance_link[i](2),2));
 
         Eigen::Vector3d vec_Temp;
-        vec_Temp << (P_obj/pow(distance_link[i].norm(),2)) * (1/distance_link[i].norm() - 1/influence) *distance_der_partial[0];
+        vec_Temp = (P_obj/pow(distance_link[i].norm(),2)) * (1/distance_link[i].norm() - 1/influence) *distance_der_partial;
 
-        Force_repulsion_left << vec_Temp; //Ricorda che se devi metterne più di uno devi mettere le parentesi
+        Force_repulsion = vec_Temp; //Ricorda che se devi metterne più di uno devi mettere le parentesi
       }
+
       else
       {
-        //Force_repulsion.push_back(0);
-        continue;
+        Eigen::Vector3d fiel_zero(0,0,0);
+        Force_repulsion_left = fiel_zero;
+        //continue;
       }
     }
 }

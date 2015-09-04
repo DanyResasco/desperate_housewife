@@ -108,7 +108,7 @@ void phobic_mp::Esegui()
 		KDL::Jacobian local_jack = Vito_desperate.link_jac_l[7]; 
 
 		SetAttractiveField(local_pos_xd, Vito_desperate.Vel_l, local_pos_x, Force_attractive_left, local_jack);
-		//SetPotentialField_robot(Force_repulsion_right, 1);
+		SetPotentialField_robot(Force_repulsion_left, 0);
 		
 		// switch(whichArm[i])
 		// {
@@ -277,25 +277,25 @@ double phobic_mp::SetLimitation(Eigen::VectorXd &vel_d)
 // }
 
 
-// void phobic_mp::SetRepulsiveFiled(Eigen::Vector3d &Pos, int p, Eigen::Vector3d Force_repulsion )
+// void phobic_mp::SetRepulsiveFiled(Eigen::Vector3d &Pos, int p, Eigen::Vector3d &Force_repulsion )
 // {
 // 	std::vector<Eigen::Vector3d> distance_local_obj;
-// 	std::vector<Eigen::VectorXd>* local_arm; 
+// 	std::vector<Eigen::VectorXd> local_arm; 
 
 // 	for(int t = 0; t<7; t++ )
 // 	{
-// 		if(p == 0) //left
-// 		{
+// 		// if(p == 0) //left
+// 		// {
 // 			GetEuleroAngle(Vito_desperate.robot_position_left[t], local_arm );
-// 		}
+// 		//}
 		
-// 		else
-// 		{
-// 			GetEuleroAngle(Vito_desperate.robot_position_righ[t], local_arm );
+// 		// else
+// 		// {
+// 		// 	GetEuleroAngle(Vito_desperate.robot_position_righ[t], local_arm );
 
-// 		}
+// 		// }
 	
-// 		distance_local_obj.push_back(GetDistance(Pos,*local_arm[i])); 
+// 		distance_local_obj.push_back(GetDistance(Pos, local_arm[i])); 
 
 // 	}
 
@@ -378,55 +378,3 @@ KDL::Frame FromTFtoKDL(tf::StampedTransform &st_transf)
 	return distance_local;
 }
 
-
-
-
-Eigen::Vector3d phobic_mp::Take_Pos(tf::StampedTransform &M_tf)
-{
-	Eigen::Vector3d Pos_vito;
-	Eigen::Matrix4d Link_eigen;
-	
-	Link_eigen = FromTFtoEigen(M_tf);
-
-	Pos_vito[0] = Link_eigen(0,3);
-	Pos_vito[1] = Link_eigen(1,3);
-	Pos_vito[2] = Link_eigen(2,3);
-
-	return Pos_vito;
-}
-
-// void phobic_mp::Calculate_force()
-// {
-// 	pcl::PointXYZ repulsive_local;
-// 	pcl::PointXYZ attractive_local;
-	
-// 	for(int i=0;i < Force_repulsion.size();i++)
-// 	{
-// 		repulsive_local.x = Force_repulsion[i].x +  Force_repulsion[i+1].x;
-// 		repulsive_local.y = Force_repulsion[i].y +  Force_repulsion[i+1].y;
-// 		repulsive_local.z = Force_repulsion[i].z +  Force_repulsion[i+1].z;
-// 	}
-
-// 	if(Force_attractive.size() > 1)
-// 	{
-// 		for (int i=0; i< Force_attractive.size(); i++)
-// 		{
-// 			attractive_local.x = Force_attractive[i].x + Force_attractive[i+1].x;
-// 			attractive_local.y = Force_attractive[i].y + Force_attractive[i+1].y;
-// 			attractive_local.z = Force_attractive[i].z + Force_attractive[i+1].z;
-// 		}
-// 	}
-
-// 	else
-// 	{
-// 		attractive_local = *Force_attractive.begin();
-// 	}
-
-// 	pcl::PointXYZ local_force;
-// 	local_force.x = attractive_local.x + repulsive_local.x;
-// 	local_force.y = attractive_local.y + repulsive_local.y;
-// 	local_force.z = attractive_local.z + repulsive_local.z;
-// 	Force.push_back( local_force);
-// 	ROS_INFO(" FORCE: %d", Force.front());
-	
-// }

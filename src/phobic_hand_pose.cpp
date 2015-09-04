@@ -207,12 +207,12 @@ void phobic_hand::SetHandPosition(int &u)
 
 	//devo portare il tutto in word frame RICONTROLLA!!
 	Eigen::Matrix4d T_K_VA_eigen;
-	listener_info.lookupTransform("/camera_rgb_optical_frame", "vito_anchor" , ros::Time(0), T_K_vito_ancor );
-	T_K_VA_eigen = FromTFtoEigen(T_K_vito_ancor);
+	//listener_info.lookupTransform("/camera_rgb_optical_frame", "vito_anchor" , ros::Time(0), T_K_vito_ancor );
+	//T_K_VA_eigen = FromTFtoEigen(T_K_vito_ancor);
 	
-	T_w_c = T_K_VA_eigen.inverse() * T_K_H * M_desired_local.inverse();
+	//T_w_c = T_K_VA_eigen.inverse() * T_K_H * M_desired_local.inverse();
 	
-	fromEigenToPose( T_w_c , Hand_pose[u]);
+	//fromEigenToPose( T_w_c , Hand_pose[u]);
 
 
 	//cancello primo elemento della lista
