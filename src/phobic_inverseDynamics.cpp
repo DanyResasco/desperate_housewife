@@ -399,7 +399,7 @@ namespace desperate_inversedynamics
 
 					case 2: //obstacles
 						ROS_INFO("The object is obstacles");
-						Eigen::Vector3d local_pos(hand_msg.hand_Pose[i].position.x, hand_msg.hand_Pose[i].position.y, hand_msg.hand_Pose[i].position.z);
+						KDL::Vector local_pos(hand_msg.hand_Pose[i].position.x, hand_msg.hand_Pose[i].position.y, hand_msg.hand_Pose[i].position.z);
 						obstacle_position.push_back(local_pos);
 
 					break;
@@ -497,9 +497,9 @@ namespace desperate_inversedynamics
 	}
 
 
-	void phobic_mp::SetRepulsiveFiled(Eigen::Vector3d &Pos, int p, Eigen::Vector3d &Force_repulsion )
+	void phobic_mp::SetRepulsiveFiled(KDL::Vector &Pos, int p, Eigen::Vector3d &Force_repulsion )
 	{
-		std::vector<Eigen::Vector3d> distance_local_obj;
+		std::vector<KDL::Vector> distance_local_obj;
 		//std::vector<Eigen::VectorXd> local_arm; 
 
 		for(int t = 0; t<7; t++ )
@@ -514,8 +514,8 @@ namespace desperate_inversedynamics
 			// 	GetEuleroAngle(Vito_desperate.robot_position_righ[t], local_arm );
 
 			// }
-		
-			distance_local_obj.push_back(GetDistance(Pos, x_now.p[i])); 
+		distance_local_obj.push_back(Pos - x_now.p[i]); 
+			// distance_local_obj.push_back(GetDistance(Pos, x_now.p[i])); 
 
 		}
 
@@ -525,7 +525,7 @@ namespace desperate_inversedynamics
 		for (int i=0; i <= distance_local_obj.size(); i++)
 		{
 			double local_distance;
-			local_distance  = distance_local_obj[i].norm();
+			local_distance  = distance_local_obj[i].Norm();
 			
 			if( local_distance <= influence )
 			{
@@ -566,18 +566,18 @@ namespace desperate_inversedynamics
 
 
 
-	Eigen::Vector3d phobic_mp::GetDistance(Eigen::VectorXd &obj1, KDL::Vector &obj2 )
-	//double phobic_mp::GetDistance(Eigen::VectorXd &obj1, Eigen::VectorXd &obj2 )
-	{
-		Eigen::Vector3d distance_local;
-		//double distance_local;
-		//distance_local = sqrt(pow(obj1[0]-obj2[0],2) + pow(obj1[1]-obj2[1],2) + pow(obj1[2]-obj2[2],2));  
-		  distance_local[0] = obj1[0] - obj2[0];
-		  distance_local[1] = obj1[1] - obj2[1];
-		  distance_local[2] = obj1[2] - obj2[2];
+	// Eigen::Vector3d phobic_mp::GetDistance(KDL::Vector &obj1, KDL::Vector &obj2 )
+	// //double phobic_mp::GetDistance(Eigen::VectorXd &obj1, Eigen::VectorXd &obj2 )
+	// {
+	// 	Eigen::Vector3d distance_local;
+	// 	//double distance_local;
+	// 	//distance_local = sqrt(pow(obj1[0]-obj2[0],2) + pow(obj1[1]-obj2[1],2) + pow(obj1[2]-obj2[2],2));  
+	// 	  distance_local[0] = obj1[0] - obj2[0];
+	// 	  distance_local[1] = obj1[1] - obj2[1];
+	// 	  distance_local[2] = obj1[2] - obj2[2];
 		
-		return distance_local;
-	}
+	// 	return distance_local;
+	// }
 
 	void phobic_mp::InfoSoftHand(tf::StampedTransform &SoftHand_orBase_tf, KDL::Frame &Eulero_angle  )
 	{
@@ -590,25 +590,16 @@ namespace desperate_inversedynamics
 	}
 
 
-
-
-
-
-
-
-
-
-
-
 void phobic_mp::SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p)
 {
-    std::vector<Eigen::Vector3d> distance_link; //Only position
+    std::vector<KDL::Vector> distance_link; //Only position
 
-    std::vector<Eigen::VectorXd> robot_link_position1;
-    std::vector<Eigen::VectorXd> robot_link_position2;
+    std::vector<KDL::Vector> robot_link_position1;
+    std::vector<KDL::Vector> robot_link_position2;
+    robot_link_position1.resize(x_now.size());
 
-    Eigen::VectorXd HAND;
-    Eigen::VectorXd base_link;
+    KDL::Frame HAND;
+    KDL::Frame base_link;
     //robot_link_position->resize(Vito_desperate.robot_position_left.size());
     
      //p==0 is left arm, else is right arm
@@ -620,7 +611,11 @@ void phobic_mp::SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p)
       //   //GetEuleroAngle(Vito_desperate.link_frame_r[i], robot_link_position2[i]);   
   
       // }
-
+    	for (int i=0; i< x_now.size(); i++)
+    	{
+    		robot_link_position1[i] = x_now[i];
+    	}
+   
         HAND =  Vito_desperate.Pos_HAND_l_x;     
 
         base_link = Vito_desperate.pos_base_l ;
@@ -668,11 +663,12 @@ void phobic_mp::SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p)
     // }  
 
     //collision with softhand
-    distance_link.push_back(GetDistance(HAND, base_link));
+    distance_link.push_back(HAND - base_link));
 
     for(int j = 3; j >= 1; j--) //with himself
     {
-      distance_link.push_back(GetDistance(HAND, robot_link_position1[j]));
+      // distance_link.push_back(GetDistance(HAND, robot_link_position1[j]));
+    	distance_link.push_back(HAND - robot_link_position1[j]);
     }
 
     // for(int i=1; i<=7; i++)//with other arm
@@ -685,7 +681,7 @@ void phobic_mp::SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p)
     for (int i=0; i <= distance_link.size(); i++)
     {
        double local_distance;
-       local_distance  = distance_link[i].norm();
+       local_distance  = distance_link[i].Norm();
 
       if(local_distance <= influence) //if in minus than influence area
       {
@@ -697,7 +693,7 @@ void phobic_mp::SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p)
         Eigen::Vector3d vec_Temp;
         vec_Temp = (P_obj/pow(distance_link[i].norm(),2)) * (1/distance_link[i].norm() - 1/influence) *distance_der_partial;
 
-        Force_repulsion = vec_Temp; //Ricorda che se devi metterne più di uno devi mettere le parentesi
+        Force_repulsion_left = vec_Temp; //Ricorda che se devi metterne più di uno devi mettere le parentesi
       }
 
       else
