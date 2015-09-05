@@ -44,8 +44,36 @@ void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
 		if(check_robot == true)
 		{
 			//Soft Hand information M_k_H 
-			listener_info.lookupTransform("/camera_rgb_optical_frame", "right_hand_palm_link" , ros::Time(0), SoftHand_r );
-			listener_info.lookupTransform("/camera_rgb_optical_frame", "left_hand_palm_link" , ros::Time(0), SoftHand_l );
+
+			ros::Time t = ros::Time::now();
+			try{
+				listener_info.waitForTransform("/camera_rgb_optical_frame", "right_hand_palm_link" , t, ros::Duration(4.0));
+				listener_info.lookupTransform("/camera_rgb_optical_frame", "right_hand_palm_link" , t, SoftHand_r);
+			}
+			catch (tf::TransformException ex){
+				ROS_ERROR("%s",ex.what());
+			}
+
+			try{
+				listener_info.waitForTransform("/camera_rgb_optical_frame", "left_hand_palm_link" , t, ros::Duration(4.0));
+				listener_info.lookupTransform("/camera_rgb_optical_frame", "left_hand_palm_link" , t, SoftHand_l);
+			}
+			catch (tf::TransformException ex){
+				ROS_ERROR("%s",ex.what());
+			}
+
+			// listener_info.lookupTransform("/camera_rgb_optical_frame", "right_hand_palm_link" , ros::Time::now(), SoftHand_r );
+			// listener_info.lookupTransform("/camera_rgb_optical_frame", "left_hand_palm_link" , ros::Time::now(), SoftHand_l );
+			Eigen::Matrix4d local_pos_hand_l, local_pos_hand_r;
+			local_pos_hand_l = FromTFtoEigen(SoftHand_l);
+			local_pos_hand_r = FromTFtoEigen(SoftHand_r);
+			Pos_HAND_l.x = local_pos_hand_l(0,3);
+			Pos_HAND_l.y = local_pos_hand_l(1,3);
+			Pos_HAND_l.z = local_pos_hand_l(2,3);
+
+			Pos_HAND_r.x = local_pos_hand_r(0,3);
+			Pos_HAND_r.y = local_pos_hand_r(1,3);
+			Pos_HAND_r.z = local_pos_hand_r(2,3);
 	    }
 	    else
 	    {	//solo per provarlo			
@@ -61,7 +89,7 @@ void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
     	//read the cylinder informations in tf::StampedTransform
 		for (int i = 0; i < cyl_msg.dimension; i++)
 		{
-			listener_info.lookupTransform("/camera_rgb_optical_frame", "cilindro_" + std::to_string(i) , ros::Time(0), Goal[i] );
+			listener_info.lookupTransform("/camera_rgb_optical_frame", "cilindro_" + std::to_string(i) , ros::Time::now(), Goal[i] );
 			
 			// cyl_height.push_back(cyl_msg.length[i]);
 			// cyl_radius.push_back(cyl_msg.radius[i]);
@@ -207,7 +235,7 @@ void phobic_hand::SetHandPosition(int &u)
 
 	//devo portare il tutto in word frame RICONTROLLA!!
 	Eigen::Matrix4d T_K_VA_eigen;
-	//listener_info.lookupTransform("/camera_rgb_optical_frame", "vito_anchor" , ros::Time(0), T_K_vito_ancor );
+	//listener_info.lookupTransform("/camera_rgb_optical_frame", "vito_anchor" , ros::Time::now(), T_K_vito_ancor );
 	//T_K_VA_eigen = FromTFtoEigen(T_K_vito_ancor);
 	
 	//T_w_c = T_K_VA_eigen.inverse() * T_K_H * M_desired_local.inverse();

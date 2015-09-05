@@ -51,11 +51,15 @@
 #include <kdl/chainfksolver.hpp>
 #include <kdl/chainfksolverpos_recursive.hpp>
 
-// Gazebo
-// #include <gazebo/gazebo.hh>
-// #include <gazebo/physics/physics.hh>
-// #include <gazebo/common/common.hh>
-// #include <urdf/model.h> 
+// #include <lwr_controllers/one_task_inverse_dynamics_jl.h>
+// #include <pluginlib/class_list_macros.h>
+// #include <kdl_parser/kdl_parser.hpp>
+// #include <math.h>
+// #include <Eigen/LU>
+// #include <utils/pseudo_inversion.h>
+// #include <utils/skew_symmetric.h>
+
+
 
 class phobic_mp
 {
@@ -67,13 +71,13 @@ class phobic_mp
 		// Node Handles
   		ros::NodeHandle model_nh_; // namespaces to robot name
   		// Strings
-		std::string robot_namespace_;
-  		std::string robot_description_;
-  		std::vector<std::string> link_names_;
+		// std::string robot_namespace_;
+  // 		std::string robot_description_;
+  // 		std::vector<std::string> link_names_;
   	
   		std::vector<int> whichArm;
-		
-		pcl::PointXYZ goal_position;
+		bool check_urdf;
+		// pcl::PointXYZ goal_position;
 		std::vector<Eigen::Vector3d> obstacle_position;
 		Eigen::Matrix4d frame_cylinder; //M_c_k
 		double P_hand = 0.5;
@@ -92,57 +96,91 @@ class phobic_mp
 		double max_radius=0.1, max_lenght=0.20;
 		std::string root_name;
 	
+		boost::scoped_ptr<KDL::ChainJntToJacSolver> jnt_to_jac_solver_;
+		boost::scoped_ptr<KDL::ChainDynParam> id_solver_;
+		boost::scoped_ptr<KDL::ChainFkSolverPos_recursive> fk_pos_solver_;
+		std::vector<KDL::Frame> x_,  x_now;
+		KDL::Frame x0_ ;	
+		std::vector<KDL::Frame> x_des_;	//desired pose
+		KDL::Twist x_des_dot_;
+		KDL::Twist x_des_dotdot_;
+		Eigen::Matrix<double,6,1> x_dot_;	//current e-e velocity
+		KDL::Twist x_err_;
+		KDL::JntArray tau_;
+
+		Eigen::Matrix<double,7,7> I_;
+		Eigen::Matrix<double,7,7> N_trans_;
+
+
+
 
 		struct Robot
 		{	
 
-			std::vector<double> robot_position_left, robot_position_right; //in joint space is a point
-			Eigen::VectorXd Vel_l, Vel_r;
-			std::vector<KDL::Jacobian> link_jac_l, link_jac_r;
-			std::vector<KDL::Frame> link_frame_l, link_frame_r;
-			std::vector<KDL::ChainJntToJacSolver*> link_jac_solver_;
-			std::vector<KDL::ChainFkSolverPos_recursive*> link_fk_solver_;
-			std::vector<KDL::JntArray> link_joints_;
-			std::vector<KDL::Chain> link_chain_;
+			// std::vector<double> robot_position_left, robot_position_right; //in joint space is a point
+			// Eigen::VectorXd Vel_l, Vel_r;
+			// std::vector<KDL::Jacobian> link_jac_l, link_jac_r;
+			// std::vector<KDL::Frame> link_frame_l, link_frame_r;
+			// std::vector<KDL::ChainJntToJacSolver*> link_jac_solver_;
+			// std::vector<KDL::ChainFkSolverPos_recursive*> link_fk_solver_;
+			// std::vector<KDL::JntArray> link_joints_;
+			// std::vector<KDL::Chain> link_chain_;
 			
 			std::vector<Eigen::VectorXd> Pos_HAND_r_xd, Pos_HAND_l_xd;
 			Eigen::VectorXd Pos_HAND_r_x, Pos_HAND_l_x;
 			Eigen::Matrix4d Pos_final_hand_r, Pos_final_hand_l;
 			Eigen::VectorXd pos_base_l, pos_base_r;
 			 //make a model
-			KDL::Tree Robot_tree;
+			// KDL::Tree Robot_tree;
 
 			
+			std::vector<hardware_interface::JointHandle> joint_handles_;
+			KDL::Chain kdl_chain_;
+			KDL::JntArrayVel joint_msr_states_, joint_des_states_;	// joint states (measured and desired)
+			KDL::JntArray qdot_last_;
+			KDL::Jacobian J_;	//Jacobian J(q)
+			KDL::Jacobian J_last_;	//Jacobian of the last step
+			KDL::Jacobian J_dot_;	//d/dt(J(q))
+			KDL::Jacobian J_star_; // it will be J_*P_
+			KDL::JntSpaceInertiaMatrix M_;	// intertia matrix
+			KDL::JntArray C_;	// coriolis
+			KDL::JntArray G_;	// gravity
+
+
 		} Vito_desperate;
 
 	public:
 
-		ros::Subscriber  joint_listen;
-		void Esegui();
+		// ros::Subscriber  joint_listen;
+		// void Esegui();
 		void MPCallback(const desperate_housewife::hand hand_msg);		
 		//double SetrepulsiveField( tf::StampedTransform &object, int &p);
 		void SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p);
 		//bool objectORostacles();
 		
-		void SetAttractiveField(Eigen::VectorXd &pos_Hand_xd, Eigen::VectorXd &Vel, Eigen::VectorXd &Pos_hand_x, Eigen::VectorXd &Force_attractive,  KDL::Jacobian &link_jac_);
-		
+		void SetAttractiveField(KDL::Frame &pos_Hand_xd, KDL::JntArrayVel &Vel, KDL::Frame &Pos_hand_x, Eigen::VectorXd &Force_attractive,  KDL::Jacobian &link_jac_);
+
 		void SetRepulsiveFiled(Eigen::Vector3d &Pos, int p, Eigen::Vector3d Force_repulsion );
 		
 		Eigen::Vector3d GetDistance(Eigen::VectorXd &obj1, Eigen::VectorXd &obj2);
-		double SetLimitation(Eigen::VectorXd &vel_d);
-		void SetCommandVector();
-		Eigen::Vector3d Take_Pos(tf::StampedTransform &M_tf);
-		bool GetVitoUrdf();
-		void GetEuleroAngle(KDL::Frame &Hand_kdl_xd, Eigen::VectorXd &pos_cartisian);
-		void Robot_Callback_left(sensor_msgs::JointState msg);
-		void Robot_Callback_right(sensor_msgs::JointState msg);
-		//void Robot_Callback_right(sensor_msgs::JointState msg);
+		//double SetLimitation(Eigen::VectorXd &vel_d);
+		// void SetCommandVector();
+		// Eigen::Vector3d Take_Pos(tf::StampedTransform &M_tf);
+		// bool GetVitoUrdf();
+		void GetEuleroAngle(KDL::Frame &Hand_kdl_xd, KDL::Frame &pos_cartisian);
+		// void Robot_Callback_left(sensor_msgs::JointState msg);
+		// void Robot_Callback_right(sensor_msgs::JointState msg);
+		// //void Robot_Callback_right(sensor_msgs::JointState msg);
 		
-		void GetJacobian(int p);
-		void SetPseudoInvJac();
-		std::string getURDF(std::string param_name);
-		void InfoSoftHand(tf::StampedTransform &SoftHand_orBase_tf, Eigen::VectorXd &Eulero_angle );
+		// void GetJacobian(int p);
+		// void SetPseudoInvJac();
+		// std::string getURDF(std::string param_name);
+		// void InfoSoftHand(tf::StampedTransform &SoftHand_orBase_tf, Eigen::VectorXd &Eulero_angle );
 
+
+		bool init(hardware_interface::EffortJointInterface *robot, ros::NodeHandle &n);
+		void starting(const ros::Time& time);
+		void update(const ros::Time& time, const ros::Duration& period);
 
 		phobic_mp(ros::NodeHandle node_mp): nodeH(node_mp)
 		{
