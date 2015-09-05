@@ -188,6 +188,17 @@ namespace desperate_inversedynamics
 
 	void OneTaskInverseDynamicsJL::update(const ros::Time& time, const ros::Duration& period)
 	{
+		
+		tf::StampedTransform left_arm_base_link_st, left_arm_softhand_st;
+			
+		//base and softhand in word frame
+		listener_info.lookupTransform("/vito_anchor", "left_arm_base_link" , ros::Time(0), left_arm_base_link_st );
+		InfoSoftHand(left_arm_base_link_st , Vito_desperate.pos_base_l ); //eulero angle base link
+
+		listener_info.lookupTransform("/vito_anchor", "left_hand_palm_link" , ros::Time(0), left_arm_softhand_st );
+		InfoSoftHand(left_arm_softhand_st, Vito_desperate.Pos_HAND_l_x); //eulero angle softhand
+
+
 		// get joint positions
   		for(int i=0; i < Vito_desperate.joint_handles_.size(); i++) 
   		{
@@ -236,7 +247,7 @@ namespace desperate_inversedynamics
 	    	// computing forward kinematics
 	    	for(int i=0; i < Vito_desperate.joint_handles_.size(); i++) 
   			{
-	    		fk_pos_solver_->JntToCart(Vito_desperate.joint_msr_states_.q[i], x_[i]);
+	    		fk_pos_solver_->JntToCart(Vito_desperate.joint_msr_states_.q[i], x_[i]);	//pos_joint
 	    		GetEuleroAngle(x_ [i], x_now[i]);
 	    	}
 	    	
@@ -244,7 +255,7 @@ namespace desperate_inversedynamics
 	    	for(int p =0; p < x_des_.size(); p ++)
 	    	{
 	    			
-			    if (Equal(x_now[7], x_des_[p],0.05))
+			    if (Equal(Vito_desperate.Pos_HAND_l_x.p, x_des_[p],0.05))
 			    {
 			    	ROS_INFO("On target");
 			    	cmd_flag_ = 0;
@@ -252,7 +263,7 @@ namespace desperate_inversedynamics
 			    }
 			    
 
-				SetAttractiveField(x_des_[p], Vito_desperate.joint_msr_states_.qdot[7] , x_now[7], Force_attractive,  Vito_desperate.J_);
+				SetAttractiveField(x_des_[p], Vito_desperate.joint_msr_states_.qdot[7] , Vito_desperate.Pos_HAND_l_x, Force_attractive,  Vito_desperate.J_);
 						
 				if (p == 0)	
 				{
@@ -284,6 +295,9 @@ namespace desperate_inversedynamics
 				SetRepulsiveFiled(obstacle_position[k], Force_repulsion);
 			}
 
+
+			SetPotentialField_robot(Force_repulsion, int p);
+
 	    	// pushing x to the pose msg
 	    	// for (int i = 0; i < 3; i++)
 	    	// 	msg_pose_.data.push_back(x_.p(i));
@@ -304,7 +318,7 @@ namespace desperate_inversedynamics
 			Eigen::MatrixXd P;
 
 			// computing nullspace
-	    	N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;  
+	    	N_trans_ = N_trans_ - Vito_desperate.J_.data.transpose()*lambda_*Vito_desperate.J_.data*Vito_desperate.M_inv_;  
 			
 			omega_ = (VIto_desperate.J_.data * Vito_desperate.M_inv_ * VIto_desperate.J_.data.transpose()).inverse();
 			J_ext_t = omega_ * Vito_desperate.J_.data * Vito_desperate.M_inv_;
@@ -346,14 +360,14 @@ namespace desperate_inversedynamics
 
 		if (check_urdf == true)
 		{	
-			tf::StampedTransform left_arm_base_link_st, left_arm_softhand_st;
+			// tf::StampedTransform left_arm_base_link_st, left_arm_softhand_st;
 			
-			//base and softhand in word frame
-			listener_info.lookupTransform("/vito_anchor", "left_arm_base_link" , ros::Time(0), left_arm_base_link_st );
-			InfoSoftHand(left_arm_base_link_st , Vito_desperate.pos_base_l ); //eulero angle base link
+			// //base and softhand in word frame
+			// listener_info.lookupTransform("/vito_anchor", "left_arm_base_link" , ros::Time(0), left_arm_base_link_st );
+			// InfoSoftHand(left_arm_base_link_st , Vito_desperate.pos_base_l ); //eulero angle base link
 
-			listener_info.lookupTransform("/vito_anchor", "left_hand_palm_link" , ros::Time(0), left_arm_softhand_st );
-			InfoSoftHand(left_arm_softhand_st, Vito_desperate.Pos_HAND_l_x); //eulero angle softhand
+			// listener_info.lookupTransform("/vito_anchor", "left_hand_palm_link" , ros::Time(0), left_arm_softhand_st );
+			// InfoSoftHand(left_arm_softhand_st, Vito_desperate.Pos_HAND_l_x); //eulero angle softhand
 
 			int index_dx(0), index_sx(0);
 			std::vector<KDL::Frame> Hand_pose_kdl_l;
@@ -402,56 +416,6 @@ namespace desperate_inversedynamics
 			ROS_INFO("Failed to construct Vito urdf");
 		}
 	}
-	// void OneTaskInverseDynamicsJL::command_configuration(const lwr_controllers::PoseRPY::ConstPtr &msg)
-	// {	
-	// 	KDL::Frame frame_des_;
-
-	// 	switch(msg->id)
-	// 	{
-	// 		case 0:
-	// 		frame_des_ = KDL::Frame(
-	// 				KDL::Rotation::RPY(msg->orientation.roll,
-	// 					 			  msg->orientation.pitch,
-	// 							 	  msg->orientation.yaw),
-	// 				KDL::Vector(msg->position.x,
-	// 							msg->position.y,
-	// 							msg->position.z));
-	// 		break;
-	
-	// 		case 1: // position only
-	// 		frame_des_ = KDL::Frame(
-	// 			KDL::Vector(msg->position.x,
-	// 						msg->position.y,
-	// 						msg->position.z));
-	// 		break;
-		
-	// 		case 2: // orientation only
-	// 		frame_des_ = KDL::Frame(
-	// 			KDL::Rotation::RPY(msg->orientation.roll,
-	// 			   	 			   msg->orientation.pitch,
-	// 							   msg->orientation.yaw));
-	// 		break;
-
-	// 		default:
-	// 		ROS_INFO("Wrong message ID");
-	// 		return;
-	// 	}
-		
-	// 	x_des_ = frame_des_;
-	// 	cmd_flag_ = 1;
-	// }
-
-	// void OneTaskInverseDynamicsJL::set_gains(const std_msgs::Float64MultiArray::ConstPtr &msg)
-	// {
-	// 	if(msg->data.size() == 3)
-	// 	{
-	// 		for(int i = 0; i < PIDs_.size(); i++)
-	// 			PIDs_[i].setGains(msg->data[0],msg->data[1],msg->data[2],0.3,-0.3);
-	// 		ROS_INFO("New gains set: Kp = %f, Ki = %f, Kd = %f",msg->data[0],msg->data[1],msg->data[2]);
-	// 	}
-	// 	else
-	// 		ROS_INFO("PIDs gains needed are 3 (Kp, Ki and Kd)");
-	// }
 
 	void OneTaskInverseDynamicsJL::set_marker(KDL::Frame x, int id)
 	{			
@@ -499,9 +463,9 @@ namespace desperate_inversedynamics
 	void phobic_mp::SetAttractiveField(KDL::Frame &pos_Hand_xd, KDL::JntArrayVel &Vel, KDL::Frame &Pos_hand_x, Eigen::VectorXd &Force_attractive,  KDL::Jacobian &link_jac_)
 	{		
 
-		//Eigen::VectorXd vel_servo_control; //xd_point
+		KDL::Vector vel_servo_control; //xd_point
 		
-		// vel_servo_control = P_goal/dissipative * (pos_Hand_xd - Pos_hand_x); //1*6
+		vel_servo_control = P_goal/dissipative * (pos_Hand_xd.p - Pos_hand_x.p); //1*6
 
 		x_dot_ = VIto_desperate.J_.data* Vel.qdot.data; //velocity
 
@@ -615,6 +579,135 @@ namespace desperate_inversedynamics
 		return distance_local;
 	}
 
+	void phobic_mp::InfoSoftHand(tf::StampedTransform &SoftHand_orBase_tf, KDL::Frame &Eulero_angle  )
+	{
+	//from stampedtrasform-->tf::transform-->KDL::frame -->take eulero angle
+	KDL::Frame local_frame_sh;
+
+	local_frame_sh = FromTFtoKDL(SoftHand_orBase_tf);
+
+	GetEuleroAngle(local_frame_sh, Eulero_angle);
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+void phobic_mp::SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p)
+{
+    std::vector<Eigen::Vector3d> distance_link; //Only position
+
+    std::vector<Eigen::VectorXd> robot_link_position1;
+    std::vector<Eigen::VectorXd> robot_link_position2;
+
+    Eigen::VectorXd HAND;
+    Eigen::VectorXd base_link;
+    //robot_link_position->resize(Vito_desperate.robot_position_left.size());
+    
+     //p==0 is left arm, else is right arm
+    // if(p ==0)
+    // {
+      // for(int i=0; i< Vito_desperate.link_frame_l.size();i++)
+      // { 
+      //   GetEuleroAngle(Vito_desperate.link_frame_l[i], robot_link_position1[i]); //take's the eulero angles
+      //   //GetEuleroAngle(Vito_desperate.link_frame_r[i], robot_link_position2[i]);   
+  
+      // }
+
+        HAND =  Vito_desperate.Pos_HAND_l_x;     
+
+        base_link = Vito_desperate.pos_base_l ;
+        
+     //}
+     
+     // else //right arm
+     // {
+     //    for(int i=0; i< Vito_desperate.link_frame_r.size();i++)
+     //   { 
+     //      GetEuleroAngle(Vito_desperate.link_frame_r[i], robot_link_position1[i]);
+     //      GetEuleroAngle(Vito_desperate.link_frame_l[i], robot_link_position2[i]);   
+
+     //    }
+
+     //     HAND = Vito_desperate.Pos_HAND_r_x;
+        
+
+     //    base_link = Vito_desperate.pos_base_r; 
+     //} 
+
+    //Self collision
+    // distance_link.push_back(GetDistance(robot_link_position1[1], robot_link_position2[5]));
+    // distance_link.push_back(GetDistance(robot_link_position1[1], robot_link_position2[6]));
+    // distance_link.push_back(GetDistance(robot_link_position1[1], robot_link_position2[7]));
+    // distance_link.push_back(GetDistance(robot_link_position1[2], robot_link_position2[5]));
+    // distance_link.push_back(GetDistance(robot_link_position1[2], robot_link_position2[6]));
+    // distance_link.push_back(GetDistance(robot_link_position1[2], robot_link_position2[7])); 
+    // distance_link.push_back(GetDistance(robot_link_position1[3], robot_link_position2[4]));
+    // distance_link.push_back(GetDistance(robot_link_position1[3], robot_link_position2[5]));
+    // distance_link.push_back(GetDistance(robot_link_position1[3], robot_link_position2[6]));
+    // distance_link.push_back(GetDistance(robot_link_position1[3], robot_link_position2[7]));
+    // distance_link.push_back(GetDistance(robot_link_position1[4], robot_link_position2[3]));
+    // distance_link.push_back(GetDistance(robot_link_position1[4], robot_link_position2[4]));
+    // distance_link.push_back(GetDistance(robot_link_position1[4], robot_link_position2[5]));
+    // distance_link.push_back(GetDistance(robot_link_position1[4], robot_link_position2[6]));
+    // distance_link.push_back(GetDistance(robot_link_position1[4], robot_link_position2[7]));
+
+    // for(int i=5;i<=7;i++)
+    // {
+    //   for (int k=1; k<=7; k++)
+    //   {
+    //     distance_link.push_back(GetDistance(robot_link_position1[i], robot_link_position2[k]));
+    //   }
+    // }  
+
+    //collision with softhand
+    distance_link.push_back(GetDistance(HAND, base_link));
+
+    for(int j = 3; j >= 1; j--) //with himself
+    {
+      distance_link.push_back(GetDistance(HAND, robot_link_position1[j]));
+    }
+
+    // for(int i=1; i<=7; i++)//with other arm
+    // {
+    //   distance_link.push_back(GetDistance(HAND,robot_link_position2[i]));
+    // }
+
+    // Repulsive fields = K/distance^2 (1/distance -1/influence) partial_derivative_vector
+
+    for (int i=0; i <= distance_link.size(); i++)
+    {
+       double local_distance;
+       local_distance  = distance_link[i].norm();
+
+      if(local_distance <= influence) //if in minus than influence area
+      {
+        Eigen::Vector3d distance_der_partial;
+        distance_der_partial[0] =  distance_link[i](0) / sqrt(pow(distance_link[i](0),2)+ pow(distance_link[i](1),2) +pow(distance_link[i](2),2));
+        distance_der_partial[1] =  distance_link[i](1) / sqrt(pow(distance_link[i](0),2)+ pow(distance_link[i](1),2) +pow(distance_link[i](2),2));
+        distance_der_partial[2] =  distance_link[i](2) / sqrt(pow(distance_link[i](0),2)+ pow(distance_link[i](1),2) +pow(distance_link[i](2),2));
+
+        Eigen::Vector3d vec_Temp;
+        vec_Temp = (P_obj/pow(distance_link[i].norm(),2)) * (1/distance_link[i].norm() - 1/influence) *distance_der_partial;
+
+        Force_repulsion = vec_Temp; //Ricorda che se devi metterne più di uno devi mettere le parentesi
+      }
+
+      else
+      {
+        Eigen::Vector3d fiel_zero(0,0,0);
+        Force_repulsion_left = fiel_zero;
+        //continue;
+      }
+    }
+}
 
 
 
@@ -630,9 +723,56 @@ namespace desperate_inversedynamics
 
 
 
+	// void OneTaskInverseDynamicsJL::command_configuration(const lwr_controllers::PoseRPY::ConstPtr &msg)
+	// {	
+	// 	KDL::Frame frame_des_;
 
+	// 	switch(msg->id)
+	// 	{
+	// 		case 0:
+	// 		frame_des_ = KDL::Frame(
+	// 				KDL::Rotation::RPY(msg->orientation.roll,
+	// 					 			  msg->orientation.pitch,
+	// 							 	  msg->orientation.yaw),
+	// 				KDL::Vector(msg->position.x,
+	// 							msg->position.y,
+	// 							msg->position.z));
+	// 		break;
+	
+	// 		case 1: // position only
+	// 		frame_des_ = KDL::Frame(
+	// 			KDL::Vector(msg->position.x,
+	// 						msg->position.y,
+	// 						msg->position.z));
+	// 		break;
+		
+	// 		case 2: // orientation only
+	// 		frame_des_ = KDL::Frame(
+	// 			KDL::Rotation::RPY(msg->orientation.roll,
+	// 			   	 			   msg->orientation.pitch,
+	// 							   msg->orientation.yaw));
+	// 		break;
 
+	// 		default:
+	// 		ROS_INFO("Wrong message ID");
+	// 		return;
+	// 	}
+		
+	// 	x_des_ = frame_des_;
+	// 	cmd_flag_ = 1;
+	// }
 
+	// void OneTaskInverseDynamicsJL::set_gains(const std_msgs::Float64MultiArray::ConstPtr &msg)
+	// {
+	// 	if(msg->data.size() == 3)
+	// 	{
+	// 		for(int i = 0; i < PIDs_.size(); i++)
+	// 			PIDs_[i].setGains(msg->data[0],msg->data[1],msg->data[2],0.3,-0.3);
+	// 		ROS_INFO("New gains set: Kp = %f, Ki = %f, Kd = %f",msg->data[0],msg->data[1],msg->data[2]);
+	// 	}
+	// 	else
+	// 		ROS_INFO("PIDs gains needed are 3 (Kp, Ki and Kd)");
+	// }
 
 
 

@@ -15,6 +15,9 @@
 
 	</node>
 
+
+	<arg name="stopped_controllers" default="phobic_InverseDynamics" doc="Additional controllers to be loaded, but not started (can be started later with controller_manager)" />
+
 	<!-- <node name="desperate_housewife_HP" pkg="desperate_housewife" type="phobic_hand_pose" respawn="false" output="screen" > 
 
 	</node> -->

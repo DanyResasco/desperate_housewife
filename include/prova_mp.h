@@ -127,7 +127,7 @@ class phobic_mp
 			// std::vector<KDL::Chain> link_chain_;
 			
 			std::vector<Eigen::VectorXd> Pos_HAND_r_xd, Pos_HAND_l_xd;
-			Eigen::VectorXd Pos_HAND_r_x, Pos_HAND_l_x;
+			KDL::Frame Pos_HAND_r_x, Pos_HAND_l_x;
 			Eigen::Matrix4d Pos_final_hand_r, Pos_final_hand_l;
 			Eigen::VectorXd pos_base_l, pos_base_r;
 			 //make a model
@@ -194,9 +194,6 @@ class phobic_mp
 			ros::param::get("~max_lenght", max_lenght);
 			ROS_INFO("max_lenght %lf", max_lenght);
 			check_robot  = false;
-
-
-
 
 		}
 
