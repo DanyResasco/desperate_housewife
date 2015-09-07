@@ -2,8 +2,8 @@
 
 namespace desperate_inversedynamics
 {
-	phobic_mp::phobic_mp(node_mp){};
-	phobic_mp::~phobic_mp(){};
+	phobic_mp::phobic_mp() {}
+	phobic_mp::~phobic_mp() {}
 
 	bool phobic_mp::init(hardware_interface::EffortJointInterface *robot, ros::NodeHandle &n)
 	{
@@ -146,7 +146,7 @@ namespace desperate_inversedynamics
 
 		Vito_desperate.J_last_.resize(Vito_desperate.kdl_chain_.getNrOfJoints());
 
-		sub_command_ = nh_.subscribe("command_configuration", 1, &phobic_mp::MPCallback, this);	//???? 
+		sub_command_ = nh_.subscribe(nh_.resolveName("SoftHand_Pose"), 1, &phobic_mp::MPCallback, this);	//???? 
 		//sub_gains_ = nh_.subscribe("set_gains", 1, &OneTaskInverseDynamicsJL::set_gains, this);
 
 		// pub_error_ = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
@@ -156,7 +156,7 @@ namespace desperate_inversedynamics
 		return true;
 	}
 
-	void phobic_m::starting(const ros::Time& time)
+	void phobic_mp::starting(const ros::Time& time)
 	{
 		// get joint positions
   		for(int i=0; i < Vito_desperate.joint_handles_.size(); i++) 
@@ -186,17 +186,18 @@ namespace desperate_inversedynamics
 
 	}
 
-	void OneTaskInverseDynamicsJL::update(const ros::Time& time, const ros::Duration& period)
+	void phobic_mp::update(const ros::Time& time, const ros::Duration& period)
 	{
 		
 		tf::StampedTransform left_arm_base_link_st, left_arm_softhand_st;
 			
 		//base and softhand in word frame
 		listener_info.lookupTransform("/vito_anchor", "left_arm_base_link" , ros::Time(0), left_arm_base_link_st );
-		InfoSoftHand(left_arm_base_link_st , Vito_desperate.pos_base_l ); //eulero angle base link
+		// Vito_desperate.pos_base_l = FromTFtoKDL(left_arm_base_link_st); 
 
 		listener_info.lookupTransform("/vito_anchor", "left_hand_palm_link" , ros::Time(0), left_arm_softhand_st );
-		InfoSoftHand(left_arm_softhand_st, Vito_desperate.Pos_HAND_l_x); //eulero angle softhand
+		Vito_desperate.Pos_HAND_l_x = FromTFtoKDL(left_arm_softhand_st); 
+		// InfoSoftHand(left_arm_softhand_st, Vito_desperate.Pos_HAND_l_x); //eulero angle softhand
 
 
 		// get joint positions
@@ -206,9 +207,9 @@ namespace desperate_inversedynamics
     		Vito_desperate.joint_msr_states_.qdot(i) = Vito_desperate.joint_handles_[i].getVelocity();
     	}
 
-    	// clearing msgs before publishing
-    	msg_err_.data.clear();
-    	msg_pose_.data.clear();
+    	// // clearing msgs before publishing
+    	// msg_err_.data.clear();
+    	// msg_pose_.data.clear();
     	
     	if (cmd_flag_)
     	{
@@ -222,8 +223,10 @@ namespace desperate_inversedynamics
 		    id_solver_->JntToGravity(Vito_desperate.joint_msr_states_.q, Vito_desperate.G_);
 		    Vito_desperate.G_.data.setZero();
 
+		    Eigen::MatrixXd M_inv_;
 		    // computing the inverse of Vito_desperate.M_ now, since it will be used often
-		    pseudo_inverse(Vito_desperate.M_.data, Vito_desperate.M_inv_, false); //Vito_desperate.M_inv_ = Vito_desperate.M_.data.inverse(); 
+		    // pseudo_inverse(Vito_desperate.M_.data, M_inv_, false); //
+		    M_inv_ = Vito_desperate.M_.data.inverse(); 
 
 
 	    	// computing Jacobian J(q)
@@ -247,15 +250,17 @@ namespace desperate_inversedynamics
 	    	// computing forward kinematics
 	    	for(int i=0; i < Vito_desperate.joint_handles_.size(); i++) 
   			{
-	    		fk_pos_solver_->JntToCart(Vito_desperate.joint_msr_states_.q[i], x_[i]);	//pos_joint
-	    		GetEuleroAngle(x_ [i], x_now[i]);
+  				KDL::Frame x_temp;
+	    		fk_pos_solver_->JntToCart(Vito_desperate.joint_msr_states_.q, x_temp, i);	//pos_joint
+	    		x_now.push_back(x_temp);
+	    		// GetEuleroAngle(x_ [i], x_now[i]);
 	    	}
 	    	
-	    
+	    	int index_rep=0;
 	    	for(int p =0; p < x_des_.size(); p ++)
 	    	{
 	    			
-			    if (Equal(Vito_desperate.Pos_HAND_l_x.p, x_des_[p],0.05))
+			    if (Equal(Vito_desperate.Pos_HAND_l_x.p, x_des_[p].p,0.05))
 			    {
 			    	ROS_INFO("On target");
 			    	cmd_flag_ = 0;
@@ -263,28 +268,32 @@ namespace desperate_inversedynamics
 			    }
 			    
 
-				SetAttractiveField(x_des_[p], Vito_desperate.joint_msr_states_.qdot[7] , Vito_desperate.Pos_HAND_l_x, Force_attractive,  Vito_desperate.J_);
+				SetAttractiveField(x_des_[p], Vito_desperate.joint_msr_states_.qdot , Vito_desperate.Pos_HAND_l_x, Force_attractive_left[p],  Vito_desperate.J_);
 						
 				if (p == 0)	
 				{
+					// continue;
 					for(int k = p+1; k < x_des_.size()-1; k++)
 					{
-						SetRepulsiveFiled(obstacle_position[k], Force_repulsion_left);  
+						SetRepulsiveFiled(x_des_[k].p, Force_repulsion_left[index_rep]);
+						index_rep ++;  
 					}
 				}
 				
 				else
 				{
-				
+	
 					for(int i =0; i <= p-1; i++)
 					{
-						SetRepulsiveFiled(obstacle_position[i], Force_repulsion_left);
+						SetRepulsiveFiled(x_des_[i].p, Force_repulsion_left[index_rep]);
+						index_rep ++;
 					}
 				
 				
 					for(int k = p+1; k < x_des_.size()-1; k++)
 					{
-						SetRepulsiveFiled(obstacle_position[k], Force_repulsion_left);  
+						SetRepulsiveFiled(x_des_[k].p, Force_repulsion_left[index_rep]);
+						index_rep++;  
 					}
 				}
 			}			
@@ -292,41 +301,51 @@ namespace desperate_inversedynamics
 
 			for(int k=0; k < obstacle_position.size(); k++)
 			{
-				SetRepulsiveFiled(obstacle_position[k], Force_repulsion);
+				SetRepulsiveFiled(obstacle_position[k], Force_repulsion_left[index_rep]);
+				index_rep++;
 			}
 
 
-			SetPotentialField_robot(Force_repulsion, int p);
+			SetPotentialField_robot(Force_repulsion_left[index_rep], p);
 
-	    	// pushing x to the pose msg
-	    	// for (int i = 0; i < 3; i++)
-	    	// 	msg_pose_.data.push_back(x_.p(i));
-
-	    	// // setting marker parameters
-	    	// set_marker(x_, msg_id_);
-
-	    	// setattractivefield
-
-	    	// computing end-effector position/orientation error w.r.t. desired frame
-	    	// x_err_ = diff(x_, x_des_);
 
 	    	Eigen::Matrix<double,6,1> b_;
-			Eigen::MatrixXd M_inv_;
+			
 			Eigen::MatrixXd omega_;
 			Eigen::MatrixXd lambda_;
-			Eigen::MatrixXd J_ext_t;
+			Eigen::MatrixXd P_;
+			// Eigen::MatrixXd J_ext_t;
 			Eigen::MatrixXd P;
-
+			KDL::Jacobian J_ext_t;
+		
 			// computing nullspace
-	    	N_trans_ = N_trans_ - Vito_desperate.J_.data.transpose()*lambda_*Vito_desperate.J_.data*Vito_desperate.M_inv_;  
+	    	N_trans_ = N_trans_ - Vito_desperate.J_.data.transpose()*lambda_*Vito_desperate.J_.data*M_inv_;  
 			
-			omega_ = (VIto_desperate.J_.data * Vito_desperate.M_inv_ * VIto_desperate.J_.data.transpose()).inverse();
-			J_ext_t = omega_ * Vito_desperate.J_.data * Vito_desperate.M_inv_;
-			lambda_ = (J_ext_t * Vito_desperate.C_ - Vito_desperate.M_ * Vito_desperate.J_dot_.data* Vito_desperate.joint_msr_states_.qdot );
-			P = J_ext_t * Vito_desperate.G_;
+			omega_ = (Vito_desperate.J_.data * M_inv_ * Vito_desperate.J_.data.transpose()).inverse();
+			J_ext_t.data = omega_ * Vito_desperate.J_.data * M_inv_;
+
+			lambda_ = (J_ext_t.data * Vito_desperate.C_.data - Vito_desperate.M_.data * Vito_desperate.J_dot_.data * Vito_desperate.joint_msr_states_.qdot.data );
+			P_ = J_ext_t.data * Vito_desperate.G_.data;
+
+
+			Eigen::VectorXd Force_rep_local = Eigen::VectorXd::Zero(6);
+			Eigen::VectorXd Force_att_local = Eigen::VectorXd::Zero(6);
+
+			for(int i=0; i< Force_attractive_left.size()-1;i++)
+			{
+				Force_att_local = Force_att_local +  Force_attractive_left[i];  
+			}
+
+			for(int i=0; i< Force_repulsion_left.size()-1;i++)
+			{
+				Force_rep_local = Force_rep_local +  Force_repulsion_left[i];  
+			}
+
+
+			Force = Force_rep_local + Force_att_local;
 
 			// control law
-			tau_.data = Vito_desperate.J_.data.transpose()*(omega_*Force_attractive_left + lambda_ + P_) + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec())) ;
+			tau_.data = Vito_desperate.J_.data.transpose()*(omega_*Force + lambda_ + P_) + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec())) ;
 	
     	}
 
@@ -340,35 +359,15 @@ namespace desperate_inversedynamics
     			// Vito_desperate.joint_handles_[i].setCommand(PIDs_[i].computeCommand(Vito_desperate.joint_des_states_.q(i) - Vito_desperate.joint_msr_states_.q(i),period));
     	}
 
-    	// publishing markers for visualization in rviz
-    	pub_marker_.publish(msg_marker_);
-    	msg_id_++;
 
-	    // publishing error 
-	    pub_error_.publish(msg_err_);
-	    // publishing pose 
-	    pub_pose_.publish(msg_pose_);
 	    ros::spinOnce();
 
 	}
 	//chiamata per leggere il messaggio della posa desiderata della mano
 	void phobic_mp::MPCallback(const desperate_housewife::hand hand_msg)
 	{	
-	// bool check_urdf = true;
-	// make a urdf and initialize the parameter for the dynamics
-	//check_urdf = init();	
-
 		if (check_urdf == true)
 		{	
-			// tf::StampedTransform left_arm_base_link_st, left_arm_softhand_st;
-			
-			// //base and softhand in word frame
-			// listener_info.lookupTransform("/vito_anchor", "left_arm_base_link" , ros::Time(0), left_arm_base_link_st );
-			// InfoSoftHand(left_arm_base_link_st , Vito_desperate.pos_base_l ); //eulero angle base link
-
-			// listener_info.lookupTransform("/vito_anchor", "left_hand_palm_link" , ros::Time(0), left_arm_softhand_st );
-			// InfoSoftHand(left_arm_softhand_st, Vito_desperate.Pos_HAND_l_x); //eulero angle softhand
-
 			int index_dx(0), index_sx(0);
 			std::vector<KDL::Frame> Hand_pose_kdl_l;
 
@@ -380,9 +379,7 @@ namespace desperate_inversedynamics
 					case 0: //left arm
 						ROS_INFO("Vito use left arm");
 						
-						tf::poseMsgToKDL(hand_msg.hand_Pose[i], Hand_pose_kdl_l[index_sx]);
-						GetEuleroAngle(Hand_pose_kdl_l[index_sx], x_des[index_sx]); //X_d
-
+						tf::poseMsgToKDL(hand_msg.hand_Pose[i], x_des_[index_sx]);
 						index_sx ++;
 		
 					break;
@@ -392,7 +389,6 @@ namespace desperate_inversedynamics
 						ROS_INFO("Vito use right arm");
 						
 						// tf::poseMsgToKDL( hand_msg.hand_Pose[i], Hand_pose_kdl_r[index_dx]);
-						// GetEuleroAngle(Hand_pose_kdl_r[index_dx], Vito_desperate.Pos_HAND_r_xd[index_dx]);
 						// index_dx ++;
 
 					break;
@@ -417,31 +413,8 @@ namespace desperate_inversedynamics
 		}
 	}
 
-	void OneTaskInverseDynamicsJL::set_marker(KDL::Frame x, int id)
-	{			
-				msg_marker_.header.frame_id = "world";
-				msg_marker_.header.stamp = ros::Time();
-				msg_marker_.ns = "end_effector";
-				msg_marker_.id = id;
-				msg_marker_.type = visualization_msgs::Marker::SPHERE;
-				msg_marker_.action = visualization_msgs::Marker::ADD;
-				msg_marker_.pose.position.x = x.p(0);
-				msg_marker_.pose.position.y = x.p(1);
-				msg_marker_.pose.position.z = x.p(2);
-				msg_marker_.pose.orientation.x = 0.0;
-				msg_marker_.pose.orientation.y = 0.0;
-				msg_marker_.pose.orientation.z = 0.0;
-				msg_marker_.pose.orientation.w = 1.0;
-				msg_marker_.scale.x = 0.005;
-				msg_marker_.scale.y = 0.005;
-				msg_marker_.scale.z = 0.005;
-				msg_marker_.color.a = 1.0;
-				msg_marker_.color.r = 0.0;
-				msg_marker_.color.g = 1.0;
-				msg_marker_.color.b = 0.0;	
-	}
-
-	double OneTaskInverseDynamicsJL::task_objective_function(KDL::JntArray q)
+	
+	double phobic_mp::task_objective_function(KDL::JntArray q)
 	{
 		double sum = 0;
 		double temp;
@@ -460,67 +433,58 @@ namespace desperate_inversedynamics
 	}
 
 
-	void phobic_mp::SetAttractiveField(KDL::Frame &pos_Hand_xd, KDL::JntArrayVel &Vel, KDL::Frame &Pos_hand_x, Eigen::VectorXd &Force_attractive,  KDL::Jacobian &link_jac_)
+	void phobic_mp::SetAttractiveField(KDL::Frame &pos_Hand_xd, KDL::JntArray &Vel, KDL::Frame &Pos_hand_x, Eigen::VectorXd &Force_attractive,  KDL::Jacobian &link_jac_)
 	{		
-
-		KDL::Vector vel_servo_control; //xd_point
+		double roll_xd, pitch_xd, yaw_xd;
+		double roll_x, pitch_x, yaw_x;
 		
-		vel_servo_control = P_goal/dissipative * (pos_Hand_xd.p - Pos_hand_x.p); //1*6
+		pos_Hand_xd.M.RPY(roll_xd, pitch_xd, yaw_xd);
+		Pos_hand_x.M.RPY(roll_x, pitch_x, yaw_x);
+		//KDL::Vector vel_servo_control; //xd_point
+		Eigen::VectorXd vel_servo_control;
+		// KDL::Vector local_dist_v;
+		// KDL::Rotation local_dist_r;
+		KDL::Frame distance;
+		distance.p = pos_Hand_xd.p - Pos_hand_x.p;
+		// distance.M = pos_Hand_xd.M. - Pos_hand_x.M;
+		
+		Eigen::VectorXd temp_dist_eigen;
+		temp_dist_eigen << distance.p(0), distance.p(1), distance.p(2) , roll_xd - roll_x , pitch_xd - pitch_x, yaw_xd - yaw_x;
 
-		x_dot_ = VIto_desperate.J_.data* Vel.qdot.data; //velocity
+		vel_servo_control = P_goal/dissipative * temp_dist_eigen.transpose(); 
+		// (pos_Hand_xd - Pos_hand_x); //1*6
+
+		x_dot_ = Vito_desperate.J_.data* Vel.data; //velocity 6*1
 
 		double v_lim = 1;
 		//v_lim = SetLimitation(vel_servo_control);
 
-		Eigen::VectorXd velocity;
-		velocity = (link_jac_.data * Vel.transpose());  //x_point = jac*q_point 6*1
+		// Eigen::VectorXd velocity;
+		//KDL::Vector velocity;
+		// velocity.data = (link_jac_.data * Vel.data);  //x_point = jac*q_point 6*1
 
-		Force_attractive = (- dissipative *(velocity - v_lim * vel_servo_control.transpose())); //in vito frame
+		Force_attractive = (- dissipative *(x_dot_ - v_lim * vel_servo_control)); //in vito frame
 
 		
 	}
 
 
-	void phobic_mp::GetEuleroAngle(KDL::Frame &Hand_kdl_xd, KDL::Frame &pos_cartisian)
-	{
-		//KDL::Frame hand_kdl_pose_l;
-						
-		// double x, y,z,w;
-		// double roll, pitch, yaw;
-		Hand_kdl_xd.M.GetRPY(roll, pitch, yaw); //KDL::FRAME--> kdl::Rotation --> rpy
-		Hand_kdl_xd.M.GetQuaternion(x,y,z,w);	//KDL::FRAME--> kdl::Rotation --> x,y,z,w
-
-		pos_cartisian = Hand_kdl_xd;
-
-		// pos_cartisian << x,y,z,roll,pitch,yaw;	//x_d in word frame		
-		
-	}
 
 
-	void phobic_mp::SetRepulsiveFiled(KDL::Vector &Pos, int p, Eigen::Vector3d &Force_repulsion )
+	void phobic_mp::SetRepulsiveFiled(KDL::Vector &Pos, Eigen::VectorXd &Force_repulsion )
 	{
 		std::vector<KDL::Vector> distance_local_obj;
 		//std::vector<Eigen::VectorXd> local_arm; 
 
 		for(int t = 0; t<7; t++ )
 		{
-			// if(p == 0) //left
-			// {
-			//	GetEuleroAngle(Vito_desperate.robot_position_left[t], local_a rm );
-			//}
 			
-			// else
-			// {
-			// 	GetEuleroAngle(Vito_desperate.robot_position_righ[t], local_arm );
-
-			// }
-		distance_local_obj.push_back(Pos - x_now.p[i]); 
-			// distance_local_obj.push_back(GetDistance(Pos, x_now.p[i])); 
-
+			distance_local_obj.push_back(Pos - x_now[t].p); 
+			
 		}
 
 		std::vector<double>  min_d;
-		std::vector<double> index_infl;
+		std::vector<int> index_infl;
 
 		for (int i=0; i <= distance_local_obj.size(); i++)
 		{
@@ -529,7 +493,7 @@ namespace desperate_inversedynamics
 			
 			if( local_distance <= influence )
 			{
-				min_d = local_distance;
+				min_d.push_back(local_distance);
 				index_infl.push_back(i); //for tracking wich jacobian used
 			}
 
@@ -539,55 +503,39 @@ namespace desperate_inversedynamics
 			}
 		}
 
-		double min_distance;
+		double min_distance = min_d[0];
 		Eigen::Vector3d distance_der_partial;
 		Eigen::Vector3d vec_Temp;
-
+		int index_dist;
+		
 		for (int i=0; i< min_d.size()-1;i++)
 		{
-			if(min_d[i] < min_d[i+1])
+			if(min_distance > min_d[i+1])
 			{
-				min_distance = min_d[i];
+				min_distance = min_d[i+1];
+				index_dist = i+1;
+	        }
 
-	        	distance_der_partial[0] =  min_d[i](0) / sqrt(pow(min_d[i](0))+ pow(min_d[i](1)) + pow(min_d[i](2)));
-	       		distance_der_partial[1] =  min_d[i](1) / sqrt(pow(min_d[i](0))+ pow(min_d[i](1)) + pow(min_d[i](2)));
-	       		distance_der_partial[2] =  min_d[i](2) / sqrt(pow(min_d[i](0))+ pow(min_d[i](1)) + pow(min_d[i](2)));
-				vec_Temp = (P_obj/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
-				Force_repulsion.push_back(vec_Temp);
-			}
-
-			else
+	        else
 			{
 				continue;
 			}
-
 		}
+
+		int D;
+		D = index_infl[index_dist];
+
+	    distance_der_partial[0] =  distance_local_obj[D](0) / sqrt(pow(distance_local_obj[D](0),2)+ pow(distance_local_obj[D](1),2) + pow(distance_local_obj[D](2),2));
+	    distance_der_partial[1] =  distance_local_obj[D](1) / sqrt(pow(distance_local_obj[D](0),2)+ pow(distance_local_obj[D](1),2) + pow(distance_local_obj[D](2),2));
+	    distance_der_partial[2] =  distance_local_obj[D](2) / sqrt(pow(distance_local_obj[D](0),2)+ pow(distance_local_obj[D](1),2) + pow(distance_local_obj[D](2),2));
+				
+		vec_Temp = (P_obj/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
+				
+		Force_repulsion << vec_Temp, 0,0,0;
+			
+
 	}
 
-
-
-	// Eigen::Vector3d phobic_mp::GetDistance(KDL::Vector &obj1, KDL::Vector &obj2 )
-	// //double phobic_mp::GetDistance(Eigen::VectorXd &obj1, Eigen::VectorXd &obj2 )
-	// {
-	// 	Eigen::Vector3d distance_local;
-	// 	//double distance_local;
-	// 	//distance_local = sqrt(pow(obj1[0]-obj2[0],2) + pow(obj1[1]-obj2[1],2) + pow(obj1[2]-obj2[2],2));  
-	// 	  distance_local[0] = obj1[0] - obj2[0];
-	// 	  distance_local[1] = obj1[1] - obj2[1];
-	// 	  distance_local[2] = obj1[2] - obj2[2];
-		
-	// 	return distance_local;
-	// }
-
-	void phobic_mp::InfoSoftHand(tf::StampedTransform &SoftHand_orBase_tf, KDL::Frame &Eulero_angle  )
-	{
-	//from stampedtrasform-->tf::transform-->KDL::frame -->take eulero angle
-	KDL::Frame local_frame_sh;
-
-	local_frame_sh = FromTFtoKDL(SoftHand_orBase_tf);
-
-	GetEuleroAngle(local_frame_sh, Eulero_angle);
-	}
 
 
 void phobic_mp::SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p)
@@ -598,8 +546,8 @@ void phobic_mp::SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p)
     std::vector<KDL::Vector> robot_link_position2;
     robot_link_position1.resize(x_now.size());
 
-    KDL::Frame HAND;
-    KDL::Frame base_link;
+    KDL::Vector HAND;
+    KDL::Vector base_link;
     //robot_link_position->resize(Vito_desperate.robot_position_left.size());
     
      //p==0 is left arm, else is right arm
@@ -613,15 +561,16 @@ void phobic_mp::SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p)
       // }
     	for (int i=0; i< x_now.size(); i++)
     	{
-    		robot_link_position1[i] = x_now[i];
+    		robot_link_position1[i] = x_now[i].p;
     	}
    
-        HAND =  Vito_desperate.Pos_HAND_l_x;     
+        HAND =  Vito_desperate.Pos_HAND_l_x.p;     
 
-        base_link = Vito_desperate.pos_base_l ;
+        base_link = Vito_desperate.pos_base_l.p ;
         
      //}
-     
+
+
      // else //right arm
      // {
      //    for(int i=0; i< Vito_desperate.link_frame_r.size();i++)
@@ -663,7 +612,7 @@ void phobic_mp::SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p)
     // }  
 
     //collision with softhand
-    distance_link.push_back(HAND - base_link));
+    distance_link.push_back(HAND - base_link);
 
     for(int j = 3; j >= 1; j--) //with himself
     {
@@ -691,20 +640,43 @@ void phobic_mp::SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p)
         distance_der_partial[2] =  distance_link[i](2) / sqrt(pow(distance_link[i](0),2)+ pow(distance_link[i](1),2) +pow(distance_link[i](2),2));
 
         Eigen::Vector3d vec_Temp;
-        vec_Temp = (P_obj/pow(distance_link[i].norm(),2)) * (1/distance_link[i].norm() - 1/influence) *distance_der_partial;
+        vec_Temp = (P_obj/pow(distance_link[i].	Norm(),2)) * (1/distance_link[i].Norm() - 1/influence) *distance_der_partial;
 
-        Force_repulsion_left = vec_Temp; //Ricorda che se devi metterne più di uno devi mettere le parentesi
+        Force_repulsion << vec_Temp, 0,0,0; //Ricorda che se devi metterne più di uno devi mettere le parentesi
       }
 
       else
       {
-        Eigen::Vector3d fiel_zero(0,0,0);
-        Force_repulsion_left = fiel_zero;
+        //Eigen::VectorXd fiel_zero(0,0,0);
+        Force_repulsion = Eigen::VectorXd::Zero(6);
         //continue;
       }
     }
 }
 
+// void OneTaskInverseDynamicsJL::set_marker(KDL::Frame x, int id)
+	// {			
+	// 			msg_marker_.header.frame_id = "world";
+	// 			msg_marker_.header.stamp = ros::Time();
+	// 			msg_marker_.ns = "end_effector";
+	// 			msg_marker_.id = id;
+	// 			msg_marker_.type = visualization_msgs::Marker::SPHERE;
+	// 			msg_marker_.action = visualization_msgs::Marker::ADD;
+	// 			msg_marker_.pose.position.x = x.p(0);
+	// 			msg_marker_.pose.position.y = x.p(1);
+	// 			msg_marker_.pose.position.z = x.p(2);
+	// 			msg_marker_.pose.orientation.x = 0.0;
+	// 			msg_marker_.pose.orientation.y = 0.0;
+	// 			msg_marker_.pose.orientation.z = 0.0;
+	// 			msg_marker_.pose.orientation.w = 1.0;
+	// 			msg_marker_.scale.x = 0.005;
+	// 			msg_marker_.scale.y = 0.005;
+	// 			msg_marker_.scale.z = 0.005;
+	// 			msg_marker_.color.a = 1.0;
+	// 			msg_marker_.color.r = 0.0;
+	// 			msg_marker_.color.g = 1.0;
+	// 			msg_marker_.color.b = 0.0;	
+	// }
 
 
 
@@ -790,4 +762,4 @@ void phobic_mp::SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p)
 
 }
 
-PLUGINLIB_EXPORT_CLASS(desperate_housewife::phobic_mp, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(desperate_inversedynamics::phobic_mp, controller_interface::ControllerBase)

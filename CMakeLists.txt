@@ -7,6 +7,30 @@ project(desperate_housewife)
 find_package(catkin REQUIRED roscpp pcl_conversions pcl_ros tf_conversions pcl_msgs message_generation std_msgs geometry_msgs sensor_msgs)
 find_package(PCL 1.7.2 REQUIRED)
 
+find_package(catkin REQUIRED COMPONENTS
+  controller_interface
+  control_msgs
+  forward_command_controller
+  control_toolbox
+  realtime_tools
+  urdf
+  roscpp
+  kdl_parser
+  message_generation
+  cmake_modules
+  roscpp 
+  pcl_conversions
+  pcl_ros
+  tf_conversions 
+  pcl_msgs
+  message_generation 
+  std_msgs
+  geometry_msgs 
+  sensor_msgs
+)
+
+
+
 
 include_directories(${GAZEBO_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})
@@ -14,10 +38,12 @@ include_directories(include ${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
+include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
+
 
 add_definitions(-std=c++11) 
 
-
+find_library(KDL_LIBRARY REQUIRED NAMES orocos-kdl HINTS ${orocos_kdl_LIBRARY_DIRS})
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -92,10 +118,12 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 INCLUDE_DIRS include
+DEPENDS orocos_kdl
+
 #  LIBRARIES desperate_housewife
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
-	CATKIN_DEPENDS message_runtime message_generation std_msgs
+	CATKIN_DEPENDS message_runtime message_generation std_msgs controller_interface urdf kdl_parser control_msgs control_toolbox realtime_tools
 )
 
 ###########
@@ -107,9 +135,10 @@ INCLUDE_DIRS include
 ## include_directories(include)
 
 ## Declare a cpp library
-# add_library(desperate_housewife
-#   src/${PROJECT_NAME}/desperate_housewife.cpp
-# )
+add_library(desperate_housewife
+  src/phobic_inverseDynamics.cpp
+)
+
 
 ## Declare a cpp executable
 # add_executable(desperate_housewife_node src/desperate_housewife_node.cpp)
@@ -145,7 +174,7 @@ target_link_libraries(cylinder_test
 #   ${PCL_LIBRARIES}
 # )
 
-
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
 target_link_libraries(phobic_hand_pose
   ${catkin_LIBRARIES}
@@ -157,6 +186,23 @@ target_link_libraries(phobic_hand_pose
 #############
 ## Install ##
 #############
+
+ # Install
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
+
+install(FILES phobic_dynamic_plugins.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+
+
+
 
 # all install targets should use catkin DESTINATION variables
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
