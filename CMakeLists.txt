@@ -4,11 +4,10 @@ project(desperate_housewife)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED roscpp pcl_conversions pcl_ros tf_conversions pcl_msgs message_generation std_msgs geometry_msgs sensor_msgs)
-find_package(PCL 1.7.2 REQUIRED)
-
-find_package(catkin REQUIRED COMPONENTS
-  controller_interface
+find_package(orocos_kdl REQUIRED)
+find_package(catkin REQUIRED 
+  sensor_msgs
+    controller_interface
   control_msgs
   forward_command_controller
   control_toolbox
@@ -26,8 +25,30 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation 
   std_msgs
   geometry_msgs 
-  sensor_msgs
-)
+  sensor_msgs)
+find_package(PCL 1.7.2 REQUIRED)
+
+# find_package(catkin REQUIRED COMPONENTS
+#   controller_interface
+#   control_msgs
+#   forward_command_controller
+#   control_toolbox
+#   realtime_tools
+#   urdf
+#   roscpp
+#   kdl_parser
+#   message_generation
+#   cmake_modules
+#   roscpp 
+#   pcl_conversions
+#   pcl_ros
+#   tf_conversions 
+#   pcl_msgs
+#   message_generation 
+#   std_msgs
+#   geometry_msgs 
+#   sensor_msgs
+# )
 
 
 
@@ -38,12 +59,17 @@ include_directories(include ${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
+
+link_directories(${catkin_LIBRARY_DIRS})
+link_directories(${orocos_kdl_LIBRARY_DIRS})
+
+# include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
 
 add_definitions(-std=c++11) 
 
 find_library(KDL_LIBRARY REQUIRED NAMES orocos-kdl HINTS ${orocos_kdl_LIBRARY_DIRS})
+include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -116,15 +142,30 @@ generate_messages(
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-INCLUDE_DIRS include
-DEPENDS orocos_kdl
+# catkin_package(
+# INCLUDE_DIRS include
+# DEPENDS orocos_kdl
 
-#  LIBRARIES desperate_housewife
-#  CATKIN_DEPENDS other_catkin_pkg
-#  DEPENDS system_lib
-	CATKIN_DEPENDS message_runtime message_generation std_msgs controller_interface urdf kdl_parser control_msgs control_toolbox realtime_tools
-)
+# #  LIBRARIES desperate_housewife
+# #  CATKIN_DEPENDS other_catkin_pkg
+# #  DEPENDS system_lib
+# 	CATKIN_DEPENDS message_runtime message_generation std_msgs controller_interface urdf kdl_parser control_msgs control_toolbox realtime_tools
+# )
+
+catkin_package(
+  DEPENDS orocos_kdl
+  CATKIN_DEPENDS
+    controller_interface
+    control_msgs
+    control_toolbox
+    realtime_tools
+    urdf
+    forward_command_controller
+    kdl_parser
+    message_runtime
+  INCLUDE_DIRS include
+  LIBRARIES ${PROJECT_NAME}
+  )
 
 ###########
 ## Build ##
@@ -174,14 +215,12 @@ target_link_libraries(cylinder_test
 #   ${PCL_LIBRARIES}
 # )
 
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+target_link_libraries(desperate_housewife ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
 target_link_libraries(phobic_hand_pose
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
 )
-
-
 
 #############
 ## Install ##
