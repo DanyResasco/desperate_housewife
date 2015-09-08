@@ -37,7 +37,7 @@
         <param name="robot_description" command="$(find xacro)/xacro.py $(find vito_description)/robot/$(arg robot_name).urdf.xacro use_mimic_tag:=false"/>
     </group> -->
 
-	<node name="my_rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find desperate_housewife)/launch/rviz_config.rviz" output="screen">
+	<node name="desperate_rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find desperate_housewife)/launch/rviz_config.rviz" output="screen">
 
   </node>
 

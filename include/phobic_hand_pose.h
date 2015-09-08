@@ -101,7 +101,7 @@ class phobic_hand
 		phobic_hand(ros::NodeHandle node_hand): nodeH(node_hand)
 		{
 			hand_info = node_hand.advertise<desperate_housewife::hand>( "SoftHand_Pose", 1 );
-			check_robot  = true;
+			check_robot  = false;
 			Test_obj  = true;
 		}
 

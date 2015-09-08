@@ -169,6 +169,7 @@ namespace desperate_inversedynamics
   			// Kd_(i) = 20;
     	}
 
+    	ROS_INFO("dentro starting");
     	// Kp = 200;
     	// Ki = 1; 
     	// Kd = 5;
@@ -198,7 +199,7 @@ namespace desperate_inversedynamics
 		listener_info.lookupTransform("/vito_anchor", "left_hand_palm_link" , ros::Time(0), left_arm_softhand_st );
 		Vito_desperate.Pos_HAND_l_x = FromTFtoKDL(left_arm_softhand_st); 
 		// InfoSoftHand(left_arm_softhand_st, Vito_desperate.Pos_HAND_l_x); //eulero angle softhand
-
+		ROS_INFO("dentro update");
 
 		// get joint positions
   		for(int i=0; i < Vito_desperate.joint_handles_.size(); i++) 

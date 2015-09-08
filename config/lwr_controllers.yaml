@@ -179,6 +179,6 @@ lwr:
 
   # Dynamic Sliding Mode Controller Task Space
   phobic_mp:
-     type: deserate_housewige/phobic_mp
+     type: deserate_housewife/phobic_mp
      root_name: world
      tip_name: lwr_7_link
