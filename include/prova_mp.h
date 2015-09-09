@@ -1,5 +1,5 @@
-#ifndef dany_bicchi_MP_h
-#define dany_bicchi_MP_h
+#ifndef PROVA_MP_h
+#define PROVA_MP_h
 
 //ros
 #include <ros/ros.h>
@@ -69,10 +69,10 @@
 #include <utils/pseudo_inversion.h>
 #include <utils/skew_symmetric.h>
 
-namespace desperate_inversedynamics
+namespace desperate_housewife
 {
 
-	class phobic_mp: public controller_interface::Controller<hardware_interface::EffortJointInterface>
+	class PotentialFieldControl: public controller_interface::Controller<hardware_interface::EffortJointInterface>
 	{
 		private:
 
@@ -186,7 +186,7 @@ namespace desperate_inversedynamics
 			void update(const ros::Time& time, const ros::Duration& period);
 			double task_objective_function(KDL::JntArray q);
 
-			phobic_mp();
+			PotentialFieldControl();
 			//{
 				
 				// ros::param::get("~influence", influence);
@@ -202,7 +202,7 @@ namespace desperate_inversedynamics
 			//};
 
 
-			~phobic_mp();
+			~PotentialFieldControl();
 
 
 

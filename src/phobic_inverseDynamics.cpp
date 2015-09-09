@@ -1,11 +1,11 @@
 #include <prova_mp.h>
 
-namespace desperate_inversedynamics
+namespace desperate_housewife
 {
-	phobic_mp::phobic_mp() {}
-	phobic_mp::~phobic_mp() {}
+	PotentialFieldControl::PotentialFieldControl() {}
+	PotentialFieldControl::~PotentialFieldControl() {}
 
-	bool phobic_mp::init(hardware_interface::EffortJointInterface *robot, ros::NodeHandle &n)
+	bool PotentialFieldControl::init(hardware_interface::EffortJointInterface *robot, ros::NodeHandle &n)
 	{
 		nh_ = n;
 
@@ -146,7 +146,7 @@ namespace desperate_inversedynamics
 
 		Vito_desperate.J_last_.resize(Vito_desperate.kdl_chain_.getNrOfJoints());
 
-		sub_command_ = nh_.subscribe(nh_.resolveName("SoftHand_Pose"), 1, &phobic_mp::MPCallback, this);	//???? 
+		sub_command_ = nh_.subscribe(nh_.resolveName("SoftHand_Pose"), 1, &PotentialFieldControl::MPCallback, this);	//???? 
 		//sub_gains_ = nh_.subscribe("set_gains", 1, &OneTaskInverseDynamicsJL::set_gains, this);
 
 		// pub_error_ = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
@@ -156,7 +156,7 @@ namespace desperate_inversedynamics
 		return true;
 	}
 
-	void phobic_mp::starting(const ros::Time& time)
+	void PotentialFieldControl::starting(const ros::Time& time)
 	{
 		// get joint positions
   		for(int i=0; i < Vito_desperate.joint_handles_.size(); i++) 
@@ -187,7 +187,7 @@ namespace desperate_inversedynamics
 
 	}
 
-	void phobic_mp::update(const ros::Time& time, const ros::Duration& period)
+	void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& period)
 	{
 		
 		tf::StampedTransform left_arm_base_link_st, left_arm_softhand_st;
@@ -365,7 +365,7 @@ namespace desperate_inversedynamics
 
 	}
 	//chiamata per leggere il messaggio della posa desiderata della mano
-	void phobic_mp::MPCallback(const desperate_housewife::hand hand_msg)
+	void PotentialFieldControl::MPCallback(const desperate_housewife::hand hand_msg)
 	{	
 		if (check_urdf == true)
 		{	
@@ -415,7 +415,7 @@ namespace desperate_inversedynamics
 	}
 
 	
-	double phobic_mp::task_objective_function(KDL::JntArray q)
+	double PotentialFieldControl::task_objective_function(KDL::JntArray q)
 	{
 		double sum = 0;
 		double temp;
@@ -434,7 +434,7 @@ namespace desperate_inversedynamics
 	}
 
 
-	void phobic_mp::SetAttractiveField(KDL::Frame &pos_Hand_xd, KDL::JntArray &Vel, KDL::Frame &Pos_hand_x, Eigen::VectorXd &Force_attractive,  KDL::Jacobian &link_jac_)
+	void PotentialFieldControl::SetAttractiveField(KDL::Frame &pos_Hand_xd, KDL::JntArray &Vel, KDL::Frame &Pos_hand_x, Eigen::VectorXd &Force_attractive,  KDL::Jacobian &link_jac_)
 	{		
 		double roll_xd, pitch_xd, yaw_xd;
 		double roll_x, pitch_x, yaw_x;
@@ -472,7 +472,7 @@ namespace desperate_inversedynamics
 
 
 
-	void phobic_mp::SetRepulsiveFiled(KDL::Vector &Pos, Eigen::VectorXd &Force_repulsion )
+	void PotentialFieldControl::SetRepulsiveFiled(KDL::Vector &Pos, Eigen::VectorXd &Force_repulsion )
 	{
 		std::vector<KDL::Vector> distance_local_obj;
 		//std::vector<Eigen::VectorXd> local_arm; 
@@ -539,7 +539,7 @@ namespace desperate_inversedynamics
 
 
 
-void phobic_mp::SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p)
+void PotentialFieldControl::SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p)
 {
     std::vector<KDL::Vector> distance_link; //Only position
 
@@ -763,4 +763,4 @@ void phobic_mp::SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p)
 
 }
 
-PLUGINLIB_EXPORT_CLASS(desperate_inversedynamics::phobic_mp, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(desperate_housewife::PotentialFieldControl, controller_interface::ControllerBase)

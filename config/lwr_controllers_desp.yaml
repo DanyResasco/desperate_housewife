@@ -178,8 +178,8 @@ left_arm:
   #    tip_name: left_hand_palm_link
 
   # Dynamic Sliding Mode Controller Task Space
-  phobic_mp:
-     type: desperate_housewife/phobic_mp
+  PotentialFieldControl:
+     type: desperate_housewife/PotentialFieldControl
      root_name: vito_anchor
      tip_name: left_hand_palm_link
 

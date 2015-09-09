@@ -44,7 +44,7 @@
       <!-- <run_depend>lwr_controllers</run_depend>  -->
        <!-- <run_depend>controller_interface</run_depend>  -->
 
-     <build_depend>angles</build_depend>
+  <build_depend>angles</build_depend>
   <build_depend>controller_interface</build_depend> 
   <build_depend>control_msgs</build_depend> 
   <build_depend>control_toolbox</build_depend> 
