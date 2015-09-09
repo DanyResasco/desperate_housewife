@@ -80,7 +80,10 @@ class phobic_hand
 		tf::StampedTransform SoftHand_l;
 		ros::Publisher hand_info;
 		bool Test_obj;
-		Eigen::Matrix4d T_w_c;
+		Eigen::Matrix4d T_w_h;
+		Eigen::Matrix4d frame_kinect;
+		Eigen::Matrix4d T_k_ob;
+		Eigen::Matrix4d T_K_VA_eigen;
 		
 
 

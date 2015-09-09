@@ -7,6 +7,7 @@ namespace desperate_housewife
 
   bool PotentialFieldControl::init(hardware_interface::EffortJointInterface *robot, ros::NodeHandle &n)
   {
+    ROS_INFO("dentro init");
     nh_ = n;
 
     // get URDF and name of root and tip from the parameter server
@@ -195,7 +196,7 @@ namespace desperate_housewife
     // //base and softhand in word frame
     // listener_info.lookupTransform("/vito_anchor", "left_arm_base_link" , ros::Time(0), left_arm_base_link_st );
     // Vito_desperate.pos_base_l = FromTFtoKDL(left_arm_base_link_st); 
-
+    listener_info.waitForTransform("/vito_anchor", "left_hand_palm_link", ros::Time::now(), ros::Duration(1));
     listener_info.lookupTransform("/vito_anchor", "left_hand_palm_link" , ros::Time(0), left_arm_softhand_st );
     Vito_desperate.Pos_HAND_l_x = FromTFtoKDL(left_arm_softhand_st); 
     // // InfoSoftHand(left_arm_softhand_st, Vito_desperate.Pos_HAND_l_x); //eulero angle softhand
@@ -257,17 +258,19 @@ namespace desperate_housewife
           // GetEuleroAngle(x_ [i], x_now[i]);
         }
         
+        ROS_INFO("prima del for in update");
         int index_rep=0;
         for(int p =0; p < x_des_.size(); p ++)
         {
             
-          if (Equal(Vito_desperate.Pos_HAND_l_x.p, x_des_[p].p,0.05))  //Pos_HAND_l_x is the position of softhand
-          {
-            ROS_INFO("On target");
-            cmd_flag_ = 0;
-            return;         
-          }
-          SetAttractiveField(x_des_[p], Vito_desperate.joint_msr_states_.qdot , Vito_desperate.Pos_HAND_l_x, Force_attractive_left[p],  Vito_desperate.J_);
+          // if (Equal(Vito_desperate.Pos_HAND_l_x.p, x_des_[p].p,0.05))  //Pos_HAND_l_x is the position of softhand
+          // {
+          //   ROS_INFO("On target");
+          //   cmd_flag_ = 0;
+          //   return;         
+          // }
+          ROS_INFO("dentro for di update");
+           SetAttractiveField(x_des_[p], Vito_desperate.joint_msr_states_.qdot , Vito_desperate.Pos_HAND_l_x, Force_attractive_left[p],  Vito_desperate.J_);
         }
 
       } 
@@ -368,6 +371,18 @@ namespace desperate_housewife
 
   }
 
+
+  KDL::Frame FromTFtoKDL(tf::StampedTransform &st_transf)
+  {
+    KDL::Frame hand_frame;
+    tf::Transform hand_tf(st_transf.getRotation(), st_transf.getOrigin());
+    tf::transformTFToKDL(hand_tf, hand_frame);
+
+    return hand_frame;
+  }
+
+
+
   //chiamata per leggere il messaggio della posa desiderata della mano
   void PotentialFieldControl::MPCallback(const desperate_housewife::hand hand_msg)
   { 
@@ -442,12 +457,11 @@ namespace desperate_housewife
   void PotentialFieldControl::SetAttractiveField(KDL::Frame &pos_Hand_xd, KDL::JntArray &Vel, KDL::Frame &Pos_hand_x, Eigen::VectorXd &Force_attractive,  KDL::Jacobian &link_jac_)
   {   
     ROS_INFO("dentro SetAttractiveField");
-    //double roll_xd=0., pitch_xd=0., yaw_xd=0.;
-    //double roll_x=0., pitch_x=0., yaw_x=0.;
+    double roll_xd=0., pitch_xd=0., yaw_xd=0.;
+    double roll_x=0., pitch_x=0., yaw_x=0.;
     
-    //pos_Hand_xd.M.GetRPY(roll_xd, pitch_xd, yaw_xd);
-    //pos_Hand_xd.p = (KDL::Vector::Zero());
-    //Pos_hand_x.M.GetRPY(roll_x, pitch_x, yaw_x);
+    pos_Hand_xd.M.GetRPY(roll_xd, pitch_xd, yaw_xd);
+    Pos_hand_x.M.GetRPY(roll_x, pitch_x, yaw_x);
     // //KDL::Vector vel_servo_control; //xd_point
     // Eigen::VectorXd vel_servo_control;
     // // KDL::Vector local_dist_v;
