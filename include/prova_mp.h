@@ -62,7 +62,7 @@
 #include <kdl/chaindynparam.hpp>
 #include <hardware_interface/joint_command_interface.h>
 #include <controller_interface/controller.h>
-
+#include <control_msgs/JointControllerState.h>
 
 #include <kdl/frames.hpp>
 // #include <Eigen/LU>

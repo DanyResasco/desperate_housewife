@@ -1,7 +1,7 @@
 
-<library path="lib/desperate_housewife">
+<library path="lib/libdesperate_housewife">
 
-  <class name="desperate_housewife/phobic_mp" type="desperate_housewife::phobic_mp" base_class_type="controller_interface::ControllerBase">
+  <class  type="desperate_inversedynamics::phobic_mp" base_class_type="controller_interface::ControllerBase">
     <description>
       The phobic_mp tracks effort commands. It expects a EffortJointInterface type of hardware interface.
     </description>

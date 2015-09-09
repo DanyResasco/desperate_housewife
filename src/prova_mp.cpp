@@ -6,13 +6,13 @@ int main(int argc, char** argv)
 	ros::NodeHandle node_mp;
 	phobic_mp phobic_local_mp(node_mp);
 
-	
 	ros::Subscriber reader; //pose in word frame!!
+	//
 	reader = node_mp.subscribe(node_mp.resolveName("SoftHand_Pose"), 1, &phobic_mp::MPCallback, &phobic_local_mp);
 	//left arm
 	
 	//joint_listen();//ritonrna msg joint_State pos,vel,acc,coppia
-	phobic_local_mp.joint_listen = node_mp.subscribe("left_arm/joint_states", 1, &phobic_mp::Robot_Callback_left, &phobic_local_mp);
+	//phobic_local_mp.joint_listen = node_mp.subscribe("left_arm/joint_states", 1, &phobic_mp::Robot_Callback_left, &phobic_local_mp);
 	//left arm
 	
 	//joint_listen();//ritonrna msg joint_State pos,vel,acc,coppia
@@ -31,10 +31,14 @@ int main(int argc, char** argv)
 	
 }
 
+
 void phobic_mp::MPCallback(const desperate_housewife::hand hand_msg)
 {	
 	bool check_urdf = true;
-	//check_urdf = GetVitoUrdf();
+	// make a urdf and initialize the parameter for the dynamics
+	//check_urdf = init();	
+
+
 	if (check_urdf == true)
 	{	
 		tf::StampedTransform left_arm_base_link_st, left_arm_softhand_st;

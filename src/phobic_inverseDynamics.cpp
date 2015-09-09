@@ -194,10 +194,10 @@ namespace desperate_inversedynamics
 			
 		//base and softhand in word frame
 		listener_info.lookupTransform("/vito_anchor", "left_arm_base_link" , ros::Time(0), left_arm_base_link_st );
-		// Vito_desperate.pos_base_l = FromTFtoKDL(left_arm_base_link_st); 
+		Vito_desperate.pos_base_l = FromTFtoKDL(left_arm_base_link_st); 
 
-		listener_info.lookupTransform("/vito_anchor", "left_hand_palm_link" , ros::Time(0), left_arm_softhand_st );
-		Vito_desperate.Pos_HAND_l_x = FromTFtoKDL(left_arm_softhand_st); 
+		// listener_info.lookupTransform("/vito_anchor", "left_hand_palm_link" , ros::Time(0), left_arm_softhand_st );
+		// Vito_desperate.Pos_HAND_l_x = FromTFtoKDL(left_arm_softhand_st); 
 		// InfoSoftHand(left_arm_softhand_st, Vito_desperate.Pos_HAND_l_x); //eulero angle softhand
 		ROS_INFO("dentro update");
 
@@ -261,7 +261,7 @@ namespace desperate_inversedynamics
 	    	for(int p =0; p < x_des_.size(); p ++)
 	    	{
 	    			
-			    if (Equal(Vito_desperate.Pos_HAND_l_x.p, x_des_[p].p,0.05))
+			    if (Equal(x_now[7].p, x_des_[p].p,0.05))	//x_now[7] is the position of softhand
 			    {
 			    	ROS_INFO("On target");
 			    	cmd_flag_ = 0;
@@ -269,7 +269,7 @@ namespace desperate_inversedynamics
 			    }
 			    
 
-				SetAttractiveField(x_des_[p], Vito_desperate.joint_msr_states_.qdot , Vito_desperate.Pos_HAND_l_x, Force_attractive_left[p],  Vito_desperate.J_);
+				SetAttractiveField(x_des_[p], Vito_desperate.joint_msr_states_.qdot , x_now[7], Force_attractive_left[p],  Vito_desperate.J_);
 						
 				if (p == 0)	
 				{
@@ -477,7 +477,7 @@ namespace desperate_inversedynamics
 		std::vector<KDL::Vector> distance_local_obj;
 		//std::vector<Eigen::VectorXd> local_arm; 
 
-		for(int t = 0; t<7; t++ )
+		for(int t = 0; t <= 7; t++ )
 		{
 			
 			distance_local_obj.push_back(Pos - x_now[t].p); 
@@ -560,12 +560,12 @@ void phobic_mp::SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p)
       //   //GetEuleroAngle(Vito_desperate.link_frame_r[i], robot_link_position2[i]);   
   
       // }
-    	for (int i=0; i< x_now.size(); i++)
+    	for (int i=0; i< x_now.size()-1; i++)
     	{
     		robot_link_position1[i] = x_now[i].p;
     	}
    
-        HAND =  Vito_desperate.Pos_HAND_l_x.p;     
+        HAND =  x_now[7].p;     
 
         base_link = Vito_desperate.pos_base_l.p ;
         

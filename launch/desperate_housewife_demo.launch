@@ -1,7 +1,7 @@
 
 <launch>
 
-	<arg name="spin_rate" default="1" />
+	<arg name="spin_rate" default="50" />
 	<arg name="camera_topic" default="camera/depth_registered/points" />
 	<arg name="down_sample_size" default="0.01" />
 	<arg name="pc_save" default="0" />
