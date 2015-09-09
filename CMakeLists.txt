@@ -176,10 +176,12 @@ catkin_package(
 ## include_directories(include)
 
 ## Declare a cpp library
-add_library(desperate_housewife
-  src/phobic_inverseDynamics.cpp
+add_library(${PROJECT_NAME}
+  src/potential_field_control.cpp
 )
 
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
 ## Declare a cpp executable
 # add_executable(desperate_housewife_node src/desperate_housewife_node.cpp)
@@ -215,7 +217,7 @@ target_link_libraries(cylinder_test
 #   ${PCL_LIBRARIES}
 # )
 
-target_link_libraries(desperate_housewife ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+# target_link_libraries(desperate_housewife ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
 target_link_libraries(phobic_hand_pose
   ${catkin_LIBRARIES}
