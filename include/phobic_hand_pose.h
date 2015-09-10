@@ -84,6 +84,7 @@ class phobic_hand
 		Eigen::Matrix4d frame_kinect;
 		Eigen::Matrix4d T_k_ob;
 		Eigen::Matrix4d T_K_VA_eigen;
+		Eigen::Matrix4d T_vito_c;
 		
 
 

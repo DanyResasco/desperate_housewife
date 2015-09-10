@@ -47,16 +47,16 @@ void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
 
 			// ros::Time t ; //= ros::Time::now();
 			// try{
-				listener_info.waitForTransform("/camera_rgb_optical_frame", "/right_hand_palm_link" , ros::Time::now(), ros::Duration(1));
-				listener_info.lookupTransform("/camera_rgb_optical_frame", "/right_hand_palm_link" , ros::Time(0), SoftHand_r);
+				listener_info.waitForTransform("/vito_anchor", "/right_hand_palm_link" , ros::Time::now(), ros::Duration(1));
+				listener_info.lookupTransform("/vito_anchor", "/right_hand_palm_link" , ros::Time(0), SoftHand_r);
 			// }
 			// catch (tf::TransformException ex){
 			// 	ROS_ERROR("%s",ex.what());
 			// }
 
 			// try{
-				listener_info.waitForTransform("/camera_rgb_optical_frame", "/left_hand_palm_link" , ros::Time::now(), ros::Duration(1));
-				listener_info.lookupTransform("/camera_rgb_optical_frame", "/left_hand_palm_link" , ros::Time(0), SoftHand_l);
+				listener_info.waitForTransform("/vito_anchor", "/left_hand_palm_link" , ros::Time::now(), ros::Duration(1));
+				listener_info.lookupTransform("/vito_anchor", "/left_hand_palm_link" , ros::Time(0), SoftHand_l);
 			// }
 			// catch (tf::TransformException ex){
 			// 	ROS_ERROR("%s",ex.what());
@@ -89,7 +89,7 @@ void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
     	//read the cylinder informations in tf::StampedTransform
 		for (int i = 0; i < cyl_msg.dimension; i++)
 		{
-			listener_info.lookupTransform("/camera_rgb_optical_frame", "cilindro_" + std::to_string(i) , ros::Time(0), Goal[i] );
+			listener_info.lookupTransform("/vito_anchor", "cilindro_" + std::to_string(i) , ros::Time(0), Goal[i] );
 			
 			// cyl_height.push_back(cyl_msg.length[i]);
 			// cyl_radius.push_back(cyl_msg.radius[i]);
@@ -121,9 +121,12 @@ void phobic_hand::GetCylPos( tf::StampedTransform &object, int &i)
 {	
 	ROS_INFO("get goal position");
 	//Set robot potential fields 
-	// Eigen::Matrix4d frame_kinect;
-	frame_kinect = FromTFtoEigen(object); //T_k_c
-	frame_cylinder = frame_kinect.inverse(); //T_c_k
+	// Eigen::Matrix4d T_vito_c;
+	// frame_kinect = FromTFtoEigen(object); //T_k_c
+	// frame_cylinder = frame_kinect.inverse(); //T_c_k
+
+	T_vito_c = FromTFtoEigen(object); 
+	frame_cylinder = frame_kinect.inverse(); //T_c_vito
 	std::cout<< frame_kinect <<"frame kinect" <<std::endl<<std::flush;
 	
 	// test for setting the potential field
@@ -198,8 +201,8 @@ void phobic_hand::SetHandPosition(int &u)
 		ROS_INFO("cyl dritto e vuoto");
 		M_desired_local.col(1) << 0,0,1, 0;	
 		M_desired_local.col(2) << -x, 0;
-		M_desired_local.col(3) << translation;
-		M_desired_local.normalize();
+		M_desired_local.col(3) << Point_desired;
+		// M_desired_local.normalize();
 	}
 	// else if(((cyl_info.front() == 0) && (cyl_v.front() != 0)) && (cyl_radius.front() < max_radius))
 	else if(((cyl_info == 0) && (cyl_v != 0)) && (cyl_radius< max_radius))
@@ -212,7 +215,7 @@ void phobic_hand::SetHandPosition(int &u)
 		M_desired_local.col(1) << 0,0,1, 0;	//da rifare
 		M_desired_local.col(2) << -x, 0;
 		M_desired_local.col(3) << Point_desired;
-		M_desired_local.normalize();
+		// M_desired_local.normalize();
 	}
 
 	// else if ((cyl_info.front() != 0) && (cyl_radius.front() < max_radius))
@@ -226,7 +229,7 @@ void phobic_hand::SetHandPosition(int &u)
 		M_desired_local.col(1) << 0,0,1, 0;	//da rifare
 		M_desired_local.col(2) << -x, 0;
 		M_desired_local.col(3) << Point_desired;
-		M_desired_local.normalize();
+		// M_desired_local.normalize();
 	}
 	else
 	{
@@ -255,10 +258,10 @@ void phobic_hand::SetHandPosition(int &u)
 
 	//devo portare il tutto in word frame RICONTROLLA!!
 	// Eigen::Matrix4d T_K_VA_eigen;
-	listener_info.lookupTransform("/camera_rgb_optical_frame", "vito_anchor" , ros::Time(0), T_K_vito_ancor );
-	T_K_VA_eigen = FromTFtoEigen(T_K_vito_ancor);
+	// listener_info.lookupTransform("/camera_rgb_optical_frame", "vito_anchor" , ros::Time(0), T_K_vito_ancor );
+	// T_K_VA_eigen = FromTFtoEigen(T_K_vito_ancor);
 	
-	T_w_h = T_K_VA_eigen.inverse() * frame_kinect * M_desired_local;
+	T_w_h = T_vito_c * M_desired_local;
 	geometry_msgs::Pose local_sh_pose;
 	fromEigenToPose( T_w_h ,local_sh_pose);
 	Hand_pose.push_back(local_sh_pose );
