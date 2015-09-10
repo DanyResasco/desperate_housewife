@@ -126,9 +126,9 @@ void phobic_hand::GetCylPos( tf::StampedTransform &object, int &i)
 	// frame_cylinder = frame_kinect.inverse(); //T_c_k
 
 	T_vito_c = FromTFtoEigen(object); 
-	frame_cylinder = frame_kinect.inverse(); //T_c_vito
-	std::cout<< frame_kinect <<"frame kinect" <<std::endl<<std::flush;
-	
+	frame_cylinder = T_vito_c.inverse(); //T_c_vito
+	std::cout<< T_vito_c <<"frame T_vito_c" <<std::endl<<std::flush;
+
 	// test for setting the potential field
 	// bool Test_obj  = true;
 	// if true the object is a goal, otherwise is a obstacles
@@ -136,26 +136,26 @@ void phobic_hand::GetCylPos( tf::StampedTransform &object, int &i)
 	
 	if(Test_obj == true)
 	{	
-		goal_position.x = frame_cylinder(0,3);
-		goal_position.y = frame_cylinder(1,3);
-		goal_position.z = frame_cylinder(2,3);
+		// goal_position.x = frame_cylinder(0,3);
+		// goal_position.y = frame_cylinder(1,3);
+		// goal_position.z = frame_cylinder(2,3);
 
 		
-		pcl::PointXYZ goal_kinect_frame;
-		goal_kinect_frame.x = frame_kinect(0,3);
-		goal_kinect_frame.y = frame_kinect(1,3);
-		goal_kinect_frame.z = frame_kinect(2,3);
-		WhichArm(goal_kinect_frame);
+		pcl::PointXYZ goal_v_c_pos;
+		goal_v_c_pos.x = T_vito_c(0,3);
+		goal_v_c_pos.y = T_vito_c(1,3);
+		goal_v_c_pos.z = T_vito_c(2,3);
+		WhichArm(goal_v_c_pos);
 
 		SetHandPosition(i);		
 	}
 
 	else
 	{	//set obstacles repulsion force		
-		obstacle_position.x = frame_kinect(0,3);
-		obstacle_position.y = frame_kinect(1,3);
-		obstacle_position.z = frame_kinect(2,3);
-		T_k_ob = frame_kinect;
+		obstacle_position.x = T_vito_c(0,3);
+		obstacle_position.y = T_vito_c(1,3);
+		obstacle_position.z = T_vito_c(2,3);
+		T_k_ob = T_vito_c;
 	
 	}
 }
@@ -177,58 +177,110 @@ void phobic_hand::SetHandPosition(int &u)
 
 	// translation = Point_desired - local;
 	
-	if (Arm == true) //left arm
-	{
-		M_desired_local.col(0) << (-x.cross(z)), 0;
-		//z_d = (-x.cross(y));
-		// T_K_H = FromTFtoEigen(SoftHand_l);		
-	}
+	// if (Arm == true) //left arm
+	// {
+	// 	M_desired_local.col(0) << x, 0;
+	// 	//z_d = (-x.cross(y));
+	// 	// T_K_H = FromTFtoEigen(SoftHand_l);		
+	// }
 
-	else
-	{
-		M_desired_local.col(0) << (x.cross(z)), 0;	//right arm
-		z_d = (x.cross(y));
-		// T_K_H = FromTFtoEigen(SoftHand_r);
-	}
+	// else
+	// {
+	// 	M_desired_local.col(0) << -x, 0;	//right arm
+	// 	// z_d = (x.cross(y));
+	// 	// T_K_H = FromTFtoEigen(SoftHand_r);
+	// }
+	Eigen::Matrix4d Rot_z;
+	Rot_z.row(0)<< -1,0,0,0;
+	Rot_z.row(1)<< 0,-1,0,0;
+	Rot_z.row(2)<< 0,0,1,0;
+	Rot_z.row(3)<< 0,0,0,1;
 	
 	// if((cyl_info.front() == 0) && (cyl_v.front() == 0)) //se cilindro dritto (o leggermente piegato) e senza tappo
 	if((cyl_info == 0) && (cyl_v == 0))
 	{
+		if (Arm == true) //left arm
+		{
+			M_desired_local.col(0) << x, 0;
+			M_desired_local.col(1) << -z.cross(x),0;
+		//z_d = (-x.cross(y));
+		// T_K_H = FromTFtoEigen(SoftHand_l);		
+		}
+		else
+		{
+			M_desired_local.col(0) << -x, 0;	//right arm
+			M_desired_local.col(1) << -z.cross(-x),0;
+		// z_d = (x.cross(y));
+		// T_K_H = FromTFtoEigen(SoftHand_r);
+		}
 		Point_desired(0) = cyl_radius + 0.05;
 		Point_desired(1) = 0;
 		Point_desired(2) = cyl_height*0.5 + 0.05;	//da rivedere!!
-		Point_desired(3) = 0; 
+		Point_desired(3) = 1; 
 		ROS_INFO("cyl dritto e vuoto");
-		M_desired_local.col(1) << 0,0,1, 0;	
-		M_desired_local.col(2) << -x, 0;
+		// M_desired_local.col(1) <<  (-z.cross(x)), 0;	
+		M_desired_local.col(2) << -z , 0;
 		M_desired_local.col(3) << Point_desired;
+		T_w_h = T_vito_c * M_desired_local*Rot_z ;
 		// M_desired_local.normalize();
 	}
 	// else if(((cyl_info.front() == 0) && (cyl_v.front() != 0)) && (cyl_radius.front() < max_radius))
 	else if(((cyl_info == 0) && (cyl_v != 0)) && (cyl_radius< max_radius))
 	{
+		if (Arm == true) //left arm
+		{
+			M_desired_local.col(0) << x, 0;
+			M_desired_local.col(1) << -z.cross(x),0;
+		//z_d = (-x.cross(y));
+		// T_K_H = FromTFtoEigen(SoftHand_l);		
+		}
+
+		else
+		{
+			M_desired_local.col(0) << -x, 0;	//right arm
+			M_desired_local.col(1) << -z.cross(-x),0;
+		// z_d = (x.cross(y));
+		// T_K_H = FromTFtoEigen(SoftHand_r);
+		}
 		Point_desired(0) = 0;
 		Point_desired(1) = 0;
 		Point_desired(2) = cyl_height*0.5 + 0.05;; //da rivedere
-		Point_desired(3) = 0; 
+		Point_desired(3) = 1; 
 		ROS_INFO("cyl dritto e pieno");
-		M_desired_local.col(1) << 0,0,1, 0;	//da rifare
-		M_desired_local.col(2) << -x, 0;
+		M_desired_local.col(2) << -z, 0;
+		// M_desired_local.col(1) << -z.cross(x),0;	//da rifare
 		M_desired_local.col(3) << Point_desired;
+		T_w_h = T_vito_c * M_desired_local*Rot_z ;
 		// M_desired_local.normalize();
 	}
 
 	// else if ((cyl_info.front() != 0) && (cyl_radius.front() < max_radius))
 	else if ((cyl_info != 0) && (cyl_radius < max_radius))
 	{
-		Point_desired(0) = cyl_height + 0.05;
+		if (Arm == true) //left arm
+		{
+			M_desired_local.col(0) << -z, 0;
+			M_desired_local.col(1) << -y.cross(-z), 0;	//da rifare
+		//z_d = (-x.cross(y));
+		// T_K_H = FromTFtoEigen(SoftHand_l);		
+		}
+
+		else
+		{
+			M_desired_local.col(0) << z, 0;	//right arm
+			M_desired_local.col(1) << -y.cross(z), 0;	//da rifare
+		// z_d = (x.cross(y));
+		// T_K_H = FromTFtoEigen(SoftHand_r);
+		}
+		Point_desired(0) = 0;
 		Point_desired(1) = cyl_radius + 0.05;
 		Point_desired(2) = 0; //da rivedere
-		Point_desired(3) = 0; 
+		Point_desired(3) = 1; 
 		ROS_INFO("cyl piegato");
-		M_desired_local.col(1) << 0,0,1, 0;	//da rifare
-		M_desired_local.col(2) << -x, 0;
+		// M_desired_local.col(1) << -y.cross(z), 0;	//da rifare
+		M_desired_local.col(2) << -y, 0;
 		M_desired_local.col(3) << Point_desired;
+		T_w_h = T_vito_c * M_desired_local ;
 		// M_desired_local.normalize();
 	}
 	else
@@ -260,11 +312,22 @@ void phobic_hand::SetHandPosition(int &u)
 	// Eigen::Matrix4d T_K_VA_eigen;
 	// listener_info.lookupTransform("/camera_rgb_optical_frame", "vito_anchor" , ros::Time(0), T_K_vito_ancor );
 	// T_K_VA_eigen = FromTFtoEigen(T_K_vito_ancor);
-	
-	T_w_h = T_vito_c * M_desired_local;
+
+
+	// T_w_h = T_vito_c * M_desired_local*Rot_z ;
 	geometry_msgs::Pose local_sh_pose;
 	fromEigenToPose( T_w_h ,local_sh_pose);
 	Hand_pose.push_back(local_sh_pose );
+
+	//just for view in rzv
+	tf::Transform local_tf_pos;
+	tf::poseMsgToTF(local_sh_pose, local_tf_pos);
+	int a =0;
+	std::string sh= "hand_desired_pose" + std::to_string(a);
+	tf_br.sendTransform(tf::StampedTransform(local_tf_pos, ros::Time::now(), "/vito_anchor", sh.c_str()));
+	a++;
+
+	
 
 	//cancello primo elemento della lista
 	// cyl_radius.erase(cyl_radius.begin());

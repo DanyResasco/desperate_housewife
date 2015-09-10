@@ -364,8 +364,14 @@ void phobic_scene::makeInfoCyl(std::vector<float> coeff , pcl::PointCloud<pcl::P
 	
 	bool ok_transf;
 	ok_transf = fromEigenToPose( T_k_g , CYLINDER.Cyl_pose );
+	// std::cout<<T_k_g <<"T_K_G" <<std::endl<<std::flush;
+	std::cout<<CYLINDER.Cyl_pose.position<<"cyl_pose position" <<std::endl<<std::flush;
+	std::cout<<CYLINDER.Cyl_pose.orientation<<"cyl_pose orientation" <<std::endl<<std::flush;
+	
 
 	tf::poseMsgToTF(CYLINDER.Cyl_pose, CYLINDER.cyl_tf_pose );
+	std::cout<<CYLINDER.cyl_tf_pose.getOrigin().getX()<<CYLINDER.cyl_tf_pose.getOrigin().getY()<<CYLINDER.cyl_tf_pose.getOrigin().getZ() <<"cyl_tf trans" <<std::endl<<std::flush;
+	std::cout<<CYLINDER.cyl_tf_pose.getRotation().getX()<< CYLINDER.cyl_tf_pose.getRotation().getY()<<CYLINDER.cyl_tf_pose.getRotation().getW()<<"cyl_tf rot" <<std::endl<<std::flush;
 	
 
   	// pcl::ModelCoefficients cylinder_coeff;

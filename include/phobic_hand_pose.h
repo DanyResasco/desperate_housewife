@@ -61,6 +61,7 @@ class phobic_hand
 		// std::vector<double> cyl_radius;
 		// std::vector<double> cyl_info;
 		// std::vector<double> cyl_v;
+		tf::TransformBroadcaster tf_br;
 		double cyl_height;
 		double cyl_radius;
 		double cyl_info;
