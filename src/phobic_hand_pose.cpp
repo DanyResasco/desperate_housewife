@@ -28,42 +28,21 @@ void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
 	}
 	else
 	{
-		ROS_INFO("There are a objects in the scene, start the motion planning");
+		ROS_DEBUG("There are a objects in the scene, start the motion planning");
 		
 		Goal.resize(cyl_msg.dimension);
-		//cyl_radius.resize(cyl_msg.dimension);
-		//cyl_height.resize(cyl_msg.dimension);
-		//check the vector dimension	
-		ROS_INFO("cyl_msg size: %d", cyl_msg.dimension);
-		// ROS_INFO("goal size: %d", Goal.size());
-		// ROS_INFO("cyl_radius size: %d", cyl_radius.size());
-		// ROS_INFO("cyl_height size: %d", cyl_height.size());
-	
-				
-		//read the robot informations in tf::StampedTransform. Vito has 7 link and 6 joint
+
+		ROS_DEBUG("cyl_msg size: %d", cyl_msg.dimension);
+
 		if(check_robot == true)
 		{
-			//Soft Hand information M_k_H 
 
-			// ros::Time t ; //= ros::Time::now();
-			// try{
-				listener_info.waitForTransform("/vito_anchor", "/right_hand_palm_link" , ros::Time::now(), ros::Duration(1));
-				listener_info.lookupTransform("/vito_anchor", "/right_hand_palm_link" , ros::Time(0), SoftHand_r);
-			// }
-			// catch (tf::TransformException ex){
-			// 	ROS_ERROR("%s",ex.what());
-			// }
+			listener_info.waitForTransform("/vito_anchor", "/right_hand_palm_link" , ros::Time::now(), ros::Duration(1));
+			listener_info.lookupTransform("/vito_anchor", "/right_hand_palm_link" , ros::Time(0), SoftHand_r);
 
-			// try{
-				listener_info.waitForTransform("/vito_anchor", "/left_hand_palm_link" , ros::Time::now(), ros::Duration(1));
-				listener_info.lookupTransform("/vito_anchor", "/left_hand_palm_link" , ros::Time(0), SoftHand_l);
-			// }
-			// catch (tf::TransformException ex){
-			// 	ROS_ERROR("%s",ex.what());
-			// }
+			listener_info.waitForTransform("/vito_anchor", "/left_hand_palm_link" , ros::Time::now(), ros::Duration(1));
+			listener_info.lookupTransform("/vito_anchor", "/left_hand_palm_link" , ros::Time(0), SoftHand_l);
 
-			// listener_info.lookupTransform("/camera_rgb_optical_frame", "right_hand_palm_link" , ros::Time::now(), SoftHand_r );
-			// listener_info.lookupTransform("/camera_rgb_optical_frame", "left_hand_palm_link" , ros::Time::now(), SoftHand_l );
 			Eigen::Matrix4d local_pos_hand_l, local_pos_hand_r;
 			local_pos_hand_l = FromTFtoEigen(SoftHand_l);
 			local_pos_hand_r = FromTFtoEigen(SoftHand_r);
@@ -74,37 +53,31 @@ void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
 			Pos_HAND_r.x = local_pos_hand_r(0,3);
 			Pos_HAND_r.y = local_pos_hand_r(1,3);
 			Pos_HAND_r.z = local_pos_hand_r(2,3);
-	    }
-	    else
+		}
+		else
 	    {	//solo per provarlo			
 	    	Pos_HAND_r.x = 0.1;
 	    	Pos_HAND_r.y = -0.1;
 	    	Pos_HAND_r.z = 0.2;
-			
-			Pos_HAND_l.x = -0.1;
+
+	    	Pos_HAND_l.x = -0.1;
 	    	Pos_HAND_l.y = -0.1;
 	    	Pos_HAND_l.z = 0.2;
 	    }
-	
-    	//read the cylinder informations in tf::StampedTransform
-		for (int i = 0; i < cyl_msg.dimension; i++)
-		{
-			listener_info.lookupTransform("/vito_anchor", "cilindro_" + std::to_string(i) , ros::Time(0), Goal[i] );
-			
-			// cyl_height.push_back(cyl_msg.length[i]);
-			// cyl_radius.push_back(cyl_msg.radius[i]);
-			// cyl_info.push_back(cyl_msg.Info[i]); //standing or liyng
-			// cyl_v.push_back(cyl_msg.vol[i]); // full or empty
 
-			cyl_height = cyl_msg.length[i];
-			cyl_radius = cyl_msg.radius[i];
+    	//read the cylinder informations in tf::StampedTransform
+	    for (int i = 0; i < cyl_msg.dimension; i++)
+	    {
+	    	listener_info.lookupTransform("/vito_anchor", "cilindro_" + std::to_string(i) , ros::Time(0), Goal[i] );
+
+	    cyl_height = cyl_msg.length[i];
+	    cyl_radius = cyl_msg.radius[i];
 			cyl_info = cyl_msg.Info[i]; //standing or liyng
 			cyl_v = cyl_msg.vol[i]; // full or empty
 
-			ROS_INFO("prima di getcyl");
+			ROS_DEBUG("prima di getcyl");
 			
-			GetCylPos(Goal[i], i);
-			//Goal.erase(Goal.begin());
+			GetCylPos(Goal[i], i);;
 			
 		}	
 		
@@ -119,28 +92,15 @@ void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
 
 void phobic_hand::GetCylPos( tf::StampedTransform &object, int &i)
 {	
-	ROS_INFO("get goal position");
-	//Set robot potential fields 
-	// Eigen::Matrix4d T_vito_c;
-	// frame_kinect = FromTFtoEigen(object); //T_k_c
-	// frame_cylinder = frame_kinect.inverse(); //T_c_k
+	ROS_DEBUG("get goal position");
 
 	T_vito_c = FromTFtoEigen(object); 
 	frame_cylinder = T_vito_c.inverse(); //T_c_vito
 	std::cout<< T_vito_c <<"frame T_vito_c" <<std::endl<<std::flush;
-
-	// test for setting the potential field
-	// bool Test_obj  = true;
-	// if true the object is a goal, otherwise is a obstacles
-	//Test_obj = objectORostacles();
 	
 	if(Test_obj == true)
 	{	
-		// goal_position.x = frame_cylinder(0,3);
-		// goal_position.y = frame_cylinder(1,3);
-		// goal_position.z = frame_cylinder(2,3);
 
-		
 		pcl::PointXYZ goal_v_c_pos;
 		goal_v_c_pos.x = T_vito_c(0,3);
 		goal_v_c_pos.y = T_vito_c(1,3);
@@ -156,7 +116,7 @@ void phobic_hand::GetCylPos( tf::StampedTransform &object, int &i)
 		obstacle_position.y = T_vito_c(1,3);
 		obstacle_position.z = T_vito_c(2,3);
 		T_k_ob = T_vito_c;
-	
+
 	}
 }
 
@@ -172,149 +132,88 @@ void phobic_hand::SetHandPosition(int &u)
 	tf::StampedTransform T_K_vito_ancor;
 	Eigen::Vector4d local;
 
-	// T_C_H =  frame_cylinder * T_K_H;
-	// local = Pos_ori_hand.transpose()*T_C_H;
-
-	// translation = Point_desired - local;
-	
-	// if (Arm == true) //left arm
-	// {
-	// 	M_desired_local.col(0) << x, 0;
-	// 	//z_d = (-x.cross(y));
-	// 	// T_K_H = FromTFtoEigen(SoftHand_l);		
-	// }
-
-	// else
-	// {
-	// 	M_desired_local.col(0) << -x, 0;	//right arm
-	// 	// z_d = (x.cross(y));
-	// 	// T_K_H = FromTFtoEigen(SoftHand_r);
-	// }
 	Eigen::Matrix4d Rot_z;
 	Rot_z.row(0)<< -1,0,0,0;
 	Rot_z.row(1)<< 0,-1,0,0;
 	Rot_z.row(2)<< 0,0,1,0;
 	Rot_z.row(3)<< 0,0,0,1;
 	
-	// if((cyl_info.front() == 0) && (cyl_v.front() == 0)) //se cilindro dritto (o leggermente piegato) e senza tappo
 	if((cyl_info == 0) && (cyl_v == 0))
 	{
 		if (Arm == true) //left arm
 		{
 			M_desired_local.col(0) << x, 0;
-			M_desired_local.col(1) << -z.cross(x),0;
-		//z_d = (-x.cross(y));
-		// T_K_H = FromTFtoEigen(SoftHand_l);		
+			M_desired_local.col(1) << -z.cross(x),0;	
 		}
 		else
 		{
 			M_desired_local.col(0) << -x, 0;	//right arm
 			M_desired_local.col(1) << -z.cross(-x),0;
-		// z_d = (x.cross(y));
-		// T_K_H = FromTFtoEigen(SoftHand_r);
 		}
 		Point_desired(0) = cyl_radius + 0.05;
 		Point_desired(1) = 0;
 		Point_desired(2) = cyl_height*0.5 + 0.05;	//da rivedere!!
 		Point_desired(3) = 1; 
-		ROS_INFO("cyl dritto e vuoto");
-		// M_desired_local.col(1) <<  (-z.cross(x)), 0;	
+		ROS_DEBUG("cyl dritto e vuoto");
+
 		M_desired_local.col(2) << -z , 0;
 		M_desired_local.col(3) << Point_desired;
 		T_w_h = T_vito_c * M_desired_local*Rot_z ;
-		// M_desired_local.normalize();
+
 	}
-	// else if(((cyl_info.front() == 0) && (cyl_v.front() != 0)) && (cyl_radius.front() < max_radius))
+
 	else if(((cyl_info == 0) && (cyl_v != 0)) && (cyl_radius< max_radius))
 	{
 		if (Arm == true) //left arm
 		{
 			M_desired_local.col(0) << x, 0;
 			M_desired_local.col(1) << -z.cross(x),0;
-		//z_d = (-x.cross(y));
-		// T_K_H = FromTFtoEigen(SoftHand_l);		
 		}
 
 		else
 		{
 			M_desired_local.col(0) << -x, 0;	//right arm
 			M_desired_local.col(1) << -z.cross(-x),0;
-		// z_d = (x.cross(y));
-		// T_K_H = FromTFtoEigen(SoftHand_r);
 		}
 		Point_desired(0) = 0;
 		Point_desired(1) = 0;
 		Point_desired(2) = cyl_height*0.5 + 0.05;; //da rivedere
 		Point_desired(3) = 1; 
-		ROS_INFO("cyl dritto e pieno");
+		ROS_DEBUG("cyl dritto e pieno");
 		M_desired_local.col(2) << -z, 0;
-		// M_desired_local.col(1) << -z.cross(x),0;	//da rifare
 		M_desired_local.col(3) << Point_desired;
 		T_w_h = T_vito_c * M_desired_local*Rot_z ;
-		// M_desired_local.normalize();
 	}
 
-	// else if ((cyl_info.front() != 0) && (cyl_radius.front() < max_radius))
 	else if ((cyl_info != 0) && (cyl_radius < max_radius))
 	{
 		if (Arm == true) //left arm
 		{
 			M_desired_local.col(0) << -z, 0;
-			M_desired_local.col(1) << -y.cross(-z), 0;	//da rifare
-		//z_d = (-x.cross(y));
-		// T_K_H = FromTFtoEigen(SoftHand_l);		
+			M_desired_local.col(1) << -y.cross(-z), 0;	//da rifare		
 		}
 
 		else
 		{
 			M_desired_local.col(0) << z, 0;	//right arm
 			M_desired_local.col(1) << -y.cross(z), 0;	//da rifare
-		// z_d = (x.cross(y));
-		// T_K_H = FromTFtoEigen(SoftHand_r);
 		}
 		Point_desired(0) = 0;
 		Point_desired(1) = cyl_radius + 0.05;
 		Point_desired(2) = 0; //da rivedere
 		Point_desired(3) = 1; 
-		ROS_INFO("cyl piegato");
+		ROS_DEBUG("cyl piegato");
 		// M_desired_local.col(1) << -y.cross(z), 0;	//da rifare
 		M_desired_local.col(2) << -y, 0;
 		M_desired_local.col(3) << Point_desired;
 		T_w_h = T_vito_c * M_desired_local ;
-		// M_desired_local.normalize();
 	}
 	else
 	{
 		ROS_INFO("caso non contemplato");
 	}
 
-	ROS_INFO("Set hand final position");
-	// Eigen::Matrix4d T_C_H;
-	// std::cout<< M_desired_local <<"M_desired_local" <<std::endl<<std::flush;
-	// transformation matrix for the softhand in cyl frame t_c_h = t_c_k * t_k_h
-	// T_C_H =  frame_cylinder * T_K_H;
-	// std::cout<< T_C_H <<"T_C_H" <<std::endl<<std::flush;
-	// Pos_ori_hand = T_K_H.col(3);
-	// Eigen::Vector4d local;
-	// local = Pos_ori_hand.transpose()*T_C_H;
-
-	// translation = Point_desired - local;
-	//T_C_SOFTHAND	
-	// M_desired_local.col(1) << 0,0,1, 0;	
-	// M_desired_local.col(2) << -x, 0;
-	// M_desired_local.col(3) << translation;
-	// M_desired_local.normalize();
-
-	//std::cout<<"translation"<<translation(3)<<std::endl;
-	//ROS_INFO("translation: %d", translation(3));
-
-	//devo portare il tutto in word frame RICONTROLLA!!
-	// Eigen::Matrix4d T_K_VA_eigen;
-	// listener_info.lookupTransform("/camera_rgb_optical_frame", "vito_anchor" , ros::Time(0), T_K_vito_ancor );
-	// T_K_VA_eigen = FromTFtoEigen(T_K_vito_ancor);
-
-
-	// T_w_h = T_vito_c * M_desired_local*Rot_z ;
+	ROS_DEBUG("Set hand final position");
 	geometry_msgs::Pose local_sh_pose;
 	fromEigenToPose( T_w_h ,local_sh_pose);
 	Hand_pose.push_back(local_sh_pose );
@@ -326,40 +225,24 @@ void phobic_hand::SetHandPosition(int &u)
 	std::string sh= "hand_desired_pose" + std::to_string(a);
 	tf_br.sendTransform(tf::StampedTransform(local_tf_pos, ros::Time::now(), "/vito_anchor", sh.c_str()));
 	a++;
-
-	
-
-	//cancello primo elemento della lista
-	// cyl_radius.erase(cyl_radius.begin());
-	// cyl_height.erase(cyl_height.begin());
-	// cyl_info.erase(cyl_info.begin());
-	// cyl_v.erase(cyl_v.begin());
-
 }
 
 void phobic_hand::WhichArm(pcl::PointXYZ Pos)
 {
 	std::pair<double, pcl::PointXYZ> distance_HtO;
-	//Hand position respect kinect frame 
-	//Pos_HAND_l = Take_Pos( SoftHand_l);
-	//Pos_HAND_r = Take_Pos( SoftHand_r);
-	
 	double dist_lTo, dist_rTo;	//in kinect frame
-
 	dist_lTo = GetDistance(Pos, Pos_HAND_l).first;
 	dist_rTo = GetDistance(Pos, Pos_HAND_r).first;
 
 	if(dist_lTo < dist_rTo)
 	{
 		Arm = true; 
-		//distance_HtO = GetDistance(Pos, Pos_HAND_l);
-		ROS_INFO("Vito uses a: LEFT ARM");
+		ROS_DEBUG("Vito uses a: LEFT ARM");
 	}
 	else
 	{
 		Arm = false;
-		//distance_HtO = GetDistance(Pos ,Pos_HAND_r );
-		ROS_INFO("Vito uses a: RIGHT ARM");
+		ROS_DEBUG("Vito uses a: RIGHT ARM");
 	}
 }
 
@@ -405,7 +288,7 @@ Eigen::Matrix4d FromTFtoEigen(tf::StampedTransform &object)
 	transf_quad.normalize();
 	Eigen::Vector3d translation(object.getOrigin().x(),object.getOrigin().y(),object.getOrigin().z());
 	Eigen::Matrix3d rotation(transf_quad.toRotationMatrix());
-		
+
 	Eigen::Matrix4d Matrix_transf;
 
 	Matrix_transf.row(0) << rotation.row(0), translation[0];
