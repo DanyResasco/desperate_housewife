@@ -320,12 +320,12 @@ void phobic_hand::SetHandPosition(int &u)
 	Hand_pose.push_back(local_sh_pose );
 
 	//just for view in rzv
-	// tf::Transform local_tf_pos;
-	// tf::poseMsgToTF(local_sh_pose, local_tf_pos);
-	// int a =0;
-	// std::string sh= "hand_desired_pose" + std::to_string(a);
-	// tf_br.sendTransform(tf::StampedTransform(local_tf_pos, ros::Time::now(), "/vito_anchor", sh.c_str()));
-	// a++;
+	tf::Transform local_tf_pos;
+	tf::poseMsgToTF(local_sh_pose, local_tf_pos);
+	int a =0;
+	std::string sh= "hand_desired_pose" + std::to_string(a);
+	tf_br.sendTransform(tf::StampedTransform(local_tf_pos, ros::Time::now(), "/vito_anchor", sh.c_str()));
+	a++;
 
 	
 
