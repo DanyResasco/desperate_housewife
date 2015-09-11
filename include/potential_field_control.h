@@ -179,7 +179,7 @@ namespace desperate_housewife
 
 		public:
 
-			void MPCallback(const desperate_housewife::hand hand_msg);		
+			void MPCallback(const desperate_housewife::hand::ConstPtr& hand_msg);		
 			void SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p);
 			void SetAttractiveField(KDL::Frame &pos_Hand_xd, KDL::JntArray &Vel, KDL::Frame &Pos_hand_x, Eigen::VectorXd &Force_attractive,  KDL::Jacobian &link_jac_);
 			void SetRepulsiveFiled(KDL::Vector &Pos, Eigen::VectorXd &Force_repulsion );

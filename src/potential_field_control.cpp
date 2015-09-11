@@ -155,7 +155,9 @@ namespace desperate_housewife
 
     Vito_desperate.J_last_.resize(Vito_desperate.kdl_chain_.getNrOfJoints());
     ROS_INFO("prima della CALLBACK");
-    sub_ = nh_.subscribe("SoftHand_Pose", 1, &PotentialFieldControl::MPCallback, this);  //???? 
+    // PotentialFieldControl local_pf;
+    // sub_ = nh_.subscribe(nh_.resolveName("SoftHand_Pose"), 1, &PotentialFieldControl::MPCallback, this);  //????
+    sub_ = nh_.subscribe(nh_.resolveName("/SoftHand_Pose"), 1, &PotentialFieldControl::MPCallback, this); 
     ROS_INFO("dopo della CALLBACK");
     //sub_gains_ = nh_.subscribe("set_gains", 1, &OneTaskInverseDynamicsJL::set_gains, this);
 
@@ -168,55 +170,55 @@ namespace desperate_housewife
 
 
   //chiamata per leggere il messaggio della posa desiderata della mano
-  void PotentialFieldControl::MPCallback(const desperate_housewife::hand hand_msg)
+  void PotentialFieldControl::MPCallback(const desperate_housewife::hand::ConstPtr& hand_msg)
   { 
     ROS_INFO("DENTRO CALLBACK");
 
-    if (check_urdf == true)
-    { 
-      int index_dx(0), index_sx(0);
-      std::vector<KDL::Frame> Hand_pose_kdl_l;
+    // if (check_urdf == true)
+    // { 
+    //   int index_dx(0), index_sx(0);
+    //   std::vector<KDL::Frame> Hand_pose_kdl_l;
 
-      for(int i=0; i < hand_msg.hand_Pose.size(); i++) //number of object + obstacle
-      {
+    //   for(int i=0; i < hand_msg.hand_Pose.size(); i++) //number of object + obstacle
+    //   {
         
-        switch(hand_msg.whichArm[i]) 
-        {
-          case 0: //left arm
-            ROS_INFO("Vito use left arm");
+    //     switch(hand_msg.whichArm[i]) 
+    //     {
+    //       case 0: //left arm
+    //         ROS_INFO("Vito use left arm");
             
-            tf::poseMsgToKDL(hand_msg.hand_Pose[i], x_des_[index_sx]);
-            index_sx ++;
+    //         tf::poseMsgToKDL(hand_msg.hand_Pose[i], x_des_[index_sx]);
+    //         index_sx ++;
     
-          break;
+    //       break;
 
-          case 1: //right arm
+    //       case 1: //right arm
 
-            ROS_INFO("Vito use right arm");
+    //         ROS_INFO("Vito use right arm");
             
-            // tf::poseMsgToKDL( hand_msg.hand_Pose[i], Hand_pose_kdl_r[index_dx]);
-            // index_dx ++;
+    //         // tf::poseMsgToKDL( hand_msg.hand_Pose[i], Hand_pose_kdl_r[index_dx]);
+    //         // index_dx ++;
 
-          break;
+    //       break;
 
-          case 2: //obstacles
-            ROS_INFO("The object is obstacles");
-            KDL::Vector local_pos(hand_msg.hand_Pose[i].position.x, hand_msg.hand_Pose[i].position.y, hand_msg.hand_Pose[i].position.z);
-            obstacle_position.push_back(local_pos);
+    //       case 2: //obstacles
+    //         ROS_INFO("The object is obstacles");
+    //         KDL::Vector local_pos(hand_msg.hand_Pose[i].position.x, hand_msg.hand_Pose[i].position.y, hand_msg.hand_Pose[i].position.z);
+    //         obstacle_position.push_back(local_pos);
 
-          break;
-        }
+    //       break;
+    //     }
 
-        whichArm.push_back(hand_msg.whichArm[i]);
-      }
+    //     whichArm.push_back(hand_msg.whichArm[i]);
+    //   }
 
-      // hand_msg.hand_Pose.clear();
-      // hand_msg.whichArm.clear();
-    }
-    else
-    {
-      ROS_INFO("Failed to construct Vito urdf");
-    }
+    //   // hand_msg.hand_Pose.clear();
+    //   // hand_msg.whichArm.clear();
+    // }
+    // else
+    // {
+    //   ROS_INFO("Failed to construct Vito urdf");
+    // }
   }
 
 
@@ -225,122 +227,122 @@ namespace desperate_housewife
   void PotentialFieldControl::starting(const ros::Time& time)
   {
     // get joint positions
-      for(int i=0; i < Vito_desperate.joint_handles_.size(); i++) 
-      {
-        Vito_desperate.joint_msr_states_.q(i) = Vito_desperate.joint_handles_[i].getPosition();
-        Vito_desperate.joint_msr_states_.qdot(i) = Vito_desperate.joint_handles_[i].getVelocity();
-        // Vito_desperate.joint_des_states_.q(i) = Vito_desperate.joint_msr_states_.q(i);
-        // Vito_desperate.joint_des_states_.qdot(i) = Vito_desperate.joint_msr_states_.qdot(i);
-        // Kp_(i) = 100;
-        // Kd_(i) = 20;
-      }
+      // for(int i=0; i < Vito_desperate.joint_handles_.size(); i++) 
+      // {
+      //   Vito_desperate.joint_msr_states_.q(i) = Vito_desperate.joint_handles_[i].getPosition();
+      //   Vito_desperate.joint_msr_states_.qdot(i) = Vito_desperate.joint_handles_[i].getVelocity();
+      //   // Vito_desperate.joint_des_states_.q(i) = Vito_desperate.joint_msr_states_.q(i);
+      //   // Vito_desperate.joint_des_states_.qdot(i) = Vito_desperate.joint_msr_states_.qdot(i);
+      //   // Kp_(i) = 100;
+      //   // Kd_(i) = 20;
+      // }
 
       ROS_INFO("dentro starting");
-      sub_ = nh_.subscribe("SoftHand_Pose", 1, &PotentialFieldControl::MPCallback, this);  //????
       
-      // Kp = 200;
-      // Ki = 1; 
-      // Kd = 5;
+      
+      // // Kp = 200;
+      // // Ki = 1; 
+      // // Kd = 5;
 
-      // for (int i = 0; i < PIDs_.size(); i++)
-      //  PIDs_[i].initPid(Kp,Ki,Kd,0.1,-0.1);
-      //ROS_INFO("PIDs gains are: Kp = %f, Ki = %f, Kd = %f",Kp,Ki,Kd);
+      // // for (int i = 0; i < PIDs_.size(); i++)
+      // //  PIDs_[i].initPid(Kp,Ki,Kd,0.1,-0.1);
+      // //ROS_INFO("PIDs gains are: Kp = %f, Ki = %f, Kd = %f",Kp,Ki,Kd);
 
-      I_ = Eigen::Matrix<double,7,7>::Identity(7,7);
-      //e_ref_ = Eigen::Matrix<double,6,1>::Zero();
+      // I_ = Eigen::Matrix<double,7,7>::Identity(7,7);
+      // //e_ref_ = Eigen::Matrix<double,6,1>::Zero();
 
-      first_step_ = 0;
-      cmd_flag_ = 0;  //for starting the controller
-      step_ = 0;
+      // first_step_ = 0;
+      // cmd_flag_ = 0;  //for starting the controller
+      // step_ = 0;
 
   }
 
   void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& period)
   {
     
-    tf::StampedTransform left_arm_base_link_st, left_arm_softhand_st;
-      ROS_INFO("dentro update leggo le tf delle mani");
+    // tf::StampedTransform left_arm_base_link_st, left_arm_softhand_st;
+    //  ROS_INFO("dentro update leggo le tf delle mani");
     // //base and softhand in word frame
     // listener_tf.lookupTransform("/vito_anchor", "left_arm_base_link" , ros::Time(0), left_arm_base_link_st );
     // Vito_desperate.pos_base_l = FromTFtoKDL(left_arm_base_link_st); 
-    listener_tf.waitForTransform("/vito_anchor", "left_hand_palm_link", ros::Time::now(), ros::Duration(0.1));
-    listener_tf.lookupTransform("/vito_anchor", "left_hand_palm_link" , ros::Time(0), left_arm_softhand_st );
-    Vito_desperate.Pos_HAND_l_x = FromTFtoKDL(left_arm_softhand_st); 
-    // // InfoSoftHand(left_arm_softhand_st, Vito_desperate.Pos_HAND_l_x); //eulero angle softhand
-    ROS_INFO("dentro update dopo aver letto");
+    // listener_tf.waitForTransform("/vito_anchor", "left_hand_palm_link", ros::Time::now(), ros::Duration(0.1));
+    // listener_tf.lookupTransform("/vito_anchor", "left_hand_palm_link" , ros::Time(0), left_arm_softhand_st );
+    // Vito_desperate.Pos_HAND_l_x = FromTFtoKDL(left_arm_softhand_st); 
+    // // // InfoSoftHand(left_arm_softhand_st, Vito_desperate.Pos_HAND_l_x); //eulero angle softhand
+    // ROS_INFO("dentro update dopo aver letto");
 
-    // // get joint positions
-      for(int i=0; i < Vito_desperate.joint_handles_.size(); i++) 
-      {
-        Vito_desperate.joint_msr_states_.q(i) = Vito_desperate.joint_handles_[i].getPosition();
-        Vito_desperate.joint_msr_states_.qdot(i) = Vito_desperate.joint_handles_[i].getVelocity();
-      }
+    // // // get joint positions
+    //   for(int i=0; i < Vito_desperate.joint_handles_.size(); i++) 
+    //   {
+    //     Vito_desperate.joint_msr_states_.q(i) = Vito_desperate.joint_handles_[i].getPosition();
+    //     Vito_desperate.joint_msr_states_.qdot(i) = Vito_desperate.joint_handles_[i].getVelocity();
+    //   }
 
-    //   // // clearing msgs before publishing
-    //   // msg_err_.data.clear();
-    //   // msg_pose_.data.clear();
+    // //   // // clearing msgs before publishing
+    // //   // msg_err_.data.clear();
+    // //   // msg_pose_.data.clear();
       
-      if (cmd_flag_)
-      {
-        // resetting N and tau(t=0) for the highest priority task
-        N_trans_ = I_;  
-        SetToZero(tau_);
+    //   if (cmd_flag_)
+    //   {
+    //     // resetting N and tau(t=0) for the highest priority task
+    //     N_trans_ = I_;  
+    //     SetToZero(tau_);
 
-        // computing Inertia, Coriolis and Gravity matrices
-        id_solver_->JntToMass(Vito_desperate.joint_msr_states_.q, Vito_desperate.M_);
-        id_solver_->JntToCoriolis(Vito_desperate.joint_msr_states_.q, Vito_desperate.joint_msr_states_.qdot, Vito_desperate.C_);
-        id_solver_->JntToGravity(Vito_desperate.joint_msr_states_.q, Vito_desperate.G_);
-        Vito_desperate.G_.data.setZero();
+    //     // computing Inertia, Coriolis and Gravity matrices
+    //     id_solver_->JntToMass(Vito_desperate.joint_msr_states_.q, Vito_desperate.M_);
+    //     id_solver_->JntToCoriolis(Vito_desperate.joint_msr_states_.q, Vito_desperate.joint_msr_states_.qdot, Vito_desperate.C_);
+    //     id_solver_->JntToGravity(Vito_desperate.joint_msr_states_.q, Vito_desperate.G_);
+    //     Vito_desperate.G_.data.setZero();
 
-        Eigen::MatrixXd M_inv_;
-        // computing the inverse of Vito_desperate.M_ now, since it will be used often
-        // pseudo_inverse(Vito_desperate.M_.data, M_inv_, false); //
-        M_inv_ = Vito_desperate.M_.data.inverse(); 
+    //     Eigen::MatrixXd M_inv_;
+    //     // computing the inverse of Vito_desperate.M_ now, since it will be used often
+    //     // pseudo_inverse(Vito_desperate.M_.data, M_inv_, false); //
+    //     M_inv_ = Vito_desperate.M_.data.inverse(); 
 
 
-        // computing Jacobian J(q)
-        jnt_to_jac_solver_->JntToJac(Vito_desperate.joint_msr_states_.q, Vito_desperate.J_);  //6*7
+    //     // computing Jacobian J(q)
+    //     jnt_to_jac_solver_->JntToJac(Vito_desperate.joint_msr_states_.q, Vito_desperate.J_);  //6*7
 
-        // computing the distance from the mid points of the joint ranges as objective function to be minimized
-        //phi_ = task_objective_function(Vito_desperate.joint_msr_states_.q);
+    //     // computing the distance from the mid points of the joint ranges as objective function to be minimized
+    //     //phi_ = task_objective_function(Vito_desperate.joint_msr_states_.q);
 
-        // using the first step to compute jacobian of the tasks
-        if (first_step_)
-        {
-          Vito_desperate.J_last_ =Vito_desperate.J_;
-          // phi_last_ = phi_;
-          first_step_ = 0;
-          return;
-        }
+    //     // using the first step to compute jacobian of the tasks
+    //     if (first_step_)
+    //     {
+    //       Vito_desperate.J_last_ =Vito_desperate.J_;
+    //       // phi_last_ = phi_;
+    //       first_step_ = 0;
+    //       return;
+    //     }
 
-        // computing the derivative of Jacobian J_dot(q) through numerical differentiation
-        Vito_desperate.J_dot_.data = (Vito_desperate.J_.data - Vito_desperate.J_last_.data)/period.toSec();
+    //     // computing the derivative of Jacobian J_dot(q) through numerical differentiation
+    //     Vito_desperate.J_dot_.data = (Vito_desperate.J_.data - Vito_desperate.J_last_.data)/period.toSec();
 
-        // computing forward kinematics
-        for(int i=0; i < Vito_desperate.joint_handles_.size(); i++) 
-        {
-          KDL::Frame x_temp;
-          fk_pos_solver_->JntToCart(Vito_desperate.joint_msr_states_.q, x_temp, i); //pos_joint
-          x_now.push_back(x_temp);
-          // GetEuleroAngle(x_ [i], x_now[i]);
-        }
+    //     // computing forward kinematics
+    //     for(int i=0; i < Vito_desperate.joint_handles_.size(); i++) 
+    //     {
+    //       KDL::Frame x_temp;
+    //       fk_pos_solver_->JntToCart(Vito_desperate.joint_msr_states_.q, x_temp, i); //pos_joint
+    //       x_now.push_back(x_temp);
+    //       // GetEuleroAngle(x_ [i], x_now[i]);
+    //     }
         
-        ROS_INFO("prima del for in update");
-        int index_rep=0;
-        for(int p =0; p < x_des_.size(); p ++)
-        {
+    //     ROS_INFO("prima del for in update");
+    //     int index_rep=0;
+    //     for(int p =0; p < x_des_.size(); p ++)
+    //     {
             
-          // if (Equal(Vito_desperate.Pos_HAND_l_x.p, x_des_[p].p,0.05))  //Pos_HAND_l_x is the position of softhand
-          // {
-          //   ROS_INFO("On target");
-          //   cmd_flag_ = 0;
-          //   return;         
-          // }
-          ROS_INFO("dentro for di update");
-           SetAttractiveField(x_des_[p], Vito_desperate.joint_msr_states_.qdot , Vito_desperate.Pos_HAND_l_x, Force_attractive_left[p],  Vito_desperate.J_);
-        }
+    //       // if (Equal(Vito_desperate.Pos_HAND_l_x.p, x_des_[p].p,0.05))  //Pos_HAND_l_x is the position of softhand
+    //       // {
+    //       //   ROS_INFO("On target");
+    //       //   cmd_flag_ = 0;
+    //       //   return;         
+    //       // }
+    //       ROS_INFO("dentro for di update");
+    //        SetAttractiveField(x_des_[p], Vito_desperate.joint_msr_states_.qdot , Vito_desperate.Pos_HAND_l_x, Force_attractive_left[p],  Vito_desperate.J_);
+    //     }
 
-      } 
+    //   } 
 
         
             
@@ -434,19 +436,19 @@ namespace desperate_housewife
     //   }
 
 
-    //   ros::spinOnce();
+     ros::spinOnce();
 
   }
 
 
-  KDL::Frame FromTFtoKDL(tf::StampedTransform &st_transf)
-  {
-    KDL::Frame hand_frame;
-    tf::Transform hand_tf(st_transf.getRotation(), st_transf.getOrigin());
-    tf::transformTFToKDL(hand_tf, hand_frame);
+  // KDL::Frame FromTFtoKDL(tf::StampedTransform &st_transf)
+  // {
+  //   KDL::Frame hand_frame;
+  //   tf::Transform hand_tf(st_transf.getRotation(), st_transf.getOrigin());
+  //   tf::transformTFToKDL(hand_tf, hand_frame);
 
-    return hand_frame;
-  }
+  //   return hand_frame;
+  // }
 
 
 
@@ -470,19 +472,19 @@ namespace desperate_housewife
 //   }
 
 
-  void PotentialFieldControl::SetAttractiveField(KDL::Frame &pos_Hand_xd, KDL::JntArray &Vel, KDL::Frame &Pos_hand_x, Eigen::VectorXd &Force_attractive,  KDL::Jacobian &link_jac_)
-  {   
-    ROS_INFO("dentro SetAttractiveField");
-    double roll_xd=0., pitch_xd=0., yaw_xd=0.;
-    double roll_x=0., pitch_x=0., yaw_x=0.;
+  // void PotentialFieldControl::SetAttractiveField(KDL::Frame &pos_Hand_xd, KDL::JntArray &Vel, KDL::Frame &Pos_hand_x, Eigen::VectorXd &Force_attractive,  KDL::Jacobian &link_jac_)
+  // {   
+  //   ROS_INFO("dentro SetAttractiveField");
+  //   double roll_xd=0., pitch_xd=0., yaw_xd=0.;
+  //   double roll_x=0., pitch_x=0., yaw_x=0.;
     
-    pos_Hand_xd.M.GetRPY(roll_xd, pitch_xd, yaw_xd);
-    Pos_hand_x.M.GetRPY(roll_x, pitch_x, yaw_x);
-    // //KDL::Vector vel_servo_control; //xd_point
-    // Eigen::VectorXd vel_servo_control;
-    // // KDL::Vector local_dist_v;
-    // // KDL::Rotation local_dist_r;
-    ROS_WARN("x %g  y %g z %g",pos_Hand_xd.p.x(),pos_Hand_xd.p.y(),pos_Hand_xd.p.z());
+  //   pos_Hand_xd.M.GetRPY(roll_xd, pitch_xd, yaw_xd);
+  //   Pos_hand_x.M.GetRPY(roll_x, pitch_x, yaw_x);
+  //   // //KDL::Vector vel_servo_control; //xd_point
+  //   // Eigen::VectorXd vel_servo_control;
+  //   // // KDL::Vector local_dist_v;
+  //   // // KDL::Rotation local_dist_r;
+  //   ROS_WARN("x %g  y %g z %g",pos_Hand_xd.p.x(),pos_Hand_xd.p.y(),pos_Hand_xd.p.z());
     //KDL::Vector distance( pos_Hand_xd.p.x() - Pos_hand_x.p.x(),
       //                    pos_Hand_xd.p.y() - Pos_hand_x.p.y(),
         //                  pos_Hand_xd.p.z() - Pos_hand_x.p.z() );
@@ -514,7 +516,7 @@ namespace desperate_housewife
     // Force_attractive = (- dissipative *(x_dot_ - v_lim * vel_servo_control)); //in vito frame
 
     
-  }
+  // }
 
 
 
