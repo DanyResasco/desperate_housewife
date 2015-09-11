@@ -3,7 +3,7 @@
 
   <class name="desperate_housewife/PotentialFieldControl" type="desperate_housewife::PotentialFieldControl" base_class_type="controller_interface::ControllerBase">
     <description>
-      The phobic_mp tracks effort commands. It expects a EffortJointInterface type of hardware interface.
+      This is in implementation of potential field controller (Khatib)
     </description>
   </class>
 
