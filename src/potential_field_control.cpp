@@ -76,6 +76,14 @@ namespace desperate_housewife
 
     check_urdf = true;
 
+    if (check_urdf ==true)
+    {
+      ROS_INFO("check_urdf è true");
+    }
+    else
+    {
+      ROS_INFO("check_urdf è false");
+    }
     // Parsing joint limits from urdf model
     // boost::shared_ptr<const urdf::Link> link_ = model.getLink(tip_name);
     //   boost::shared_ptr<const urdf::Joint> joint_;
@@ -146,8 +154,9 @@ namespace desperate_housewife
     Vito_desperate.G_.resize(Vito_desperate.kdl_chain_.getNrOfJoints());
 
     Vito_desperate.J_last_.resize(Vito_desperate.kdl_chain_.getNrOfJoints());
-
-    sub_command_ = nh_.subscribe(nh_.resolveName("SoftHand_Pose"), 1, &PotentialFieldControl::MPCallback, this);  //???? 
+    ROS_INFO("prima della CALLBACK");
+    sub_ = nh_.subscribe("SoftHand_Pose", 1, &PotentialFieldControl::MPCallback, this);  //???? 
+    ROS_INFO("dopo della CALLBACK");
     //sub_gains_ = nh_.subscribe("set_gains", 1, &OneTaskInverseDynamicsJL::set_gains, this);
 
     // // pub_error_ = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
@@ -156,6 +165,62 @@ namespace desperate_housewife
 
     return true;
   }
+
+
+  //chiamata per leggere il messaggio della posa desiderata della mano
+  void PotentialFieldControl::MPCallback(const desperate_housewife::hand hand_msg)
+  { 
+    ROS_INFO("DENTRO CALLBACK");
+
+    if (check_urdf == true)
+    { 
+      int index_dx(0), index_sx(0);
+      std::vector<KDL::Frame> Hand_pose_kdl_l;
+
+      for(int i=0; i < hand_msg.hand_Pose.size(); i++) //number of object + obstacle
+      {
+        
+        switch(hand_msg.whichArm[i]) 
+        {
+          case 0: //left arm
+            ROS_INFO("Vito use left arm");
+            
+            tf::poseMsgToKDL(hand_msg.hand_Pose[i], x_des_[index_sx]);
+            index_sx ++;
+    
+          break;
+
+          case 1: //right arm
+
+            ROS_INFO("Vito use right arm");
+            
+            // tf::poseMsgToKDL( hand_msg.hand_Pose[i], Hand_pose_kdl_r[index_dx]);
+            // index_dx ++;
+
+          break;
+
+          case 2: //obstacles
+            ROS_INFO("The object is obstacles");
+            KDL::Vector local_pos(hand_msg.hand_Pose[i].position.x, hand_msg.hand_Pose[i].position.y, hand_msg.hand_Pose[i].position.z);
+            obstacle_position.push_back(local_pos);
+
+          break;
+        }
+
+        whichArm.push_back(hand_msg.whichArm[i]);
+      }
+
+      // hand_msg.hand_Pose.clear();
+      // hand_msg.whichArm.clear();
+    }
+    else
+    {
+      ROS_INFO("Failed to construct Vito urdf");
+    }
+  }
+
+
+
 
   void PotentialFieldControl::starting(const ros::Time& time)
   {
@@ -171,6 +236,8 @@ namespace desperate_housewife
       }
 
       ROS_INFO("dentro starting");
+      sub_ = nh_.subscribe("SoftHand_Pose", 1, &PotentialFieldControl::MPCallback, this);  //????
+      
       // Kp = 200;
       // Ki = 1; 
       // Kd = 5;
@@ -192,15 +259,15 @@ namespace desperate_housewife
   {
     
     tf::StampedTransform left_arm_base_link_st, left_arm_softhand_st;
-      
+      ROS_INFO("dentro update leggo le tf delle mani");
     // //base and softhand in word frame
-    // listener_info.lookupTransform("/vito_anchor", "left_arm_base_link" , ros::Time(0), left_arm_base_link_st );
+    // listener_tf.lookupTransform("/vito_anchor", "left_arm_base_link" , ros::Time(0), left_arm_base_link_st );
     // Vito_desperate.pos_base_l = FromTFtoKDL(left_arm_base_link_st); 
-    listener_info.waitForTransform("/vito_anchor", "left_hand_palm_link", ros::Time::now(), ros::Duration(1));
-    listener_info.lookupTransform("/vito_anchor", "left_hand_palm_link" , ros::Time(0), left_arm_softhand_st );
+    listener_tf.waitForTransform("/vito_anchor", "left_hand_palm_link", ros::Time::now(), ros::Duration(0.1));
+    listener_tf.lookupTransform("/vito_anchor", "left_hand_palm_link" , ros::Time(0), left_arm_softhand_st );
     Vito_desperate.Pos_HAND_l_x = FromTFtoKDL(left_arm_softhand_st); 
     // // InfoSoftHand(left_arm_softhand_st, Vito_desperate.Pos_HAND_l_x); //eulero angle softhand
-    ROS_INFO("dentro update");
+    ROS_INFO("dentro update dopo aver letto");
 
     // // get joint positions
       for(int i=0; i < Vito_desperate.joint_handles_.size(); i++) 
@@ -382,57 +449,6 @@ namespace desperate_housewife
   }
 
 
-
-  //chiamata per leggere il messaggio della posa desiderata della mano
-  void PotentialFieldControl::MPCallback(const desperate_housewife::hand hand_msg)
-  { 
-    ROS_INFO("DENTRO CALLBACK");
-    if (check_urdf == true)
-    { 
-      int index_dx(0), index_sx(0);
-      std::vector<KDL::Frame> Hand_pose_kdl_l;
-
-      for(int i=0; i < hand_msg.hand_Pose.size(); i++) //number of object + obstacle
-      {
-        
-        switch(hand_msg.whichArm[i]) 
-        {
-          case 0: //left arm
-            ROS_INFO("Vito use left arm");
-            
-            tf::poseMsgToKDL(hand_msg.hand_Pose[i], x_des_[index_sx]);
-            index_sx ++;
-    
-          break;
-
-          case 1: //right arm
-
-            ROS_INFO("Vito use right arm");
-            
-            // tf::poseMsgToKDL( hand_msg.hand_Pose[i], Hand_pose_kdl_r[index_dx]);
-            // index_dx ++;
-
-          break;
-
-          case 2: //obstacles
-            ROS_INFO("The object is obstacles");
-            KDL::Vector local_pos(hand_msg.hand_Pose[i].position.x, hand_msg.hand_Pose[i].position.y, hand_msg.hand_Pose[i].position.z);
-            obstacle_position.push_back(local_pos);
-
-          break;
-        }
-
-        whichArm.push_back(hand_msg.whichArm[i]);
-      }
-
-      // hand_msg.hand_Pose.clear();
-      // hand_msg.whichArm.clear();
-    }
-    else
-    {
-      ROS_INFO("Failed to construct Vito urdf");
-    }
-  }
 
   
 //   double PotentialFieldControl::task_objective_function(KDL::JntArray q)

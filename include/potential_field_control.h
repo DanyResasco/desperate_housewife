@@ -79,8 +79,8 @@ namespace desperate_housewife
 
 			ros::NodeHandle nodeH;
 			ros::NodeHandle nh_;
-			tf::TransformListener listener_info;
-			ros::Subscriber sub_command_;
+			tf::TransformListener listener_tf;
+			ros::Subscriber sub_;
 			// Node Handles
 	  		// ros::NodeHandle model_nh_; // namespaces to robot name
 	  		// Strings
@@ -130,6 +130,7 @@ namespace desperate_housewife
 			double phi_;	
 			double phi_last_;
 			// int p;
+			tf::TransformListener info;
 
 		
 

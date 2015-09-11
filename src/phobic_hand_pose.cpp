@@ -290,7 +290,7 @@ void phobic_hand::SetHandPosition(int &u)
 
 	ROS_INFO("Set hand final position");
 	// Eigen::Matrix4d T_C_H;
-	std::cout<< M_desired_local <<"M_desired_local" <<std::endl<<std::flush;
+	// std::cout<< M_desired_local <<"M_desired_local" <<std::endl<<std::flush;
 	// transformation matrix for the softhand in cyl frame t_c_h = t_c_k * t_k_h
 	// T_C_H =  frame_cylinder * T_K_H;
 	// std::cout<< T_C_H <<"T_C_H" <<std::endl<<std::flush;
@@ -320,12 +320,12 @@ void phobic_hand::SetHandPosition(int &u)
 	Hand_pose.push_back(local_sh_pose );
 
 	//just for view in rzv
-	tf::Transform local_tf_pos;
-	tf::poseMsgToTF(local_sh_pose, local_tf_pos);
-	int a =0;
-	std::string sh= "hand_desired_pose" + std::to_string(a);
-	tf_br.sendTransform(tf::StampedTransform(local_tf_pos, ros::Time::now(), "/vito_anchor", sh.c_str()));
-	a++;
+	// tf::Transform local_tf_pos;
+	// tf::poseMsgToTF(local_sh_pose, local_tf_pos);
+	// int a =0;
+	// std::string sh= "hand_desired_pose" + std::to_string(a);
+	// tf_br.sendTransform(tf::StampedTransform(local_tf_pos, ros::Time::now(), "/vito_anchor", sh.c_str()));
+	// a++;
 
 	
 
@@ -436,8 +436,6 @@ void phobic_hand::Send()
 	ROS_INFO("send pose hand msg");
 	desperate_housewife::hand msg;
 
-
-
 	ROS_INFO("Hand_pose.size() %d", Hand_pose.size() );
 	
 	for (int i = 0; i < Hand_pose.size(); i++)
@@ -470,8 +468,12 @@ void phobic_hand::Send()
 			
 		}
 
-		hand_info.publish(msg);
+		// hand_info.publish(msg);
 	}
+	hand_info.publish(msg);
+	msg.whichArm.clear();
+	msg.hand_Pose.clear();
+	Hand_pose.clear();
 }
 
 
