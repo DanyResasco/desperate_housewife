@@ -66,6 +66,7 @@
 #include <control_msgs/JointControllerState.h>
 
 #include <kdl/frames.hpp>
+#include <kdl/frames_io.hpp>
 // #include <Eigen/LU>
 #include <utils/pseudo_inversion.h>
 #include <utils/skew_symmetric.h>
@@ -104,7 +105,7 @@ namespace desperate_housewife
 			std::vector<Eigen::VectorXd> Force_repulsion_left, Force_repulsion_right;
 			bool Arm;
 			double velocity_max;
-			//double v_lim;
+			double v_lim = 1;
 			bool check_robot;
 			double max_radius=0.1, max_lenght=0.20;
 			// std::string root_name;
