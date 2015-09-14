@@ -71,74 +71,74 @@
 
 class phobic_scene
 {
-	
+
 private:
-	ros::NodeHandle nodeH;
-	ros::Publisher Scena_info;
-	tf::TransformBroadcaster tf_br;
-	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud ;
-	std::vector<float> Plane_coeff;
-	std::list<pcl::PointCloud<pcl::PointXYZRGBA> > object_cluster;
-	bool testing;
-	ros::Publisher phobic_talk;
-	ros::Publisher pub_cloud_object;
-	ros::Publisher tf_pose_cyl;
-	ros::Publisher num_cyl;
-	double down_sample_size;
-	double pc_save;
-	Eigen::Matrix4d T_k_g;
+  ros::NodeHandle nodeH;
+  ros::Publisher Scena_info;
+  tf::TransformBroadcaster tf_br;
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud ;
+  std::vector<float> Plane_coeff;
+  std::list<pcl::PointCloud<pcl::PointXYZRGBA> > object_cluster;
+  bool testing;
+  ros::Publisher phobic_talk;
+  ros::Publisher pub_cloud_object;
+  ros::Publisher tf_pose_cyl;
+  ros::Publisher num_cyl;
+  double down_sample_size;
+  double pc_save;
+  Eigen::Matrix4d T_k_g;
 
 
-	struct Mod_cylinder
-	{
-		double Info;
-		double height;
-		double radius;
-		double vol;
-		pcl::ModelCoefficients cylinder_coeff;
-		pcl::PointXYZ info_disegno_cyl_up;
-		pcl::PointXYZ info_disegno_cyl_dw;
-		pcl::PointXYZ center;
-		Eigen::Matrix<double,4,4> Matrix_transform_inv;
-		geometry_msgs::Pose Cyl_pose;
-		tf::Transform cyl_tf_pose;
+  struct Mod_cylinder
+  {
+    double Info;
+    double height;
+    double radius;
+    double vol;
+    pcl::ModelCoefficients cylinder_coeff;
+    pcl::PointXYZ info_disegno_cyl_up;
+    pcl::PointXYZ info_disegno_cyl_dw;
+    pcl::PointXYZ center;
+    Eigen::Matrix<double,4,4> Matrix_transform_inv;
+    geometry_msgs::Pose Cyl_pose;
+    tf::Transform cyl_tf_pose;
 
-	} CYLINDER;
+  } CYLINDER;
 
-	std::vector<Mod_cylinder> cyl_list; 
+  std::vector<Mod_cylinder> cyl_list;
 
-	
+
 public:
 
-	void pointcloudCallback(sensor_msgs::PointCloud2 msg);
-	void fitting ();
-	void send_msg( int cyl_id = 0 );
-	void erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  pc);
-	void getcluster();
-	void erase_table();
-	void makeInfoCyl(std::vector<float> coeff, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_scene);
-	bool fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose);
-	void visualization( bool testing, bool circle );
-	Eigen::Matrix4d Cyl_Transform (const std::vector<float>  coeff);
-	int FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud2);
-	void StandingOrLying(Eigen::Matrix4d &T_G_K);
+  void pointcloudCallback(sensor_msgs::PointCloud2 msg);
+  void fitting ();
+  void send_msg( int cyl_id = 0 );
+  void erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  pc);
+  void getcluster();
+  void erase_table();
+  void makeInfoCyl(std::vector<float> coeff, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_scene);
+  bool fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose);
+  void visualization( bool testing, bool circle );
+  Eigen::Matrix4d Cyl_Transform (const std::vector<float>  coeff);
+  int FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud2);
+  void StandingOrLying(Eigen::Matrix4d &T_G_K);
 
-	phobic_scene(ros::NodeHandle NodeH, bool test): nodeH(NodeH)
-	{
+  phobic_scene(ros::NodeHandle NodeH, bool test): nodeH(NodeH)
+  {
 
-		pcl::PointCloud<pcl::PointXYZRGBA> cloud2;
-		cloud=cloud2.makeShared();
-		phobic_talk = nodeH.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
-		pub_cloud_object = nodeH.advertise<pcl::PointCloud<pcl::PointXYZRGBA> >( "object_cloud", 1 );
-		num_cyl = nodeH.advertise<desperate_housewife::cyl_info>( "INFO_CYLINDER", 1 );
-		ros::param::get("~down_sample_size", down_sample_size);
-		ROS_INFO("Down sample size %lf", down_sample_size);
-		ros::param::get("~pc_save", pc_save);
+    pcl::PointCloud<pcl::PointXYZRGBA> cloud2;
+    cloud=cloud2.makeShared();
+    phobic_talk = nodeH.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
+    pub_cloud_object = nodeH.advertise<pcl::PointCloud<pcl::PointXYZRGBA> >( "object_cloud", 1 );
+    num_cyl = nodeH.advertise<desperate_housewife::cyl_info>( "INFO_CYLINDER", 1 );
+    ros::param::get("~down_sample_size", down_sample_size);
+    ROS_INFO("Down sample size %lf", down_sample_size);
+    ros::param::get("~pc_save", pc_save);
 
 
-	}
+  }
 
-	~phobic_scene(){}
+  ~phobic_scene(){}
 
 
 };

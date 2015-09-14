@@ -36,7 +36,7 @@ link_directories(${catkin_LIBRARY_DIRS})
 link_directories(${orocos_kdl_LIBRARY_DIRS})
 
 
-add_definitions(-std=c++11) 
+add_definitions(-std=c++11 --all-warnings -O3) 
 
 find_library(KDL_LIBRARY REQUIRED NAMES orocos-kdl HINTS ${orocos_kdl_LIBRARY_DIRS})
 include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
@@ -72,12 +72,12 @@ add_library(${PROJECT_NAME} src/potential_field_control.cpp)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
-add_executable(phobic_camera src/main.cpp src/phobic_camera.cpp)
-add_dependencies(phobic_camera desperate_housewife_gencpp)
+add_executable(phobic_camera src/cilinder_fitting.cpp src/phobic_camera.cpp)
+add_dependencies(phobic_camera ${PROJECT_NAME}_gencpp)
 target_link_libraries(phobic_camera ${catkin_LIBRARIES}  ${PCL_LIBRARIES} )
 
 add_executable(phobic_hand_pose src/phobic_hand_pose.cpp)
-add_dependencies(phobic_hand_pose desperate_housewife_gencpp)
+add_dependencies(phobic_hand_pose ${PROJECT_NAME}_gencpp)
 target_link_libraries(phobic_hand_pose   ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 install(DIRECTORY include/${PROJECT_NAME}/

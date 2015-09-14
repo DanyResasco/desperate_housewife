@@ -51,80 +51,68 @@ class phobic_hand
 {
 
 
-	private:
+private:
 
-		tf::TransformListener listener_info;
-		std::vector<tf::StampedTransform> Goal;
+  tf::TransformListener listener_info;
+  std::vector<tf::StampedTransform> Goal;
 
-		ros::NodeHandle nodeH;
-		tf::TransformBroadcaster tf_br;
-		double cyl_height;
-		double cyl_radius;
-		double cyl_info;
-		double cyl_v;
-		pcl::PointXYZ goal_position, obstacle_position;
-		Eigen::Matrix4d frame_cylinder; //M_c_k
-		std::vector<double> distance;
-		bool Arm;
-		double velocity_max;
-		bool check_robot;
-		double max_radius=0.1, max_lenght=0.20;
-		pcl::PointXYZ Pos_HAND_r,Pos_HAND_l;
-		Eigen::Matrix4d Pos_final_hand_r, Pos_final_hand_l;
-		std::vector<geometry_msgs::Pose> Hand_pose;
-		//tf::StampedTransform hand_tf_pose;
-		tf::StampedTransform SoftHand_r;
-		tf::StampedTransform SoftHand_l;
-		ros::Publisher hand_info;
-		bool Test_obj;
-		Eigen::Matrix4d T_w_h;
-		Eigen::Matrix4d frame_kinect;
-		Eigen::Matrix4d T_k_ob;
-		Eigen::Matrix4d T_K_VA_eigen;
-		Eigen::Matrix4d T_vito_c;
-		
-
-
-	
-	public:
-
-		void HandPoseCallback(const desperate_housewife::cyl_info cyl_msg);
-		void GetCylPos(tf::StampedTransform &object, int &i);
-		void WhichArm(pcl::PointXYZ Pos);
-		bool objectORostacles();
-		pcl::PointXYZ  Take_Pos(tf::StampedTransform &M_tf);
-		std::pair<double, pcl::PointXYZ> GetDistance(pcl::PointXYZ &obj1,pcl::PointXYZ &obj2 );
-		void SetHandPosition(int &u);
-		void Send();
-		void fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose);
-		
-	
-		phobic_hand(ros::NodeHandle node_hand): nodeH(node_hand)
-		{
-			hand_info = node_hand.advertise<desperate_housewife::hand>( "SoftHand_Pose", 1 );
-			check_robot  = true;
-			Test_obj  = true;
-		}
+  ros::NodeHandle nodeH;
+  tf::TransformBroadcaster tf_br;
+  double cyl_height;
+  double cyl_radius;
+  double cyl_info;
+  double cyl_v;
+  pcl::PointXYZ goal_position, obstacle_position;
+  Eigen::Matrix4d frame_cylinder; //M_c_k
+  std::vector<double> distance;
+  bool Arm;
+  double velocity_max;
+  bool check_robot;
+  double max_radius=0.1, max_lenght=0.20;
+  pcl::PointXYZ Pos_HAND_r,Pos_HAND_l;
+  Eigen::Matrix4d Pos_final_hand_r, Pos_final_hand_l;
+  std::vector<geometry_msgs::Pose> Hand_pose;
+  //tf::StampedTransform hand_tf_pose;
+  tf::StampedTransform SoftHand_r;
+  tf::StampedTransform SoftHand_l;
+  ros::Publisher hand_info;
+  bool Test_obj;
+  Eigen::Matrix4d T_w_h;
+  Eigen::Matrix4d frame_kinect;
+  Eigen::Matrix4d T_k_ob;
+  Eigen::Matrix4d T_K_VA_eigen;
+  Eigen::Matrix4d T_vito_c;
 
 
-		~phobic_hand(){};
+
+
+public:
+
+  void HandPoseCallback(const desperate_housewife::cyl_info cyl_msg);
+  void GetCylPos(tf::StampedTransform &object, int &i);
+  void WhichArm(pcl::PointXYZ Pos);
+  bool objectORostacles();
+  pcl::PointXYZ  Take_Pos(tf::StampedTransform &M_tf);
+  std::pair<double, pcl::PointXYZ> GetDistance(pcl::PointXYZ &obj1,pcl::PointXYZ &obj2 );
+  void SetHandPosition(int &u);
+  void Send();
+  void fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose);
+
+
+  phobic_hand(ros::NodeHandle node_hand): nodeH(node_hand)
+  {
+    hand_info = node_hand.advertise<desperate_housewife::hand>( "SoftHand_Pose", 1 );
+    check_robot  = true;
+    Test_obj  = true;
+  }
+
+
+  ~phobic_hand(){};
 
 };
 
 
-
 Eigen::Matrix4d FromTFtoEigen(tf::StampedTransform &object);
-
-
-
-
-
-
-
-
-
-
-
 
 
 #endif
