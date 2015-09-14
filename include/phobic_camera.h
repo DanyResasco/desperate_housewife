@@ -1,5 +1,5 @@
-#ifndef dany_bicchi_test_classe_h
-#define dany_bicchi_test_classe_h
+#ifndef PHOBIC_CAMERA_H
+#define PHOBIC_CAMERA_H
 
 //ros
 #include <ros/ros.h>
@@ -143,54 +143,6 @@ public:
 
 };
 
-//function: findHeight
-//input: point cloud and two double for the Zmax and Zmin
-//Description: this function calculate the height of input point cloud
 std::vector<double> findHeight(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_t);
 
-//function:pointcloudCallback
-//input: sensor_msgs by kinect
-//Description: this function creates a poincloud whit kinect's sensor_msgs and called other functions
-//void pointcloudCallback(sensor_msgs::PointCloud2 msg);
-
-//void pointcloudCallback(sensor_msgs::PointCloud2 msg);
-
-
-//Fucntion: erase_table
-//input: ptr point cloud
-// output: couple of point cloud
-//Description: this function fitting a plane into point cloud and remove it. The inlier into plane will be save into another point cloud
-			// In the end we have two point cloud, first with the object anc second with table
-//std::pair <pcl::PointCloud<pcl::PointXYZ>,pcl::PointCloud<pcl::PointXYZ> > erase_table (pcl::PointCloud<pcl::PointXYZ>::Ptr PC_w_env);
-
-//Fucntion: erase_environment
-//input: ptr point cloud
-// output:  point cloud
-//Description: this function utilize a passthrough filter for cancel the environment
-//pcl::PointCloud<pcl::PointXYZ>::Ptr erase_environment(pcl::PointCloud<pcl::PointXYZ>::Ptr  cloud );
-
-
-//Function: fitting
-//input: object point cloud
-//Description: this function fitting a cylinder into point cloud and publish to Ros topic a hand-transformation
-//tf::Transform fitting (pcl::PointCloud<pcl::PointXYZ>::Ptr  cloud , ros::NodeHandle nodeH, ros::Publisher Scena_info);
-
-//Funtion: CylToHand_Transform 
-//input: cylinder's coefficients
-//ouput: hand transformation
-//Description: this function return a hand-transformation
-
-
-//Function: visualization
-//input: point cloud
-//Description: this funciont called the pcl visualizer
-// void visualization(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr room_object, bool window );
-
-
-
-
-
-
-
 #endif
-// dany_bicchi__test_classe_h

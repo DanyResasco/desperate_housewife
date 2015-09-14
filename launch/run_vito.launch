@@ -196,4 +196,9 @@
         <node name="grasp_state_publisher" pkg="grasp_state_publisher" type="grasp_state_publisher" respawn="true" output="screen" />
     </group>
 
+    <include file="$(find desperate_housewife)/launch/desperate_asus_head_vito_broadcaster.launch"/>
+
+    <include file="$(find desperate_housewife)/launch/desperate_housewife_demo.launch"/>
+
+
 </launch>

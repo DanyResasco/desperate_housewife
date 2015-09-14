@@ -1,5 +1,5 @@
-#ifndef dany_bicchi_hand_h
-#define dany_bicchi_hand_h
+#ifndef PHOBIC_HAND_POSE_H
+#define PHOBIC_HAND_POSE_H
 
 //ros
 #include <ros/ros.h>
@@ -55,12 +55,8 @@ class phobic_hand
 
 		tf::TransformListener listener_info;
 		std::vector<tf::StampedTransform> Goal;
-		//tf::TransformBroadcaster tf_br;
+
 		ros::NodeHandle nodeH;
-		// std::vector<double> cyl_height;
-		// std::vector<double> cyl_radius;
-		// std::vector<double> cyl_info;
-		// std::vector<double> cyl_v;
 		tf::TransformBroadcaster tf_br;
 		double cyl_height;
 		double cyl_radius;
