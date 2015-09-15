@@ -122,6 +122,9 @@ public:
   Eigen::Matrix4d Cyl_Transform (const std::vector<float>  coeff);
   int FullorEmpty(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud2);
   void StandingOrLying(Eigen::Matrix4d &T_G_K);
+  std::string cylinders_topic;
+  std::string camera_topic;
+  std::string camera_frame;
 
   phobic_scene(ros::NodeHandle NodeH, bool test): nodeH(NodeH)
   {

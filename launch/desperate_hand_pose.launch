@@ -1,0 +1,21 @@
+
+<launch>
+
+	<arg name="spin_rate" default="50" />
+	<arg name="base_frame" default="vito_anchor" />
+	<arg name="right_hand_frame" default="right_hand_palm_link" />
+	<arg name="left_hand_frame" default="right_hand_palm_link" />
+	<arg name="cylinders_topic" default="cylinders" />
+
+	<node name="desperate_HandPose" pkg="desperate_housewife" type="phobic_hand_pose" respawn="false" output="screen"  >
+ 		
+		<param name="spin_rate" value="$(arg spin_rate)" />
+		<param name="base_frame" value="$(arg base_frame)"/>
+		<param name="right_hand_frame" value="$(arg right_hand_frame)" />
+		<param name="left_hand_frame" value="$(arg left_hand_frame)" />
+		<param name="cylinders_topic" value="$(arg cylinders_topic)" />
+
+	</node>
+ 
+</launch>
+

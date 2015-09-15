@@ -4,7 +4,7 @@
     <arg name="robot_name" default="vito"/>
     <arg name="use_rviz" default="false"/>
     <arg name="use_joint_state_publisher" default="true"/>
-    <arg name="load_moveit" default="true"/>
+    <arg name="load_moveit" default="false"/>
     <arg name="use_calibration_package" default="true"/>
     <arg name="use_grasp_estimator" default="true"/>
 
@@ -80,13 +80,13 @@
         <node name="spawn_env" pkg="gazebo_ros" type="spawn_model" args="-param environment_description -urdf -model environment -x 0 -y 0 -z 1.0 -R 0 -P 0 -Y 0" respawn="false" output="screen"/-->
     </group>
     <!-- calibration transformations -->
-    <group unless="$(arg use_robot_sim)">
-        <group if="$(arg use_calibration_package)">
+    <!-- <group unless="$(arg use_robot_sim)"> -->
+        <!-- <group if="$(arg use_calibration_package)"> -->
             <!-- it takes the last calibration performed, you can call calibrate and it will overwrite the yaml file -->
-            <include file="$(find calibration)/launch/asus_head_vito_broadcaster.launch"/>
+            <!-- <include file="$(find calibration)/launch/asus_head_vito_broadcaster.launch"/> -->
             <!-- for the fake eyes, which are not still included here -->
-        </group>
-    </group>
+        <!-- </group> -->
+    <!-- </group> -->
 
     <!-- load moveit configuration -->
     <group if="$(arg load_moveit)">
@@ -198,7 +198,7 @@
 
     <include file="$(find desperate_housewife)/launch/desperate_asus_head_vito_broadcaster.launch"/>
 
-    <include file="$(find desperate_housewife)/launch/desperate_housewife_demo.launch"/>
+    <include file="$(find desperate_housewife)/launch/desperate_cylinder_fitting.launch"/>
 
 
 </launch>
