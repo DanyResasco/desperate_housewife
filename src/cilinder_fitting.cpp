@@ -1,16 +1,13 @@
-#include "phobic_camera.h"
+#include <phobic_camera.h>
 
 int main(int argc, char** argv)
 {
-  //std::cout<<"Sono nel main"<<std::endl<<std::flush;
-  ros::init(argc, argv, "Phobic_whife_scene");
+
+  ros::init(argc, argv, "Phobic_CylinderFitting");
 
   ros::Subscriber reader;
-  // std::cout<<"Sono nel main prima di aver creato ogetto classe"<<std::endl;
-  
   ros::NodeHandle nodeH;
   phobic_scene phobic_scene_local(nodeH, true); 
-  // std::cout<<"Sono nel main dopo aver creato ogetto classe"<<std::endl;
 
   double spin_rate;
   ros::param::get("~spin_rate",spin_rate);
@@ -20,9 +17,16 @@ int main(int argc, char** argv)
   ros::param::get("~camera_topic",camera_topic);
   ROS_INFO( "camera_topic %s", camera_topic.c_str());
 
-  reader = nodeH.subscribe(nodeH.resolveName(camera_topic), 1, &phobic_scene::pointcloudCallback, &phobic_scene_local);
-  //std::cout<<"Sono nel main dopo aver letto"<<std::endl;
+  ros::param::get("~cylinders_topic", phobic_scene_local.cylinders_topic);
+  ROS_INFO( "Cylinder Topic %s", phobic_scene_local.cylinders_topic.c_str());
 
+  ros::param::get("~camera_topic", phobic_scene_local.camera_topic);
+  ROS_INFO( "Camera Topic %s", phobic_scene_local.camera_topic.c_str());
+
+  ros::param::get("~camera_frame", phobic_scene_local.camera_frame);
+  ROS_INFO( "Camera Frame %s", phobic_scene_local.camera_frame.c_str());
+
+  reader = nodeH.subscribe(nodeH.resolveName(camera_topic), 1, &phobic_scene::pointcloudCallback, &phobic_scene_local);
   
   ros::Rate loop_rate( spin_rate ); // 5Hz
 
@@ -33,8 +37,6 @@ int main(int argc, char** argv)
     ros::spinOnce();
 
   }
-  // ros::spin();
-  return 0;
 
-  
+  return 0;  
 }

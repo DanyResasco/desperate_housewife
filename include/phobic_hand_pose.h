@@ -84,8 +84,6 @@ private:
   Eigen::Matrix4d T_vito_c;
 
 
-
-
 public:
 
   void HandPoseCallback(const desperate_housewife::cyl_info cyl_msg);
@@ -97,6 +95,11 @@ public:
   void SetHandPosition(int &u);
   void Send();
   void fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &pose);
+
+  std::string right_hand_frame_topic;
+  std::string left_hand_frame_topic;
+  std::string base_frame_topic;
+  std::string cylinders_topic;
 
 
   phobic_hand(ros::NodeHandle node_hand): nodeH(node_hand)

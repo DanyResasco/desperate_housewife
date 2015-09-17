@@ -1,14 +1,34 @@
 #include <phobic_hand_pose.h>
 
+#include <chrono>
+
+std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "Phobic_whife_MP");
+  ros::init(argc, argv, "Phobic_HandPose");
   ros::NodeHandle node_hand;
   phobic_hand phobic_local_hand(node_hand);
   ros::Subscriber reader;
-  reader = node_hand.subscribe(node_hand.resolveName("INFO_CYLINDER"), 1, &phobic_hand::HandPoseCallback, &phobic_local_hand);
 
-  ros::Rate loop_rate( 1 ); // 1Hz
+  t1 = std::chrono::high_resolution_clock::now();
+  reader = node_hand.subscribe(node_hand.resolveName("INFO_CYLINDER"), 1, &phobic_hand::HandPoseCallback, &phobic_local_hand);
+  std::cout << "Duration subscriber\t"  << std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - t1 ).count() << std::endl;
+  t1 = std::chrono::high_resolution_clock::now();
+
+  double spin_rate;
+  ros::param::get("~spin_rate",spin_rate);
+  ROS_INFO( "Spin Rate %lf", spin_rate);
+  ros::param::get("~base_frame", phobic_local_hand.base_frame_topic);
+  ROS_INFO( "Base Frame Link %s", phobic_local_hand.base_frame_topic.c_str());
+  ros::param::get("~right_hand_frame", phobic_local_hand.right_hand_frame_topic);
+  ROS_INFO( "Right Hand Frame Link %s", phobic_local_hand.right_hand_frame_topic.c_str());
+  ros::param::get("~left_hand_frame", phobic_local_hand.left_hand_frame_topic);
+  ROS_INFO( "Left Hand Frame Link %s", phobic_local_hand.left_hand_frame_topic.c_str());
+  ros::param::get("~cylinders_topic", phobic_local_hand.cylinders_topic);
+  ROS_INFO( "Cylinders Topic %s", phobic_local_hand.cylinders_topic.c_str());
+
+  ros::Rate loop_rate( spin_rate ); // 1Hz
   while (ros::ok())
     {
 
@@ -22,6 +42,7 @@ int main(int argc, char** argv)
 void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
 {
   // To the first we take an informations from cilynders and robot.
+
   if(cyl_msg.dimension <= 0)
     {
       ROS_INFO("There are not a objects in the scene");
@@ -37,11 +58,11 @@ void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
       if(check_robot == true)
         {
 
-          listener_info.waitForTransform("/vito_anchor", "/right_hand_palm_link" , ros::Time::now(), ros::Duration(1));
-          listener_info.lookupTransform("/vito_anchor", "/right_hand_palm_link" , ros::Time(0), SoftHand_r);
+          listener_info.waitForTransform(base_frame_topic.c_str(), right_hand_frame_topic.c_str() , ros::Time::now(), ros::Duration(1));
+          listener_info.lookupTransform(base_frame_topic.c_str(), right_hand_frame_topic.c_str() , ros::Time(0), SoftHand_r);
 
-          listener_info.waitForTransform("/vito_anchor", "/left_hand_palm_link" , ros::Time::now(), ros::Duration(1));
-          listener_info.lookupTransform("/vito_anchor", "/left_hand_palm_link" , ros::Time(0), SoftHand_l);
+          listener_info.waitForTransform(base_frame_topic.c_str(), left_hand_frame_topic.c_str() , ros::Time::now(), ros::Duration(1));
+          listener_info.lookupTransform(base_frame_topic.c_str(), left_hand_frame_topic.c_str() , ros::Time(0), SoftHand_l);
 
           Eigen::Matrix4d local_pos_hand_l, local_pos_hand_r;
           local_pos_hand_l = FromTFtoEigen(SoftHand_l);
@@ -68,7 +89,8 @@ void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
       //read the cylinder informations in tf::StampedTransform
       for (int i = 0; i < cyl_msg.dimension; i++)
         {
-          listener_info.lookupTransform("/vito_anchor", "cilindro_" + std::to_string(i) , ros::Time(0), Goal[i] );
+          // cylinders_topic.append('_');
+          listener_info.lookupTransform(base_frame_topic.c_str(), cylinders_topic.c_str() + std::string("_") +  std::to_string(i) , ros::Time(0), Goal[i] );
 
           cyl_height = cyl_msg.length[i];
           cyl_radius = cyl_msg.radius[i];
@@ -83,7 +105,8 @@ void phobic_hand::HandPoseCallback(const desperate_housewife::cyl_info cyl_msg)
 
       Goal.clear();
       Send();
-
+      std::cout << "Duration First Call back\t"  << std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - t1 ).count() << std::endl;
+      t1 = std::chrono::high_resolution_clock::now();
 
     }
 }
@@ -96,7 +119,7 @@ void phobic_hand::GetCylPos( tf::StampedTransform &object, int &i)
 
   T_vito_c = FromTFtoEigen(object);
   frame_cylinder = T_vito_c.inverse(); //T_c_vito
-  std::cout<< T_vito_c <<"frame T_vito_c" <<std::endl<<std::flush;
+  // std::cout<< T_vito_c <<"frame T_vito_c" <<std::endl<<std::flush;
 
   if(Test_obj == true)
     {
@@ -223,7 +246,7 @@ void phobic_hand::SetHandPosition(int &u)
   tf::poseMsgToTF(local_sh_pose, local_tf_pos);
   int a =0;
   std::string sh= "hand_desired_pose" + std::to_string(a);
-  tf_br.sendTransform(tf::StampedTransform(local_tf_pos, ros::Time::now(), "/vito_anchor", sh.c_str()));
+  tf_br.sendTransform(tf::StampedTransform(local_tf_pos, ros::Time::now(), base_frame_topic.c_str(), sh.c_str()));
   a++;
 }
 
@@ -316,10 +339,10 @@ pcl::PointXYZ phobic_hand::Take_Pos(tf::StampedTransform &M_tf)
 
 void phobic_hand::Send()
 { 	
-  ROS_INFO("send pose hand msg");
+  ROS_DEBUG("send pose hand msg");
   desperate_housewife::hand msg;
 
-  ROS_INFO("Hand_pose.size() %lu", Hand_pose.size() );
+  ROS_DEBUG("Hand_pose.size() %lu", Hand_pose.size() );
 
   for (unsigned int i = 0; i < Hand_pose.size(); i++)
     {
