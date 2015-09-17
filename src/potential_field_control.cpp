@@ -221,6 +221,7 @@ namespace desperate_housewife
       // hand_msg.hand_Pose.clear();
       // hand_msg.whichArm.clear();
       cmd_flag_ = 1;  //for start the controller
+
     }
     else
     {
@@ -229,6 +230,8 @@ namespace desperate_housewife
     ROS_INFO("FINITO CALLBACK");
 
     ROS_INFO("x_des size %d", x_des_.size());
+
+
   }
 
 
@@ -248,9 +251,10 @@ namespace desperate_housewife
 
       I_ = Eigen::Matrix<double,7,7>::Identity(7,7);
     
-      first_step_ = 0;
+      first_step_ = 1; //for initialize the j_last for the first time
       cmd_flag_ = 0;  //for starting the controller
-      step_ = 0;
+      // step_ = 0;
+
       ROS_INFO("fine starting");
   }
 
@@ -269,7 +273,7 @@ namespace desperate_housewife
         // resetting N and tau(t=0) for the highest priority task
         N_trans_ = I_;  
         SetToZero(tau_);
-        ROS_INFO("dentro update");
+        //ROS_INFO("dentro update");
 
         // computing Inertia, Coriolis and Gravity matrices
         id_solver_->JntToMass(Vito_desperate.joint_msr_states_.q, Vito_desperate.M_);
@@ -287,7 +291,7 @@ namespace desperate_housewife
         // using the first step to compute jacobian of the tasks
         if (first_step_)
         {
-          Vito_desperate.J_last_ =Vito_desperate.J_;
+          Vito_desperate.J_last_ = Vito_desperate.J_;
           first_step_ = 0;
           return;
         }
@@ -296,42 +300,46 @@ namespace desperate_housewife
         Vito_desperate.J_dot_.data = (Vito_desperate.J_.data - Vito_desperate.J_last_.data)/period.toSec();
 
          // computing forward kinematics
-        for(int i=0; i < Vito_desperate.joint_handles_.size(); i++) 
+           //just for know the tf
+        for(int i=0; i <= Vito_desperate.kdl_chain_.getNrOfSegments(); i++) 
         {
-          KDL::Frame x_temp;
-          fk_pos_solver_->JntToCart(Vito_desperate.joint_msr_states_.q, x_temp, -1); //pos_joint
-          x_now.push_back(x_temp);
-          
+            KDL::Frame x_temp;
+            fk_pos_solver_->JntToCart(Vito_desperate.joint_msr_states_.q, x_temp, i); //pos_joint
+            x_now.push_back(x_temp);
         }
-      
+        //std::cout<<"x_now.size(): "<<x_now.size()<<std::endl;
+
+              
         // ROS_INFO("prima del for in update");
-        int index_rep=0;
+        int index_rep = 0;
         
         for(int p =0; p < x_des_.size(); p ++)
         {
             
-          if (Equal(x_now[6].p, x_des_[p].p,0.05))  //x_now[] is the softhand position 
+          if (Equal(x_now[14].p, x_des_[p].p,0.05))  //x_now[] is the softhand position 
           {
             ROS_INFO("On target");
             cmd_flag_ = 0;
             return;         
           }
-          ROS_INFO("dentro for di update");
+          //ROS_INFO("dentro for di update");
           Force_attractive_left.push_back( Eigen::VectorXd::Zero(6));
-          SetAttractiveField(x_des_[p], Vito_desperate.joint_msr_states_.qdot , x_now[6], Force_attractive_left[p],  Vito_desperate.J_);
+          SetAttractiveField(x_des_[p], Vito_desperate.joint_msr_states_.qdot , x_now[14], Force_attractive_left[p],  Vito_desperate.J_);
+   
+          if (p == 0) 
+          {
+           
+            for(int k = p+1; k <= x_des_.size()-1; k++)
+            {
+             
+              Force_repulsion_left.push_back( Eigen::VectorXd::Zero(6));
+              SetRepulsiveFiled(x_des_[k].p, x_now, Force_repulsion_left[index_rep]);
+              index_rep ++; 
+            }
+          }
+        }
+      }
 
-       // }
-    
-            
-    //     if (p == 0) 
-    //     {
-    //       // continue;
-    //       for(int k = p+1; k < x_des_.size()-1; k++)
-    //       {
-    //         SetRepulsiveFiled(x_des_[k].p, Force_repulsion_left[index_rep]);
-    //         index_rep ++;  
-    //       }
-    //     }
         
     //     else
     //     {
@@ -377,7 +385,7 @@ namespace desperate_housewife
     //   omega_ = (Vito_desperate.J_.data * M_inv_ * Vito_desperate.J_.data.transpose()).inverse();
     //   J_ext_t.data = omega_ * Vito_desperate.J_.data * M_inv_;
 
-    //   lambda_ = (J_ext_t.data * Vito_desperate.C_.data - Vito_desperate.M_.data * Vito_desperate.J_dot_.data * Vito_desperate.joint_msr_states_.qdot.data );
+    //   lambda_ = (J_ext_t.data * Vito_desperate.C_.data - omega_ * Vito_desperate.J_dot_.data * Vito_desperate.joint_msr_states_.qdot.data );
     //   P_ = J_ext_t.data * Vito_desperate.G_.data;
 
 
@@ -412,8 +420,8 @@ namespace desperate_housewife
     //       // Vito_desperate.joint_handles_[i].setCommand(PIDs_[i].computeCommand(Vito_desperate.joint_des_states_.q(i) - Vito_desperate.joint_msr_states_.q(i),period));
     //   }
 
-
-     ros::spinOnce();
+      x_now.clear();
+      ros::spinOnce();
 
   }
 
@@ -429,39 +437,16 @@ namespace desperate_housewife
 
 
 
-  
-//   double PotentialFieldControl::task_objective_function(KDL::JntArray q)
-//   {
-//     double sum = 0;
-//     double temp;
-//     int N = q.data.size();
-
-//     for (int i = 0; i < N; i++)
-//     {
-//       temp = ((q(i) - joint_limits_.center(i))/(joint_limits_.max(i) - joint_limits_.min(i)));
-//       sum += temp*temp;
-//     }
-
-//     sum /= 2*N;
-
-//     return -sum;
-//   // }
-//   }
-
-
   void PotentialFieldControl::SetAttractiveField(KDL::Frame &pos_Hand_xd, KDL::JntArray &Vel, KDL::Frame &Pos_hand_x, Eigen::VectorXd &Force_attractive,  KDL::Jacobian &link_jac_)
   {   
-    ROS_INFO("dentro SetAttractiveField");
+    //ROS_INFO("dentro SetAttractiveField");
     // Force_attractive.resize(6);
     double roll_xd=0., pitch_xd=0., yaw_xd=0.;
     double roll_x=0., pitch_x=0., yaw_x=0.;
     
     pos_Hand_xd.M.GetRPY(roll_xd, pitch_xd, yaw_xd);
-    Pos_hand_x.M.GetRPY(roll_x, pitch_x, yaw_x);
-    //KDL::Vector vel_servo_control; //xd_point
-    Eigen::VectorXd vel_servo_control(6);
-    // // KDL::Vector local_dist_v;
-    // // KDL::Rotation local_dist_r;
+    Pos_hand_x.M.GetRPY(roll_x, pitch_x, yaw_x);  
+    
     //ROS_WARN("x %g  y %g z %g",pos_Hand_xd.p.x(),pos_Hand_xd.p.y(),pos_Hand_xd.p.z());
     KDL::Vector distance( pos_Hand_xd.p.x() - Pos_hand_x.p.x(),
                          pos_Hand_xd.p.y() - Pos_hand_x.p.y(),
@@ -476,7 +461,6 @@ namespace desperate_housewife
     double t_y = (pitch_xd - pitch_x);
     double t_z = (yaw_xd - yaw_x);
   
-
     Eigen::VectorXd temp_dist_eigen(6);
     temp_dist_eigen(0) = distance.x();
     temp_dist_eigen(1) = distance.y();
@@ -485,7 +469,7 @@ namespace desperate_housewife
     temp_dist_eigen(4) = t_y;
     temp_dist_eigen(5) = t_z ;
 
-    // ROS_INFO("CALCOLATO TEMP");
+    Eigen::VectorXd vel_servo_control(6);
 
     vel_servo_control = P_goal/dissipative * temp_dist_eigen.transpose();
     //ROS_INFO("calcolato vel_Servo"); 
@@ -494,99 +478,120 @@ namespace desperate_housewife
     
     x_dot_ = Vito_desperate.J_.data* Vel.data; //velocity 6*1
 
-    // double v_lim = 1;
-    // //v_lim = SetLimitation(vel_servo_control);
-
-    // // Eigen::VectorXd velocity;
-    // //KDL::Vector velocity;
-    // // velocity.data = (link_jac_.data * Vel.data);  //x_point = jac*q_point 6*1
-    Eigen::VectorXd differentVelocity(6);
-    differentVelocity = dissipative*(x_dot_.col(0) - v_lim * differentHandPos.col(0)).transpose();
-    ROS_INFO("passato a vettore");
+    // Eigen::VectorXd differentVelocity(6);
+    // differentVelocity = dissipative*(x_dot_.col(0) - v_lim * differentHandPos.col(0)).transpose();
     // ROS_INFO("differentVelocity.size() = %lu", differentVelocity.size() );
 
-// ROS_INFO("Force_attractive.size() = %lu", differentVelocity.size() );
-    Force_attractive = dissipative*(x_dot_.col(0) - v_lim * differentHandPos.col(0)).transpose();
-    // Force_attractive(0) = (- dissipative *differentVelocity(0)); //in word frame
-    // Force_attractive(1) = (- dissipative *differentVelocity(1));
-    // Force_attractive(2) = (- dissipative *differentVelocity(2));
-    // Force_attractive(3) = (- dissipative *differentVelocity(3));
-    // Force_attractive(4) = (- dissipative *differentVelocity(4));
-    // Force_attractive(5) = (- dissipative *differentVelocity(5));
-    
+    // ROS_INFO("Force_attractive.size() = %lu", differentVelocity.size() );
+    Force_attractive = dissipative*(x_dot_.col(0) - v_lim * differentHandPos.col(0)).transpose();   
 
-    ROS_INFO("fine set attractive");
-
-    
+    // ROS_INFO("fine set attractive");
   }
 
-
-
-
-//   void PotentialFieldControl::SetRepulsiveFiled(KDL::Vector &Pos, Eigen::VectorXd &Force_repulsion )
-//   {
-//     std::vector<KDL::Vector> distance_local_obj;
-//     //std::vector<Eigen::VectorXd> local_arm; 
-
-//     for(int t = 0; t <= 7; t++ )
-//     {
-      
-//       distance_local_obj.push_back(Pos - x_now[t].p); 
-      
-//     }
-
-//     std::vector<double>  min_d;
-//     std::vector<int> index_infl;
-
-//     for (int i=0; i <= distance_local_obj.size(); i++)
-//     {
-//       double local_distance;
-//       local_distance  = distance_local_obj[i].Norm();
-      
-//       if( local_distance <= influence )
-//       {
-//         min_d.push_back(local_distance);
-//         index_infl.push_back(i); //for tracking wich jacobian used
-//       }
-
-//       else
-//       {
-//         continue;
-//       }
-//     }
-
-//     double min_distance = min_d[0];
-//     Eigen::Vector3d distance_der_partial;
-//     Eigen::Vector3d vec_Temp;
-//     int index_dist;
+   void PotentialFieldControl::SetRepulsiveFiled(KDL::Vector &Pos, std::vector<KDL::Frame> &Pos_now, Eigen::VectorXd &Force_repulsion )
+  {
+    ROS_INFO("dentro_set_repulsive");
+    // for the obstacles avoidance we consired only segments 6,8,14 (14 is the softhand)
+    std::vector<KDL::Vector> distance_local_obj;
+    std::cout<<"Pos: "<<Pos<<std::endl;
+    std::cout<<"Pos 6: "<< Pos_now[6]<<std::endl;
+    std::cout<<"Pos 8: "<< Pos_now[8]<<std::endl;
+    std::cout<<"Pos 14: "<< Pos_now[14]<<std::endl; 
     
-//     for (int i=0; i< min_d.size()-1;i++)
-//     {
-//       if(min_distance > min_d[i+1])
-//       {
-//         min_distance = min_d[i+1];
-//         index_dist = i+1;
-//           }
-
-//           else
-//       {
-//         continue;
-//       }
-//     }
-
-//     int D;
-//     D = index_infl[index_dist];
-
-//       distance_der_partial[0] =  distance_local_obj[D](0) / sqrt(pow(distance_local_obj[D](0),2)+ pow(distance_local_obj[D](1),2) + pow(distance_local_obj[D](2),2));
-//       distance_der_partial[1] =  distance_local_obj[D](1) / sqrt(pow(distance_local_obj[D](0),2)+ pow(distance_local_obj[D](1),2) + pow(distance_local_obj[D](2),2));
-//       distance_der_partial[2] =  distance_local_obj[D](2) / sqrt(pow(distance_local_obj[D](0),2)+ pow(distance_local_obj[D](1),2) + pow(distance_local_obj[D](2),2));
-        
-//     vec_Temp = (P_obj/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
-        
-//     Force_repulsion << vec_Temp, 0,0,0;
+      KDL::Vector distance_H5( Pos.x() - Pos_now[6].p.x(),
+                         Pos.y() - Pos_now[6].p.y(),
+                         Pos.z() - Pos_now[6].p.z() );
+      distance_local_obj.push_back(distance_H5); 
+      std::cout<<"distance_H5"<<distance_H5<<std::endl;
       
+      KDL::Vector distance_H7( Pos.x() - Pos_now[8].p.x(),
+                         Pos.y() - Pos_now[8].p.y(),
+                         Pos.z() - Pos_now[8].p.z() );
+      distance_local_obj.push_back(distance_H7); 
+       std::cout<<"distance_H7"<<distance_H7<<std::endl;
+      
+      
+      KDL::Vector distance_Hh( Pos.x() - Pos_now[14].p.x(),
+                         Pos.y() - Pos_now[14].p.y(),
+                         Pos.z() - Pos_now[14].p.z() );
+      distance_local_obj.push_back(distance_Hh); 
+      std::cout<<"distance_Hh"<<distance_Hh<<std::endl;
 
-//   }
+      // ROS_INFO("riempito il vettore");
+      // ROS_INFO("distance_local_obj.size() %d", distance_local_obj.size());
+
+    std::vector<double>  min_d;
+    std::vector<int> index_infl;
+
+    for (int i=0; i < distance_local_obj.size(); i++)
+    {
+      double local_distance;
+      local_distance  = distance_local_obj[i].Norm();
+      ROS_INFO("calcolato normali");
+      ROS_INFO("normali: %g", local_distance);
+      
+      if( local_distance <= influence )
+      {
+        min_d.push_back(local_distance);
+        index_infl.push_back(i); //for tracking wich jacobian used
+      }
+
+      else
+      {
+        ROS_INFO("obstacle is far from softhand");
+        continue;
+      }
+    }
+    //ROS_INFO("finito for e la dimensione è di: %d", min_d.size());
+
+    if(min_d.size() != 0)
+    {
+      double min_distance = min_d[0];
+      //ROS_INFO("fatto init min_distance");
+      Eigen::Vector3d distance_der_partial(0,0,0);
+      Eigen::Vector3d vec_Temp(0,0,0);
+      int index_dist = 0;
+      //ROS_INFO("finita inizializzazione");
+      
+      for (int i=0; i< min_d.size()-1;i++)
+      {
+        if(min_distance > min_d[i+1])
+        {
+          min_distance = min_d[i+1];
+          index_dist = i+1;
+        }
+
+        else
+        {
+          continue;
+        }
+      }
+
+      int D = index_infl[index_dist];
+
+        distance_der_partial[0] =  distance_local_obj[D](0) / sqrt(pow(distance_local_obj[D](0),2)+ pow(distance_local_obj[D](1),2) + pow(distance_local_obj[D](2),2));
+        distance_der_partial[1] =  distance_local_obj[D](1) / sqrt(pow(distance_local_obj[D](0),2)+ pow(distance_local_obj[D](1),2) + pow(distance_local_obj[D](2),2));
+        distance_der_partial[2] =  distance_local_obj[D](2) / sqrt(pow(distance_local_obj[D](0),2)+ pow(distance_local_obj[D](1),2) + pow(distance_local_obj[D](2),2));
+          
+      vec_Temp = (P_obj/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
+          
+      
+      Force_repulsion[0] = vec_Temp[0];
+      Force_repulsion[1] = vec_Temp[1];
+      Force_repulsion[2] = vec_Temp[2];
+      Force_repulsion[3] =  0;
+      Force_repulsion[4] =  0;
+      Force_repulsion[5] =  0;
+    }
+    
+    else
+    {
+     Force_repulsion = Eigen::VectorXd::Zero(6); 
+    }
+    ROS_INFO("fine_set_repulsive");
+       
+
+  }
 
 
 

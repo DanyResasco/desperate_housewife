@@ -25,7 +25,7 @@ left_arm:
   PotentialFieldControl:
     type: desperate_housewife/PotentialFieldControl
     root_name: left_arm_base_link
-    tip_name: left_arm_7_link
+    tip_name: left_hand_palm_link
     stiffness_gains: 300
     damping_gains: .7
 

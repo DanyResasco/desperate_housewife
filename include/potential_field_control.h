@@ -82,12 +82,6 @@ namespace desperate_housewife
 			ros::NodeHandle nh_;
 			tf::TransformListener listener_tf;
 			ros::Subscriber sub_;
-			// Node Handles
-	  		// ros::NodeHandle model_nh_; // namespaces to robot name
-	  		// Strings
-			// std::string robot_namespace_;
-	  // 		std::string robot_description_;
-	  // 		std::vector<std::string> link_names_;
 	  	
 	  		std::vector<int> whichArm;
 			bool check_urdf;
@@ -97,7 +91,7 @@ namespace desperate_housewife
 			double P_hand = 0.5;
 			double P_obj = -1;
 			double P_goal = 1;	
-			double influence ;	// limit distance of the potential filed influence
+			double influence = 0.25;	// limit distance of the potential filed influence
 			Eigen::VectorXd Force;
 			double dissipative;
 			std::vector<double> distance;
@@ -183,11 +177,11 @@ namespace desperate_housewife
 			void MPCallback(const desperate_housewife::hand::ConstPtr& hand_msg);		
 			void SetPotentialField_robot(Eigen::VectorXd &Force_repulsion, int p);
 			void SetAttractiveField(KDL::Frame &pos_Hand_xd, KDL::JntArray &Vel, KDL::Frame &Pos_hand_x, Eigen::VectorXd &Force_attractive,  KDL::Jacobian &link_jac_);
-			void SetRepulsiveFiled(KDL::Vector &Pos, Eigen::VectorXd &Force_repulsion );
+			void SetRepulsiveFiled(KDL::Vector &Pos, std::vector<KDL::Frame> &Pos_now, Eigen::VectorXd &Force_repulsion );
 			bool init(hardware_interface::EffortJointInterface *robot, ros::NodeHandle &n);
 			void starting(const ros::Time& time);
 			void update(const ros::Time& time, const ros::Duration& period);
-			double task_objective_function(KDL::JntArray q);
+
 
 			PotentialFieldControl();
 			//{
@@ -219,6 +213,7 @@ namespace desperate_housewife
 
 	// Eigen::Matrix4d FromTFtoEigen(tf::StampedTransform &object);
 	KDL::Frame FromTFtoKDL(tf::StampedTransform &st_transf);
+
 }
 
 
