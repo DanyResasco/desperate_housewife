@@ -5,7 +5,7 @@ using Eigen::VectorXf ;
 
 void phobic_scene::pointcloudCallback(sensor_msgs::PointCloud2 msg)
 {
-pcl::PointCloud<pcl::PointXYZRGBA>::Ptr scene (new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr scene (new pcl::PointCloud<pcl::PointXYZRGBA>);
   pcl::fromROSMsg (msg, *scene);
 
   erase_environment(scene);
@@ -55,22 +55,22 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr scene (new pcl::PointCloud<pcl::PointXYZ
 
 
 
-void phobic_scene::erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  original_pc)
+void phobic_scene::erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  OriginalPointCloud)
 {
 
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>);
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_temp (new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr FilteredPointCloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr TemporalPointCloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
   pcl::PassThrough<pcl::PointXYZRGBA> Filter_env;
 
-  Filter_env.setInputCloud (original_pc);
+  Filter_env.setInputCloud (OriginalPointCloud);
   Filter_env.setFilterFieldName ("x");
   Filter_env.setFilterLimits (-0.3, 0.3);
-  Filter_env.filter (*cloud_filtered);
-  Filter_env.setInputCloud (cloud_filtered);
+  Filter_env.filter (*FilteredPointCloud);
+  Filter_env.setInputCloud (FilteredPointCloud);
   Filter_env.setFilterFieldName ("y");
   Filter_env.setFilterLimits (-1.0, 1.0);
-  Filter_env.filter (*cloud_temp);
-  Filter_env.setInputCloud (cloud_temp);
+  Filter_env.filter (*TemporalPointCloud);
+  Filter_env.setInputCloud (TemporalPointCloud);
   Filter_env.setFilterFieldName ("z");
   Filter_env.setFilterLimits (0.2, 1.0);
   Filter_env.filter (*cloud);

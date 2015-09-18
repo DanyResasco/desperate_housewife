@@ -113,7 +113,7 @@ public:
   void pointcloudCallback(sensor_msgs::PointCloud2 msg);
   void fitting ();
   void send_msg( int cyl_id = 0 );
-  void erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  pc);
+  void erase_environment(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr  OriginalPointCloud);
   void getcluster();
   void erase_table();
   void makeInfoCyl(std::vector<float> coeff, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pc_cyl, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_scene);

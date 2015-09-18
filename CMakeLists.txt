@@ -65,12 +65,17 @@ catkin_package(
   forward_command_controller
   kdl_parser
   message_runtime
+  tf_conversions
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME})
 
 add_library(${PROJECT_NAME} src/potential_field_control.cpp)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+
+add_executable(scene_filtering src/scene_filtering.cpp)
+add_dependencies(scene_filtering ${PROJECT_NAME}_gencpp)
+target_link_libraries(scene_filtering ${catkin_LIBRARIES}  ${PCL_LIBRARIES} )
 
 add_executable(phobic_camera src/cilinder_fitting.cpp src/phobic_camera.cpp)
 add_dependencies(phobic_camera ${PROJECT_NAME}_gencpp)

@@ -13,10 +13,6 @@ int main(int argc, char** argv)
   ros::param::get("~spin_rate",spin_rate);
   ROS_INFO( "Spin Rate %lf", spin_rate);
 
-  std::string camera_topic;
-  ros::param::get("~camera_topic",camera_topic);
-  ROS_INFO( "camera_topic %s", camera_topic.c_str());
-
   ros::param::get("~cylinders_topic", phobic_scene_local.cylinders_topic);
   ROS_INFO( "Cylinder Topic %s", phobic_scene_local.cylinders_topic.c_str());
 
@@ -26,7 +22,7 @@ int main(int argc, char** argv)
   ros::param::get("~camera_frame", phobic_scene_local.camera_frame);
   ROS_INFO( "Camera Frame %s", phobic_scene_local.camera_frame.c_str());
 
-  reader = nodeH.subscribe(nodeH.resolveName(camera_topic), 1, &phobic_scene::pointcloudCallback, &phobic_scene_local);
+  reader = nodeH.subscribe(nodeH.resolveName(phobic_scene_local.camera_topic), 1, &phobic_scene::pointcloudCallback, &phobic_scene_local);
   
   ros::Rate loop_rate( spin_rate ); // 5Hz
 
