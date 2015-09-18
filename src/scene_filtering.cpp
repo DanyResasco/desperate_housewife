@@ -20,10 +20,6 @@
 //Eigen
 #include <Eigen/Dense>
 //tf
-// #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
-// #include <tf2_ros/transform_listener.h>
-// #include <geometry_msgs/TransformStamped.h>
-// #include <geometry_msgs/Twist.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
@@ -40,10 +36,7 @@ class sceneFilter
     //Node handle
     ros::NodeHandle nh;
   private:
-
-    //Service Server
-    // ros::ServiceServer srv_acquire_;
-    
+   
     //Message Subscriber
     ros::Subscriber sub_stream_;
     
@@ -56,9 +49,9 @@ class sceneFilter
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr scene_stream_;
 
     //parameters
-    bool filter_, downsample_, keep_organized_, change_frame_, erase_plane_;
+    bool filter_, downsample_, keep_organized_, change_frame_, erase_plane_, filer_applied;
     double xmin,xmax,ymin,ymax,zmin,zmax,leaf_;
-    std::string new_frame_, camera_frame_;
+    std::string new_frame_, camera_frame_, new_scene_topic_;
 
     // geometry_msgs::TransformStamped tf_transform_;
     Eigen::Affine3d transform_;
@@ -78,7 +71,8 @@ sceneFilter::sceneFilter()
   std::string topic = nh.resolveName("/camera/depth_registered/points");
   sub_stream_ = nh.subscribe(topic, 1, &sceneFilter::new_cloud_in_stream, this);
 
-  pub_stream_ = nh.advertise<pcl::PointCloud<pcl::PointXYZRGBA> > ("/scene_filter/scene",1);
+  nh.param<std::string>("/scene_filter/new_scene_topic", new_scene_topic_, "/scene_filter/scene_filtered");
+  pub_stream_ = nh.advertise<pcl::PointCloud<pcl::PointXYZRGBA> > (new_scene_topic_.c_str(),1);
 
   //load parameters
   nh.param<bool>("/scene_filter/filter", filter_, "false");
@@ -96,6 +90,7 @@ sceneFilter::sceneFilter()
   nh.param<std::string>("/scene_filter/camera_frame", camera_frame_, "camera_rgb_optical_frame");
 
   transform_ = Eigen::Affine3d::Identity();
+  filer_applied = false;
 
   if (change_frame_)
   {
@@ -114,6 +109,7 @@ sceneFilter::sceneFilter()
       ROS_INFO("Transform from %s to %s does not exists, Identity will be used", new_frame_.c_str(), camera_frame_.c_str());
     }
     tf::transformTFToEigen(transformToBaseLink, transform_);
+    filer_applied = true;
   }
 
 }
@@ -160,6 +156,7 @@ void sceneFilter::new_cloud_in_stream(const sensor_msgs::PointCloud2::ConstPtr& 
     pass.setFilterLimits (xmin, xmax);
     pass.filter (*scene_stream_);
     pcl::copyPointCloud(*scene_stream_ , *tmp);
+    filer_applied = true;
   }
 
   if (erase_plane_)
@@ -190,11 +187,10 @@ void sceneFilter::new_cloud_in_stream(const sensor_msgs::PointCloud2::ConstPtr& 
     extract.setIndices (inliers);
     extract.setNegative (true);
     extract.filter (*scene_stream_);
-    
+
     pcl::copyPointCloud(*scene_stream_ , *tmp);
+    filer_applied = true;
   }
-
-
 
   //check if we need to downsample stream
   nh.getParam("/scene_filter/downsample", downsample_);
@@ -205,9 +201,14 @@ void sceneFilter::new_cloud_in_stream(const sensor_msgs::PointCloud2::ConstPtr& 
     vg.setInputCloud (tmp);
     vg.setLeafSize(leaf_, leaf_, leaf_);
     vg.filter (*scene_stream_);
+    filer_applied = true;
   }
 
-  pub_stream_.publish( *tmp ); //republish the modified scene
+  if (~filer_applied)
+  {
+    pcl::copyPointCloud(*tmp, *scene_stream_);
+  }
+  pub_stream_.publish( *scene_stream_ ); //republish the modified scene
 }
 
 int main(int argc, char **argv)
@@ -219,6 +220,7 @@ int main(int argc, char **argv)
   double spin_rate = 10;
   ros::param::get("~spin_rate",spin_rate);
   ROS_DEBUG( "Spin Rate %lf", spin_rate);
+
   ros::Rate rate(spin_rate); 
 
   while (node.nh.ok())
