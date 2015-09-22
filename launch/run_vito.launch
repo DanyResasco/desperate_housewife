@@ -196,9 +196,18 @@
         <node name="grasp_state_publisher" pkg="grasp_state_publisher" type="grasp_state_publisher" respawn="true" output="screen" />
     </group>
 
-    <include file="$(find desperate_housewife)/launch/desperate_asus_head_vito_broadcaster.launch"/>
+    <group>
+        <include file="$(find desperate_housewife)/launch/desperate_demo_asus_head_vito_broadcaster.launch">
+            <arg name="start_openni2" default="false"/>
+        </include>
+    </group>
 
-    <include file="$(find desperate_housewife)/launch/desperate_cylinder_fitting.launch"/>
+    <!-- <include file="$(find desperate_housewife)/launch/desperate_cylinder_fitting.launch"/> -->
+    
+    <include file="$(find desperate_housewife)/launch/desperate_demo_scene_filter.launch"/>
 
+    <include file="$(find desperate_housewife)/launch/desperate_demo_fit_geometries.launch"/>
+
+    <node name="desperate_rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find desperate_housewife)/launch/rviz_config.rviz" output="screen"/>
 
 </launch>

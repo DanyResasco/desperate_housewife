@@ -1,2 +1,0 @@
-uint16[] whichArm
-geometry_msgs/Pose[] hand_Pose

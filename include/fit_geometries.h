@@ -1,5 +1,5 @@
-#ifndef PHOBIC_CAMERA_H
-#define PHOBIC_CAMERA_H
+#ifndef FIT_GEOMETRIES_H
+#define FIT_GEOMETRIES_H
 
 //ros
 #include <ros/ros.h>
@@ -69,7 +69,7 @@
 
 
 
-class phobic_scene
+class fit_geometries
 {
 
 private:
@@ -126,7 +126,7 @@ public:
   std::string camera_topic;
   std::string camera_frame;
 
-  phobic_scene(ros::NodeHandle NodeH, bool test): nodeH(NodeH)
+  fit_geometries(ros::NodeHandle NodeH, bool test): nodeH(NodeH)
   {
 
     pcl::PointCloud<pcl::PointXYZRGBA> cloud2;
@@ -141,7 +141,7 @@ public:
 
   }
 
-  ~phobic_scene(){}
+  ~fit_geometries(){}
 
 
 };

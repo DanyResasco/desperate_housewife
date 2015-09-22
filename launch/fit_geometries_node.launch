@@ -1,0 +1,9 @@
+<launch>
+
+  <arg name="spin_rate" default="50" />
+  
+	<node name="fit_geometries_node" pkg="desperate_housewife" type="fit_geometries" output="screen" >
+    <param name="spin_rate" value="$(arg spin_rate)" />
+  </node>
+
+</launch>

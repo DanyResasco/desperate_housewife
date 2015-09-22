@@ -2,8 +2,6 @@
 
 #include <chrono>
 
-std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "Phobic_HandPose");
@@ -31,7 +29,6 @@ int main(int argc, char** argv)
   ros::Rate loop_rate( spin_rate ); // 1Hz
   while (ros::ok())
     {
-
       loop_rate.sleep();
       ros::spinOnce();
     }

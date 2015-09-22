@@ -64,8 +64,7 @@ class sceneFilter
 sceneFilter::sceneFilter()
 {
   nh = ros::NodeHandle("scene_filter_node");
-  pcl::PointCloud<pcl::PointXYZRGBA> a;
-  scene_stream_ = a.makeShared();
+  scene_stream_ = pcl::PointCloud<pcl::PointXYZRGBA>::Ptr (new pcl::PointCloud<pcl::PointXYZRGBA>);
 
   //subscribe to depth_registered pointclouds topic
   std::string topic = nh.resolveName("/camera/depth_registered/points");
@@ -86,7 +85,7 @@ sceneFilter::sceneFilter()
   nh.param<double>("/scene_filter/ymax", ymax, 100);
   nh.param<double>("/scene_filter/zmin", zmin, -100);
   nh.param<double>("/scene_filter/zmax", zmax, 100);
-  nh.param<double>("/scene_filter/leaf_s", leaf_, 0.005);
+  nh.param<double>("/scene_filter/leaf_s", leaf_, 0.01);
   nh.param<std::string>("/scene_filter/camera_frame", camera_frame_, "camera_rgb_optical_frame");
 
   transform_ = Eigen::Affine3d::Identity();
@@ -196,6 +195,7 @@ void sceneFilter::new_cloud_in_stream(const sensor_msgs::PointCloud2::ConstPtr& 
   nh.getParam("/scene_filter/downsample", downsample_);
   if (downsample_)
   {
+
     nh.getParam("/scene_filter/leaf_s", leaf_);
     pcl::VoxelGrid<pcl::PointXYZRGBA> vg;
     vg.setInputCloud (tmp);
@@ -204,11 +204,14 @@ void sceneFilter::new_cloud_in_stream(const sensor_msgs::PointCloud2::ConstPtr& 
     filer_applied = true;
   }
 
-  if (~filer_applied)
+  if ( filer_applied == false)
   {
+    ROS_INFO("NO  filer_applied");
     pcl::copyPointCloud(*tmp, *scene_stream_);
   }
+
   pub_stream_.publish( *scene_stream_ ); //republish the modified scene
+
 }
 
 int main(int argc, char **argv)

@@ -43,8 +43,8 @@ include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
 add_message_files(
   FILES
-  cyl_info.msg
-  hand.msg
+  fittedGeometriesSingle.msg
+  fittedGeometries.msg
 )
 
 generate_messages(
@@ -69,21 +69,32 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME})
 
-add_library(${PROJECT_NAME} src/potential_field_control.cpp)
-add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
 add_executable(scene_filtering src/scene_filtering.cpp)
 add_dependencies(scene_filtering ${PROJECT_NAME}_gencpp)
 target_link_libraries(scene_filtering ${catkin_LIBRARIES}  ${PCL_LIBRARIES} )
 
-add_executable(phobic_camera src/cilinder_fitting.cpp src/phobic_camera.cpp)
-add_dependencies(phobic_camera ${PROJECT_NAME}_gencpp)
-target_link_libraries(phobic_camera ${catkin_LIBRARIES}  ${PCL_LIBRARIES} )
+add_executable(fit_geometries src/fit_geometries.cpp)
+add_dependencies(fit_geometries ${PROJECT_NAME}_gencpp)
+target_link_libraries(fit_geometries ${catkin_LIBRARIES}  ${PCL_LIBRARIES} )
 
-add_executable(phobic_hand_pose src/phobic_hand_pose.cpp)
-add_dependencies(phobic_hand_pose ${PROJECT_NAME}_gencpp)
-target_link_libraries(phobic_hand_pose   ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+add_executable(hand_pose_generator src/hand_pose_generator.cpp)
+add_dependencies(hand_pose_generator ${PROJECT_NAME}_gencpp)
+target_link_libraries(hand_pose_generator ${catkin_LIBRARIES}  ${PCL_LIBRARIES} )
+
+
+
+
+add_library(${PROJECT_NAME} src/potential_field_control.cpp)
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+
+add_executable(test test/test.cpp)
+target_link_libraries(test ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+
+# add_executable(phobic_camera src/main.cpp src/phobic_camera_old.cpp)
+# add_dependencies(phobic_camera ${PROJECT_NAME}_gencpp)
+# target_link_libraries(phobic_camera   ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})

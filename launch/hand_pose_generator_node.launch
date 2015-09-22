@@ -1,0 +1,9 @@
+<launch>
+
+  <arg name="spin_rate" default="50" />
+
+	<node name="hand_pose_generator_node" pkg="desperate_housewife" type="hand_pose_generator" output="screen" >
+    <param name="spin_rate" value="$(arg spin_rate)" />
+  </node>
+
+</launch>

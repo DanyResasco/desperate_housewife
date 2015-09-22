@@ -1,13 +1,13 @@
 scene_filter/filter: true
-scene_filter/xmin: -1.5
+scene_filter/xmin: -0.7
 scene_filter/xmax: 0.0
-scene_filter/ymin: -0.7
+scene_filter/ymin: -0.2
 scene_filter/ymax: 0.7
 scene_filter/zmin: 0.0
 scene_filter/zmax: 1.0
-scene_filter/downsample: false
+scene_filter/erase_plane: true
+scene_filter/downsample: true
 scene_filter/leaf_s: 0.01
 scene_filter/keep_organized: false
 scene_filter/change_frame: true
 scene_filter/new_frame: vito_anchor
-scene_filter/erase_plane: true
