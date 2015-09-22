@@ -14,13 +14,15 @@ class HandPoseGenerator{
 
 private:
 
-  std::string geometries_topic_;
+  std::string geometries_topic_, desired_hand_pose_topic_, obstalces_topic_;
   std::list<desperate_housewife::fittedGeometriesSingle> objects_list;
 
 public:
 
   ros::Subscriber stream_subscriber_;
   ros::NodeHandle nh;
+  ros::Publiser desired_hand_pose_publisher_;
+  ros::Publiser obstacles_publisher_;
 
   HandPoseGenerator();
   ~HandPoseGenerator(){};
@@ -35,6 +37,9 @@ HandPoseGenerator::HandPoseGenerator()
   nh.param<std::string>("/BasicGeometriesNode/geometries_topic", geometries_topic_, "/BasicGeometriesNode/geometries");
   stream_subscriber_ = nh.subscribe(geometries_topic_, 1, &HandPoseGenerator::HandPoseGeneratorCallback, this);
 
+  nh.param<std::string>("/PotentialFieldControl/desired_hand_pose", desired_hand_pose_topic_, "/PotentialFieldControl/desired_hand_pose");
+  nh.param<geometry_msgs::Pose>("")
+
 }
 
 void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fittedGeometries::ConstPtr& msg)
@@ -47,6 +52,11 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
   }
   else
   {
+    if ( msg->geometries.size() == 1)
+    {
+
+      desired_hand_pose_publisher.publish(  );
+    }
     for (unsigned int i=0; i<msg->geometries.size(); i++)
     {
       objects_list.push_back(msg->geometries[i]);
