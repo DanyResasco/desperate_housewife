@@ -45,6 +45,7 @@ add_message_files(
   FILES
   fittedGeometriesSingle.msg
   fittedGeometries.msg
+  PointArray.msg
 )
 
 generate_messages(
