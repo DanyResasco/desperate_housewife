@@ -78,11 +78,11 @@ add_executable(scene_filtering src/scene_filtering.cpp)
 add_dependencies(scene_filtering ${PROJECT_NAME}_gencpp)
 target_link_libraries(scene_filtering ${catkin_LIBRARIES}  ${PCL_LIBRARIES} )
 
-add_executable(fit_geometries src/fit_geometries.cpp)
+add_executable(fit_geometries src/fit_geometries_node.cpp src/fit_geometries.cpp)
 add_dependencies(fit_geometries ${PROJECT_NAME}_gencpp)
 target_link_libraries(fit_geometries ${catkin_LIBRARIES}  ${PCL_LIBRARIES} )
 
-add_executable(hand_pose_generator src/hand_pose_generator.cpp)
+add_executable(hand_pose_generator src/hand_pose_generator_node.cpp src/hand_pose_generator.cpp)
 add_dependencies(hand_pose_generator ${PROJECT_NAME}_gencpp)
 target_link_libraries(hand_pose_generator ${catkin_LIBRARIES}  ${PCL_LIBRARIES} )
 
