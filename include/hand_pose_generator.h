@@ -20,7 +20,7 @@ class HandPoseGenerator{
 private:
 
   std::string geometries_topic_, desired_hand_pose_topic_, obstalces_topic_;
-  std::string ref_frame_, desired_hand_frame_;
+  std::string base_frame_, desired_hand_frame_, right_hand_frame_, left_hand_frame_;
   std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec;
 
 public:
@@ -29,6 +29,7 @@ public:
   ros::NodeHandle nh;
   ros::Publisher desired_hand_pose_publisher_, obstacles_publisher_;
   tf::TransformBroadcaster tf_desired_hand_pose;
+  tf::TransformListener listener_info;
 
   HandPoseGenerator();
   ~HandPoseGenerator(){};
@@ -37,6 +38,7 @@ public:
   desperate_housewife::handPoseSingle generateHandPose( desperate_housewife::fittedGeometriesSingle geometry );
   bool isGeometryGraspable ( desperate_housewife::fittedGeometriesSingle geometry );
   geometry_msgs::Pose placeHand ( desperate_housewife::fittedGeometriesSingle geometry );
+  int whichArm( geometry_msgs::Pose object_pose );
 
 };
 
