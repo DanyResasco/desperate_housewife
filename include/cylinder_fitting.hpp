@@ -244,6 +244,7 @@ namespace BasicGeometries{
     }
 
     info_.push_back( isFull );
+    /* info contains: radius, height, isLying, isfull */
 
     return true;
   }

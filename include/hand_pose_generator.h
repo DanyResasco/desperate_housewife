@@ -8,6 +8,7 @@
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
 #include <tf_conversions/tf_eigen.h>
+#include <eigen_conversions/eigen_msg.h>
 
 #include <desperate_housewife/fittedGeometriesSingle.h>
 #include <desperate_housewife/fittedGeometriesArray.h>
@@ -37,8 +38,12 @@ public:
   void HandPoseGeneratorCallback(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
   desperate_housewife::handPoseSingle generateHandPose( desperate_housewife::fittedGeometriesSingle geometry );
   bool isGeometryGraspable ( desperate_housewife::fittedGeometriesSingle geometry );
-  geometry_msgs::Pose placeHand ( desperate_housewife::fittedGeometriesSingle geometry );
+
+  ////////////////////////
+  geometry_msgs::Pose placeHand ( desperate_housewife::fittedGeometriesSingle geometry, int whichArm );
   int whichArm( geometry_msgs::Pose object_pose );
+  void fromEigenToPose (Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &Hand_pose);
+  Eigen::Matrix4d FromMsgtoEigen(geometry_msgs::Pose &object);
 
 };
 
