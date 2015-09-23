@@ -29,6 +29,10 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   double  height = geometry.info[1];
   double  isLying = geometry.info[2];
   double  isFull = geometry.info[3];
+  ROS_INFO ("radius = ", radius);
+  ROS_INFO ("height = ", height);
+  ROS_INFO ("isLying = ", isLying);
+  ROS_INFO ("isFull = ", isFull);
 
   if((isLying == 0) && (isFull == 0))
     {
@@ -46,7 +50,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       Point_desired(1) = 0;
       Point_desired(2) = height*0.5 + 0.05;	//da rivedere!!
       Point_desired(3) = 1;
-      ROS_DEBUG("cyl dritto e vuoto");
+      ROS_INFO("cyl dritto e vuoto");
 
       M_desired_local.col(2) << -z , 0;
       M_desired_local.col(3) << Point_desired;
@@ -71,7 +75,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       Point_desired(1) = 0;
       Point_desired(2) = height*0.5 + 0.05;; //da rivedere
       Point_desired(3) = 1;
-      ROS_DEBUG("cyl dritto e pieno");
+      ROS_INFO("cyl dritto e pieno");
       M_desired_local.col(2) << -z, 0;
       M_desired_local.col(3) << Point_desired;
       T_w_h = T_vito_c * M_desired_local*Rot_z ;
@@ -94,7 +98,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       Point_desired(1) = radius + 0.05;
       Point_desired(2) = 0; //da rivedere
       Point_desired(3) = 1;
-      ROS_DEBUG("cyl piegato");
+      ROS_INFO("cyl piegato");
       // M_desired_local.col(1) << -y.cross(z), 0;	//da rifare
       M_desired_local.col(2) << -y, 0;
       M_desired_local.col(3) << Point_desired;
