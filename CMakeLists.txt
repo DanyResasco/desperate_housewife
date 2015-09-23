@@ -44,8 +44,11 @@ include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 add_message_files(
   FILES
   fittedGeometriesSingle.msg
-  fittedGeometries.msg
-  PointArray.msg
+  fittedGeometriesArray.msg
+  obstacleSingle.msg
+  obstacleArray.msg
+  handPoseSingle.msg
+  handPosesArray.msg
 )
 
 generate_messages(
@@ -83,28 +86,29 @@ add_executable(hand_pose_generator src/hand_pose_generator.cpp)
 add_dependencies(hand_pose_generator ${PROJECT_NAME}_gencpp)
 target_link_libraries(hand_pose_generator ${catkin_LIBRARIES}  ${PCL_LIBRARIES} )
 
+add_executable(test_fitting src/test_fitting.cpp)
+add_dependencies(test_fitting ${PROJECT_NAME}_gencpp)
+target_link_libraries(test_fitting ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 
+# add_library(${PROJECT_NAME} src/potential_field_control.cpp)
+# add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
+# target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
-add_library(${PROJECT_NAME} src/potential_field_control.cpp)
-add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
-add_executable(test test/test.cpp)
-target_link_libraries(test ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 # add_executable(phobic_camera src/main.cpp src/phobic_camera_old.cpp)
 # add_dependencies(phobic_camera ${PROJECT_NAME}_gencpp)
 # target_link_libraries(phobic_camera   ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+# install(DIRECTORY include/${PROJECT_NAME}/
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
-install(TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  )
+# install(TARGETS ${PROJECT_NAME}
+#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#   )
 
-install(FILES desperate_housewife_controllers.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+# install(FILES desperate_housewife_controllers.xml
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

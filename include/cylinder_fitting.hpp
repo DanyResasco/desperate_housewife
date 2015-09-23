@@ -63,7 +63,7 @@ namespace BasicGeometries{
     seg.setNormalDistanceWeight (0.1);
     seg.setMaxIterations (10000);
     seg.setDistanceThreshold (0.05);
-    seg.setRadiusLimits (0, 0.1);
+    seg.setRadiusLimits (0, 0.5);
     seg.setInputCloud (original_cloud_);
     seg.setInputNormals (cloud_normals);
 

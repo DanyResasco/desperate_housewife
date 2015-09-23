@@ -10,10 +10,11 @@
 #include <pcl/segmentation/extract_clusters.h>
 
 #include <cylinder_fitting.hpp>
+#include <sphere_fitting.hpp>
 
 #include <visualization_msgs/Marker.h>
 
-#include <desperate_housewife/fittedGeometries.h>
+#include <desperate_housewife/fittedGeometriesArray.h>
 
 
 class BasicGeometriesNode {
@@ -72,7 +73,7 @@ BasicGeometriesNode::BasicGeometriesNode()
   stream_subscriber_ = nh.subscribe(topic, 1, &BasicGeometriesNode::BasicGeometriesNodeCallback, this);
 
   nh.param<std::string>("/BasicGeometriesNode/geometries_topic", geometries_topic_, "/BasicGeometriesNode/geometries");
-  geometries_publisher_ = nh.advertise<desperate_housewife::fittedGeometries>( geometries_topic_.c_str(), 1 );
+  geometries_publisher_ = nh.advertise<desperate_housewife::fittedGeometriesArray>( geometries_topic_.c_str(), 1 );
 
   nh.param<std::string>("/BasicGeometriesNode/cylinder_names", object_names_, "object");
   nh.param<int>("/BasicGeometriesNode/cluster_tolerance", min_cluster_size_, 100);
@@ -98,10 +99,12 @@ void BasicGeometriesNode::BasicGeometriesNodeCallback(sensor_msgs::PointCloud2 m
         geometry new_geometry = fitGeometry( cluster_vector[i] );
         if (new_geometry.geom_type >= 0)
         {
-          geometries.push_back( fitGeometry( cluster_vector[i] ) );
+          geometries.push_back( new_geometry );
         }
       }
     }
+
+  ROS_DEBUG("Number of geometries %lu", geometries.size());
 
   generateMarkerMessages( geometries );
   generateGeometriesMessages( geometries );
@@ -172,6 +175,19 @@ BasicGeometriesNode::geometry BasicGeometriesNode::fitGeometry( pcl::PointCloud<
       double height = cyl_info[1];
       new_geometry.geom_info.push_back( height );
       new_geometry.geom_transformation = cylinder_local.getTransformation();
+      return new_geometry;
+    }
+    BasicGeometries::sphere sphere_local( OriginalCluster );
+    if( sphere_local.fitSphere() )
+    {
+      new_geometry.geom_type = 2;
+      std::vector<double> cyl_info = sphere_local.getInfo();
+      double radius = cyl_info[0];
+      new_geometry.geom_info.push_back( radius );
+      new_geometry.geom_info.push_back( radius );
+      new_geometry.geom_info.push_back( radius );
+      new_geometry.geom_transformation = sphere_local.getTransformation();
+      return new_geometry;
     }
 
   return new_geometry;
@@ -219,7 +235,7 @@ void BasicGeometriesNode::generateMarkerMessages( std::vector<geometry> geometri
 void BasicGeometriesNode::generateGeometriesMessages( std::vector<geometry> geometries){
 
   
-  desperate_housewife::fittedGeometries fittedGeometriesArrayMsg;
+  desperate_housewife::fittedGeometriesArray fittedGeometriesArrayMsg;
 
   for (unsigned int i=0; i < geometries.size(); i++)
   {

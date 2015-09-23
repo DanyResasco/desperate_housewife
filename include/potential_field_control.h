@@ -11,7 +11,7 @@
 #include <std_msgs/Float32MultiArray.h>
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Quaternion.h>
-#include <desperate_housewife/cyl_info.h>
+// #include <desperate_housewife/cyl_info.h>
 #include <visualization_msgs/Marker.h>
 #include <std_msgs/UInt32.h>
 #include <sensor_msgs/JointState.h>
@@ -34,8 +34,8 @@
 #include <pluginlib/class_list_macros.h>
 #include <sstream> 
 //msg
-#include <desperate_housewife/cyl_info.h>
-#include <desperate_housewife/hand.h>
+// #include <desperate_housewife/cyl_info.h>
+// #include <desperate_housewife/hand.h>
 
 //Eigen
 #include <Eigen/Dense>
