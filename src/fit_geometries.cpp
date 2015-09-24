@@ -58,6 +58,7 @@ void BasicGeometriesNode::BasicGeometriesNodeCallback(sensor_msgs::PointCloud2 m
   {
     generateMarkerMessages( geometries );
     generateGeometriesMessages( geometries );
+    printGometriesInfo( geometries );
   }
 }
 
@@ -121,10 +122,11 @@ BasicGeometriesNode::geometry BasicGeometriesNode::fitGeometry( pcl::PointCloud<
       new_geometry.geom_type = 3;
       std::vector<double> cyl_info = cylinder_local.getInfo();
       double radius = cyl_info[0];
-      new_geometry.geom_info.push_back( radius * 2 );
-      new_geometry.geom_info.push_back( radius * 2 );
+      new_geometry.geom_info = cyl_info;
+      new_geometry.geom_info_marker.push_back( radius * 2 );
+      new_geometry.geom_info_marker.push_back( radius * 2 );
       double height = cyl_info[1];
-      new_geometry.geom_info.push_back( height );
+      new_geometry.geom_info_marker.push_back( height );
       new_geometry.geom_transformation = cylinder_local.getTransformation();
       return new_geometry;
     }
@@ -134,9 +136,10 @@ BasicGeometriesNode::geometry BasicGeometriesNode::fitGeometry( pcl::PointCloud<
       new_geometry.geom_type = 2;
       std::vector<double> cyl_info = sphere_local.getInfo();
       double radius = cyl_info[0];
-      new_geometry.geom_info.push_back( radius );
-      new_geometry.geom_info.push_back( radius );
-      new_geometry.geom_info.push_back( radius );
+      new_geometry.geom_info = cyl_info;
+      new_geometry.geom_info_marker.push_back( radius );
+      new_geometry.geom_info_marker.push_back( radius );
+      new_geometry.geom_info_marker.push_back( radius );
       new_geometry.geom_transformation = sphere_local.getTransformation();
       return new_geometry;
     }
@@ -164,9 +167,9 @@ void BasicGeometriesNode::generateMarkerMessages( std::vector<geometry> geometri
     marker.pose.orientation.z = pose.orientation.z;
     marker.pose.orientation.w = pose.orientation.w;
 
-    marker.scale.x = geometries[i].geom_info[0];
-    marker.scale.y = geometries[i].geom_info[1];
-    marker.scale.z = geometries[i].geom_info[2];
+    marker.scale.x = geometries[i].geom_info_marker[0];
+    marker.scale.y = geometries[i].geom_info_marker[1];
+    marker.scale.z = geometries[i].geom_info_marker[2];
 
     marker.color.a = 1.0; // for the clearness
     marker.color.r = 0.0;
@@ -217,4 +220,27 @@ geometry_msgs::Pose BasicGeometriesNode::fromEigenMatrix4x4ToPose( Eigen::Matrix
   pose.position.y = tranfs_matrix(1,3);
   pose.position.z = tranfs_matrix(2,3);
   return pose;
+}
+
+
+void BasicGeometriesNode::printGometriesInfo ( std::vector<geometry> geometries )
+{
+  ROS_INFO("Number of geometries %lu", geometries.size());
+
+  for (unsigned int i = 0; i < geometries.size(); ++i)
+  {
+    if (geometries[i].geom_type == 3)
+    {
+      ROS_INFO("Number of parameters %lu in geometry %u", geometries[i].geom_info.size(), i);
+      ROS_INFO("radius = %f", geometries[i].geom_info[0]);
+      ROS_INFO("height = %f", geometries[i].geom_info[1]);
+      ROS_INFO("isLying = %f", geometries[i].geom_info[2]);
+      ROS_INFO("isFull = %f", geometries[i].geom_info[3]);
+      ROS_INFO(" ");
+    }
+    else
+    {
+      ROS_INFO("Geometry %u is not a cylinder", i);
+    }
+  }
 }

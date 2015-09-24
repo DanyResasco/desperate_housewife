@@ -206,7 +206,7 @@
     
     <include file="$(find desperate_housewife)/launch/desperate_demo_scene_filter.launch"/>
 
-    <include file="$(find desperate_housewife)/launch/desperate_demo_fit_geometries.launch"/>
+    <!-- <include file="$(find desperate_housewife)/launch/desperate_demo_fit_geometries.launch"/> -->
 
     <node name="desperate_rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find desperate_housewife)/launch/rviz_config.rviz" output="screen"/>
 

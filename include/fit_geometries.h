@@ -34,6 +34,7 @@ class BasicGeometriesNode {
     int geom_type;
     Eigen::Matrix4d geom_transformation;
     std::vector<double> geom_info;
+    std::vector<double> geom_info_marker;
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr geom_points_global;
     geometry(){geom_type = -1;}
   };
@@ -49,6 +50,7 @@ class BasicGeometriesNode {
     void generateMarkerMessages( std::vector<geometry> geometries );
     void generateGeometriesMessages( std::vector<geometry> geometries );
     geometry_msgs::Pose fromEigenMatrix4x4ToPose( Eigen::Matrix4d &tranfs_matrix );
+    void printGometriesInfo( std::vector<geometry> geometries );
 
     int min_cluster_size_;
     double cluster_tolerance_;

@@ -182,23 +182,30 @@ namespace BasicGeometries{
     // normal_plane_cyl_frame = T_G_K * temp_normal_plane;
     // normal_plane_cyl_frame.normalize();
 
-    Eigen::Vector4d nomal_plani_in_cyl_frame = transformation_i * Eigen::Vector4d( 0, 0, 0, 1);
+    Eigen::Vector3d nomal_plani_in_cyl_frame = transformation_i.block<3,3>(0,0) * Eigen::Vector3d( 0, 0, 1);
     nomal_plani_in_cyl_frame.normalize();
 
     Eigen::Vector3d vec_temp;
+    vec_temp = nomal_plani_in_cyl_frame;
     // Eigen::Vector3d axis_cyl_frame(0,0,1);
-    vec_temp(0) = nomal_plani_in_cyl_frame(0);
-    vec_temp(1) = nomal_plani_in_cyl_frame(1);
-    vec_temp(2) = nomal_plani_in_cyl_frame(2);
+    // vec_temp(0) = nomal_plani_in_cyl_frame(0);
+    // vec_temp(1) = nomal_plani_in_cyl_frame(1);
+    // vec_temp(2) = nomal_plani_in_cyl_frame(2);
 
     vec_temp.normalize();
     double dotproduct = vec_temp.dot(Eigen::Vector3d(0,0,1));
 
     double theta = std::acos(dotproduct);
-    double isLaying = 1.0;
-    if(((theta >= 0.) && (theta<45.*(3.14/180.))) || ((theta <0) && (theta > -45.*(3.14/180.))))
+
+    double isLaying = 0.0;
+    // if(((theta >= 0.) && (theta<45.*(3.14/180.))) || ((theta <0) && (theta > -45.*(3.14/180.))))
+    if(((theta >= -45.*(3.14/180.)) && (theta <= 45.*(3.14/180.))))
     {
       isLaying = 0.;
+    }
+    else
+    {
+      isLaying = 1.0;
     }
 
     info_.push_back( isLaying );
@@ -230,11 +237,11 @@ namespace BasicGeometries{
       double dim_s;
 
       pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBA>);
-      tree->setInputCloud (cylinder_points_);
+      tree->setInputCloud ( cylinder_points_ );
 
       dim_s = radius*0.6; //less than half
 
-      tree->radiusSearch(point_center, dim_s, k_indices, k_sqr_distances,0 );
+      tree->radiusSearch( point_center, dim_s, k_indices, k_sqr_distances,0 );
 
       if(k_indices.size() < (dim_s*300))
         {
