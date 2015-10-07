@@ -112,7 +112,7 @@
     </group>
 
     <!-- load the controllers in current namespace -->
-    <node ns="head" name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="joint_state_controller joint_trajectory_controller"/>
+    <!-- <node ns="head" name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="joint_state_controller joint_trajectory_controller"/> -->
 
     <group ns="left_arm">
         <group if="$(arg left_arm_enabled)">
