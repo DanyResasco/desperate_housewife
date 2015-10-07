@@ -1,0 +1,8 @@
+<launch>
+ 
+  <rosparam command="load" file="$(find desperate_housewife)/config/desperate_demo_fitting_params.yaml" />
+  <include file="$(find desperate_housewife)/launch/fit_geometries_node.launch">
+  	
+  </include>
+
+</launch>

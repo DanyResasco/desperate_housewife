@@ -33,7 +33,7 @@ main (int argc, char** argv)
   pcl::PointIndices::Ptr inliers_plane (new pcl::PointIndices), inliers_cylinder (new pcl::PointIndices);
 
   // Read in the cloud data
-  reader.read ("table_scene_mug_stereo_textured.pcd", *cloud);
+  reader.read ("1431179878740401.pcd", *cloud);
   std::cerr << "PointCloud has: " << cloud->points.size () << " data points." << std::endl;
 
   // Build a passthrough filter to remove spurious NaNs
@@ -83,6 +83,7 @@ main (int argc, char** argv)
 
   // Create the segmentation object for cylinder segmentation and set all the parameters
   seg.setOptimizeCoefficients (true);
+  // seg.setModelType (pcl::SACMODEL_SPHERE);
   seg.setModelType (pcl::SACMODEL_CYLINDER);
   seg.setMethodType (pcl::SAC_RANSAC);
   seg.setNormalDistanceWeight (0.1);
@@ -99,15 +100,15 @@ main (int argc, char** argv)
   // Write the cylinder inliers to disk
   extract.setInputCloud (cloud_filtered2);
   extract.setIndices (inliers_cylinder);
-  extract.setNegative (false);
+  extract.setNegative (true);
   pcl::PointCloud<PointT>::Ptr cloud_cylinder (new pcl::PointCloud<PointT> ());
   extract.filter (*cloud_cylinder);
   if (cloud_cylinder->points.empty ()) 
     std::cerr << "Can't find the cylindrical component." << std::endl;
   else
   {
-	  std::cerr << "PointCloud representing the cylindrical component: " << cloud_cylinder->points.size () << " data points." << std::endl;
-	  writer.write ("table_scene_mug_stereo_textured_cylinder.pcd", *cloud_cylinder, false);
+    std::cerr << "PointCloud representing the cylindrical component: " << cloud_cylinder->points.size () << " data points." << std::endl;
+    writer.write ("table_scene_mug_stereo_textured_cylinder.pcd", *cloud_cylinder, false);
   }
   return (0);
 }
