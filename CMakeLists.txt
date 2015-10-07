@@ -24,7 +24,7 @@ find_package(catkin REQUIRED
   geometry_msgs 
   sensor_msgs)
 
-find_package(PCL 1.7.2 REQUIRED)
+find_package(PCL REQUIRED)
 
 include_directories(${GAZEBO_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})
