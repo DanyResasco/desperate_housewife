@@ -46,6 +46,7 @@ namespace desperate_housewife
 
     J_last_.resize(kdl_chain_.getNrOfJoints());
 
+    ROS_INFO("Subscribed to: %s", desired_reference_topic.c_str());
     sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this);
     pub_error_ = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
     pub_pose_ = nh_.advertise<std_msgs::Float64MultiArray>("pose", 1000);
@@ -57,20 +58,20 @@ namespace desperate_housewife
   void PotentialFieldControl::starting(const ros::Time& time)
   {
     // get joint positions
-      for(int i=0; i < joint_handles_.size(); i++) 
+      for(unsigned int i=0; i < joint_handles_.size(); i++) 
       {
         joint_msr_states_.q(i) = joint_handles_[i].getPosition();
         joint_msr_states_.qdot(i) = joint_handles_[i].getVelocity();
         joint_des_states_.q(i) = joint_msr_states_.q(i);
         joint_des_states_.qdot(i) = joint_msr_states_.qdot(i);
-        Kp_(i) = 100;
-        Kd_(i) = 20;
+        Kp_(i) = 1000;
+        Kd_(i) = 200;
       }
 
       I_ = Eigen::Matrix<double,7,7>::Identity(7,7);
       e_ref_ = Eigen::Matrix<double,6,1>::Zero();
 
-      first_step_ = 0;
+      first_step_ = 1;
       cmd_flag_ = 0;
       step_ = 0;
 
@@ -79,7 +80,7 @@ namespace desperate_housewife
   void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& period)
   {
     // get joint positions
-      for(int i=0; i < joint_handles_.size(); i++) 
+      for(unsigned int i=0; i < joint_handles_.size(); i++) 
       {
         joint_msr_states_.q(i) = joint_handles_[i].getPosition();
         joint_msr_states_.qdot(i) = joint_handles_[i].getVelocity();
@@ -129,7 +130,7 @@ namespace desperate_housewife
         if (Equal(x_,x_des_,0.05))
         {
           ROS_INFO("On target");
-          for(int i=0; i < joint_handles_.size(); i++) 
+          for(unsigned int i=0; i < joint_handles_.size(); i++) 
           {
             joint_des_states_.q(i) = joint_msr_states_.q(i);
             joint_des_states_.qdot(i) = joint_msr_states_.qdot(i);
@@ -155,7 +156,8 @@ namespace desperate_housewife
         {
           // e = x_des_dotdot + Kd*(x_des_dot - x_dot) + Kp*(x_des - x)
           e_ref_(i) =  -Kd_(i)*(x_dot_(i)) + Kp_(i)*x_err_(i);
-          msg_err_.data.push_back(e_ref_(i));
+          // msg_err_.data.push_back(e_ref_(i));
+          msg_err_.data.push_back(x_err_(i));
         }
 
         // computing b = J*M^-1*(c+g) - J_dot*q_dot
@@ -172,7 +174,7 @@ namespace desperate_housewife
         N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
 
         // finally, computing the torque tau
-        tau_.data = J_.data.transpose()*lambda_*(e_ref_ + b_) + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
+        tau_.data = J_.data.transpose()*lambda_*(e_ref_ + b_);// + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
 
         // saving J_ and phi of the last iteration
         J_last_ = J_;
@@ -181,12 +183,12 @@ namespace desperate_housewife
       }
 
       // set controls for joints
-      for (int i = 0; i < joint_handles_.size(); i++)
+      for (unsigned int i = 0; i < joint_handles_.size(); i++)
       {
         if(cmd_flag_)
           joint_handles_[i].setCommand(tau_(i));
         else
-            joint_handles_[i].setCommand(PIDs_[i].computeCommand(joint_des_states_.q(i) - joint_msr_states_.q(i),period));
+          joint_handles_[i].setCommand(PIDs_[i].computeCommand(joint_des_states_.q(i) - joint_msr_states_.q(i),period));
       }
 
       // publishing markers for visualization in rviz
@@ -200,42 +202,11 @@ namespace desperate_housewife
       ros::spinOnce();
 
   }
+
   void PotentialFieldControl::command(const desperate_housewife::handPoseSingle::ConstPtr& msg)
-  //void PotentialFieldControl::command(const lwr_controllers::PoseRPY::ConstPtr &msg)
   { 
     KDL::Frame frame_des_;
     tf::poseMsgToKDL(msg->pose, frame_des_);
-    ROS_INFO("In callback");
-    // switch(msg->id)
-    // {
-    //   case 0:
-    //   frame_des_ = KDL::Frame(
-    //       KDL::Rotation::RPY(msg->orientation.roll,
-    //                 msg->orientation.pitch,
-    //                 msg->orientation.yaw),
-    //       KDL::Vector(msg->position.x,
-    //             msg->position.y,
-    //             msg->position.z));
-    //   break;
-  
-    //   case 1: // position only
-    //   frame_des_ = KDL::Frame(
-    //     KDL::Vector(msg->position.x,
-    //           msg->position.y,
-    //           msg->position.z));
-    //   break;
-    
-    //   case 2: // orientation only
-    //   frame_des_ = KDL::Frame(
-    //     KDL::Rotation::RPY(msg->orientation.roll,
-    //                  msg->orientation.pitch,
-    //                msg->orientation.yaw));
-    //   break;
-
-    //   default:
-    //   ROS_INFO("Wrong message ID");
-    //   return;
-    // }
     
     x_des_ = frame_des_;
     cmd_flag_ = 1;
@@ -281,6 +252,7 @@ namespace desperate_housewife
 
     return -sum;
   }
+
 }
 
 PLUGINLIB_EXPORT_CLASS(desperate_housewife::PotentialFieldControl, controller_interface::ControllerBase)

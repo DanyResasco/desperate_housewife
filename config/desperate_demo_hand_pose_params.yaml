@@ -1,0 +1,2 @@
+PotentialFieldControl/desired_hand_pose_right: /right_arm/PotentialFieldControl/desired_hand_right_pose
+PotentialFieldControl/desired_hand_pose_left: /left_arm/PotentialFieldControl/desired_hand_left_pose

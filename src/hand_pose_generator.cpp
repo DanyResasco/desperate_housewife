@@ -59,7 +59,7 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
     }
   }
  
-  if (DesiredHandPose.whichArm == 1)  //left arm
+  if (DesiredHandPose.whichArm == 1) 
   {
     desired_hand_left_pose_publisher_.publish( DesiredHandPose );
   }
@@ -74,8 +74,6 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
   tf::Transform tfHandTrasform;
   tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform);
   tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), desired_hand_frame_.c_str()) );
-
-  //ROS_INFO("Running");
 
 }
 
@@ -102,9 +100,6 @@ desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( despera
 
 bool HandPoseGenerator::isGeometryGraspable ( desperate_housewife::fittedGeometriesSingle geometry )
 {
-  // Check if this is a graspable and it is among a graspable radius cylinder
-  // ROS_INFO("geometry.type: %d", geometry.type);
-  // ROS_INFO("geometry.info: %f", geometry.info[0]);
   if ( geometry.type == 3 && geometry.info[0] < .15 )
   {
     return true;

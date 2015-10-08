@@ -29,10 +29,10 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   double  height = geometry.info[1];
   double  isLying = geometry.info[2];
   double  isFull = geometry.info[3];
-  ROS_INFO ("radius = %g", radius);
-  ROS_INFO ("height = %g", height);
-  ROS_INFO ("isLying = %g", isLying);
-  ROS_INFO ("isFull = %g", isFull);
+  ROS_DEBUG ("radius = %g", radius);
+  ROS_DEBUG ("height = %g", height);
+  ROS_DEBUG ("isLying = %g", isLying);
+  ROS_DEBUG ("isFull = %g", isFull);
 
   if((isLying == 0) && (isFull == 0)) 
     {
@@ -50,7 +50,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       Point_desired(1) = 0;
       Point_desired(2) = height*0.5 + 0.05;	
       Point_desired(3) = 1;
-      ROS_INFO("cyl upright and empty");
+      ROS_DEBUG("cyl upright and empty");
 
       M_desired_local.col(2) << -z , 0;
       M_desired_local.col(3) << Point_desired;
@@ -75,7 +75,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       Point_desired(1) = 0;
       Point_desired(2) = height*0.5 + 0.05;
       Point_desired(3) = 1;
-      ROS_INFO("cyl upright and full");
+      ROS_DEBUG("cyl upright and full");
       
       M_desired_local.col(2) << -z, 0;
       M_desired_local.col(3) << Point_desired;
@@ -99,7 +99,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       Point_desired(1) = radius + 0.05;
       Point_desired(2) = 0; 
       Point_desired(3) = 1;
-      ROS_INFO("cyl is lying");
+      ROS_DEBUG("cyl is lying");
       
       M_desired_local.col(2) << -y, 0;
       M_desired_local.col(3) << Point_desired;
@@ -107,10 +107,10 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
     }
   else
     {
-      ROS_INFO("case not covered");
+      ROS_DEBUG("case not covered");
     }
 
-  ROS_INFO("Set hand final position");
+  ROS_DEBUG("Set hand final position");
   geometry_msgs::Pose local_sh_pose;
   fromEigenToPose( T_w_h ,local_sh_pose);
 
@@ -184,10 +184,10 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose ){
 	if(dist_to_left_hand < dist_to_right_hand)
 	{
 	 
-	  ROS_INFO("Vito uses a: left arm");
+	  ROS_DEBUG("Vito uses a: left arm");
     return 1;
 	}
 	
-	ROS_INFO("Vito uses a: Right arm");
+	ROS_DEBUG("Vito uses a: Right arm");
 	return 0;
 }

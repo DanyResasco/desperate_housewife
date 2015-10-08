@@ -14,6 +14,7 @@
     <arg name="left_hand_enabled" default="false"/>
     <arg name="right_arm_enabled" default="false"/>
     <arg name="right_hand_enabled" default="false"/>
+    <arg name="start_openni2" default="true"/>
 
     <!-- choose whether or not to start the full robot simulation -->
     <arg name="use_robot_sim" default="true"/>
@@ -206,7 +207,7 @@
 
     <group>
         <include file="$(find desperate_housewife)/launch/desperate_demo_asus_head_vito_broadcaster.launch">
-            <arg name="start_openni2" default="true"/>
+            <arg name="start_openni2" value="$(arg start_openni2)"/>
         </include>
     </group>
 
@@ -214,6 +215,8 @@
     <include file="$(find desperate_housewife)/launch/desperate_demo_scene_filter.launch"/>
 
     <include file="$(find desperate_housewife)/launch/desperate_demo_fit_geometries.launch"/>
+
+    <include file="$(find desperate_housewife)/launch/desperate_demo_hand_pose_generator.launch"/>
 
     <node name="desperate_rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find desperate_housewife)/launch/rviz_config.rviz" output="screen"/>
 
