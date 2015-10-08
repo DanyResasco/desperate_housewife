@@ -58,7 +58,7 @@ void BasicGeometriesNode::BasicGeometriesNodeCallback(sensor_msgs::PointCloud2 m
   {
     generateMarkerMessages( geometries );
     generateGeometriesMessages( geometries );
-    printGometriesInfo( geometries );
+    // printGometriesInfo( geometries );
   }
 }
 

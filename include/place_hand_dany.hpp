@@ -41,12 +41,12 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
           M_desired_local.col(0) << x, 0;
           M_desired_local.col(1) << -z.cross(x),0;
         }
-      else
+      else //right arm
         {
-          M_desired_local.col(0) << -x, 0;	//right arm
+          M_desired_local.col(0) << -x, 0;	
           M_desired_local.col(1) << -z.cross(-x),0;
         }
-      Point_desired(0) = 0;//radius + 0.05;
+      Point_desired(0) = 0;
       Point_desired(1) = 0;
       Point_desired(2) = height*0.5 + 0.05;	
       Point_desired(3) = 1;
@@ -66,9 +66,9 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
           M_desired_local.col(1) << -z.cross(x),0;
         }
 
-      else
+      else //right arm
         {
-          M_desired_local.col(0) << -x, 0;	//right arm
+          M_desired_local.col(0) << -x, 0;	
           M_desired_local.col(1) << -z.cross(-x),0;
         }
       Point_desired(0) = 0;
@@ -90,9 +90,9 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
           M_desired_local.col(1) << -y.cross(-z), 0;	
         }
 
-      else
+      else //right arm
         {
-          M_desired_local.col(0) << z, 0;	//right arm
+          M_desired_local.col(0) << z, 0;	
           M_desired_local.col(1) << -y.cross(z), 0;	
         }
       Point_desired(0) = 0;

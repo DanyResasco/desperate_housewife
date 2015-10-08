@@ -72,6 +72,7 @@ catkin_package(
   kdl_parser
   message_runtime
   tf_conversions
+  lwr_hw
   lwr_controllers
   calibration
   INCLUDE_DIRS include

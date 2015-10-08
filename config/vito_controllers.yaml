@@ -17,6 +17,7 @@ left_arm:
     type: desperate_housewife/PotentialFieldControl
     root_name: vito_anchor
     tip_name: left_arm_7_link
+    desired_reference_topic: PotentialFieldControl/desired_hand_left_pose
     pid_left_arm_0_joint: {p: 250,  i: 10, d: 30, i_clamp_min: -0.3, i_clamp_max: 0.3}
     pid_left_arm_1_joint: {p: 220,  i: 10, d: 30, i_clamp_min: -0.3, i_clamp_max: 0.3}
     pid_left_arm_2_joint: {p: 150,  i: 6, d: 20, i_clamp_min: -0.3, i_clamp_max: 0.3}
@@ -35,6 +36,7 @@ right_arm:
     type: desperate_housewife/PotentialFieldControl
     root_name: vito_anchor
     tip_name: right_arm_7_link
+    desired_reference_topic: PotentialFieldControl/desired_hand_right_pose
     pid_right_arm_0_joint: {p: 250,  i: 10, d: 30, i_clamp_min: -0.3, i_clamp_max: 0.3}
     pid_right_arm_1_joint: {p: 220,  i: 10, d: 30, i_clamp_min: -0.3, i_clamp_max: 0.3}
     pid_right_arm_2_joint: {p: 150,  i: 6, d: 20, i_clamp_min: -0.3, i_clamp_max: 0.3}

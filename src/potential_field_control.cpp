@@ -1,6 +1,8 @@
 #include <potential_field_control.h>
 #include <utils/pseudo_inversion.h>
 #include <utils/skew_symmetric.h>
+#include <ros/node_handle.h>
+#include <ros/ros.h>
 
 #include <pluginlib/class_list_macros.h>
 #include <kdl_parser/kdl_parser.hpp>
@@ -16,6 +18,16 @@ namespace desperate_housewife
   bool PotentialFieldControl::init(hardware_interface::EffortJointInterface *robot, ros::NodeHandle &n)
   {
         PIDKinematicChainControllerBase<hardware_interface::EffortJointInterface>::init(robot, n);
+
+    if (!n.getParam("desired_reference_topic", desired_reference_topic))
+    {
+        ROS_ERROR_STREAM(" No root name found on parameter server ("<<n.getNamespace()<<"/root_name)");
+        return false;
+    }
+    else
+    {
+      ROS_INFO("Starting controller");
+    }
 
     jnt_to_jac_solver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
     id_solver_.reset(new KDL::ChainDynParam(kdl_chain_,gravity_));
@@ -34,7 +46,7 @@ namespace desperate_housewife
 
     J_last_.resize(kdl_chain_.getNrOfJoints());
 
-    sub_command_ = nh_.subscribe("command", 1, &PotentialFieldControl::command, this);
+    sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this);
     pub_error_ = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
     pub_pose_ = nh_.advertise<std_msgs::Float64MultiArray>("pose", 1000);
     pub_marker_ = nh_.advertise<visualization_msgs::Marker>("marker",1000);
@@ -188,41 +200,42 @@ namespace desperate_housewife
       ros::spinOnce();
 
   }
-
-  void PotentialFieldControl::command(const lwr_controllers::PoseRPY::ConstPtr &msg)
+  void PotentialFieldControl::command(const desperate_housewife::handPoseSingle::ConstPtr& msg)
+  //void PotentialFieldControl::command(const lwr_controllers::PoseRPY::ConstPtr &msg)
   { 
     KDL::Frame frame_des_;
-
-    switch(msg->id)
-    {
-      case 0:
-      frame_des_ = KDL::Frame(
-          KDL::Rotation::RPY(msg->orientation.roll,
-                    msg->orientation.pitch,
-                    msg->orientation.yaw),
-          KDL::Vector(msg->position.x,
-                msg->position.y,
-                msg->position.z));
-      break;
+    tf::poseMsgToKDL(msg->pose, frame_des_);
+    ROS_INFO("In callback");
+    // switch(msg->id)
+    // {
+    //   case 0:
+    //   frame_des_ = KDL::Frame(
+    //       KDL::Rotation::RPY(msg->orientation.roll,
+    //                 msg->orientation.pitch,
+    //                 msg->orientation.yaw),
+    //       KDL::Vector(msg->position.x,
+    //             msg->position.y,
+    //             msg->position.z));
+    //   break;
   
-      case 1: // position only
-      frame_des_ = KDL::Frame(
-        KDL::Vector(msg->position.x,
-              msg->position.y,
-              msg->position.z));
-      break;
+    //   case 1: // position only
+    //   frame_des_ = KDL::Frame(
+    //     KDL::Vector(msg->position.x,
+    //           msg->position.y,
+    //           msg->position.z));
+    //   break;
     
-      case 2: // orientation only
-      frame_des_ = KDL::Frame(
-        KDL::Rotation::RPY(msg->orientation.roll,
-                     msg->orientation.pitch,
-                   msg->orientation.yaw));
-      break;
+    //   case 2: // orientation only
+    //   frame_des_ = KDL::Frame(
+    //     KDL::Rotation::RPY(msg->orientation.roll,
+    //                  msg->orientation.pitch,
+    //                msg->orientation.yaw));
+    //   break;
 
-      default:
-      ROS_INFO("Wrong message ID");
-      return;
-    }
+    //   default:
+    //   ROS_INFO("Wrong message ID");
+    //   return;
+    // }
     
     x_des_ = frame_des_;
     cmd_flag_ = 1;

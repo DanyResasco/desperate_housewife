@@ -58,8 +58,8 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
       obstaclesMsg.obstacles.push_back( obstacle );
     }
   }
-
-  if (DesiredHandPose.whichArm == 0)  //left arm
+ 
+  if (DesiredHandPose.whichArm == 1)  //left arm
   {
     desired_hand_left_pose_publisher_.publish( DesiredHandPose );
   }
@@ -87,7 +87,6 @@ desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( despera
   if ( isGeometryGraspable ( geometry ))
   {
       hand_pose_local.whichArm = whichArm( geometry.pose );
-      // std::cout<<"whichArm: "<<hand_pose_local.whichArm<<std::endl;
       hand_pose_local.pose = placeHand( geometry, hand_pose_local.whichArm );
       hand_pose_local.isGraspable = true;
   }
@@ -97,15 +96,15 @@ desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( despera
     hand_pose_local.isGraspable = false;
   }
 
-  hand_pose_local.whichArm = 0; //left
+  
   return hand_pose_local;
 }
 
 bool HandPoseGenerator::isGeometryGraspable ( desperate_housewife::fittedGeometriesSingle geometry )
 {
   // Check if this is a graspable and it is among a graspable radius cylinder
-  ROS_INFO("geometry.type: %d", geometry.type);
-  ROS_INFO("geometry.info: %f", geometry.info[0]);
+  // ROS_INFO("geometry.type: %d", geometry.type);
+  // ROS_INFO("geometry.info: %f", geometry.info[0]);
   if ( geometry.type == 3 && geometry.info[0] < .15 )
   {
     return true;
