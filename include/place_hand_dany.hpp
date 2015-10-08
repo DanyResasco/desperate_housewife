@@ -8,7 +8,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   Eigen::Vector4d Point_desired,Pos_ori_hand; //in cyl frame
   Eigen::Vector4d translation; //in cyl frame
   Eigen::Vector3d x(1,0,0);
-  Eigen::Vector3d y(0,1,0), z_d, z(0,0,1);
+  Eigen::Vector3d y(0,1,0), z(0,0,1);
   Eigen::Matrix4d T_K_H;
   tf::StampedTransform T_K_vito_ancor;
   Eigen::Vector4d local;
@@ -18,7 +18,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   Eigen::Affine3d mtemp;
  
   T_vito_c = FromMsgtoEigen( geometry.pose );
-
+ 
   Eigen::Matrix4d Rot_z;
   Rot_z.row(0)<< -1,0,0,0;
   Rot_z.row(1)<< 0,-1,0,0;
@@ -29,12 +29,12 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   double  height = geometry.info[1];
   double  isLying = geometry.info[2];
   double  isFull = geometry.info[3];
-  ROS_INFO ("radius = ", radius);
-  ROS_INFO ("height = ", height);
-  ROS_INFO ("isLying = ", isLying);
-  ROS_INFO ("isFull = ", isFull);
+  ROS_INFO ("radius = %g", radius);
+  ROS_INFO ("height = %g", height);
+  ROS_INFO ("isLying = %g", isLying);
+  ROS_INFO ("isFull = %g", isFull);
 
-  if((isLying == 0) && (isFull == 0))
+  if((isLying == 0) && (isFull == 0)) 
     {
       if (whichArm == 1) //left arm
         {
@@ -46,16 +46,16 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
           M_desired_local.col(0) << -x, 0;	//right arm
           M_desired_local.col(1) << -z.cross(-x),0;
         }
-      Point_desired(0) = radius + 0.05;
+      Point_desired(0) = 0;//radius + 0.05;
       Point_desired(1) = 0;
-      Point_desired(2) = height*0.5 + 0.05;	//da rivedere!!
+      Point_desired(2) = height*0.5 + 0.05;	
       Point_desired(3) = 1;
-      ROS_INFO("cyl dritto e vuoto");
+      ROS_INFO("cyl upright and empty");
 
       M_desired_local.col(2) << -z , 0;
       M_desired_local.col(3) << Point_desired;
-      T_w_h = T_vito_c * M_desired_local*Rot_z ;
-
+      T_w_h = T_vito_c * M_desired_local;//*Rot_z ; 
+      
     }
 
   else if(((isLying == 0) && (isFull != 0)) && (radius< max_radius))
@@ -73,9 +73,10 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
         }
       Point_desired(0) = 0;
       Point_desired(1) = 0;
-      Point_desired(2) = height*0.5 + 0.05;; //da rivedere
+      Point_desired(2) = height*0.5 + 0.05;
       Point_desired(3) = 1;
-      ROS_INFO("cyl dritto e pieno");
+      ROS_INFO("cyl upright and full");
+      
       M_desired_local.col(2) << -z, 0;
       M_desired_local.col(3) << Point_desired;
       T_w_h = T_vito_c * M_desired_local*Rot_z ;
@@ -86,27 +87,27 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       if (whichArm == 1) //left arm
         {
           M_desired_local.col(0) << -z, 0;
-          M_desired_local.col(1) << -y.cross(-z), 0;	//da rifare
+          M_desired_local.col(1) << -y.cross(-z), 0;	
         }
 
       else
         {
           M_desired_local.col(0) << z, 0;	//right arm
-          M_desired_local.col(1) << -y.cross(z), 0;	//da rifare
+          M_desired_local.col(1) << -y.cross(z), 0;	
         }
       Point_desired(0) = 0;
       Point_desired(1) = radius + 0.05;
-      Point_desired(2) = 0; //da rivedere
+      Point_desired(2) = 0; 
       Point_desired(3) = 1;
-      ROS_INFO("cyl piegato");
-      // M_desired_local.col(1) << -y.cross(z), 0;	//da rifare
+      ROS_INFO("cyl is lying");
+      
       M_desired_local.col(2) << -y, 0;
       M_desired_local.col(3) << Point_desired;
-      T_w_h = T_vito_c * M_desired_local ;
+      T_w_h = T_vito_c * M_desired_local*Rot_z ;
     }
   else
     {
-      ROS_INFO("caso non contemplato");
+      ROS_INFO("case not covered");
     }
 
   ROS_INFO("Set hand final position");
@@ -137,9 +138,9 @@ void HandPoseGenerator::fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry
 Eigen::Matrix4d HandPoseGenerator::FromMsgtoEigen(geometry_msgs::Pose &object)
 {	
 
-  Eigen::Quaterniond transf_quad(object.orientation.x, object.orientation.y, object.orientation.z, object.orientation.w);
+  Eigen::Quaterniond transf_quad(object.orientation.w, object.orientation.x, object.orientation.y, object.orientation.z);
   transf_quad.normalize();
-  Eigen::Vector3d translation(object.position.x, object.position.y, object.position.x);
+  Eigen::Vector3d translation(object.position.x, object.position.y, object.position.z);
   Eigen::Matrix3d rotation(transf_quad.toRotationMatrix());
 
   Eigen::Matrix4d Matrix_transf;
@@ -182,10 +183,11 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose ){
 
 	if(dist_to_left_hand < dist_to_right_hand)
 	{
-	  return 0;
-	  ROS_DEBUG("Vito uses a: left arm");
+	 
+	  ROS_INFO("Vito uses a: left arm");
+    return 1;
 	}
 	
-	ROS_DEBUG("Vito uses a: Right arm");
-	return 1;
+	ROS_INFO("Vito uses a: Right arm");
+	return 0;
 }

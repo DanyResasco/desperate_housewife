@@ -8,8 +8,11 @@ HandPoseGenerator::HandPoseGenerator()
   nh.param<std::string>("/BasicGeometriesNode/geometries_topic", geometries_topic_, "/BasicGeometriesNode/geometries");
   stream_subscriber_ = nh.subscribe(geometries_topic_, 1, &HandPoseGenerator::HandPoseGeneratorCallback, this);
 
-  nh.param<std::string>("/PotentialFieldControl/desired_hand_pose", desired_hand_pose_topic_, "/PotentialFieldControl/desired_hand_pose");
-  desired_hand_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_pose_topic_.c_str(),1);
+  nh.param<std::string>("/PotentialFieldControl/desired_hand_pose_right", desired_hand_right_pose_topic_, "/PotentialFieldControl/desired_hand_right_pose");
+  desired_hand_right_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_right_pose_topic_.c_str(),1);
+
+  nh.param<std::string>("/PotentialFieldControl/desired_hand_pose_left", desired_hand_left_pose_topic_, "/PotentialFieldControl/desired_hand_left_pose");
+  desired_hand_left_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_left_pose_topic_.c_str(),1);
 
   nh.param<std::string>("/PotentialFieldControl/obstacle_list", obstalces_topic_, "/PotentialFieldControl/obstacle_list");
   obstacles_publisher_ = nh.advertise<desperate_housewife::obstacleArray > (obstalces_topic_.c_str(),1);
@@ -17,7 +20,7 @@ HandPoseGenerator::HandPoseGenerator()
   nh.param<std::string>("/PotentialFieldControl/desired_hand_frame", desired_hand_frame_, "desired_hand_pose");
 
   nh.param<std::string>("/PotentialFieldControl/base_frame", base_frame_, "vito_anchor");
-  nh.param<std::string>("/PotentialFieldControl/left_hand_frame", left_hand_frame_, "right_hand_palm_link");
+  nh.param<std::string>("/PotentialFieldControl/left_hand_frame", left_hand_frame_, "left_hand_palm_link");
   nh.param<std::string>("/PotentialFieldControl/right_hand_frame", right_hand_frame_, "right_hand_palm_link");
 
 }
@@ -56,14 +59,23 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
     }
   }
 
-  desired_hand_pose_publisher_.publish( DesiredHandPose );
+  if (DesiredHandPose.whichArm == 0)  //left arm
+  {
+    desired_hand_left_pose_publisher_.publish( DesiredHandPose );
+  }
+  else
+  {
+    desired_hand_right_pose_publisher_.publish( DesiredHandPose );
+  }
+
+ 
   obstacles_publisher_.publish( obstaclesMsg );
 
   tf::Transform tfHandTrasform;
   tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform);
   tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), desired_hand_frame_.c_str()) );
 
-  ROS_INFO("Running");
+  //ROS_INFO("Running");
 
 }
 
@@ -75,6 +87,7 @@ desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( despera
   if ( isGeometryGraspable ( geometry ))
   {
       hand_pose_local.whichArm = whichArm( geometry.pose );
+      // std::cout<<"whichArm: "<<hand_pose_local.whichArm<<std::endl;
       hand_pose_local.pose = placeHand( geometry, hand_pose_local.whichArm );
       hand_pose_local.isGraspable = true;
   }
@@ -84,14 +97,16 @@ desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( despera
     hand_pose_local.isGraspable = false;
   }
 
-  hand_pose_local.whichArm = 0;
+  hand_pose_local.whichArm = 0; //left
   return hand_pose_local;
 }
 
 bool HandPoseGenerator::isGeometryGraspable ( desperate_housewife::fittedGeometriesSingle geometry )
 {
   // Check if this is a graspable and it is among a graspable radius cylinder
-  if ( geometry.type == 3 && geometry.info[0] < .015 )
+  ROS_INFO("geometry.type: %d", geometry.type);
+  ROS_INFO("geometry.info: %f", geometry.info[0]);
+  if ( geometry.type == 3 && geometry.info[0] < .15 )
   {
     return true;
   }

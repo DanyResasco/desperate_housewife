@@ -22,7 +22,9 @@ find_package(catkin REQUIRED
   message_generation 
   std_msgs
   geometry_msgs 
-  sensor_msgs)
+  sensor_msgs
+  lwr_controllers
+  calibration)
 
 find_package(PCL REQUIRED)
 
@@ -70,6 +72,8 @@ catkin_package(
   kdl_parser
   message_runtime
   tf_conversions
+  lwr_controllers
+  calibration
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME})
 
@@ -91,9 +95,9 @@ add_dependencies(test_fitting ${PROJECT_NAME}_gencpp)
 target_link_libraries(test_fitting ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 
-# add_library(${PROJECT_NAME} src/potential_field_control.cpp)
-# add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
-# target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+add_library(${PROJECT_NAME} src/potential_field_control.cpp)
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
 
 
@@ -101,14 +105,14 @@ target_link_libraries(test_fitting ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 # add_dependencies(phobic_camera ${PROJECT_NAME}_gencpp)
 # target_link_libraries(phobic_camera   ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
-# install(TARGETS ${PROJECT_NAME}
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-#   )
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
 
-# install(FILES desperate_housewife_controllers.xml
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+install(FILES desperate_housewife_controllers.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

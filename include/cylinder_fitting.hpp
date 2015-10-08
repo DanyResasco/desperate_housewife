@@ -216,7 +216,7 @@ namespace BasicGeometries{
     {
       // Check if the cylinder is empty
 
-      pcl::PointXYZRGBA point_center; //punto in mezzo
+      pcl::PointXYZRGBA point_center; //point at top of the object
 
       z_max= cylinder_points_->points[0].z;
       for (unsigned int i=1; i< cylinder_points_->points.size(); i++)
@@ -239,14 +239,14 @@ namespace BasicGeometries{
       pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBA>);
       tree->setInputCloud ( cylinder_points_ );
 
-      dim_s = radius*0.6; //less than half
+      dim_s = radius*0.8; //less than half
 
       tree->radiusSearch( point_center, dim_s, k_indices, k_sqr_distances,0 );
 
       if(k_indices.size() < (dim_s*300))
-        {
-          isFull = 0.; // empty
-        }
+      {
+        isFull = 0.; // empty
+      }
 
     }
 

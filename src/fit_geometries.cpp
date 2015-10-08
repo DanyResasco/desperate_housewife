@@ -52,7 +52,7 @@ void BasicGeometriesNode::BasicGeometriesNodeCallback(sensor_msgs::PointCloud2 m
       }
     }
 
-  ROS_DEBUG("Number of geometries %lu", geometries.size());
+  // ROS_DEBUG("Number of geometries %lu", geometries.size());
 
   if ( geometries.size() > 0 )
   {
@@ -196,6 +196,7 @@ void BasicGeometriesNode::generateGeometriesMessages( std::vector<geometry> geom
     desperate_housewife::fittedGeometriesSingle fittedGeometriesSingleMsg;
     fittedGeometriesSingleMsg.type = geometries[i].geom_type;
     fittedGeometriesSingleMsg.pose = fromEigenMatrix4x4ToPose( geometries[i].geom_transformation );
+    // std::cout<<"pose in fitting: "<< geometries[i].geom_transformation <<std::endl;
     for (unsigned j=0; j < geometries[i].geom_info.size(); j++)
     {
       fittedGeometriesSingleMsg.info.push_back(geometries[i].geom_info[j]);
@@ -219,10 +220,11 @@ geometry_msgs::Pose BasicGeometriesNode::fromEigenMatrix4x4ToPose( Eigen::Matrix
   pose.position.x = tranfs_matrix(0,3);
   pose.position.y = tranfs_matrix(1,3);
   pose.position.z = tranfs_matrix(2,3);
+
   return pose;
 }
 
-
+  
 void BasicGeometriesNode::printGometriesInfo ( std::vector<geometry> geometries )
 {
   ROS_INFO("Number of geometries %lu", geometries.size());

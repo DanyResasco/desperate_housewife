@@ -13,8 +13,8 @@ left_arm:
       - left_arm_4_joint
       - left_arm_5_joint
       - left_arm_6_joint
-  one_task_inverse_dynamics_JL:
-    type: lwr_controllers/OneTaskInverseDynamicsJL
+  PotentialFieldControl:
+    type: desperate_housewife/PotentialFieldControl
     root_name: vito_anchor
     tip_name: left_arm_7_link
     pid_left_arm_0_joint: {p: 250,  i: 10, d: 30, i_clamp_min: -0.3, i_clamp_max: 0.3}
@@ -31,8 +31,8 @@ right_arm:
     type: joint_state_controller/JointStateController
     publish_rate: 100  
 
-  one_task_inverse_dynamics_JL:
-    type: lwr_controllers/OneTaskInverseDynamicsJL
+  PotentialFieldControl:
+    type: desperate_housewife/PotentialFieldControl
     root_name: vito_anchor
     tip_name: right_arm_7_link
     pid_right_arm_0_joint: {p: 250,  i: 10, d: 30, i_clamp_min: -0.3, i_clamp_max: 0.3}

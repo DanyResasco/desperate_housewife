@@ -130,7 +130,7 @@
         </group>
 
         <!-- spawn only desired controllers in current namespace -->
-        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller one_task_inverse_dynamics_JL"/>
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller PotentialFieldControl"/>
 
         <node name="controller_stopper" pkg="controller_manager" type="spawner" args="--stopped joint_trajectory_controller" />
     </group>
@@ -149,7 +149,7 @@
         </group>
 
         <!-- load the controllers in current namespace -->
-        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="true" output="screen"  args="joint_state_controller joint_trajectory_controller"/>
+        <!-- <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="true" output="screen"  args="joint_state_controller joint_trajectory_controller"/> -->
 
         <!-- grasp estimator -->
         <rosparam command="load" file="$(find grasp_state_publisher)/config/softgrasp.yaml" />
@@ -178,7 +178,7 @@
         </group>
 
         <!-- spawn only desired controllers in current namespace -->
-        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller one_task_inverse_dynamics_JL"/>
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller PotentialFieldControl"/>
 
         <node name="controller_stopper" pkg="controller_manager" type="spawner" args="--stopped joint_trajectory_controller" />
     </group>
@@ -197,7 +197,7 @@
         </group>
 
         <!-- load the controllers in current namespace -->
-        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="true" output="screen"  args="joint_state_controller joint_trajectory_controller"/>
+        <!-- <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="true" output="screen"  args="joint_state_controller joint_trajectory_controller"/> -->
 
         <!-- grasp estimator -->
         <rosparam command="load" file="$(find grasp_state_publisher)/config/softgrasp.yaml" />
@@ -206,7 +206,7 @@
 
     <group>
         <include file="$(find desperate_housewife)/launch/desperate_demo_asus_head_vito_broadcaster.launch">
-            <arg name="start_openni2" default="false"/>
+            <arg name="start_openni2" default="true"/>
         </include>
     </group>
 
