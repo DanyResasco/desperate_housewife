@@ -12,6 +12,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread/condition.hpp>
 #include <sstream>
+#include <iostream>
 
 //Tf
 #include <tf/transform_listener.h>
@@ -39,11 +40,15 @@ namespace desperate_housewife
 		void set_marker(KDL::Frame x, int id);
 		double task_objective_function(KDL::JntArray q);
 
+
+		void SetAttractiveField();
+
 	private:
 		ros::Subscriber sub_command_;
 		ros::Publisher pub_error_;
 		ros::Publisher pub_pose_;
 		ros::Publisher pub_marker_;
+		tf::TransformBroadcaster tf_now_hand;
 
 		std_msgs::Float64MultiArray msg_err_;
 		std_msgs::Float64MultiArray msg_pose_;
@@ -54,6 +59,7 @@ namespace desperate_housewife
 		KDL::JntArray qdot_last_;
 
 		KDL::Frame x_,x0_;	//current e-e pose
+		
 		Eigen::Matrix<double,6,1> x_dot_;	//current e-e velocity
 
 		KDL::Frame x_des_;	//desired pose
@@ -77,7 +83,7 @@ namespace desperate_housewife
 
 		Eigen::MatrixXd J_pinv_;
 
-		Eigen::Matrix<double,6,1> e_ref_;
+		// Eigen::Matrix<double,6,1> e_ref_;
 		Eigen::Matrix<double,7,7> I_;
 		Eigen::Matrix<double,7,7> N_trans_;
 		Eigen::MatrixXd M_inv_;
@@ -102,6 +108,11 @@ namespace desperate_housewife
 		boost::scoped_ptr<KDL::ChainFkSolverPos_recursive> fk_pos_solver_;
 		//boost::scoped_ptr<KDL::ChainFkSolverVel_recursive> fk_vel_solver_;
 		//boost::scoped_ptr<KDL::ChainFkSolverAcc_recursive> fk_acc_solver_;
+
+		//dany
+		Eigen::Matrix<double,6,1> Force_attractive;
+		double V_max_kuka = 1.5;
+		std::vector<KDL::Frame> x_prova;	//13 is soft_hand (end_effector)
 	};
 
 }

@@ -7,6 +7,8 @@
 #include <pluginlib/class_list_macros.h>
 #include <kdl_parser/kdl_parser.hpp>
 #include <Eigen/LU>
+#include <kdl/frames.hpp>
+#include <kdl/frames_io.hpp>
 
 #include <math.h>
 
@@ -19,6 +21,7 @@ namespace desperate_housewife
   {
         PIDKinematicChainControllerBase<hardware_interface::EffortJointInterface>::init(robot, n);
 
+    // for swicht the hand_desired
     if (!n.getParam("desired_reference_topic", desired_reference_topic))
     {
         ROS_ERROR_STREAM(" No root name found on parameter server ("<<n.getNamespace()<<"/root_name)");
@@ -27,6 +30,10 @@ namespace desperate_housewife
     else
     {
       ROS_INFO("Starting controller");
+    ROS_INFO("Number of segments: %d", kdl_chain_.getNrOfSegments());
+ 
+    // ROS_INFO("Number of joints in chain: %d", kdl_chain_.getNrOfJoints());
+   
     }
 
     jnt_to_jac_solver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
@@ -69,7 +76,7 @@ namespace desperate_housewife
       }
 
       I_ = Eigen::Matrix<double,7,7>::Identity(7,7);
-      e_ref_ = Eigen::Matrix<double,6,1>::Zero();
+      Force_attractive = Eigen::Matrix<double,6,1>::Zero();
 
       first_step_ = 1;
       cmd_flag_ = 0;
@@ -126,8 +133,19 @@ namespace desperate_housewife
 
         // computing forward kinematics
         fk_pos_solver_->JntToCart(joint_msr_states_.q,x_);
+        std::cout<<"x_: "<<x_<<std::endl;
 
-        if (Equal(x_,x_des_,0.05))
+        // for(int i=0; i<kdl_chain_.getNrOfSegments();i++)
+        // {
+        //   KDL::Frame x_test;
+        //   fk_pos_solver_->JntToCart(joint_msr_states_.q,x_test,i);
+        //   x_prova.push_back(x_test);
+
+        // }
+        // std::cout<<"x_prova: "<<x_prova[13]<<std::endl;
+
+       if (Equal(x_,x_des_,0.05))
+        //if (Equal(x_chain[13],x_des_,0.05))
         {
           ROS_INFO("On target");
           for(unsigned int i=0; i < joint_handles_.size(); i++) 
@@ -149,14 +167,14 @@ namespace desperate_housewife
         // computing end-effector position/orientation error w.r.t. desired frame
         x_err_ = diff(x_,x_des_);
 
-        x_dot_ = J_.data*joint_msr_states_.qdot.data;     
+        x_dot_ = J_.data*joint_msr_states_.qdot.data; 
 
         // setting error reference
-        for(int i = 0; i < e_ref_.size(); i++)
+        for(int i = 0; i < Force_attractive.size(); i++)
         {
           // e = x_des_dotdot + Kd*(x_des_dot - x_dot) + Kp*(x_des - x)
-          e_ref_(i) =  -Kd_(i)*(x_dot_(i)) + Kp_(i)*x_err_(i);
-          // msg_err_.data.push_back(e_ref_(i));
+          Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + V_max_kuka*Kp_(i)*x_err_(i);
+          // msg_err_.data.push_back(Force_attractive(i));
           msg_err_.data.push_back(x_err_(i));
         }
 
@@ -174,7 +192,7 @@ namespace desperate_housewife
         N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
 
         // finally, computing the torque tau
-        tau_.data = J_.data.transpose()*lambda_*(e_ref_ + b_);// + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
+        tau_.data = J_.data.transpose()*lambda_*(Force_attractive + b_);// + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
 
         // saving J_ and phi of the last iteration
         J_last_ = J_;
@@ -209,6 +227,7 @@ namespace desperate_housewife
     tf::poseMsgToKDL(msg->pose, frame_des_);
     
     x_des_ = frame_des_;
+    // std::cout<<"pose desired: "<<x_des_ <<std::endl;
     cmd_flag_ = 1;
   }
 
