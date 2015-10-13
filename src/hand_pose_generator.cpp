@@ -15,7 +15,7 @@ HandPoseGenerator::HandPoseGenerator()
   desired_hand_left_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_left_pose_topic_.c_str(),1);
 
   nh.param<std::string>("/PotentialFieldControl/obstacle_list", obstalces_topic_, "/PotentialFieldControl/obstacle_list");
-  obstacles_publisher_ = nh.advertise<desperate_housewife::obstacleArray > (obstalces_topic_.c_str(),1);
+  obstacles_publisher_ = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstalces_topic_.c_str(),1);
 
   nh.param<std::string>("/PotentialFieldControl/desired_hand_frame", desired_hand_frame_, "desired_hand_pose");
 
@@ -28,8 +28,8 @@ HandPoseGenerator::HandPoseGenerator()
 void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
 {
 
-  desperate_housewife::obstacleArray obstaclesMsg;
-  desperate_housewife::obstacleSingle obstacle;
+  desperate_housewife::fittedGeometriesSingle obstacle;
+  desperate_housewife::fittedGeometriesArray obstaclesMsg;
   desperate_housewife::handPoseSingle DesiredHandPose;
 
   if ( msg->geometries.size() == 1)
@@ -51,12 +51,20 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
 
     DesiredHandPose = generateHandPose( objects_vec[0] );
 
+
     for (unsigned int i=1; i<objects_vec.size(); i++)
     {
-      obstacle.point = objects_vec[i].pose.position;
-      obstacle.radius = 0.05; // to set for the radius o length or whatever
+      obstacle.pose = objects_vec[i].pose;
+      
+      for (unsigned j=0; j < objects_vec[i].info.size(); j++)
+      {
+      
+        obstacle.info.push_back(objects_vec[i].info[j]);
+      }
+      
       obstaclesMsg.obstacles.push_back( obstacle );
     }
+     obstacles_publisher_.publish( obstaclesMsg );
   }
  
   if (DesiredHandPose.whichArm == 1) 
@@ -69,7 +77,7 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
   }
 
  
-  obstacles_publisher_.publish( obstaclesMsg );
+  
 
   tf::Transform tfHandTrasform;
   tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform);

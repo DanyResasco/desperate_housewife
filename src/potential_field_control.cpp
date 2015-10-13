@@ -30,7 +30,7 @@ namespace desperate_housewife
     else
     {
       ROS_INFO("Starting controller");
-    ROS_INFO("Number of segments: %d", kdl_chain_.getNrOfSegments());
+      ROS_INFO("Number of segments: %d", kdl_chain_.getNrOfSegments());
  
     // ROS_INFO("Number of joints in chain: %d", kdl_chain_.getNrOfJoints());
    
@@ -55,6 +55,12 @@ namespace desperate_housewife
 
     ROS_INFO("Subscribed to: %s", desired_reference_topic.c_str());
     sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this);
+    
+    std::string obstalces_topic_;
+    n.getParam("/PotentialFieldControl/obstacle_list", obstalces_topic_);
+    //n.param<std::string>("/PotentialFieldControl/obstacle_list", obstalces_topic_, "/PotentialFieldControl/obstacle_list");
+    obstacles_subscribe_ = n.subscribe(obstalces_topic_.c_str(), 1, &PotentialFieldControl::Obstacle, this);
+    
     pub_error_ = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
     pub_pose_ = nh_.advertise<std_msgs::Float64MultiArray>("pose", 1000);
     pub_marker_ = nh_.advertise<visualization_msgs::Marker>("marker",1000);
@@ -73,10 +79,12 @@ namespace desperate_housewife
         joint_des_states_.qdot(i) = joint_msr_states_.qdot(i);
         Kp_(i) = 1000;
         Kd_(i) = 200;
+       
       }
 
       I_ = Eigen::Matrix<double,7,7>::Identity(7,7);
       Force_attractive = Eigen::Matrix<double,6,1>::Zero();
+      Force_repulsive = Eigen::Matrix<double,6,1>::Zero();
 
       first_step_ = 1;
       cmd_flag_ = 0;
@@ -133,17 +141,18 @@ namespace desperate_housewife
 
         // computing forward kinematics
         fk_pos_solver_->JntToCart(joint_msr_states_.q,x_);
-        std::cout<<"x_: "<<x_<<std::endl;
+        // std::cout<<"x_: "<<x_<<std::endl;
 
-        // for(int i=0; i<kdl_chain_.getNrOfSegments();i++)
+        // for(int i=0; i<kdl_chain_.getNrOfSegments()+1;i++)  
         // {
         //   KDL::Frame x_test;
         //   fk_pos_solver_->JntToCart(joint_msr_states_.q,x_test,i);
-        //   x_prova.push_back(x_test);
+        //   x_chain.push_back(x_test);
 
         // }
-        // std::cout<<"x_prova: "<<x_prova[13]<<std::endl;
-
+        // std::cout<<"x_prova: "<<x_chain[14]<<std::endl;
+        
+        // x_ = x_chain[14]; //14 is softhand
        if (Equal(x_,x_des_,0.05))
         //if (Equal(x_chain[13],x_des_,0.05))
         {
@@ -154,6 +163,8 @@ namespace desperate_housewife
             joint_des_states_.qdot(i) = joint_msr_states_.qdot(i);
           }
           cmd_flag_ = 0;
+
+          
           return;         
         }
 
@@ -178,6 +189,24 @@ namespace desperate_housewife
           msg_err_.data.push_back(x_err_(i));
         }
 
+        // std::cout<<"qui crash"<<std::endl;
+        //std::cout<<"Object_position.size()"<<Object_position.size()<<std::endl;
+        
+        if(Object_position.size() > 0)
+        {
+          //Eigen::Matrix<double,6,1> force_rep_local = Eigen::Matrix<double,6,1>::Zero();
+          // for(int i = 1; i< Object_position.size(); i++)
+          // {
+            Force_repulsive = GetRepulsiveForce(x_);
+            // std::cout<<"Force_repulsive: "<<Force_repulsive[0].col(0)<<std::endl;
+          // }
+          // for(int p=0; p<Force_repulsive.size();p++)
+          // {
+          //  Force_total = Force_total + Force_repulsive[p]; 
+          // }
+        }
+        
+
         // computing b = J*M^-1*(c+g) - J_dot*q_dot
         b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
 
@@ -191,8 +220,11 @@ namespace desperate_housewife
         // computing nullspace
         N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
 
+        // Eigen::Matrix<double,6,1> Force_test;
+        // Force_test = Force_attractive + Force_repulsive[0];
+        // std::cout<<"Force_test "<<Force_test<<std::endl;
         // finally, computing the torque tau
-        tau_.data = J_.data.transpose()*lambda_*(Force_attractive + b_);// + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
+        tau_.data = J_.data.transpose()*lambda_*(Force_attractive + Force_repulsive + b_);// + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
 
         // saving J_ and phi of the last iteration
         J_last_ = J_;
@@ -217,6 +249,15 @@ namespace desperate_housewife
       pub_error_.publish(msg_err_);
       // publishing pose 
       pub_pose_.publish(msg_pose_);
+
+      
+      x_chain.clear();
+      // Force_repulsive.clear();
+      Object_radius.clear();
+      Object_height.clear();
+      Object_position.clear();
+  
+
       ros::spinOnce();
 
   }
@@ -229,6 +270,23 @@ namespace desperate_housewife
     x_des_ = frame_des_;
     // std::cout<<"pose desired: "<<x_des_ <<std::endl;
     cmd_flag_ = 1;
+  }
+
+  void PotentialFieldControl::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
+  {
+      //get info for calculates objects surface
+      for(int i=0; i < msg->geometries.size(); i++)
+      {
+        KDL::Frame frame_obj;
+        Object_radius.push_back(msg->geometries[i].info[0]);  //radius
+        Object_height.push_back(msg->geometries[i].info[1]);  //height
+
+        tf::poseMsgToKDL(msg->geometries[i].pose, frame_obj);
+        Object_position.push_back(frame_obj); 
+        
+
+      }  
+      
   }
 
   void PotentialFieldControl::set_marker(KDL::Frame x, int id)
@@ -271,6 +329,121 @@ namespace desperate_housewife
 
     return -sum;
   }
+
+
+  Eigen::Matrix<double,6,1> PotentialFieldControl::GetRepulsiveForce(KDL::Frame &Pos_chain)
+  {
+      // ROS_INFO("dentro_set_repulsive");
+      // for the obstacles avoidance we consired only segments 6,8,14 (14 is the softhand)
+      std::vector<KDL::Vector> distance_local_obj;
+      double local_distance;
+      Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
+      std::vector<double>  min_d;
+      std::vector<int> index_infl;
+      int index_dist = 0;
+
+
+
+      for(int i=1; i<Object_position.size();i++)
+      {
+        
+        local_distance  = (diff(Object_position[i].p,Pos_chain.p)).Norm();
+
+        if( local_distance <= influence )
+        {
+          min_d.push_back(local_distance);
+          index_infl.push_back(i); //for tracking wich object is closet
+        }
+        else
+        {
+          continue;
+        }
+ 
+      }
+      
+      // distance_local_obj.push_back(diff(Object_position[U].p,Pos_chain[6].p));
+      // distance_local_obj.push_back(diff(Object_position[U].p,Pos_chain[8].p));
+      // distance_local_obj.push_back(diff(Object_position[U].p,Pos_chain[11].p));
+     
+      ROS_INFO("finito for e la dimensione è di: %d", min_d.size());
+
+      if(min_d.size() != 0)
+      {
+        
+        double min_distance = min_d[0];
+        //ROS_INFO("fatto init min_distance");
+        Eigen::Vector3d distance_der_partial(0,0,0);
+        Eigen::Vector3d vec_Temp(0,0,0);
+            
+        for (int i=0; i< min_d.size();i++)
+        {
+          if(min_distance > min_d[i])
+          {
+            min_distance = min_d[i];
+            index_dist = i;
+            
+          }
+
+          else
+          {
+            continue;
+          }
+        }
+
+        int index_d = index_infl[index_dist];
+        //object surface (x/radius)^2 + (y/radius)^2 +(z*2/l)^2n -1 = 0   
+          
+        distance_der_partial[0] = (Object_position[index_d].p.x()*2 / Object_radius[index_d] );
+        distance_der_partial[1] = (Object_position[index_d].p.y()*2 / Object_radius[index_d] );
+        distance_der_partial[2] = (Object_position[index_d].p.z()*4 / Object_height[index_d] ); //n=1
+        
+
+        double Ni_ = 1;
+        
+        vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
+
+        Force.row(0) << vec_Temp[0];
+        Force.row(1) << vec_Temp[1];
+        Force.row(2) << vec_Temp[2];
+        Force.row(3) <<  0;
+        Force.row(4) <<  0;
+        Force.row(5) <<  0;
+      }
+  
+
+     // distance_local_obj.clear();
+     return Force;
+       
+
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 }
 

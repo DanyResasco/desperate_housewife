@@ -20,7 +20,8 @@
 #include <tf/transform_datatypes.h>
 #include <tf_conversions/tf_kdl.h>
 
-
+#include <desperate_housewife/fittedGeometriesSingle.h>
+#include <desperate_housewife/fittedGeometriesArray.h>
 
 
 
@@ -41,7 +42,9 @@ namespace desperate_housewife
 		double task_objective_function(KDL::JntArray q);
 
 
-		void SetAttractiveField();
+		//void SetAttractiveField();
+		Eigen::Matrix<double,6,1> GetRepulsiveForce(KDL::Frame &Pos_now);
+		void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
 
 	private:
 		ros::Subscriber sub_command_;
@@ -111,8 +114,15 @@ namespace desperate_housewife
 
 		//dany
 		Eigen::Matrix<double,6,1> Force_attractive;
+		Eigen::Matrix<double,6,1> Force_total;
+		Eigen::Matrix<double,6,1> Force_repulsive;
 		double V_max_kuka = 1.5;
-		std::vector<KDL::Frame> x_prova;	//13 is soft_hand (end_effector)
+		std::vector<KDL::Frame> x_chain;	//13 is soft_hand (end_effector)
+		double influence = 0.30;
+		ros::Subscriber obstacles_subscribe_;
+		std::vector<double> Object_radius;
+		std::vector<double> Object_height;
+		std::vector<KDL::Frame> Object_position;
 	};
 
 }

@@ -48,7 +48,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
         }
       Point_desired(0) = 0;
       Point_desired(1) = 0;
-      Point_desired(2) = height*0.5 + 0.05;	
+      Point_desired(2) = height *0.5 + 0.05;	
       Point_desired(3) = 1;
       ROS_DEBUG("cyl upright and empty");
 
@@ -73,13 +73,14 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
         }
       Point_desired(0) = 0;
       Point_desired(1) = 0;
-      Point_desired(2) = height*0.5 + 0.05;
+      Point_desired(2) = height *0.5+ 0.05; //height*0.5 + 0.05;
       Point_desired(3) = 1;
       ROS_DEBUG("cyl upright and full");
       
       M_desired_local.col(2) << -z, 0;
       M_desired_local.col(3) << Point_desired;
       T_w_h = T_vito_c * M_desired_local*Rot_z ;
+      // std::cout<<"T_W_H: "<< T_w_h<< std::endl;
     }
 
   else if ((isLying != 0) && (radius < max_radius))
@@ -181,13 +182,15 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose ){
 	// double dist_to_left_hand  = 0;
 	// double dist_to_right_hand = 0;
 
-	if(dist_to_left_hand < dist_to_right_hand)
+	if(dist_to_left_hand <= dist_to_right_hand)
 	{
 	 
 	  ROS_DEBUG("Vito uses a: left arm");
     return 1;
 	}
-	
-	ROS_DEBUG("Vito uses a: Right arm");
-	return 0;
+  else
+  {
+	 	ROS_DEBUG("Vito uses a: Right arm");
+	 return 0;
+  }
 }
