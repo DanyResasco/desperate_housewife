@@ -43,7 +43,7 @@ namespace desperate_housewife
 
 
 		//void SetAttractiveField();
-		Eigen::Matrix<double,6,1> GetRepulsiveForce(KDL::Frame &Pos_now);
+		Eigen::Matrix<double,6,1> GetRepulsiveForce(std::vector<KDL::Frame> &Pos_now);
 		void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
 
 	private:

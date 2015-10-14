@@ -56,10 +56,10 @@ namespace desperate_housewife
     ROS_INFO("Subscribed to: %s", desired_reference_topic.c_str());
     sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this);
     
-    std::string obstalces_topic_;
-    n.getParam("/PotentialFieldControl/obstacle_list", obstalces_topic_);
+    // std::string obstalces_topic_;
+    // n.getParam("/PotentialFieldControl/obstacle_list", obstalces_topic_);
     //n.param<std::string>("/PotentialFieldControl/obstacle_list", obstalces_topic_, "/PotentialFieldControl/obstacle_list");
-    obstacles_subscribe_ = n.subscribe(obstalces_topic_.c_str(), 1, &PotentialFieldControl::InfoGeometry, this);
+    obstacles_subscribe_ = n.subscribe("/PotentialFieldControl/obstacle_list", 1, &PotentialFieldControl::InfoGeometry, this);
     
     pub_error_ = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
     pub_pose_ = nh_.advertise<std_msgs::Float64MultiArray>("pose", 1000);
@@ -143,13 +143,13 @@ namespace desperate_housewife
         fk_pos_solver_->JntToCart(joint_msr_states_.q,x_);
         // std::cout<<"x_: "<<x_<<std::endl;
 
-        // for(int i=0; i<kdl_chain_.getNrOfSegments()+1;i++)  
-        // {
-        //   KDL::Frame x_test;
-        //   fk_pos_solver_->JntToCart(joint_msr_states_.q,x_test,i);
-        //   x_chain.push_back(x_test);
+        for(unsigned int i=0; i<kdl_chain_.getNrOfSegments()+1;i++)  
+        {
+          KDL::Frame x_test;
+          fk_pos_solver_->JntToCart(joint_msr_states_.q,x_test,i);
+          x_chain.push_back(x_test);
 
-        // }
+        }
         // std::cout<<"x_prova: "<<x_chain[14]<<std::endl;
         
         // x_ = x_chain[14]; //14 is softhand
@@ -191,12 +191,23 @@ namespace desperate_housewife
 
         // std::cout<<"qui crash"<<std::endl;
         //std::cout<<"Object_position.size()"<<Object_position.size()<<std::endl;
-        
+         // std::cout<<"obstacle size: "<<Object_position.size()<<std::endl;
         if(Object_position.size() > 0)
         {
-          Force_repulsive = GetRepulsiveForce(x_);
+          //Eigen::Matrix<double,6,1> force_rep_local = Eigen::Matrix<double,6,1>::Zero();
+          // for(int i = 1; i< Object_position.size(); i++)
+          // {
+            Force_repulsive = GetRepulsiveForce(x_chain);
+            // std::cout<<"Force_repulsive: "<<Force_repulsive[0].col(0)<<std::endl;
+          // }
+          // for(int p=0; p<Force_repulsive.size();p++)
+          // {
+          //  Force_total = Force_total + Force_repulsive[p]; 
+          // }
+  
         }
-       
+        
+
         // computing b = J*M^-1*(c+g) - J_dot*q_dot
         b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
 
@@ -243,9 +254,9 @@ namespace desperate_housewife
       
       x_chain.clear();
       // Force_repulsive.clear();
-      Object_radius.clear();
-      Object_height.clear();
-      Object_position.clear();
+        Object_radius.clear();
+        Object_height.clear();
+        Object_position.clear();
   
 
       ros::spinOnce();
@@ -265,7 +276,7 @@ namespace desperate_housewife
   void PotentialFieldControl::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
   {
       //get info for calculates objects surface
-      for(int i=0; i < msg->geometries.size(); i++)
+      for(unsigned int i=0; i < msg->geometries.size(); i++)
       {
         KDL::Frame frame_obj;
         Object_radius.push_back(msg->geometries[i].info[0]);  //radius
@@ -275,7 +286,8 @@ namespace desperate_housewife
         Object_position.push_back(frame_obj); 
         
 
-      }  
+      } 
+      // std::cout<<"obstacle size: "<<Object_position.size()<<std::endl; 
       
   }
 
@@ -321,25 +333,32 @@ namespace desperate_housewife
   }
 
 
-  Eigen::Matrix<double,6,1> PotentialFieldControl::GetRepulsiveForce(KDL::Frame &Pos_chain)
+  Eigen::Matrix<double,6,1> PotentialFieldControl::GetRepulsiveForce(std::vector<KDL::Frame> &Pos_chain)
   {
       // ROS_INFO("dentro_set_repulsive");
       // for the obstacles avoidance we consired only segments 6,8,14 (14 is the softhand)
-      std::vector<KDL::Vector> distance_local_obj;
-      double local_distance;
+      std::vector<double> distance_local_obj;
+      // double local_distance;
       Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
       std::vector<double>  min_d;
       std::vector<int> index_infl;
       int index_dist = 0;
+      // std::vector<double> local
 
-      for(int i=1; i < Object_position.size(); i++)
+      //ROS_INFO("dentro repulsive");
+
+      for(unsigned int i=0; i<Object_position.size();i++)
       {
         
-        local_distance  = (diff(Object_position[i].p,Pos_chain.p)).Norm();
+        distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[6].p)).Norm() );
+        distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[8].p)).Norm() );
+      }
 
-        if( local_distance <= influence )
+      for(unsigned int i=0; i<distance_local_obj.size(); i++ )
+      {
+        if( distance_local_obj[i] <= influence )
         {
-          min_d.push_back(local_distance);
+          min_d.push_back(distance_local_obj[i]);
           index_infl.push_back(i); //for tracking wich object is closet
         }
         else
@@ -349,8 +368,11 @@ namespace desperate_housewife
  
       }
       
-   
-      ROS_INFO("finito for e la dimensione è di: %d", min_d.size());
+      // distance_local_obj.push_back(diff(Object_position[U].p,Pos_chain[6].p));
+      // distance_local_obj.push_back(diff(Object_position[U].p,Pos_chain[8].p));
+      // distance_local_obj.push_back(diff(Object_position[U].p,Pos_chain[11].p));
+     
+      //ROS_INFO("finito for e la dimensione è di: %g", min_d.size());
 
       if(min_d.size() != 0)
       {
@@ -360,7 +382,7 @@ namespace desperate_housewife
         Eigen::Vector3d distance_der_partial(0,0,0);
         Eigen::Vector3d vec_Temp(0,0,0);
             
-        for (int i=0; i< min_d.size();i++)
+        for (unsigned int i=0; i< min_d.size();i++)
         {
           if(min_distance > min_d[i])
           {

@@ -39,7 +39,8 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       if (whichArm == 1) //left arm
         {
           M_desired_local.col(0) << x, 0;
-          M_desired_local.col(1) << -z.cross(x),0;
+           M_desired_local.col(1) << -z.cross(x),0;
+          //Rot_z = Eigen::Matrix4d::Identity();
         }
       else //right arm
         {
@@ -53,8 +54,11 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       ROS_DEBUG("cyl upright and empty");
 
       M_desired_local.col(2) << -z , 0;
+      // Eigen::Vector3d aux_vecz(M_desired_local(0,2), M_desired_local(1,2), M_desired_local(2,2));
+      // Eigen::Vector3d aux_vecx(M_desired_local(0,0), M_desired_local(1,0), M_desired_local(2,0));
+      // M_desired_local.col(1) << aux_vecz.cross(aux_vecx),0;
       M_desired_local.col(3) << Point_desired;
-      T_w_h = T_vito_c * M_desired_local;//*Rot_z ; 
+      T_w_h = T_vito_c * M_desired_local;//l*Rot_z ; 
       
     }
 
@@ -68,8 +72,8 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
       else //right arm
         {
-          M_desired_local.col(0) << -x, 0;	
-          M_desired_local.col(1) << -z.cross(-x),0;
+          M_desired_local.col(0) << x, 0;	
+          M_desired_local.col(1) << -z.cross(x),0;
         }
       Point_desired(0) = 0;
       Point_desired(1) = 0;

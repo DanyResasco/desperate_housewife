@@ -51,8 +51,11 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
 
     DesiredHandPose = generateHandPose( objects_vec[0] );
 
+    // std::cout<<"objects_vec.size(): "<<objects_vec.size()<<std::endl;
+    
+    unsigned int i = (DesiredHandPose.isGraspable != true ? 0 : 1 );
 
-    for (unsigned int i=1; i<objects_vec.size(); i++)
+    for (i; i<objects_vec.size(); i++)
     {
       obstacle.pose = objects_vec[i].pose;
       
@@ -64,21 +67,26 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
       
       obstaclesMsg.geometries.push_back( obstacle );
     }
-     obstacles_publisher_.publish( obstaclesMsg );
+
+    obstacles_publisher_.publish( obstaclesMsg );
+    
   }
  
-  if (DesiredHandPose.whichArm == 1) 
+  if(DesiredHandPose.isGraspable == true)
   {
-    desired_hand_left_pose_publisher_.publish( DesiredHandPose );
-  }
-  else
-  {
-    desired_hand_right_pose_publisher_.publish( DesiredHandPose );
+    if (DesiredHandPose.whichArm == 1) 
+    {
+      desired_hand_left_pose_publisher_.publish( DesiredHandPose );
+    }
+    else
+    {
+      desired_hand_right_pose_publisher_.publish( DesiredHandPose );
+    }
   }
 
  
   
-
+  objects_vec.clear();
   tf::Transform tfHandTrasform;
   tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform);
   tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), desired_hand_frame_.c_str()) );
@@ -108,7 +116,7 @@ desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( despera
 
 bool HandPoseGenerator::isGeometryGraspable ( desperate_housewife::fittedGeometriesSingle geometry )
 {
-  if ( geometry.type == 3 && geometry.info[0] < .15 )
+  if (( geometry.type == 3 && geometry.info[0] < .15 ) || (geometry.info[1] < 0.35))
   {
     return true;
   }

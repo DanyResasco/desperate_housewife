@@ -162,36 +162,13 @@ namespace BasicGeometries{
 
     pcl::transformPointCloud(*original_cloud_, *cylinder_points_, transformation_i);
 
-    // Identify if the cylinder is standing or lying 
-
-    // // Eigen::Vector3d u(0,-1,0);
-    // Eigen::Vector3d plane_coeff_kinect_frame, temp_n2;
-    // Eigen::Vector4d normal_plane_cyl_frame, temp_normal_plane;
-    // plane_coeff_kinect_frame(0) = Plane_coeff[0];
-    // plane_coeff_kinect_frame(1) = Plane_coeff[1];
-    // plane_coeff_kinect_frame(2) = Plane_coeff[2];
-
-
-    // if ((u.dot(plane_coeff_kinect_frame)) <0) // in kinect frame
-    // {
-    //   plane_coeff_kinect_frame = plane_coeff_kinect_frame * -1;
-    // }
-
-    // // in cyl frame
-    // temp_normal_plane << plane_coeff_kinect_frame, 1;
-    // normal_plane_cyl_frame = T_G_K * temp_normal_plane;
-    // normal_plane_cyl_frame.normalize();
 
     Eigen::Vector3d nomal_plani_in_cyl_frame = transformation_i.block<3,3>(0,0) * Eigen::Vector3d( 0, 0, 1);
     nomal_plani_in_cyl_frame.normalize();
 
     Eigen::Vector3d vec_temp;
     vec_temp = nomal_plani_in_cyl_frame;
-    // Eigen::Vector3d axis_cyl_frame(0,0,1);
-    // vec_temp(0) = nomal_plani_in_cyl_frame(0);
-    // vec_temp(1) = nomal_plani_in_cyl_frame(1);
-    // vec_temp(2) = nomal_plani_in_cyl_frame(2);
-
+  
     vec_temp.normalize();
     double dotproduct = vec_temp.dot(Eigen::Vector3d(0,0,1));
 
@@ -252,8 +229,11 @@ namespace BasicGeometries{
 
     info_.push_back( isFull );
 
-    int index = info_.size()-1;
-    info_.push_back((((double)inliers_cylinder->indices.size()) / ((double)cylinder_points_->points.size())));
+    // info_.push_back((((double)inliers_cylinder->indices.size()) / ((double)cylinder_points_->points.size())));
+    
+
+    // int index = info_.size()-1;
+    // ROS_INFO("ratio cyl: %g", info_[index]);
     //std::cout<<"rapp cyl: "<<info_[index]<<std::endl;
     
     /* info contains: radius, height, isLying, isfull,  ratio between number of inliers/number of pointCloud points*/
