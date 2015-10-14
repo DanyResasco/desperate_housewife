@@ -62,7 +62,7 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
         obstacle.info.push_back(objects_vec[i].info[j]);
       }
       
-      obstaclesMsg.obstacles.push_back( obstacle );
+      obstaclesMsg.geometries.push_back( obstacle );
     }
      obstacles_publisher_.publish( obstaclesMsg );
   }

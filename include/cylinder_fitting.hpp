@@ -251,7 +251,12 @@ namespace BasicGeometries{
     }
 
     info_.push_back( isFull );
-    /* info contains: radius, height, isLying, isfull */
+
+    int index = info_.size()-1;
+    info_.push_back((((double)inliers_cylinder->indices.size()) / ((double)cylinder_points_->points.size())));
+    //std::cout<<"rapp cyl: "<<info_[index]<<std::endl;
+    
+    /* info contains: radius, height, isLying, isfull,  ratio between number of inliers/number of pointCloud points*/
 
     return true;
   }

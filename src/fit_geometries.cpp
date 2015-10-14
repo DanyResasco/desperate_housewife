@@ -113,38 +113,55 @@ std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr > BasicGeometriesNode::getCl
 BasicGeometriesNode::geometry BasicGeometriesNode::fitGeometry( pcl::PointCloud<pcl::PointXYZRGBA>::Ptr OriginalCluster ){
 
   BasicGeometriesNode::geometry new_geometry;
+  BasicGeometriesNode::geometry cyl_geometry;
+  BasicGeometriesNode::geometry sphere_geometry;
 
   // TODO Here we can implement more BAsic Geometries.
   BasicGeometries::cylinder cylinder_local( OriginalCluster );
+
   if( cylinder_local.fitCylinder() )
     {
   //Cube = 1, Sphere = 2, Cylinder = 3, Cone = 11
-      new_geometry.geom_type = 3;
+      cyl_geometry.geom_type = 3;
       std::vector<double> cyl_info = cylinder_local.getInfo();
       double radius = cyl_info[0];
-      new_geometry.geom_info = cyl_info;
-      new_geometry.geom_info_marker.push_back( radius * 2 );
-      new_geometry.geom_info_marker.push_back( radius * 2 );
+      cyl_geometry.geom_info = cyl_info;
+      cyl_geometry.geom_info_marker.push_back( radius * 2 );
+      cyl_geometry.geom_info_marker.push_back( radius * 2 );
       double height = cyl_info[1];
-      new_geometry.geom_info_marker.push_back( height );
-      new_geometry.geom_transformation = cylinder_local.getTransformation();
-      return new_geometry;
+      cyl_geometry.geom_info_marker.push_back( height );
+      cyl_geometry.geom_transformation = cylinder_local.getTransformation();
+      //return new_geometry;
     }
-    BasicGeometries::sphere sphere_local( OriginalCluster );
-    if( sphere_local.fitSphere() )
+  
+  BasicGeometries::sphere sphere_local( OriginalCluster );
+  if( sphere_local.fitSphere() )
     {
-      new_geometry.geom_type = 2;
+      sphere_geometry.geom_type = 2;
       std::vector<double> cyl_info = sphere_local.getInfo();
       double radius = cyl_info[0];
-      new_geometry.geom_info = cyl_info;
-      new_geometry.geom_info_marker.push_back( radius );
-      new_geometry.geom_info_marker.push_back( radius );
-      new_geometry.geom_info_marker.push_back( radius );
-      new_geometry.geom_transformation = sphere_local.getTransformation();
-      return new_geometry;
+      sphere_geometry.geom_info = cyl_info;
+      sphere_geometry.geom_info_marker.push_back( radius );
+      sphere_geometry.geom_info_marker.push_back( radius );
+      sphere_geometry.geom_info_marker.push_back( radius );
+      sphere_geometry.geom_transformation = sphere_local.getTransformation();
+      //return new_geometry;
+    }
+  int index_sphere = sphere_geometry.geom_info.size() - 1;
+  int index_cyl = cyl_geometry.geom_info.size() - 1;
+
+  if(sphere_geometry.geom_info[index_sphere] > cyl_geometry.geom_info[index_cyl])
+    {
+        std::cout<<"sphere"<<std::endl;
+        return sphere_geometry;
+    }
+  else
+    {
+       std::cout<<"cyl"<<std::endl;
+    return cyl_geometry;
     }
 
-  return new_geometry;
+  
 }
 
 void BasicGeometriesNode::generateMarkerMessages( std::vector<geometry> geometries )

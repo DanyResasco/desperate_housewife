@@ -117,7 +117,7 @@ namespace desperate_housewife
 		Eigen::Matrix<double,6,1> Force_total;
 		Eigen::Matrix<double,6,1> Force_repulsive;
 		double V_max_kuka = 1.5;
-		std::vector<KDL::Frame> x_chain;	//13 is soft_hand (end_effector)
+		std::vector<KDL::Frame> x_chain;	//14 is soft_hand (end_effector)
 		double influence = 0.30;
 		ros::Subscriber obstacles_subscribe_;
 		std::vector<double> Object_radius;

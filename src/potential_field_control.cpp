@@ -59,7 +59,7 @@ namespace desperate_housewife
     std::string obstalces_topic_;
     n.getParam("/PotentialFieldControl/obstacle_list", obstalces_topic_);
     //n.param<std::string>("/PotentialFieldControl/obstacle_list", obstalces_topic_, "/PotentialFieldControl/obstacle_list");
-    obstacles_subscribe_ = n.subscribe(obstalces_topic_.c_str(), 1, &PotentialFieldControl::Obstacle, this);
+    obstacles_subscribe_ = n.subscribe(obstalces_topic_.c_str(), 1, &PotentialFieldControl::InfoGeometry, this);
     
     pub_error_ = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
     pub_pose_ = nh_.advertise<std_msgs::Float64MultiArray>("pose", 1000);
@@ -194,19 +194,9 @@ namespace desperate_housewife
         
         if(Object_position.size() > 0)
         {
-          //Eigen::Matrix<double,6,1> force_rep_local = Eigen::Matrix<double,6,1>::Zero();
-          // for(int i = 1; i< Object_position.size(); i++)
-          // {
-            Force_repulsive = GetRepulsiveForce(x_);
-            // std::cout<<"Force_repulsive: "<<Force_repulsive[0].col(0)<<std::endl;
-          // }
-          // for(int p=0; p<Force_repulsive.size();p++)
-          // {
-          //  Force_total = Force_total + Force_repulsive[p]; 
-          // }
+          Force_repulsive = GetRepulsiveForce(x_);
         }
-        
-
+       
         // computing b = J*M^-1*(c+g) - J_dot*q_dot
         b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
 
@@ -342,9 +332,7 @@ namespace desperate_housewife
       std::vector<int> index_infl;
       int index_dist = 0;
 
-
-
-      for(int i=1; i<Object_position.size();i++)
+      for(int i=1; i < Object_position.size(); i++)
       {
         
         local_distance  = (diff(Object_position[i].p,Pos_chain.p)).Norm();
@@ -361,10 +349,7 @@ namespace desperate_housewife
  
       }
       
-      // distance_local_obj.push_back(diff(Object_position[U].p,Pos_chain[6].p));
-      // distance_local_obj.push_back(diff(Object_position[U].p,Pos_chain[8].p));
-      // distance_local_obj.push_back(diff(Object_position[U].p,Pos_chain[11].p));
-     
+   
       ROS_INFO("finito for e la dimensione è di: %d", min_d.size());
 
       if(min_d.size() != 0)
