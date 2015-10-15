@@ -25,6 +25,7 @@
 
 
 
+
 namespace desperate_housewife
 {
 	class PotentialFieldControl: public controller_interface::PIDKinematicChainControllerBase<hardware_interface::EffortJointInterface>
@@ -45,6 +46,7 @@ namespace desperate_housewife
 		//void SetAttractiveField();
 		Eigen::Matrix<double,6,1> GetRepulsiveForce(std::vector<KDL::Frame> &Pos_now);
 		void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
+		// Eigen::Matrix<double,6,1> RepulsiveWithTable(std::vector<KDL::Frame> &Pos_arm, KDL::Vector &OB_pos);
 
 	private:
 		ros::Subscriber sub_command_;
@@ -56,8 +58,8 @@ namespace desperate_housewife
 		std_msgs::Float64MultiArray msg_err_;
 		std_msgs::Float64MultiArray msg_pose_;
 		visualization_msgs::Marker msg_marker_;
-		std::stringstream sstr_;
-		std::string desired_reference_topic;
+		// std::stringstream sstr_;
+		std::string desired_reference_topic, desired_hand_name, desired_hand_topic;
         
 		KDL::JntArray qdot_last_;
 
@@ -101,17 +103,15 @@ namespace desperate_housewife
 		int first_step_;
 		int msg_id_;
 		int cmd_flag_;
-		int ntasks_;
-		bool on_target_flag_;
-		int links_index_;
+		// int ntasks_;
+		// bool on_target_flag_;
+		// int links_index_;
 
 
 		boost::scoped_ptr<KDL::ChainJntToJacSolver> jnt_to_jac_solver_;
 		boost::scoped_ptr<KDL::ChainDynParam> id_solver_;
 		boost::scoped_ptr<KDL::ChainFkSolverPos_recursive> fk_pos_solver_;
-		//boost::scoped_ptr<KDL::ChainFkSolverVel_recursive> fk_vel_solver_;
-		//boost::scoped_ptr<KDL::ChainFkSolverAcc_recursive> fk_acc_solver_;
-
+		
 		//dany
 		Eigen::Matrix<double,6,1> Force_attractive;
 		Eigen::Matrix<double,6,1> Force_total;
@@ -123,8 +123,10 @@ namespace desperate_housewife
 		std::vector<double> Object_radius;
 		std::vector<double> Object_height;
 		std::vector<KDL::Frame> Object_position;
+		ros::Publisher hand_publisher_;
+		
+		Eigen::Matrix<double,6,1> F_Rep_table;
 	};
-
 }
 
 #endif

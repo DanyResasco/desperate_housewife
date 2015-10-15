@@ -36,18 +36,18 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
   if((isLying == 0) && (isFull == 0)) 
     {
-      if (whichArm == 1) //left arm
-        {
+      // if (whichArm == 1) //left arm
+      //   {
           M_desired_local.col(0) << x, 0;
            M_desired_local.col(1) << -z.cross(x),0;
           //Rot_z = Eigen::Matrix4d::Identity();
-        }
-      else //right arm
-        {
-          M_desired_local.col(0) << -x, 0;	
-          M_desired_local.col(1) << -z.cross(-x),0;
-        }
-      Point_desired(0) = 0;
+      //   }
+      // else //right arm
+      //   {
+      //     M_desired_local.col(0) << -x, 0;	
+      //     M_desired_local.col(1) << -z.cross(-x),0;
+      //   }
+      Point_desired(0) = radius;
       Point_desired(1) = 0;
       Point_desired(2) = height *0.5 + 0.05;	
       Point_desired(3) = 1;
@@ -64,17 +64,17 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
   else if(((isLying == 0) && (isFull != 0)) && (radius< max_radius))
     {
-      if (whichArm == 1) //left arm
-        {
+      // if (whichArm == 1) //left arm
+      //   {
           M_desired_local.col(0) << x, 0;
           M_desired_local.col(1) << -z.cross(x),0;
-        }
+        // }
 
-      else //right arm
-        {
+      // else //right arm
+      //   {
           M_desired_local.col(0) << x, 0;	
           M_desired_local.col(1) << -z.cross(x),0;
-        }
+        // }
       Point_desired(0) = 0;
       Point_desired(1) = 0;
       Point_desired(2) = height *0.5+ 0.05; //height*0.5 + 0.05;
@@ -89,17 +89,17 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
   else if ((isLying != 0) && (radius < max_radius))
     {
-      if (whichArm == 1) //left arm
-        {
+      // if (whichArm == 1) //left arm
+      //   {
           M_desired_local.col(0) << -z, 0;
           M_desired_local.col(1) << -y.cross(-z), 0;	
-        }
+        // }
 
-      else //right arm
-        {
+      // else //right arm
+      //   {
           M_desired_local.col(0) << z, 0;	
           M_desired_local.col(1) << -y.cross(z), 0;	
-        }
+        // }
       Point_desired(0) = 0;
       Point_desired(1) = radius + 0.05;
       Point_desired(2) = 0; 

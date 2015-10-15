@@ -9,6 +9,7 @@
 #include <Eigen/LU>
 #include <kdl/frames.hpp>
 #include <kdl/frames_io.hpp>
+#include <trajectory_msgs/JointTrajectory.h>
 
 #include <math.h>
 
@@ -56,11 +57,13 @@ namespace desperate_housewife
     ROS_INFO("Subscribed to: %s", desired_reference_topic.c_str());
     sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this);
     
-    // std::string obstalces_topic_;
-    // n.getParam("/PotentialFieldControl/obstacle_list", obstalces_topic_);
-    //n.param<std::string>("/PotentialFieldControl/obstacle_list", obstalces_topic_, "/PotentialFieldControl/obstacle_list");
-    obstacles_subscribe_ = n.subscribe("/PotentialFieldControl/obstacle_list", 1, &PotentialFieldControl::InfoGeometry, this);
+    n.getParam("desired_hand_name", desired_hand_name);
+    n.getParam("desired_hand_topic", desired_hand_topic);
+
+    hand_publisher_ = n.advertise<trajectory_msgs::JointTrajectory>(desired_hand_topic, 1000);
     
+    obstacles_subscribe_ = n.subscribe("/PotentialFieldControl/obstacle_list", 1, &PotentialFieldControl::InfoGeometry, this);
+        
     pub_error_ = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
     pub_pose_ = nh_.advertise<std_msgs::Float64MultiArray>("pose", 1000);
     pub_marker_ = nh_.advertise<visualization_msgs::Marker>("marker",1000);
@@ -85,6 +88,8 @@ namespace desperate_housewife
       I_ = Eigen::Matrix<double,7,7>::Identity(7,7);
       Force_attractive = Eigen::Matrix<double,6,1>::Zero();
       Force_repulsive = Eigen::Matrix<double,6,1>::Zero();
+      F_Rep_table = Eigen::Matrix<double,6,1>::Zero();
+      Force_total = Eigen::Matrix<double,6,1>::Zero();
 
       first_step_ = 1;
       cmd_flag_ = 0;
@@ -94,6 +99,12 @@ namespace desperate_housewife
 
   void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& period)
   {
+      //open the softh_hand
+      // msg_jointT_hand.joint_names[0] = desired_hand_name;
+      // msg_jointT_hand.points[0].positions[0] = 0;
+      // msg_jointT_hand.points[0].time_from_start = ros::Duration(0.000001); // 1s;
+      // hand_publisher_.publish(msg_jointT_hand);
+
     // get joint positions
       for(unsigned int i=0; i < joint_handles_.size(); i++) 
       {
@@ -164,7 +175,12 @@ namespace desperate_housewife
           }
           cmd_flag_ = 0;
 
-          
+          trajectory_msgs::JointTrajectory msg_jointT_hand;
+          msg_jointT_hand.joint_names[0] = desired_hand_name;
+          msg_jointT_hand.points[0].positions[0] = 1;
+          msg_jointT_hand.points[0].time_from_start = ros::Duration(0.000001); // 1s;
+          hand_publisher_.publish(msg_jointT_hand);
+
           return;         
         }
 
@@ -207,6 +223,8 @@ namespace desperate_housewife
   
         }
         
+        // F_Rep_table = RepulsiveWithTable(x_chain, x_des_.p);
+        // Force_total = Force_repulsive + F_Rep_table;
 
         // computing b = J*M^-1*(c+g) - J_dot*q_dot
         b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
@@ -242,6 +260,9 @@ namespace desperate_housewife
           joint_handles_[i].setCommand(PIDs_[i].computeCommand(joint_des_states_.q(i) - joint_msr_states_.q(i),period));
       }
 
+    
+      
+
       // publishing markers for visualization in rviz
       pub_marker_.publish(msg_marker_);
       msg_id_++;
@@ -254,10 +275,10 @@ namespace desperate_housewife
       
       x_chain.clear();
       // Force_repulsive.clear();
-        Object_radius.clear();
-        Object_height.clear();
-        Object_position.clear();
-  
+      Object_radius.clear();
+      Object_height.clear();
+      Object_position.clear();
+      Force_total = Eigen::Matrix<double,6,1>::Zero();
 
       ros::spinOnce();
 
@@ -425,7 +446,82 @@ namespace desperate_housewife
   }
 
 
+// Eigen::Matrix<double,6,1> PotentialFieldControl::RepulsiveWithTable(std::vector<KDL::Frame> &Pos_arm, KDL::Vector &OB_pos)
+// {
+//     // ROS_INFO("dentro_set_repulsive");
+//     // for the obstacles avoidance we consired only segments 6,8,14 (14 is the softhand)
+//     KDL::Vector Table_position;
+//     double Rep_inf_table = 0.15;
+//     Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
+//     // double Table_lenght =  
+//     std::vector<KDL::Vector> distance_local_obj;
+//     std::vector<double> distance_influence;
 
+//     for(unsigned int i=0; i <= (-OB_pos.x(); i++) //x is always negative
+//     {
+//       double Table_lenght = (OB_pos.y() < 0 ? -0.5: 0.5 );
+//       for(unsigned int j=OB_pos.y(); j< =Table_lenght; j++ )
+//       {
+//         Table_position.x() = i;
+//         Table_position.y() = j;
+//         Table_position.z() = 0.10;
+//         distance_local_obj.push_back(diff(Table_position,Pos_chain[6].p));
+//         distance_local_obj.push_back(diff(Table_position,Pos_chain[8].p));
+//         distance_local_obj.push_back(diff(Table_position,Pos_chain[11].p));
+//         distance_local_obj.push_back(diff(Table_position,Pos_chain[14].p));
+
+//       }
+//     }
+     
+//     for(unsigned int i= 0; i< distance_local_obj.size(); i++)
+//     {
+//       if(distance_local_obj[i].Norm() < Rep_inf_table )
+//       {
+//         distance_influence.push_back(distance_local_obj[i].Norm() );
+//       }
+//       else
+//       {
+//         continue;
+//       }
+//     }
+
+//     if(distance_influence.size() != 0)
+//     {
+//       double min_distance = distance_influence[0];
+//       for (unsigned int i=0; i< distance_influence.size();i++)
+//       {
+//           min_distance =(min_distance > distance_influence[i] ?  distance_influence[i] : continue );
+//       }
+//             // {
+//             //   min_distance = distance_influence[i];
+//             //   //index_dist = i;
+            
+//             // }
+
+//           //   else
+//           //   {
+//           //     continue;
+//           //   }
+//           // }
+//     double Ni_ = 1;
+//     Eigen::Vector3d distance_der_partial(0,0,1);
+        
+//     vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/distance_influence) * distance_der_partial;
+
+//         Force.row(0) << vec_Temp[0];
+//         Force.row(1) << vec_Temp[1];
+//         Force.row(2) << vec_Temp[2];
+//         Force.row(3) <<  0;
+//         Force.row(4) <<  0;
+//         Force.row(5) <<  0;
+//       }
+  
+
+//      // distance_local_obj.clear();
+//      return Force;
+
+
+// }
 
 
 
