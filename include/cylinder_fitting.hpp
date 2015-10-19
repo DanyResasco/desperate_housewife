@@ -38,7 +38,7 @@ namespace BasicGeometries{
     
   };
 
-
+  //use a pcl function for fitting
   bool cylinder::fitCylinder(){    
 
     transformation_ = Eigen::Matrix4d::Identity();
@@ -112,13 +112,12 @@ namespace BasicGeometries{
 
     // Compose the transformation and return it
 
-
     transformation_.row(0) << rotation.row(0), position[0];
     transformation_.row(1) << rotation.row(1), position[1];
     transformation_.row(2) << rotation.row(2), position[2];
     transformation_.row(3) << 0,0,0, 1;
 
-    // Find Height
+    // Find Height in cylinder frame
 
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cylinder_points_local (new pcl::PointCloud<pcl::PointXYZRGBA>);
     Eigen::Matrix4d transformation_i = transformation_.inverse();
@@ -162,7 +161,7 @@ namespace BasicGeometries{
 
     pcl::transformPointCloud(*original_cloud_, *cylinder_points_, transformation_i);
 
-
+    //calculation if the geometry is lying or standing respect the normal plane
     Eigen::Vector3d nomal_plani_in_cyl_frame = transformation_i.block<3,3>(0,0) * Eigen::Vector3d( 0, 0, 1);
     nomal_plani_in_cyl_frame.normalize();
 
@@ -170,13 +169,13 @@ namespace BasicGeometries{
     vec_temp = nomal_plani_in_cyl_frame;
   
     vec_temp.normalize();
-    double dotproduct = vec_temp.dot(Eigen::Vector3d(0,0,1));
+    double dotproduct = vec_temp.dot(Eigen::Vector3d(0,0,1)); 
 
-    double theta = std::acos(dotproduct);
+    double theta = std::acos(dotproduct); //angle between plane and cylidner's z_axis
 
     double isLaying = 0.0;
-    // if(((theta >= 0.) && (theta<45.*(3.14/180.))) || ((theta <0) && (theta > -45.*(3.14/180.))))
-    if(((theta >= -45.*(3.14/180.)) && (theta <= 45.*(3.14/180.))))
+    //45 degree is the threshold chosen 
+    if(((theta >= -45.*(3.14/180.)) && (theta <= 45.*(3.14/180.)))) 
     {
       isLaying = 0.;
     }
@@ -193,7 +192,7 @@ namespace BasicGeometries{
     {
       // Check if the cylinder is empty
 
-      pcl::PointXYZRGBA point_center; //point at top of the object
+      pcl::PointXYZRGBA point_center; //center point at top of the object
 
       z_max= cylinder_points_->points[0].z;
       for (unsigned int i=1; i< cylinder_points_->points.size(); i++)
@@ -205,7 +204,7 @@ namespace BasicGeometries{
         }
       }
 
-      point_center.x = 0.; // TO Check
+      point_center.x = 0.; 
       point_center.y = 0.;
       point_center.z = z_max;
 

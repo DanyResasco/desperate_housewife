@@ -5,9 +5,7 @@
 
 BasicGeometriesNode::BasicGeometriesNode()
 {
-
-  // nh.param<bool>("/scene_filter/filter", filter_, "false");
-  // nh.param<double>("/scene_filter/xmin", xmin, -100);
+  // initialize all topic and frame with file vito_controllers.yaml
   nh = ros::NodeHandle("BasicGeometriesNode_node");
   nh.param<std::string>("/BasicGeometriesNode/camera_topic", camera_topic_, "/scene_filter/scene_filtered");
 
@@ -64,7 +62,7 @@ void BasicGeometriesNode::BasicGeometriesNodeCallback(sensor_msgs::PointCloud2 m
 
 std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr > BasicGeometriesNode::getClusters( pcl::PointCloud<pcl::PointXYZRGBA>::Ptr OriginalScene )
 {
-  // try with euclidean clusters
+  // Make a cluster with euclidean clusters
   // Creating the KdTree object for the search method of the extraction
   std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr > cluster_vector;
   pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBA>);
@@ -81,7 +79,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr > BasicGeometriesNode::getCl
   euclidean_cluster.extract (cluster_indices);
 
   ROS_DEBUG("Number of clusters %lu", cluster_indices.size());
-
+  // from cluster[i] to point_cloud
   if (cluster_indices.size() > 0)
     {
 
@@ -124,7 +122,7 @@ BasicGeometriesNode::geometry BasicGeometriesNode::fitGeometry( pcl::PointCloud<
 
   if( cylinder_local.fitCylinder() )
     {
-  //Cube = 1, Sphere = 2, Cylinder = 3, Cone = 11
+    //Cube = 1, Sphere = 2, Cylinder = 3, Cone = 11
       cyl_geometry.geom_type = 3;
       std::vector<double> cyl_info = cylinder_local.getInfo();
       double radius = cyl_info[0];
@@ -134,8 +132,7 @@ BasicGeometriesNode::geometry BasicGeometriesNode::fitGeometry( pcl::PointCloud<
       double height = cyl_info[1];
       cyl_geometry.geom_info_marker.push_back( height );
       cyl_geometry.geom_transformation = cylinder_local.getTransformation();
-      //ratio_cyl = cyl_info[cyl_info.size() -1];
-      // std::cout<<"ratio_cyl: "<<ratio_cyl<<std::endl;
+      // cyl_geometry.geom_info.push_back(cyl_info[cyl_info.size() -1]); //ratio
       return cyl_geometry;
     }
   
@@ -207,7 +204,7 @@ void BasicGeometriesNode::generateMarkerMessages( std::vector<geometry> geometri
 
 void BasicGeometriesNode::generateGeometriesMessages( std::vector<geometry> geometries){
 
-  
+  //send a geometry information (type, pose, info)  
   desperate_housewife::fittedGeometriesArray fittedGeometriesArrayMsg;
 
   for (unsigned int i=0; i < geometries.size(); i++)
@@ -247,7 +244,7 @@ geometry_msgs::Pose BasicGeometriesNode::fromEigenMatrix4x4ToPose( Eigen::Matrix
 void BasicGeometriesNode::printGometriesInfo ( std::vector<geometry> geometries )
 {
   ROS_INFO("Number of geometries %lu", geometries.size());
-
+  //only per print the cylinder's informations
   for (unsigned int i = 0; i < geometries.size(); ++i)
   {
     if (geometries[i].geom_type == 3)

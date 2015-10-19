@@ -19,7 +19,7 @@ left_arm:
     tip_name: left_hand_palm_ref_link
     desired_reference_topic: desired_hand_left_pose
     desired_hand_name: left_hand_synergy_joint
-    desidere_hand_topic: left_hand/joint_trajectory_controller/command
+    desidered_hand_topic: left_hand/joint_trajectory_controller/command
     pid_left_arm_0_joint: {p: 250,  i: 10, d: 30, i_clamp_min: -0.3, i_clamp_max: 0.3}
     pid_left_arm_1_joint: {p: 220,  i: 10, d: 30, i_clamp_min: -0.3, i_clamp_max: 0.3}
     pid_left_arm_2_joint: {p: 150,  i: 6, d: 20, i_clamp_min: -0.3, i_clamp_max: 0.3}
@@ -40,7 +40,7 @@ right_arm:
     tip_name: right_hand_palm_ref_link
     desired_reference_topic: desired_hand_right_pose
     desired_hand_name: right_hand_synergy_joint    
-    desidere_hand_topic: right_hand/joint_trajectory_controller/command
+    desidered_hand_topic: right_hand/joint_trajectory_controller/command
     pid_right_arm_0_joint: {p: 250,  i: 10, d: 30, i_clamp_min: -0.3, i_clamp_max: 0.3}
     pid_right_arm_1_joint: {p: 220,  i: 10, d: 30, i_clamp_min: -0.3, i_clamp_max: 0.3}
     pid_right_arm_2_joint: {p: 150,  i: 6, d: 20, i_clamp_min: -0.3, i_clamp_max: 0.3}

@@ -22,6 +22,7 @@
 
 #include <desperate_housewife/fittedGeometriesSingle.h>
 #include <desperate_housewife/fittedGeometriesArray.h>
+// #include <kdl/chainjnttojacsolver.hpp>
 
 
 
@@ -46,7 +47,7 @@ namespace desperate_housewife
 		//void SetAttractiveField();
 		Eigen::Matrix<double,6,1> GetRepulsiveForce(std::vector<KDL::Frame> &Pos_now);
 		void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
-		// Eigen::Matrix<double,6,1> RepulsiveWithTable(std::vector<KDL::Frame> &Pos_arm, KDL::Vector &OB_pos);
+		Eigen::Matrix<double,6,1> RepulsiveWithTable(std::vector<KDL::Frame> &Pos_arm);
 
 	private:
 		ros::Subscriber sub_command_;
@@ -124,9 +125,17 @@ namespace desperate_housewife
 		std::vector<double> Object_height;
 		std::vector<KDL::Frame> Object_position;
 		ros::Publisher hand_publisher_;
+		int hand_step;
+		std::vector<KDL::Jacobian> JAC_test;
 		
 		Eigen::Matrix<double,6,1> F_Rep_table;
 	};
 }
 
 #endif
+
+
+
+
+
+
