@@ -35,6 +35,16 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
   if ( msg->geometries.size() == 1)
   {
     DesiredHandPose = generateHandPose( msg->geometries[0] );
+    if(DesiredHandPose.isGraspable != true)
+    {
+      obstacle.pose = msg->geometries[0].pose;
+      for (unsigned j=0; j < msg->geometries[0].info.size(); j++)
+      {
+      
+        obstacle.info.push_back(msg->geometries[0].info[j]);
+      }
+      obstaclesMsg.geometries.push_back( obstacle );
+    }
   }
   else
   {
@@ -55,21 +65,20 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
     
     unsigned int i = (DesiredHandPose.isGraspable != true ? 0 : 1 );
 
-    for (i; i<objects_vec.size(); i++)
+
+    for (unsigned int i_ = i; i_<objects_vec.size(); i_++)
     {
-      obstacle.pose = objects_vec[i].pose;
+      obstacle.pose = objects_vec[i_].pose;
       
-      for (unsigned j=0; j < objects_vec[i].info.size(); j++)
+      for (unsigned j=0; j < objects_vec[i_].info.size(); j++)
       {
       
-        obstacle.info.push_back(objects_vec[i].info[j]);
+        obstacle.info.push_back(objects_vec[i_].info[j]);
       }
       
       obstaclesMsg.geometries.push_back( obstacle );
     }
 
-    obstacles_publisher_.publish( obstaclesMsg );
-    
   }
  
   if(DesiredHandPose.isGraspable == true)
@@ -116,9 +125,19 @@ desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( despera
 
 bool HandPoseGenerator::isGeometryGraspable ( desperate_housewife::fittedGeometriesSingle geometry )
 {
-  if (( geometry.type == 3 && geometry.info[0] < .15 ) || (geometry.info[1] < 0.35))
-  {
-    return true;
-  }
-  return false;
+  // std::cout<<"geometry.info[0]: "<<geometry.info[0]<<std::endl;
+  // if (( geometry.type == 3 && geometry.info[0] < .11 && geometry.info[4] > 65) ) //0.15
+  // {
+  //   return true;
+  // }
+  // return false;
+    if (geometry.info[4] >=50 && geometry.info[0] < 0.15)
+      {
+
+        return true;
+      }
+      return false;
+
+
+
 }

@@ -45,9 +45,9 @@ namespace desperate_housewife
 
 
 		//void SetAttractiveField();
-		Eigen::Matrix<double,6,1> GetRepulsiveForce(std::vector<KDL::Frame> &Pos_now);
+		Eigen::Matrix<double,7,1> GetRepulsiveForce(std::vector<KDL::Frame> &Pos_now);
 		void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
-		Eigen::Matrix<double,6,1> RepulsiveWithTable(std::vector<KDL::Frame> &Pos_arm);
+		Eigen::Matrix<double,7,1> RepulsiveWithTable(std::vector<KDL::Frame> &Pos_arm);
 
 	private:
 		ros::Subscriber sub_command_;
@@ -115,8 +115,9 @@ namespace desperate_housewife
 		
 		//dany
 		Eigen::Matrix<double,6,1> Force_attractive;
-		Eigen::Matrix<double,6,1> Force_total;
-		Eigen::Matrix<double,6,1> Force_repulsive;
+		Eigen::Matrix<double,7,1> Force_total_rep;
+		Eigen::Matrix<double,7,1> Force_repulsive;
+		Eigen::Matrix<double,7,1> F_Rep_table;
 		double V_max_kuka = 1.5;
 		std::vector<KDL::Frame> x_chain;	//14 is soft_hand (end_effector)
 		double influence = 0.30;
@@ -126,9 +127,9 @@ namespace desperate_housewife
 		std::vector<KDL::Frame> Object_position;
 		ros::Publisher hand_publisher_;
 		int hand_step;
-		std::vector<KDL::Jacobian> JAC_test;
+		std::vector<KDL::Jacobian> JAC_repulsive;
 		
-		Eigen::Matrix<double,6,1> F_Rep_table;
+		
 	};
 }
 

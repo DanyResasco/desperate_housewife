@@ -228,12 +228,12 @@ namespace BasicGeometries{
 
     info_.push_back( isFull );
 
-    // info_.push_back((((double)inliers_cylinder->indices.size()) / ((double)cylinder_points_->points.size())));
+    info_.push_back((((double)inliers_cylinder->indices.size()) / ((double)cylinder_points_->points.size()))*100);
     
 
     // int index = info_.size()-1;
     // ROS_INFO("ratio cyl: %g", info_[index]);
-    //std::cout<<"rapp cyl: "<<info_[index]<<std::endl;
+    // std::cout<<"rapp cyl: "<<info_[index]<<std::endl;
     
     /* info contains: radius, height, isLying, isfull,  ratio between number of inliers/number of pointCloud points*/
 

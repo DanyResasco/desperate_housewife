@@ -132,7 +132,7 @@ BasicGeometriesNode::geometry BasicGeometriesNode::fitGeometry( pcl::PointCloud<
       double height = cyl_info[1];
       cyl_geometry.geom_info_marker.push_back( height );
       cyl_geometry.geom_transformation = cylinder_local.getTransformation();
-      // cyl_geometry.geom_info.push_back(cyl_info[cyl_info.size() -1]); //ratio
+      cyl_geometry.geom_info.push_back(cyl_info[cyl_info.size() -1]); //ratio
       return cyl_geometry;
     }
   
@@ -153,7 +153,7 @@ BasicGeometriesNode::geometry BasicGeometriesNode::fitGeometry( pcl::PointCloud<
 
   // if(ratio_cyl > ratio_sphere)
   // {    
-    // return cyl_geometry;
+     return cyl_geometry;
   // }
   // else
   // {
