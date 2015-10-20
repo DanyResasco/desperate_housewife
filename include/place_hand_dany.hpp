@@ -47,9 +47,9 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       // else //right arm
       //   {
 
-      Point_desired(0) = (whichArm == 1 ? -radius : radius);
+      //Point_desired(0) = (whichArm == 1 ? -radius : radius);
       //   }
-      // Point_desired(0) = - radius;
+      Point_desired(0) = radius;
 
       Point_desired(1) = 0;
       Point_desired(2) = height *0.5 + 0.05;	
@@ -59,9 +59,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       M_desired_local.col(0) << x, 0; 
       M_desired_local.col(1) << -z.cross(x),0;
       M_desired_local.col(2) << -z , 0;
-      // Eigen::Vector3d aux_vecz(M_desired_local(0,2), M_desired_local(1,2), M_desired_local(2,2));
-      // Eigen::Vector3d aux_vecx(M_desired_local(0,0), M_desired_local(1,0), M_desired_local(2,0));
-      // M_desired_local.col(1) << aux_vecz.cross(aux_vecx),0;
+     
       M_desired_local.col(3) << Point_desired;
       T_w_h = T_vito_c * M_desired_local*Rot_z ; 
       
@@ -69,42 +67,31 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
   else if(((isLying == 0) && (isFull != 0)) && (radius< max_radius))
     {
-      // if (whichArm == 1) //left arm
-      //   {
-          M_desired_local.col(0) << x, 0;
-          M_desired_local.col(1) << -z.cross(x),0;
-        // }
-
-      // else //right arm
-      //   {
-          M_desired_local.col(0) << x, 0;	
-          M_desired_local.col(1) << -z.cross(x),0;
-        // }
+      
+      M_desired_local.col(0) << x, 0;
+      M_desired_local.col(1) << -z.cross(x),0;
+ 
       Point_desired(0) = 0;
       Point_desired(1) = 0;
-      Point_desired(2) = height *0.5+ 0.05; //height*0.5 + 0.05;
+      Point_desired(2) = height *0.5+ 0.05; 
       Point_desired(3) = 1;
       ROS_DEBUG("cyl upright and full");
       
       M_desired_local.col(2) << -z, 0;
       M_desired_local.col(3) << Point_desired;
       T_w_h = T_vito_c * M_desired_local*Rot_z ;
-      // std::cout<<"T_W_H: "<< T_w_h<< std::endl;
+   
     }
 
   else if ((isLying != 0) && (radius < max_radius))
     {
-      // if (whichArm == 1) //left arm
-      //   {
-          M_desired_local.col(0) << -z, 0;
-          M_desired_local.col(1) << -y.cross(-z), 0;	
-        // }
+      
+      M_desired_local.col(0) << -z, 0;
+      M_desired_local.col(1) << -y.cross(-z), 0;	
 
-      // else //right arm
-      //   {
-          M_desired_local.col(0) << z, 0;	
-          M_desired_local.col(1) << -y.cross(z), 0;	
-        // }
+          // M_desired_local.col(0) << z, 0;	
+          // M_desired_local.col(1) << -y.cross(z), 0;	
+
       Point_desired(0) = 0;
       Point_desired(1) = radius + 0.05;
       Point_desired(2) = 0; 
@@ -124,7 +111,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   geometry_msgs::Pose local_sh_pose;
   fromEigenToPose( T_w_h ,local_sh_pose);
 
-    // geometry_msgs::Pose pose_local = geometry.pose;
+
   return local_sh_pose;
 
 }

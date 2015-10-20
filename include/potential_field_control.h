@@ -128,6 +128,8 @@ namespace desperate_housewife
 		ros::Publisher hand_publisher_;
 		int hand_step;
 		std::vector<KDL::Jacobian> JAC_repulsive;
+		// int step_ = 0;
+		// KDL::Frame x_des_last;
 		
 		
 	};

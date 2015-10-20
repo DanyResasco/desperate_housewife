@@ -68,8 +68,6 @@ namespace desperate_housewife
 
     J_last_.resize(kdl_chain_.getNrOfJoints());
 
-    // JAC_test.resize(kdl_chain_.getNrOfJoints());
-
     ROS_INFO("Subscribed to: %s", desired_reference_topic.c_str());
     sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this);
     
@@ -134,7 +132,8 @@ namespace desperate_housewife
       msg_pose_.data.clear();
       
       if (cmd_flag_)
-      {
+      { 
+       
         // resetting N and tau(t=0) for the highest priority task
         N_trans_ = I_;  
         SetToZero(tau_);
@@ -190,27 +189,27 @@ namespace desperate_housewife
        if (Equal(x_,x_des_,0.05))
        {
           ROS_INFO("On target");
-          for(unsigned int i=0; i < joint_handles_.size(); i++) 
-          {
-            joint_des_states_.q(i) = joint_msr_states_.q(i);
-            joint_des_states_.qdot(i) = joint_msr_states_.qdot(i);
-          }
-          cmd_flag_ = 0;
+          // for(unsigned int i=0; i < joint_handles_.size(); i++) 
+          // {
+          //   joint_des_states_.q(i) = joint_msr_states_.q(i);
+          //   joint_des_states_.qdot(i) = joint_msr_states_.qdot(i);
+          // }
+          // cmd_flag_ = 0;
 
-          if(hand_step == 0)
-          {
-            trajectory_msgs::JointTrajectory msg_jointT_hand;
-            msg_jointT_hand.joint_names.resize(1);
-            msg_jointT_hand.points.resize(1);
-            msg_jointT_hand.points[0].positions.resize(1);
-            msg_jointT_hand.joint_names[0] = desired_hand_name;
-            msg_jointT_hand.points[0].positions[0] = 1.0;
-            msg_jointT_hand.points[0].time_from_start = ros::Duration(2); // 2s;
-            hand_publisher_.publish(msg_jointT_hand);
-            hand_step =1;
-          }
+          // if(hand_step == 0)
+          // {
+          //   trajectory_msgs::JointTrajectory msg_jointT_hand;
+          //   msg_jointT_hand.joint_names.resize(1);
+          //   msg_jointT_hand.points.resize(1);
+          //   msg_jointT_hand.points[0].positions.resize(1);
+          //   msg_jointT_hand.joint_names[0] = desired_hand_name;
+          //   msg_jointT_hand.points[0].positions[0] = 1.0;
+          //   msg_jointT_hand.points[0].time_from_start = ros::Duration(2); // 2s;
+          //   hand_publisher_.publish(msg_jointT_hand);
+          //   hand_step =1;
+          // }
 
-          return;         
+          // return;         
         }
 
         // pushing x to the pose msg
@@ -233,8 +232,7 @@ namespace desperate_housewife
           // msg_err_.data.push_back(Force_attractive(i));
           msg_err_.data.push_back(x_err_(i));
         }
-
-       
+     
 
         // computing b = J*M^-1*(c+g) - J_dot*q_dot
         b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
@@ -249,25 +247,16 @@ namespace desperate_housewife
          if(Object_position.size() > 0)
         {
           Force_repulsive = GetRepulsiveForce(x_chain);
-            // std::cout<<"Force_repulsive: "<<Force_repulsive[0].col(0)<<std::endl;
-          // }
-          // for(int p=0; p<Force_repulsive.size();p++)
-          // {
-          //  Force_total = Force_total + Force_repulsive[p]; 
-          // }
-  
+         
         }
         
-        F_Rep_table = RepulsiveWithTable(x_chain);
+         F_Rep_table = RepulsiveWithTable(x_chain);
         Force_total_rep = Force_repulsive + F_Rep_table;
 
 
         // computing nullspace
         N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
 
-        // Eigen::Matrix<double,6,1> Force_test;
-        // Force_test = Force_attractive + Force_repulsive[0];
-        // std::cout<<"Force_test "<<Force_test<<std::endl;
         // finally, computing the torque tau
         tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + b_)) + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
 
@@ -275,15 +264,15 @@ namespace desperate_housewife
         J_last_ = J_;
         phi_last_ = phi_;
   
-      }
+      
 
       // set controls for joints
       for (unsigned int i = 0; i < joint_handles_.size(); i++)
       {
-        // if(cmd_flag_)
+         // if(cmd_flag_)
           joint_handles_[i].setCommand(tau_(i));
-        // else
-          // joint_handles_[i].setCommand(PIDs_[i].computeCommand(joint_des_states_.q(i) - joint_msr_states_.q(i),period));
+         // else
+         //   joint_handles_[i].setCommand(PIDs_[i].computeCommand(joint_des_states_.q(i) - joint_msr_states_.q(i),period));
       }
 
       // publishing markers for visualization in rviz
@@ -306,6 +295,13 @@ namespace desperate_housewife
       Force_repulsive = Eigen::Matrix<double,7,1>::Zero();
       F_Rep_table = Eigen::Matrix<double,7,1>::Zero();
       JAC_repulsive.clear();
+    }
+
+     else
+      for (unsigned int i = 0; i < joint_handles_.size(); i++)
+      {
+           joint_handles_[i].setCommand(PIDs_[i].computeCommand(joint_des_states_.q(i) - joint_msr_states_.q(i),period));
+         }
 
       ros::spinOnce();
 
@@ -315,8 +311,14 @@ namespace desperate_housewife
   { 
     KDL::Frame frame_des_;
     tf::poseMsgToKDL(msg->pose, frame_des_);
-    
     x_des_ = frame_des_;
+    
+    // if(step_ == 0)
+    // {
+    //   x_des_last = x_des_;
+    // }
+
+
     cmd_flag_ = 1;
   }
 
@@ -435,7 +437,7 @@ namespace desperate_housewife
           }
         }
 
-        int index_obj = floor(index_infl[index_dist]/3) + 1;
+        int index_obj = floor(index_infl[index_dist]/3) ;
         int index_jac = index_infl[index_dist] % 3;
         Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
          // distance_der_partial = 2*x/radius + 2*y / radius + 4*n*(z^2*n-1) /l
@@ -533,6 +535,7 @@ Eigen::Matrix<double,7,1> PotentialFieldControl::RepulsiveWithTable(std::vector<
       Eigen::Vector3d distance_der_partial(0,0,1);
       
       int index_jacobian = index_infl[index_dist] % 4; 
+      // std::cout<<"index_jacobian: "<<index_jacobian<<std::endl;
       
       vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/Rep_inf_table) * distance_der_partial;
 
