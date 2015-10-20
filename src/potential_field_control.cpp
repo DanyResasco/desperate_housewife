@@ -147,7 +147,6 @@ namespace desperate_housewife
         // computing the inverse of M_ now, since it will be used often
         pseudo_inverse(M_.data,M_inv_,false); //M_inv_ = M_.data.inverse(); 
 
-
         // computing Jacobian J(q)
         jnt_to_jac_solver_->JntToJac(joint_msr_states_.q,J_);
         // std::cout<<"jac_ok: "<<J_.data<<std::endl;
@@ -169,32 +168,22 @@ namespace desperate_housewife
 
         // computing forward kinematics
         fk_pos_solver_->JntToCart(joint_msr_states_.q,x_);
-         // std::cout<<"x_: "<<x_<<std::endl;
-        
+
+        //other method use to calculate the position and jacobian for the repulsive field 
         for(unsigned int i=0; i<kdl_chain_.getNrOfSegments()+1;i++)  
         {
-          KDL::Frame x_test;
-         
+          KDL::Frame x_test;     
           fk_pos_solver_->JntToCart(joint_msr_states_.q,x_test,i);
           x_chain.push_back(x_test);  //x_chain[1-7 + 14];
-
           KDL::Jacobian jac_repulsive;
           jac_repulsive = KDL::Jacobian(7);
           jnt_to_jac_solver_->JntToJac (joint_msr_states_.q,jac_repulsive , i);
           JAC_repulsive.push_back(jac_repulsive);
-          //std::cout<<"JAC_test: "<<JAC_test[i].data<<std::endl;
         } 
-        // std::cout<<"x_chain[14]: "<<x_chain[14]<<std::endl;
-        // x_ = x_chain[14]; //14 is softhand
+
        if (Equal(x_,x_des_,0.05))
        {
           ROS_INFO("On target");
-          // for(unsigned int i=0; i < joint_handles_.size(); i++) 
-          // {
-          //   joint_des_states_.q(i) = joint_msr_states_.q(i);
-          //   joint_des_states_.qdot(i) = joint_msr_states_.qdot(i);
-          // }
-          // cmd_flag_ = 0;
 
           // if(hand_step == 0)
           // {
@@ -207,9 +196,7 @@ namespace desperate_housewife
           //   msg_jointT_hand.points[0].time_from_start = ros::Duration(2); // 2s;
           //   hand_publisher_.publish(msg_jointT_hand);
           //   hand_step =1;
-          // }
-
-          // return;         
+          // }       
         }
 
         // pushing x to the pose msg
@@ -250,7 +237,7 @@ namespace desperate_housewife
          
         }
         
-         F_Rep_table = RepulsiveWithTable(x_chain);
+        F_Rep_table = RepulsiveWithTable(x_chain);
         Force_total_rep = Force_repulsive + F_Rep_table;
 
 
@@ -263,16 +250,11 @@ namespace desperate_housewife
         // saving J_ and phi of the last iteration
         J_last_ = J_;
         phi_last_ = phi_;
-  
-      
 
       // set controls for joints
       for (unsigned int i = 0; i < joint_handles_.size(); i++)
       {
-         // if(cmd_flag_)
-          joint_handles_[i].setCommand(tau_(i));
-         // else
-         //   joint_handles_[i].setCommand(PIDs_[i].computeCommand(joint_des_states_.q(i) - joint_msr_states_.q(i),period));
+        joint_handles_[i].setCommand(tau_(i));
       }
 
       // publishing markers for visualization in rviz
@@ -286,7 +268,6 @@ namespace desperate_housewife
 
       
       x_chain.clear();
-      // Force_repulsive.clear();
       Object_radius.clear();
       Object_height.clear();
       Object_position.clear();
@@ -298,11 +279,12 @@ namespace desperate_housewife
     }
 
      else
+     {
       for (unsigned int i = 0; i < joint_handles_.size(); i++)
       {
            joint_handles_[i].setCommand(PIDs_[i].computeCommand(joint_des_states_.q(i) - joint_msr_states_.q(i),period));
-         }
-
+      }
+    }
       ros::spinOnce();
 
   }
@@ -312,13 +294,6 @@ namespace desperate_housewife
     KDL::Frame frame_des_;
     tf::poseMsgToKDL(msg->pose, frame_des_);
     x_des_ = frame_des_;
-    
-    // if(step_ == 0)
-    // {
-    //   x_des_last = x_des_;
-    // }
-
-
     cmd_flag_ = 1;
   }
 
@@ -333,8 +308,6 @@ namespace desperate_housewife
 
         tf::poseMsgToKDL(msg->geometries[i].pose, frame_obj);
         Object_position.push_back(frame_obj); 
-        
-
       } 
     
   }
@@ -393,9 +366,10 @@ namespace desperate_housewife
 
       for(unsigned int i=0; i < Object_position.size();i++)
       {
-        
+        distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[4].p)).Norm() );
         distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[6].p)).Norm() );
         distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[8].p)).Norm() );
+        distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[11].p)).Norm() );
         distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[14].p)).Norm() );
       }
 
@@ -437,8 +411,8 @@ namespace desperate_housewife
           }
         }
 
-        int index_obj = floor(index_infl[index_dist]/3) ;
-        int index_jac = index_infl[index_dist] % 3;
+        int index_obj = floor(index_infl[index_dist]/5) ;
+        int index_jac = index_infl[index_dist] % 5;
         Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
          // distance_der_partial = 2*x/radius + 2*y / radius + 4*n*(z^2*n-1) /l
         distance_der_partial[0] = (Object_position[index_obj].p.x()*2 / Object_radius[index_obj] );
@@ -446,7 +420,7 @@ namespace desperate_housewife
         distance_der_partial[2] = (Object_position[index_obj].p.z()*4 / Object_height[index_obj] ); //n=1
         
 
-        double Ni_ = 100;
+        double Ni_ = 200;
         
         vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
 
@@ -461,12 +435,18 @@ namespace desperate_housewife
         {
 
           case 0: 
-                F_rep = JAC_repulsive[6].data.transpose()* lambda_ * Force;
+                F_rep = JAC_repulsive[4].data.transpose()* lambda_ * Force;
                 break;
           case 1:
-                F_rep = JAC_repulsive[8].data.transpose()* lambda_  * Force;
+                F_rep = JAC_repulsive[6].data.transpose()* lambda_  * Force;
                 break;
           case 2:
+                F_rep = JAC_repulsive[8].data.transpose()* lambda_  * Force;
+                break;
+          case 3:
+                F_rep = JAC_repulsive[11].data.transpose()* lambda_  * Force;
+                break;
+          case 4:
                 F_rep = JAC_repulsive[14].data.transpose()* lambda_  * Force;
                 break;
         }
@@ -493,7 +473,7 @@ Eigen::Matrix<double,7,1> PotentialFieldControl::RepulsiveWithTable(std::vector<
     int index_dist = 0;
     Eigen::Matrix<double,7,1> F_rep = Eigen::Matrix<double,7,1>::Zero();
 
-   
+     distance_local_obj.push_back(- Table_position.z()+ Pos_arm[4].p.z());
     distance_local_obj.push_back(- Table_position.z()+ Pos_arm[6].p.z());
     distance_local_obj.push_back(- Table_position.z()+ Pos_arm[8].p.z());
     distance_local_obj.push_back(- Table_position.z()+ Pos_arm[11].p.z());
@@ -531,10 +511,10 @@ Eigen::Matrix<double,7,1> PotentialFieldControl::RepulsiveWithTable(std::vector<
         }
       }
             
-      double Ni_ = 100;
+      double Ni_ = 200;
       Eigen::Vector3d distance_der_partial(0,0,1);
       
-      int index_jacobian = index_infl[index_dist] % 4; 
+      int index_jacobian = index_infl[index_dist] % 5; 
       // std::cout<<"index_jacobian: "<<index_jacobian<<std::endl;
       
       vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/Rep_inf_table) * distance_der_partial;
@@ -550,18 +530,22 @@ Eigen::Matrix<double,7,1> PotentialFieldControl::RepulsiveWithTable(std::vector<
         {
 
           case 0: 
-                F_rep = JAC_repulsive[6].data.transpose()* lambda_ * Force;
+                F_rep = JAC_repulsive[4].data.transpose()* lambda_ * Force;
                 // std::cout<<" JAC_repulsive[6].data"<< JAC_repulsive[6].data<<std::endl;
                 break;
           case 1:
-                F_rep = JAC_repulsive[8].data.transpose()* lambda_  * Force;
+                F_rep = JAC_repulsive[6].data.transpose()* lambda_  * Force;
                  // std::cout<<" JAC_repulsive[8].data"<< JAC_repulsive[8].data<<std::endl;
                 break;
           case 2:
-                 F_rep = JAC_repulsive[11].data.transpose()* lambda_  * Force;
+                 F_rep = JAC_repulsive[8].data.transpose()* lambda_  * Force;
                   // std::cout<<" JAC_repulsive[11].data"<< JAC_repulsive[11].data<<std::endl;
                 break;
           case 3:
+                 F_rep = JAC_repulsive[11].data.transpose()* lambda_  * Force;
+                  // std::cout<<" JAC_repulsive[14].data"<< JAC_repulsive[14].data<<std::endl;
+                break;
+          case 4:
                  F_rep = JAC_repulsive[14].data.transpose()* lambda_  * Force;
                   // std::cout<<" JAC_repulsive[14].data"<< JAC_repulsive[14].data<<std::endl;
                 break;

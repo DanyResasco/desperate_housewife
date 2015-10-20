@@ -18,12 +18,15 @@
 
 #include <desperate_housewife/handPoseSingle.h>
 
+
+/*** Code used to filtered the hand_pose. It's usefull when the cylinder's fitting is not stable
+*/
+
 class HandPoseFIltered{
 
 private:
 
   std::string desired_hand_pose_topic_, desired_hand_right_pose_topic_, desired_hand_left_pose_topic_;
-  // std::string base_frame_, desired_hand_frame_, right_hand_frame_, left_hand_frame_;
 
 public:
 

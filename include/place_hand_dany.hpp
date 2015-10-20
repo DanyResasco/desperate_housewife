@@ -1,5 +1,8 @@
 #include <hand_pose_generator.h>
 
+/*** Code used to decide the desired pose. The hand pose is calculated respect the cylinder frame and after converted to base_fram (vito_anchor).
+  * 
+*/
 
 geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGeometriesSingle geometry, int whichArm )
 {
@@ -85,13 +88,18 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
   else if ((isLying != 0) && (radius < max_radius))
     {
+      if(whichArm == 1) //left
+      {
+         M_desired_local.col(0) << -z, 0;
+         M_desired_local.col(1) << -y.cross(-z), 0;	
       
-      M_desired_local.col(0) << -z, 0;
-      M_desired_local.col(1) << -y.cross(-z), 0;	
-
-          // M_desired_local.col(0) << z, 0;	
-          // M_desired_local.col(1) << -y.cross(z), 0;	
-
+      }
+      else //right
+      { 
+          M_desired_local.col(0) << z, 0;	
+          M_desired_local.col(1) << -y.cross(z), 0;	
+      }
+      
       Point_desired(0) = 0;
       Point_desired(1) = radius + 0.05;
       Point_desired(2) = 0; 

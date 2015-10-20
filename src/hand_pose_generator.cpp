@@ -75,23 +75,16 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
 
       DesiredHandPose = generateHandPose( objects_vec[0] );
 
-      // std::cout<<"objects_vec.size(): "<<objects_vec.size()<<std::endl;
-      
       unsigned int i = (DesiredHandPose.isGraspable != true ? 0 : 1 );
 
 
       for (unsigned int i_ = i; i_<objects_vec.size(); i_++)
       {
-        // std::cout<<"i: "<<i<<std::endl;
         obstacle.pose = objects_vec[i_].pose;
-        // std::cout<<"objects_vec[i_].pose: "<<objects_vec[i_].pose<<std::endl;
-        
+    
         for (unsigned j=0; j < objects_vec[i_].info.size(); j++)
         {
-        
-          obstacle.info.push_back(objects_vec[i_].info[j]);
-             // std::cout<<"objects_vec[i_].info[j]: "<<objects_vec[i_].info[j]<<std::endl;
-        
+          obstacle.info.push_back(objects_vec[i_].info[j]); 
         }
         
         obstaclesMsg.geometries.push_back( obstacle );
