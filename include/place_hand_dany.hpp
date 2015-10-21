@@ -8,7 +8,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 {
 
   Eigen::Matrix4d M_desired_local; // in cyl frame
-  Eigen::Vector4d Point_desired,Pos_ori_hand; //in cyl frame
+  Eigen::Vector4d Point_desired, Pos_ori_hand; //in cyl frame
   Eigen::Vector4d translation; //in cyl frame
   Eigen::Vector3d x(1,0,0);
   Eigen::Vector3d y(0,1,0), z(0,0,1);
@@ -197,4 +197,65 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose ){
 	 	ROS_DEBUG("Vito uses a: Right arm");
 	 return 0;
   }
+}
+
+
+//Function for clear the table when the only object is obstacle
+geometry_msgs::Pose HandPoseGenerator::ObstacleReject( desperate_housewife::fittedGeometriesSingle Pose_rej_obs)
+{
+  Eigen::Matrix4d T_vito_c, T_w_ob;
+  Eigen::Matrix4d M_desired_local; // in cyl frame
+  Eigen::Vector4d Point_desired;
+  geometry_msgs::Pose pose_obj_hand;
+    Eigen::Vector3d x(1,0,0);
+  Eigen::Vector3d y(0,1,0), z(0,0,1);
+
+  Eigen::Matrix4d Rot_z;
+  Rot_z.row(0)<< -1,0,0,0;
+  Rot_z.row(1)<< 0,-1,0,0;
+  Rot_z.row(2)<< 0,0,1,0;
+  Rot_z.row(3)<< 0,0,0,1;
+
+  Eigen::Matrix4d ROT_y;
+  ROT_y.row(0)<< 0,0,1,0;
+  ROT_y.row(1)<< 0,1,0,0;
+  ROT_y.row(2)<< -1,0,0,0;
+  ROT_y.row(3)<< 0,0,0,1;
+
+
+  Eigen::Matrix4d ROT_x;
+  ROT_x.row(0)<< 1,0,0,0;
+  ROT_x.row(1)<< 0,0,-1,0;
+  ROT_x.row(2)<< 0,1,0,0;
+  ROT_x.row(3)<< 0,0,0,1;
+
+  T_vito_c = FromMsgtoEigen( Pose_rej_obs.pose );
+
+  Point_desired(0) = 0;
+  Point_desired(1) = Pose_rej_obs.info[0] + 0.05;
+  Point_desired(2) = 0;  
+  Point_desired(3) = 1;
+  ROS_DEBUG("obstacle to move");
+      
+  M_desired_local.col(0) << -y.cross(z), 0; 
+  M_desired_local.col(1) << -y,0;
+  M_desired_local.col(2) << z , 0;
+  
+  M_desired_local.col(3) << Point_desired;
+
+  T_w_ob = T_vito_c * M_desired_local*ROT_y*ROT_x;
+  // *ROT_x*ROT_y ; 
+
+  fromEigenToPose (T_w_ob, pose_obj_hand);
+
+  // tf::Transform tfHandTrasform;
+  // tf::poseMsgToTF( pose_obj_hand, tfHandTrasform);
+  
+  // tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(),"ObstacleReject") );
+
+  // std::cout<<"pose_obj_hand: "<<pose_obj_hand<<std::endl;
+
+
+  return pose_obj_hand;
+
 }

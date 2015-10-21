@@ -48,6 +48,7 @@ namespace desperate_housewife
 		Eigen::Matrix<double,7,1> GetRepulsiveForce(std::vector<KDL::Frame> &Pos_now);
 		void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
 		Eigen::Matrix<double,7,1> RepulsiveWithTable(std::vector<KDL::Frame> &Pos_arm);
+		void InfoOBj( const desperate_housewife::fittedGeometriesSingle::ConstPtr& obj_rem);
 
 	private:
 		ros::Subscriber sub_command_;
@@ -120,14 +121,15 @@ namespace desperate_housewife
 		Eigen::Matrix<double,7,1> F_Rep_table;
 		double V_max_kuka = 1.5;
 		std::vector<KDL::Frame> x_chain;	//14 is soft_hand (end_effector)
-		double influence = 0.30;
-		ros::Subscriber obstacles_subscribe_;
+		
+		ros::Subscriber obstacles_subscribe_, obstacles_remove_sub;
 		std::vector<double> Object_radius;
 		std::vector<double> Object_height;
 		std::vector<KDL::Frame> Object_position;
 		ros::Publisher hand_publisher_;
 		int hand_step;
 		std::vector<KDL::Jacobian> JAC_repulsive;
+		std::string obstacle_remove_topic;
 		// int step_ = 0;
 		// KDL::Frame x_des_last;
 		

@@ -254,6 +254,7 @@ void BasicGeometriesNode::printGometriesInfo ( std::vector<geometry> geometries 
       ROS_INFO("height = %f", geometries[i].geom_info[1]);
       ROS_INFO("isLying = %f", geometries[i].geom_info[2]);
       ROS_INFO("isFull = %f", geometries[i].geom_info[3]);
+      ROS_INFO("ratio = %f", geometries[i].geom_info[4]);
       ROS_INFO(" ");
     }
     else

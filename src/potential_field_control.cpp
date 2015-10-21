@@ -37,6 +37,12 @@ namespace desperate_housewife
    
     }
 
+   if(!n.getParam("obstacle_remove_topic", obstacle_remove_topic))
+   {
+     ROS_ERROR_STREAM(" No root name found on parameter server ("<<n.getNamespace()<<"/root_name)");
+        return false;
+   }
+
      // for(std::vector<KDL::Segment>::const_iterator it = kdl_chain_.segments.begin(); it != kdl_chain_.segments.end(); ++it)
      //    {
      //        if ( it->getJoint().getType() != 8 )
@@ -77,7 +83,10 @@ namespace desperate_housewife
     hand_publisher_ = n.advertise<trajectory_msgs::JointTrajectory>(desired_hand_topic, 1000);
     
     obstacles_subscribe_ = n.subscribe("/PotentialFieldControl/obstacle_list", 1, &PotentialFieldControl::InfoGeometry, this);
-        
+    
+    ROS_INFO("Subscribed for obstacle_remove_topic to : %s", obstacle_remove_topic.c_str());
+    obstacles_remove_sub = n.subscribe(obstacle_remove_topic.c_str(), 1, &PotentialFieldControl::InfoOBj, this);     
+
     pub_error_ = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
     pub_pose_ = nh_.advertise<std_msgs::Float64MultiArray>("pose", 1000);
     pub_marker_ = nh_.advertise<visualization_msgs::Marker>("marker",1000);
@@ -312,6 +321,26 @@ namespace desperate_housewife
     
   }
 
+  void PotentialFieldControl::InfoOBj( const desperate_housewife::fittedGeometriesSingle::ConstPtr& obj_rem)
+  {
+     KDL::Frame frame_des_;
+    tf::poseMsgToKDL(obj_rem->pose, frame_des_);
+    x_des_ = frame_des_;
+    cmd_flag_ = 1;
+
+  }
+
+
+
+
+
+
+
+
+
+
+
+
   void PotentialFieldControl::set_marker(KDL::Frame x, int id)
   {     
         msg_marker_.header.frame_id = "world";
@@ -358,12 +387,14 @@ namespace desperate_housewife
   {
       // for the obstacles avoidance we consired only segments 6,8,14 (14 is the softhand)
       std::vector<double> distance_local_obj;
-      
-       Eigen::Matrix<double,7,1> F_rep = Eigen::Matrix<double,7,1>::Zero();
+      Eigen::Matrix<double,7,1> F_rep_tot = Eigen::Matrix<double,7,1>::Zero();
+      std::vector<Eigen::Matrix<double,7,1> > F_rep; 
       std::vector<double>  min_d;
       std::vector<int> index_infl;
       int index_dist = 0;
+      double influence = 0.30;
 
+      //F_rep_total = SUM(F_rep_each_ostacles)
       for(unsigned int i=0; i < Object_position.size();i++)
       {
         distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[4].p)).Norm() );
@@ -371,89 +402,99 @@ namespace desperate_housewife
         distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[8].p)).Norm() );
         distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[11].p)).Norm() );
         distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[14].p)).Norm() );
-      }
-
-      for(unsigned int i=0; i < distance_local_obj.size(); i++ )
-      {
-        if( distance_local_obj[i] <= influence )
+    
+        for(unsigned int i=0; i < distance_local_obj.size(); i++ )
         {
-          min_d.push_back(distance_local_obj[i]);
-          index_infl.push_back(i); //for tracking wich object is closet
+          if( distance_local_obj[i] <= influence )
+          {
+            min_d.push_back(distance_local_obj[i]);
+            index_infl.push_back(i); //for tracking wich object is closet
+          }
+          else
+          {
+            continue;
+          }
+   
+        }
+                
+        //ROS_INFO("finito for e la dimensione è di: %g", min_d.size());
+
+        if(min_d.size() != 0)
+        {
+          
+          double min_distance = min_d[0];
+          Eigen::Vector3d distance_der_partial(0,0,0);
+          Eigen::Vector3d vec_Temp(0,0,0);
+              
+          for (unsigned int i=0; i < min_d.size(); i++)
+          {
+            if(min_distance > min_d[i])
+            {
+              min_distance = min_d[i];
+              index_dist = i;
+              
+            }
+
+            else
+            {
+              continue;
+            }
+          }
+
+          int index_obj = floor(index_infl[index_dist]/5) ;
+          int index_jac = index_infl[index_dist] % 5;
+          Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
+           // distance_der_partial = 2*x/radius + 2*y / radius + 4*n*(z^2*n-1) /l
+          distance_der_partial[0] = (Object_position[index_obj].p.x()*2 / Object_radius[index_obj] );
+          distance_der_partial[1] = (Object_position[index_obj].p.y()*2 / Object_radius[index_obj] );
+          distance_der_partial[2] = (Object_position[index_obj].p.z()*4 / Object_height[index_obj] ); //n=1
+          
+
+          double Ni_ = 200;
+          
+          vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
+
+          Force.row(0) << vec_Temp[0];
+          Force.row(1) << vec_Temp[1];
+          Force.row(2) << vec_Temp[2];
+          Force.row(3) <<  0;
+          Force.row(4) <<  0;
+          Force.row(5) <<  0;
+
+          switch(index_jac) //T= J_transpose * lambda*repulsive_force
+          {
+
+            case 0: 
+                  F_rep.push_back(JAC_repulsive[4].data.transpose()* lambda_ * Force);
+                  break;
+            case 1:
+                  F_rep.push_back(JAC_repulsive[6].data.transpose()* lambda_  * Force);
+                  break;
+            case 2:
+                  F_rep.push_back(JAC_repulsive[8].data.transpose()* lambda_  * Force);
+                  break;
+            case 3:
+                  F_rep.push_back(JAC_repulsive[11].data.transpose()* lambda_  * Force);
+                  break;
+            case 4:
+                  F_rep.push_back(JAC_repulsive[14].data.transpose()* lambda_  * Force);
+                  break;
+          }
         }
         else
         {
           continue;
         }
- 
       }
-              
-      //ROS_INFO("finito for e la dimensione è di: %g", min_d.size());
-
-      if(min_d.size() != 0)
+    
+      
+      for(unsigned int j=0; j < F_rep.size(); j++)
       {
-        
-        double min_distance = min_d[0];
-        Eigen::Vector3d distance_der_partial(0,0,0);
-        Eigen::Vector3d vec_Temp(0,0,0);
-            
-        for (unsigned int i=0; i < min_d.size(); i++)
-        {
-          if(min_distance > min_d[i])
-          {
-            min_distance = min_d[i];
-            index_dist = i;
-            
-          }
-
-          else
-          {
-            continue;
-          }
-        }
-
-        int index_obj = floor(index_infl[index_dist]/5) ;
-        int index_jac = index_infl[index_dist] % 5;
-        Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
-         // distance_der_partial = 2*x/radius + 2*y / radius + 4*n*(z^2*n-1) /l
-        distance_der_partial[0] = (Object_position[index_obj].p.x()*2 / Object_radius[index_obj] );
-        distance_der_partial[1] = (Object_position[index_obj].p.y()*2 / Object_radius[index_obj] );
-        distance_der_partial[2] = (Object_position[index_obj].p.z()*4 / Object_height[index_obj] ); //n=1
-        
-
-        double Ni_ = 200;
-        
-        vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
-
-        Force.row(0) << vec_Temp[0];
-        Force.row(1) << vec_Temp[1];
-        Force.row(2) << vec_Temp[2];
-        Force.row(3) <<  0;
-        Force.row(4) <<  0;
-        Force.row(5) <<  0;
-
-        switch(index_jac) //T= J_transpose * lambda*repulsive_force
-        {
-
-          case 0: 
-                F_rep = JAC_repulsive[4].data.transpose()* lambda_ * Force;
-                break;
-          case 1:
-                F_rep = JAC_repulsive[6].data.transpose()* lambda_  * Force;
-                break;
-          case 2:
-                F_rep = JAC_repulsive[8].data.transpose()* lambda_  * Force;
-                break;
-          case 3:
-                F_rep = JAC_repulsive[11].data.transpose()* lambda_  * Force;
-                break;
-          case 4:
-                F_rep = JAC_repulsive[14].data.transpose()* lambda_  * Force;
-                break;
-        }
+        F_rep_tot = F_rep_tot + F_rep[j];
       }
-  
+      // std::cout<<"F_rep_tot: "<<F_rep_tot<<std::endl;
 
-     return F_rep;
+     return F_rep_tot;
        
 
   }
@@ -464,7 +505,7 @@ Eigen::Matrix<double,7,1> PotentialFieldControl::RepulsiveWithTable(std::vector<
     // ROS_INFO("dentro_set_repulsive");
     // for the obstacles avoidance we consired only segments 6,8,14 (14 is the softhand)
     KDL::Vector Table_position(0,0,0.15);
-    double Rep_inf_table = 0.10;
+    double Rep_inf_table = 0.20;
     Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
     std::vector<double> distance_local_obj;
     std::vector<double> distance_influence;
@@ -526,6 +567,7 @@ Eigen::Matrix<double,7,1> PotentialFieldControl::RepulsiveWithTable(std::vector<
         Force.row(4) <<  0;
         Force.row(5) <<  0;
 
+      // std::cout<<"index_jacobian: "<<index_jacobian<<std::endl;
       switch(index_jacobian) //T= J_transpose * lambda*repulsive_force
         {
 

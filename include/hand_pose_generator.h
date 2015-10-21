@@ -21,6 +21,7 @@ class HandPoseGenerator{
 private:
 
   std::string geometries_topic_, desired_hand_right_pose_topic_, desired_hand_left_pose_topic_, obstalces_topic_, desired_hand_pose_topic_;
+  std::string Reject_obstalces_topic_left, Reject_obstalces_topic_right;
   std::string base_frame_, desired_hand_frame_, right_hand_frame_, left_hand_frame_;
   std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec;
 
@@ -29,6 +30,7 @@ public:
   ros::Subscriber stream_subscriber_;
   ros::NodeHandle nh;
   ros::Publisher desired_hand_publisher_, desired_hand_right_pose_publisher_, desired_hand_left_pose_publisher_, obstacles_publisher_;
+  ros::Publisher Reject_obstacles_publisher_left, Reject_obstacles_publisher_right ; 
   tf::TransformBroadcaster tf_desired_hand_pose;
   tf::TransformListener listener_info;
 
@@ -44,6 +46,9 @@ public:
   int whichArm( geometry_msgs::Pose object_pose );
   void fromEigenToPose (Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &Hand_pose);
   Eigen::Matrix4d FromMsgtoEigen(geometry_msgs::Pose &object);
+
+
+  geometry_msgs::Pose ObstacleReject( desperate_housewife::fittedGeometriesSingle Pose_rej_obs);
 
 };
 

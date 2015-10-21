@@ -11,3 +11,4 @@ To use this repo execute the following steps:
 	- 'git checkout manueld_devel '
 
 Compile doing 'catkin_make --only_pkg-with-deps desperate_housewife' in your workspace
+The command to launch the robot in simulation is : roslaunch desperate_housewife desperate_robot.launch

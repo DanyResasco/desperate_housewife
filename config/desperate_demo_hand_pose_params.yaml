@@ -1,2 +1,4 @@
 PotentialFieldControl/desired_hand_pose_right: /right_arm/PotentialFieldControl/desired_hand_right_pose
 PotentialFieldControl/desired_hand_pose_left: /left_arm/PotentialFieldControl/desired_hand_left_pose
+PotentialFieldControl/Reject_obstacle_left: /left_arm/PotentialFieldControl/Reject_obstacle_list_left
+PotentialFieldControl/Reject_obstacle_right: /right_arm/PotentialFieldControl/Reject_obstacle_list_right

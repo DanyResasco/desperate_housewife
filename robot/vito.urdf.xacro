@@ -19,7 +19,8 @@
                     width="1.05"
                     height="0.910"
                     plate_thickness="0.05">
-    <origin xyz="-0.495 0.55 0" rpy="0 0 0"/>
+    <!-- <origin xyz="-0.495 0.55 0" rpy="0 0 0"/> -->
+    <origin xyz="-0.25 0.55 0" rpy="0 0 0"/>
   </xacro:model_table>
 
   <!-- WORKBENCH -->
