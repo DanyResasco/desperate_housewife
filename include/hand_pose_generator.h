@@ -15,19 +15,21 @@
 #include <desperate_housewife/obstacleSingle.h>
 #include <desperate_housewife/obstacleArray.h>
 #include <desperate_housewife/handPoseSingle.h>
+#include <desperate_housewife/Error_msg.h>
 
 class HandPoseGenerator{
 
 private:
 
   std::string geometries_topic_, desired_hand_right_pose_topic_, desired_hand_left_pose_topic_, obstalces_topic_, desired_hand_pose_topic_;
-  std::string Reject_obstalces_topic_left, Reject_obstalces_topic_right;
+  std::string Reject_obstalces_topic_left, Reject_obstalces_topic_right, error_topic_left, error_topic_right;
   std::string base_frame_, desired_hand_frame_, right_hand_frame_, left_hand_frame_;
   std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec;
+  int step_obstacle = 1;
 
 public:
 
-  ros::Subscriber stream_subscriber_;
+  ros::Subscriber stream_subscriber_, error_sub_left, error_sub_right;
   ros::NodeHandle nh;
   ros::Publisher desired_hand_publisher_, desired_hand_right_pose_publisher_, desired_hand_left_pose_publisher_, obstacles_publisher_;
   ros::Publisher Reject_obstacles_publisher_left, Reject_obstacles_publisher_right ; 
@@ -49,6 +51,7 @@ public:
 
 
   geometry_msgs::Pose ObstacleReject( desperate_housewife::fittedGeometriesSingle Pose_rej_obs);
+  void Error_info(const desperate_housewife::Error_msg::ConstPtr& error_msg);
 
 };
 

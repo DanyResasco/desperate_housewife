@@ -68,6 +68,7 @@ add_message_files(
   obstacleArray.msg
   handPoseSingle.msg
   handPosesArray.msg
+  Error_msg.msg
 )
 
 generate_messages(

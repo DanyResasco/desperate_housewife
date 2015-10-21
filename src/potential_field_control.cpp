@@ -20,43 +20,15 @@ namespace desperate_housewife
 
   bool PotentialFieldControl::init(hardware_interface::EffortJointInterface *robot, ros::NodeHandle &n)
   {
-        PIDKinematicChainControllerBase<hardware_interface::EffortJointInterface>::init(robot, n);
-
-    // for swicht the hand_desired
-    if (!n.getParam("desired_reference_topic", desired_reference_topic))
-    {
-        ROS_ERROR_STREAM(" No root name found on parameter server ("<<n.getNamespace()<<"/root_name)");
-        return false;
-    }
-    else
-    {
+      PIDKinematicChainControllerBase<hardware_interface::EffortJointInterface>::init(robot, n);
       ROS_INFO("Starting controller");
-      ROS_INFO("Number of segments: %d", kdl_chain_.getNrOfSegments());
- 
-    // ROS_INFO("Number of joints in chain: %d", kdl_chain_.getNrOfJoints());
+      ROS_DEBUG("Number of segments: %d", kdl_chain_.getNrOfSegments());
+    // for swicht the hand_desired
+    n.getParam("desired_reference_topic", desired_reference_topic);
+    n.getParam("obstacle_remove_topic", obstacle_remove_topic);
+    n.getParam("desired_hand_name", desired_hand_name);
+    n.getParam("desired_hand_topic", desired_hand_topic);
    
-    }
-
-   if(!n.getParam("obstacle_remove_topic", obstacle_remove_topic))
-   {
-     ROS_ERROR_STREAM(" No root name found on parameter server ("<<n.getNamespace()<<"/root_name)");
-        return false;
-   }
-
-     // for(std::vector<KDL::Segment>::const_iterator it = kdl_chain_.segments.begin(); it != kdl_chain_.segments.end(); ++it)
-     //    {
-     //        if ( it->getJoint().getType() != 8 )
-     //        {
-     //            joint_handles_.push_back(robot->getHandle(it->getJoint().getName()));
-
-     //            ROS_INFO("NOME: %s", it->getName().c_str() );
-     //        }
-     //        else
-     //        {
-     //          ROS_INFO("NOME bho: %s", it->getName().c_str() );
-     //        }
-     //    }
-
     jnt_to_jac_solver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
     id_solver_.reset(new KDL::ChainDynParam(kdl_chain_,gravity_));
     fk_pos_solver_.reset(new KDL::ChainFkSolverPos_recursive(kdl_chain_));
@@ -74,20 +46,20 @@ namespace desperate_housewife
 
     J_last_.resize(kdl_chain_.getNrOfJoints());
 
-    ROS_INFO("Subscribed to: %s", desired_reference_topic.c_str());
-    sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this);
-    
-    n.getParam("desired_hand_name", desired_hand_name);
-    n.getParam("desired_hand_topic", desired_hand_topic);
+    ROS_DEBUG("Subscribed to: %s", desired_reference_topic.c_str());
+    //Hand_pose for graspable objects
+    sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this); 
 
-    hand_publisher_ = n.advertise<trajectory_msgs::JointTrajectory>(desired_hand_topic, 1000);
+    // hand_publisher_ = n.advertise<trajectory_msgs::JointTrajectory>(desired_hand_topic, 1000);
     
+    //list of obstacles
     obstacles_subscribe_ = n.subscribe("/PotentialFieldControl/obstacle_list", 1, &PotentialFieldControl::InfoGeometry, this);
-    
-    ROS_INFO("Subscribed for obstacle_remove_topic to : %s", obstacle_remove_topic.c_str());
+
+    ROS_DEBUG("Subscribed for obstacle_remove_topic to : %s", obstacle_remove_topic.c_str());
     obstacles_remove_sub = n.subscribe(obstacle_remove_topic.c_str(), 1, &PotentialFieldControl::InfoOBj, this);     
 
-    pub_error_ = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
+    // pub_error_ = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
+    pub_error_ = nh_.advertise<desperate_housewife::Error_msg>("error", 1000);
     pub_pose_ = nh_.advertise<std_msgs::Float64MultiArray>("pose", 1000);
     pub_marker_ = nh_.advertise<visualization_msgs::Marker>("marker",1000);
 
@@ -205,12 +177,16 @@ namespace desperate_housewife
           //   msg_jointT_hand.points[0].time_from_start = ros::Duration(2); // 2s;
           //   hand_publisher_.publish(msg_jointT_hand);
           //   hand_step =1;
-          // }       
+          // }
+          error_pose_trajectory.Value = 0;
+          tf::poseKDLToMsg (x_, error_pose_trajectory.pose);
+          error_pose_trajectory.ObjOrObst = ObjOrObst;
+          pub_error_.publish(error_pose_trajectory);       
         }
 
         // pushing x to the pose msg
-        for (int i = 0; i < 3; i++)
-          msg_pose_.data.push_back(x_.p(i));
+        // for (int i = 0; i < 3; i++)
+        //   msg_pose_.data.push_back(x_.p(i));
 
         // setting marker parameters
         set_marker(x_,msg_id_);
@@ -226,7 +202,7 @@ namespace desperate_housewife
           // e = x_des_dotdot + Kd*(x_des_dot - x_dot) + Kp*(x_des - x)
           Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + V_max_kuka*Kp_(i)*x_err_(i);
           // msg_err_.data.push_back(Force_attractive(i));
-          msg_err_.data.push_back(x_err_(i));
+          // msg_err_.data.push_back(x_err_(i));
         }
      
 
@@ -240,7 +216,7 @@ namespace desperate_housewife
         pseudo_inverse(omega_,lambda_);
         //lambda_ = omega_.inverse();
 
-         if(Object_position.size() > 0)
+        if(Object_position.size() > 0)
         {
           Force_repulsive = GetRepulsiveForce(x_chain);
          
@@ -271,9 +247,9 @@ namespace desperate_housewife
       msg_id_++;
 
       // publishing error 
-      pub_error_.publish(msg_err_);
+      // pub_error_.publish(msg_err_);
       // publishing pose 
-      pub_pose_.publish(msg_pose_);
+      // pub_pose_.publish(msg_pose_);
 
       
       x_chain.clear();
@@ -304,6 +280,7 @@ namespace desperate_housewife
     tf::poseMsgToKDL(msg->pose, frame_des_);
     x_des_ = frame_des_;
     cmd_flag_ = 1;
+    ObjOrObst = true;
   }
 
   void PotentialFieldControl::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
@@ -323,21 +300,14 @@ namespace desperate_housewife
 
   void PotentialFieldControl::InfoOBj( const desperate_housewife::fittedGeometriesSingle::ConstPtr& obj_rem)
   {
-     KDL::Frame frame_des_;
+    KDL::Frame frame_des_;
     tf::poseMsgToKDL(obj_rem->pose, frame_des_);
+    error_pose_trajectory.WhichArm = obj_rem->info[obj_rem->info.size() - 1]; //last elemet is whicharm
     x_des_ = frame_des_;
     cmd_flag_ = 1;
+    ObjOrObst = false;
 
   }
-
-
-
-
-
-
-
-
-
 
 
 

@@ -24,15 +24,49 @@ HandPoseGenerator::HandPoseGenerator()
   Reject_obstacles_publisher_right = nh.advertise<desperate_housewife::fittedGeometriesSingle > (Reject_obstalces_topic_right.c_str(),1);
 
 
-
   nh.param<std::string>("/PotentialFieldControl/desired_hand_frame", desired_hand_frame_, "desired_hand_pose");
-
   nh.param<std::string>("/PotentialFieldControl/base_frame", base_frame_, "vito_anchor");
   nh.param<std::string>("/PotentialFieldControl/left_hand_frame", left_hand_frame_, "left_hand_palm_link");
   nh.param<std::string>("/PotentialFieldControl/right_hand_frame", right_hand_frame_, "right_hand_palm_link");
 
   // nh.param<std::string>("/PotentialFieldControl/desired_hand_pose", desired_hand_pose_topic_, "/PotentialFieldControl/desired_hand_pose");
   // desired_hand_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > ("/PotentialFieldControl/desired_hand_pose",1);
+  nh.param<std::string>("/left_arm/PotentialFieldControl/error", error_topic_left, "/left_arm/PotentialFieldControl/error");
+  error_sub_left = nh.subscribe(error_topic_left, 1, &HandPoseGenerator::Error_info, this);
+  nh.param<std::string>("/right_arm/PotentialFieldControl/error", error_topic_right, "/right_arm/PotentialFieldControl/error");
+  error_sub_right = nh.subscribe(error_topic_right, 1, &HandPoseGenerator::Error_info, this);
+}
+
+
+
+void HandPoseGenerator::Error_info(const desperate_housewife::Error_msg::ConstPtr& error_msg)
+{
+  // if(ObjOrObst == true) //object to grasp
+  // {
+  //   //SendmsgToCloseHand
+  // }
+  // else //object to move
+  // {
+    desperate_housewife::handPoseSingle New_Hand_Position;
+    // geometry_msgs::Pose pos_new, pose_local;
+    New_Hand_Position.pose = error_msg->pose;
+    New_Hand_Position.pose.position.x = New_Hand_Position.pose.position.x - 0.25;
+
+     if (error_msg->WhichArm == 1) 
+      {
+        desired_hand_left_pose_publisher_.publish( New_Hand_Position );
+      }
+      else
+      {
+        desired_hand_right_pose_publisher_.publish( New_Hand_Position );
+      }
+
+
+    tf::Transform tfHandTrasform2;
+    tf::poseMsgToTF( New_Hand_Position.pose, tfHandTrasform2);  
+    tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"ObstacleReject_new_pose") ); 
+  // }
+
 
 }
 
@@ -62,11 +96,11 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
       {
         // obstacle.pose = msg->geometries[0].pose;
          obstacle_rej.pose = ObstacleReject(msg->geometries[0]);
-        // for (unsigned j=0; j < msg->geometries[0].info.size(); j++)
-        // {
-        
-        //   obstacle_rej.info.push_back(msg->geometries[0].info[j]);
-        // }
+        for (unsigned j=0; j < msg->geometries[0].info.size(); j++)
+        {
+          obstacle_rej.info.push_back(msg->geometries[0].info[j]);
+        }
+        obstacle_rej.info.push_back(DesiredHandPose.whichArm);
         // //obstaclesMsg.geometries.push_back( obstacle );
 
         if(DesiredHandPose.whichArm == 1) //left

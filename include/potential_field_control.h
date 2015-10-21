@@ -22,6 +22,7 @@
 
 #include <desperate_housewife/fittedGeometriesSingle.h>
 #include <desperate_housewife/fittedGeometriesArray.h>
+#include <desperate_housewife/Error_msg.h>
 
 
 
@@ -130,8 +131,9 @@ namespace desperate_housewife
 		int hand_step;
 		std::vector<KDL::Jacobian> JAC_repulsive;
 		std::string obstacle_remove_topic;
-		// int step_ = 0;
-		// KDL::Frame x_des_last;
+		desperate_housewife::Error_msg error_pose_trajectory;
+		//int WhichArm_obj_remove;
+		bool ObjOrObst = true;
 		
 		
 	};
