@@ -28,6 +28,7 @@ namespace desperate_housewife
     n.getParam("obstacle_remove_topic", obstacle_remove_topic);
     n.getParam("desired_hand_name", desired_hand_name);
     n.getParam("desired_hand_topic", desired_hand_topic);
+    n.getParam("obstacle_avoidance", obstacle_avoidance);
    
     jnt_to_jac_solver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
     id_solver_.reset(new KDL::ChainDynParam(kdl_chain_,gravity_));
@@ -46,16 +47,17 @@ namespace desperate_housewife
 
     J_last_.resize(kdl_chain_.getNrOfJoints());
 
-    ROS_DEBUG("Subscribed to: %s", desired_reference_topic.c_str());
+    ROS_DEBUG("Subscribed for desired_hand_topic to: %s", desired_reference_topic.c_str());
     //Hand_pose for graspable objects
     sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this); 
 
     // hand_publisher_ = n.advertise<trajectory_msgs::JointTrajectory>(desired_hand_topic, 1000);
     
     //list of obstacles
-    obstacles_subscribe_ = n.subscribe("/PotentialFieldControl/obstacle_list", 1, &PotentialFieldControl::InfoGeometry, this);
+    ROS_INFO("Subscribed for obstacle_avoidance_topic to : %s", obstacle_avoidance.c_str());
+    obstacles_subscribe_ = n.subscribe(obstacle_avoidance.c_str(), 1, &PotentialFieldControl::InfoGeometry, this);
 
-    ROS_DEBUG("Subscribed for obstacle_remove_topic to : %s", obstacle_remove_topic.c_str());
+    ROS_INFO("Subscribed for obstacle_remove_topic to : %s", obstacle_remove_topic.c_str());
     obstacles_remove_sub = n.subscribe(obstacle_remove_topic.c_str(), 1, &PotentialFieldControl::InfoOBj, this);     
 
     // pub_error_ = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
@@ -178,11 +180,15 @@ namespace desperate_housewife
           //   hand_publisher_.publish(msg_jointT_hand);
           //   hand_step =1;
           // }
-          error_pose_trajectory.Value = 0;
-          tf::poseKDLToMsg (x_, error_pose_trajectory.pose);
-          error_pose_trajectory.ObjOrObst = ObjOrObst;
-          pub_error_.publish(error_pose_trajectory);       
+          
+            error_pose_trajectory.Value = 0;
+            tf::poseKDLToMsg (x_, error_pose_trajectory.pose);
+            error_pose_trajectory.ObjOrObst = ObjOrObst;
+            pub_error_.publish(error_pose_trajectory);
+
+          Force_repulsive = Eigen::Matrix<double,7,1>::Zero();       
         }
+
 
         // pushing x to the pose msg
         // for (int i = 0; i < 3; i++)
@@ -215,16 +221,14 @@ namespace desperate_housewife
         // computing lambda = omega^-1
         pseudo_inverse(omega_,lambda_);
         //lambda_ = omega_.inverse();
-
+        // std::cout<<"Object_position.size(): "<<Object_position.size()<<std::endl;
         if(Object_position.size() > 0)
         {
-          Force_repulsive = GetRepulsiveForce(x_chain);
-         
+          Force_repulsive = GetRepulsiveForce(x_chain);    
         }
         
         F_Rep_table = RepulsiveWithTable(x_chain);
         Force_total_rep = Force_repulsive + F_Rep_table;
-
 
         // computing nullspace
         N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
@@ -256,10 +260,10 @@ namespace desperate_housewife
       Object_radius.clear();
       Object_height.clear();
       Object_position.clear();
-      Force_total_rep = Eigen::Matrix<double,7,1>::Zero();
-      Force_attractive = Eigen::Matrix<double,6,1>::Zero();
-      Force_repulsive = Eigen::Matrix<double,7,1>::Zero();
-      F_Rep_table = Eigen::Matrix<double,7,1>::Zero();
+      // Force_total_rep = Eigen::Matrix<double,7,1>::Zero();
+      // Force_attractive = Eigen::Matrix<double,6,1>::Zero();
+      // Force_repulsive = Eigen::Matrix<double,7,1>::Zero();
+      // F_Rep_table = Eigen::Matrix<double,7,1>::Zero();
       JAC_repulsive.clear();
     }
 
@@ -295,7 +299,7 @@ namespace desperate_housewife
         tf::poseMsgToKDL(msg->geometries[i].pose, frame_obj);
         Object_position.push_back(frame_obj); 
       } 
-    
+    // cmd_flag_ = 1;
   }
 
   void PotentialFieldControl::InfoOBj( const desperate_housewife::fittedGeometriesSingle::ConstPtr& obj_rem)
@@ -362,7 +366,7 @@ namespace desperate_housewife
       std::vector<double>  min_d;
       std::vector<int> index_infl;
       int index_dist = 0;
-      double influence = 0.30;
+      double influence = 0.10;
 
       //F_rep_total = SUM(F_rep_each_ostacles)
       for(unsigned int i=0; i < Object_position.size();i++)
@@ -414,10 +418,10 @@ namespace desperate_housewife
           int index_obj = floor(index_infl[index_dist]/5) ;
           int index_jac = index_infl[index_dist] % 5;
           Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
-           // distance_der_partial = 2*x/radius + 2*y / radius + 4*n*(z^2*n-1) /l
+           // distance_der_partial = x^2/radius + y^2 / radius + 2*(z^2n) /l
           distance_der_partial[0] = (Object_position[index_obj].p.x()*2 / Object_radius[index_obj] );
           distance_der_partial[1] = (Object_position[index_obj].p.y()*2 / Object_radius[index_obj] );
-          distance_der_partial[2] = (Object_position[index_obj].p.z()*4 / Object_height[index_obj] ); //n=1
+          distance_der_partial[2] = (pow(Object_position[index_obj].p.z(),3)*16 / Object_height[index_obj] ); //n=1
           
 
           double Ni_ = 200;

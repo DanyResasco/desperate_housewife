@@ -28,6 +28,8 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   Rot_z.row(2)<< 0,0,1,0;
   Rot_z.row(3)<< 0,0,0,1;
 
+
+
   double  radius = geometry.info[0];
   double  height = geometry.info[1];
   double  isLying = geometry.info[2];
@@ -37,42 +39,46 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   ROS_DEBUG ("isLying = %g", isLying);
   ROS_DEBUG ("isFull = %g", isFull);
 
+  
+  Eigen::Vector3d projection(retta_hand_obj.position.x, retta_hand_obj.position.y,0);
+  projection.normalize();
+  //double y_projection = projection.norm();
+  // std::cout<<"projectionNorm: "<<projection<<std::endl;
+
+  M_desired_local.col(0) << z.cross(projection), 0; 
+  M_desired_local.col(1) << projection,0; //y_porojection
+  M_desired_local.col(2) << -z , 0; //z_cylinder
+
+
   if((isLying == 0) && (isFull == 0)) 
     {
-      // if (whichArm == 1) //left arm
-      //   {
-      //     M_desired_local.col(0) << x, 0;
-      //      M_desired_local.col(1) << -z.cross(x),0;
-      //      Point_desired(0) = - radius;
-          
-      //     //Rot_z = Eigen::Matrix4d::Identity();
-      //   }
-      // else //right arm
-      //   {
-
-      //Point_desired(0) = (whichArm == 1 ? -radius : radius);
-      //   }
-      Point_desired(0) = radius;
-
       Point_desired(1) = 0;
       Point_desired(2) = height *0.5 + 0.05;	
       Point_desired(3) = 1;
       ROS_DEBUG("cyl upright and empty");
+
       
-      M_desired_local.col(0) << x, 0; 
-      M_desired_local.col(1) << -z.cross(x),0;
-      M_desired_local.col(2) << -z , 0;
-     
-      M_desired_local.col(3) << Point_desired;
-      T_w_h = T_vito_c * M_desired_local*Rot_z ; 
+      if (whichArm == 1) //left arm
+      {
+        Point_desired(0) = -radius;
+        M_desired_local.col(3) << Point_desired;
+        T_w_h = T_vito_c * M_desired_local*Rot_z;
+      }
+      else
+      {
+        Point_desired(0) = radius;
+        M_desired_local.col(3) << Point_desired;
+        T_w_h = T_vito_c * M_desired_local;
+      }
+
       
     }
 
   else if(((isLying == 0) && (isFull != 0)) && (radius< max_radius))
     {
       
-      M_desired_local.col(0) << x, 0;
-      M_desired_local.col(1) << -z.cross(x),0;
+      // M_desired_local.col(0) << x, 0;
+      // M_desired_local.col(1) << -z.cross(x),0;
  
       Point_desired(0) = 0;
       Point_desired(1) = 0;
@@ -80,9 +86,16 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       Point_desired(3) = 1;
       ROS_DEBUG("cyl upright and full");
       
-      M_desired_local.col(2) << -z, 0;
+      //M_desired_local.col(2) << -z, 0;
       M_desired_local.col(3) << Point_desired;
-      T_w_h = T_vito_c * M_desired_local*Rot_z ;
+      if (whichArm == 1) //left arm
+      {
+         T_w_h = T_vito_c * M_desired_local*Rot_z;
+       }
+      else
+      {
+         T_w_h = T_vito_c * M_desired_local;
+      }
    
     }
 
@@ -118,7 +131,6 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   ROS_DEBUG("Set hand final position");
   geometry_msgs::Pose local_sh_pose;
   fromEigenToPose( T_w_h ,local_sh_pose);
-
 
   return local_sh_pose;
 
@@ -174,11 +186,13 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose ){
 	Eigen::Vector3d hand_left_position(hand_left.getOrigin().x(),hand_left.getOrigin().y(),hand_left.getOrigin().z());
 	Eigen::Vector3d hand_right_position(hand_rigth.getOrigin().x(),hand_rigth.getOrigin().y(),hand_rigth.getOrigin().z());
 
-	double dist_to_left_hand = std::sqrt((object_position[0] - hand_left_position[0]) * (object_position[0] - hand_left_position[0]) +
+	//double dist_to_left_hand = 
+  dist_to_left_hand = std::sqrt((object_position[0] - hand_left_position[0]) * (object_position[0] - hand_left_position[0]) +
 				   (object_position[1] - hand_left_position[1]) * (object_position[1] - hand_left_position[1]) +
 				   (object_position[2] - hand_left_position[2]) * (object_position[2] - hand_left_position[2]) );
 
-	double dist_to_right_hand = std::sqrt((object_position[0] - hand_right_position[0]) * (object_position[0] - hand_right_position[0]) +
+	//double dist_to_right_hand 
+  dist_to_right_hand = std::sqrt((object_position[0] - hand_right_position[0]) * (object_position[0] - hand_right_position[0]) +
 				   (object_position[1] - hand_right_position[1]) * (object_position[1] - hand_right_position[1]) +
 				   (object_position[2] - hand_right_position[2]) * (object_position[2] - hand_right_position[2]) );
 
@@ -190,11 +204,17 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose ){
 	{
 	 
 	  ROS_DEBUG("Vito uses a: left arm");
+    retta_hand_obj.position.x = object_position[0] + (object_position[0] - hand_left_position[0]);
+    retta_hand_obj.position.y = object_position[1] + (object_position[1] - hand_left_position[1]);
+    retta_hand_obj.position.z = object_position[2] + (object_position[2] - hand_left_position[2]);
     return 1;
 	}
   else
   {
 	 	ROS_DEBUG("Vito uses a: Right arm");
+    retta_hand_obj.position.x = object_position[0] + (object_position[0] - hand_right_position[0]);
+    retta_hand_obj.position.y = object_position[1] + (object_position[1] - hand_right_position[1]);
+    retta_hand_obj.position.z = object_position[2] + (object_position[2] - hand_right_position[2]);
 	 return 0;
   }
 }

@@ -130,7 +130,7 @@ namespace desperate_housewife
 		ros::Publisher hand_publisher_;
 		int hand_step;
 		std::vector<KDL::Jacobian> JAC_repulsive;
-		std::string obstacle_remove_topic;
+		std::string obstacle_remove_topic, obstacle_avoidance;
 		desperate_housewife::Error_msg error_pose_trajectory;
 		//int WhichArm_obj_remove;
 		bool ObjOrObst = true;

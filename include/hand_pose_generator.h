@@ -21,17 +21,21 @@ class HandPoseGenerator{
 
 private:
 
-  std::string geometries_topic_, desired_hand_right_pose_topic_, desired_hand_left_pose_topic_, obstalces_topic_, desired_hand_pose_topic_;
+  std::string geometries_topic_, desired_hand_right_pose_topic_, desired_hand_left_pose_topic_, obstacles_topic_left,obstacles_topic_right, desired_hand_pose_topic_;
   std::string Reject_obstalces_topic_left, Reject_obstalces_topic_right, error_topic_left, error_topic_right;
   std::string base_frame_, desired_hand_frame_, right_hand_frame_, left_hand_frame_;
   std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec;
   int step_obstacle = 1;
 
+  geometry_msgs::Pose retta_hand_obj;
+  double dist_to_left_hand;
+    double dist_to_right_hand;
+
 public:
 
   ros::Subscriber stream_subscriber_, error_sub_left, error_sub_right;
   ros::NodeHandle nh;
-  ros::Publisher desired_hand_publisher_, desired_hand_right_pose_publisher_, desired_hand_left_pose_publisher_, obstacles_publisher_;
+  ros::Publisher desired_hand_publisher_, desired_hand_right_pose_publisher_, desired_hand_left_pose_publisher_, obstacles_publisher_right, obstacles_publisher_left;
   ros::Publisher Reject_obstacles_publisher_left, Reject_obstacles_publisher_right ; 
   tf::TransformBroadcaster tf_desired_hand_pose;
   tf::TransformListener listener_info;
