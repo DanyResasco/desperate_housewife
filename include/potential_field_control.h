@@ -28,6 +28,7 @@
 
 
 
+
 namespace desperate_housewife
 {
 	class PotentialFieldControl: public controller_interface::PIDKinematicChainControllerBase<hardware_interface::EffortJointInterface>
@@ -134,6 +135,7 @@ namespace desperate_housewife
 		desperate_housewife::Error_msg error_pose_trajectory;
 		//int WhichArm_obj_remove;
 		bool ObjOrObst = true;
+		geometry_msgs::WrenchStamped wrench_msg;
 		
 		
 	};

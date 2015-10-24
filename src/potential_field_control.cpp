@@ -22,7 +22,7 @@ namespace desperate_housewife
   {
       PIDKinematicChainControllerBase<hardware_interface::EffortJointInterface>::init(robot, n);
       ROS_INFO("Starting controller");
-      ROS_DEBUG("Number of segments: %d", kdl_chain_.getNrOfSegments());
+      ROS_WARN("Number of segments: %d", kdl_chain_.getNrOfSegments());
     // for swicht the hand_desired
     n.getParam("desired_reference_topic", desired_reference_topic);
     n.getParam("obstacle_remove_topic", obstacle_remove_topic);
@@ -92,6 +92,7 @@ namespace desperate_housewife
       cmd_flag_ = 0;
       step_ = 0;
       hand_step = 0;
+      count_step = 0;
 
   }
 
@@ -108,6 +109,8 @@ namespace desperate_housewife
       {
         joint_msr_states_.q(i) = joint_handles_[i].getPosition();
         joint_msr_states_.qdot(i) = joint_handles_[i].getVelocity();
+
+       
       }
 
       // clearing msgs before publishing
@@ -153,20 +156,27 @@ namespace desperate_housewife
         fk_pos_solver_->JntToCart(joint_msr_states_.q,x_);
 
         //other method use to calculate the position and jacobian for the repulsive field 
+        // int j=0;
+        // for(std::vector<KDL::Segment>::const_iterator it = kdl_chain_.segments.begin(); it != kdl_chain_.segments.end(); ++it)
+        // {
         for(unsigned int i=0; i<kdl_chain_.getNrOfSegments()+1;i++)  
         {
+          // std::cout<<"name segment n: "<<j<<std::endl;
+          // std::cout<<"_ " <<it->getName()<<std::endl;
           KDL::Frame x_test;     
           fk_pos_solver_->JntToCart(joint_msr_states_.q,x_test,i);
           x_chain.push_back(x_test);  //x_chain[1-7 + 14];
           KDL::Jacobian jac_repulsive;
           jac_repulsive = KDL::Jacobian(7);
           jnt_to_jac_solver_->JntToJac (joint_msr_states_.q,jac_repulsive , i);
+          // std::cout<<"jac_repulsive: "<<jac_repulsive.data<<std::endl;
           JAC_repulsive.push_back(jac_repulsive);
+          // j++;
         } 
 
        if (Equal(x_,x_des_,0.05))
        {
-          ROS_INFO("On target");
+          // ROS_INFO("On target");
 
           // if(hand_step == 0)
           // {
@@ -186,7 +196,7 @@ namespace desperate_housewife
             error_pose_trajectory.ObjOrObst = ObjOrObst;
             pub_error_.publish(error_pose_trajectory);
 
-          Force_repulsive = Eigen::Matrix<double,7,1>::Zero();       
+          // Force_repulsive = Eigen::Matrix<double,7,1>::Zero();       
         }
 
 
@@ -210,8 +220,10 @@ namespace desperate_housewife
           // msg_err_.data.push_back(Force_attractive(i));
           // msg_err_.data.push_back(x_err_(i));
         }
-     
-
+        // wrench_msg.wrench.force.x = Force_attractive[0];
+        // wrench_msg.wrench.force.y = Force_attractive[1];
+        // wrench_msg.wrench.force.z = Force_attractive[2];
+        // std::cout<<"Force_attractive: "<<Force_attractive<<std::endl;
         // computing b = J*M^-1*(c+g) - J_dot*q_dot
         b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
 
@@ -226,7 +238,8 @@ namespace desperate_housewife
         {
           Force_repulsive = GetRepulsiveForce(x_chain);    
         }
-        
+            
+
         F_Rep_table = RepulsiveWithTable(x_chain);
         Force_total_rep = Force_repulsive + F_Rep_table;
 
@@ -265,10 +278,12 @@ namespace desperate_housewife
       // Force_repulsive = Eigen::Matrix<double,7,1>::Zero();
       // F_Rep_table = Eigen::Matrix<double,7,1>::Zero();
       JAC_repulsive.clear();
+
+      
     }
 
-     else
-     {
+    else
+    {
       for (unsigned int i = 0; i < joint_handles_.size(); i++)
       {
            joint_handles_[i].setCommand(PIDs_[i].computeCommand(joint_des_states_.q(i) - joint_msr_states_.q(i),period));
@@ -306,7 +321,7 @@ namespace desperate_housewife
   {
     KDL::Frame frame_des_;
     tf::poseMsgToKDL(obj_rem->pose, frame_des_);
-    error_pose_trajectory.WhichArm = obj_rem->info[obj_rem->info.size() - 1]; //last elemet is whicharm
+    error_pose_trajectory.WhichArm = obj_rem->info[obj_rem->info.size() - 2]; //last element is ration and size -2 is whicharm
     x_des_ = frame_des_;
     cmd_flag_ = 1;
     ObjOrObst = false;
@@ -366,23 +381,29 @@ namespace desperate_housewife
       std::vector<double>  min_d;
       std::vector<int> index_infl;
       int index_dist = 0;
-      double influence = 0.10;
+      double influence = 0.20;
 
       //F_rep_total = SUM(F_rep_each_ostacles)
-      for(unsigned int i=0; i < Object_position.size();i++)
-      {
-        distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[4].p)).Norm() );
-        distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[6].p)).Norm() );
-        distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[8].p)).Norm() );
-        distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[11].p)).Norm() );
-        distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[14].p)).Norm() );
-    
+      // std::cout<<"Object_position.size(): "<<Object_position.size()<<std::endl;
+      // for(unsigned int i=0; i < Object_position.size();i++)
+      // {
+      //   distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[4].p)).Norm() );
+      //   distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[5].p)).Norm() );
+      //   distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[6].p)).Norm() );
+         distance_local_obj.push_back( (diff(Object_position[0].p,Pos_chain[7].p)).Norm() );
+        distance_local_obj.push_back( (diff(Object_position[0].p,Pos_chain[14].p)).Norm() );
+      
+      // double distance = diff(Object_position[0].p,Pos_chain[14].p).Norm();
+
+
         for(unsigned int i=0; i < distance_local_obj.size(); i++ )
         {
           if( distance_local_obj[i] <= influence )
+          // if( distance <= influence )
           {
-            min_d.push_back(distance_local_obj[i]);
+            min_d.push_back(distance_local_obj[0]);
             index_infl.push_back(i); //for tracking wich object is closet
+            std::cout<<"index_infl: "<<index_infl[i]<<std::endl; 
           }
           else
           {
@@ -390,9 +411,9 @@ namespace desperate_housewife
           }
    
         }
-                
+               
         //ROS_INFO("finito for e la dimensione è di: %g", min_d.size());
-
+        std::cout<<"min_d.size(): "<<min_d.size()<<std::endl;
         if(min_d.size() != 0)
         {
           
@@ -415,60 +436,77 @@ namespace desperate_housewife
             }
           }
 
-          int index_obj = floor(index_infl[index_dist]/5) ;
-          int index_jac = index_infl[index_dist] % 5;
+          int index_obj = floor(index_infl[index_dist]/2) ;
+          std::cout<<"index_obj: "<<index_obj<<std::endl;
+          int index_jac = index_infl[index_dist] % 2;
+          std::cout<<"index_jac: "<<index_jac<<std::endl;
+
+
           Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
            // distance_der_partial = x^2/radius + y^2 / radius + 2*(z^2n) /l
+          // distance_der_partial[0] = (Object_position[index_obj].p.x()*2 / Object_radius[index_obj] );
+          // distance_der_partial[1] = (Object_position[index_obj].p.y()*2 / Object_radius[index_obj] );
+          // distance_der_partial[2] = (pow(Object_position[index_obj].p.z(),3)*16 / Object_height[index_obj] ); //n=1
+
           distance_der_partial[0] = (Object_position[index_obj].p.x()*2 / Object_radius[index_obj] );
           distance_der_partial[1] = (Object_position[index_obj].p.y()*2 / Object_radius[index_obj] );
-          distance_der_partial[2] = (pow(Object_position[index_obj].p.z(),3)*16 / Object_height[index_obj] ); //n=1
+          distance_der_partial[2] = (pow(Object_position[index_obj].p.z(),7)*16 / Object_height[index_obj] ); //n=2
           
 
-          double Ni_ = 200;
+          double Ni_ = 10;
           
-          vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
+          // vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
+          // std::cout<<"qui"<<std::endl;       
+          Force(0) = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial[0];
+          Force(1) = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial[1];
+          Force(2) = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial[2];
+          Force(3) = 0;
+          Force(4) = 0;
+          Force(5) = 0;
 
-          Force.row(0) << vec_Temp[0];
-          Force.row(1) << vec_Temp[1];
-          Force.row(2) << vec_Temp[2];
-          Force.row(3) <<  0;
-          Force.row(4) <<  0;
-          Force.row(5) <<  0;
+        //   wrench_msg.wrench.force.x = Force[0];
+        // wrench_msg.wrench.force.y = Force[1];
+        // wrench_msg.wrench.force.z = Force[2];
 
           switch(index_jac) //T= J_transpose * lambda*repulsive_force
           {
 
-            case 0: 
-                  F_rep.push_back(JAC_repulsive[4].data.transpose()* lambda_ * Force);
+            // case 0: 
+            //       F_rep.push_back(JAC_repulsive[4].data.transpose()* lambda_ * Force);
+            //       break;
+            // case 1:
+            //       F_rep.push_back(JAC_repulsive[6].data.transpose()* lambda_  * Force);
+            //       break;
+            // case 2:
+            //       F_rep.push_back(JAC_repulsive[8].data.transpose()* lambda_  * Force);
+            //       break;
+            case 0:
+                  F_rep.push_back(JAC_repulsive[7].data.transpose()* lambda_  * Force);
                   break;
             case 1:
-                  F_rep.push_back(JAC_repulsive[6].data.transpose()* lambda_  * Force);
-                  break;
-            case 2:
-                  F_rep.push_back(JAC_repulsive[8].data.transpose()* lambda_  * Force);
-                  break;
-            case 3:
-                  F_rep.push_back(JAC_repulsive[11].data.transpose()* lambda_  * Force);
-                  break;
-            case 4:
-                  F_rep.push_back(JAC_repulsive[14].data.transpose()* lambda_  * Force);
+                   F_rep.push_back(JAC_repulsive[14].data.transpose()* lambda_  * Force);
                   break;
           }
         }
-        else
-        {
-          continue;
-        }
-      }
-    
-      
-      for(unsigned int j=0; j < F_rep.size(); j++)
-      {
-        F_rep_tot = F_rep_tot + F_rep[j];
-      }
+        // else
+        // {
+        //   continue;
+        // }
+      // }
+    else
+    {
+      F_rep.push_back(Eigen::Matrix<double,7,1>::Zero());
+    }
+      // std::cout<<"F_rep.size: "<<F_rep.size()<<std::endl;
+    // std::cout<<"f_rep: "<<F_rep[0]<<std::endl;
+    // std::cout<<"Force_attractive: "<<Force_attractive<<std::endl;
+      // for(unsigned int j=0; j < F_rep.size(); j++)
+      // {
+      //   F_rep_tot = F_rep_tot + F_rep[j];
+      // }
       // std::cout<<"F_rep_tot: "<<F_rep_tot<<std::endl;
 
-     return F_rep_tot;
+     return F_rep[0];
        
 
   }
@@ -489,9 +527,9 @@ Eigen::Matrix<double,7,1> PotentialFieldControl::RepulsiveWithTable(std::vector<
     Eigen::Matrix<double,7,1> F_rep = Eigen::Matrix<double,7,1>::Zero();
 
      distance_local_obj.push_back(- Table_position.z()+ Pos_arm[4].p.z());
+    distance_local_obj.push_back(- Table_position.z()+ Pos_arm[5].p.z());
     distance_local_obj.push_back(- Table_position.z()+ Pos_arm[6].p.z());
-    distance_local_obj.push_back(- Table_position.z()+ Pos_arm[8].p.z());
-    distance_local_obj.push_back(- Table_position.z()+ Pos_arm[11].p.z());
+    distance_local_obj.push_back(- Table_position.z()+ Pos_arm[7].p.z());
     distance_local_obj.push_back(- Table_position.z()+ Pos_arm[14].p.z());
 
     for(unsigned int i= 0; i< distance_local_obj.size(); i++)
@@ -550,15 +588,15 @@ Eigen::Matrix<double,7,1> PotentialFieldControl::RepulsiveWithTable(std::vector<
                 // std::cout<<" JAC_repulsive[6].data"<< JAC_repulsive[6].data<<std::endl;
                 break;
           case 1:
-                F_rep = JAC_repulsive[6].data.transpose()* lambda_  * Force;
+                F_rep = JAC_repulsive[5].data.transpose()* lambda_  * Force;
                  // std::cout<<" JAC_repulsive[8].data"<< JAC_repulsive[8].data<<std::endl;
                 break;
           case 2:
-                 F_rep = JAC_repulsive[8].data.transpose()* lambda_  * Force;
+                 F_rep = JAC_repulsive[6].data.transpose()* lambda_  * Force;
                   // std::cout<<" JAC_repulsive[11].data"<< JAC_repulsive[11].data<<std::endl;
                 break;
           case 3:
-                 F_rep = JAC_repulsive[11].data.transpose()* lambda_  * Force;
+                 F_rep = JAC_repulsive[7].data.transpose()* lambda_  * Force;
                   // std::cout<<" JAC_repulsive[14].data"<< JAC_repulsive[14].data<<std::endl;
                 break;
           case 4:

@@ -76,17 +76,12 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
   else if(((isLying == 0) && (isFull != 0)) && (radius< max_radius))
     {
-      
-      // M_desired_local.col(0) << x, 0;
-      // M_desired_local.col(1) << -z.cross(x),0;
- 
       Point_desired(0) = 0;
       Point_desired(1) = 0;
       Point_desired(2) = height *0.5+ 0.05; 
       Point_desired(3) = 1;
       ROS_DEBUG("cyl upright and full");
       
-      //M_desired_local.col(2) << -z, 0;
       M_desired_local.col(3) << Point_desired;
       if (whichArm == 1) //left arm
       {
