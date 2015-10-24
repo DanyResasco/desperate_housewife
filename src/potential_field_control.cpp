@@ -92,8 +92,7 @@ namespace desperate_housewife
       cmd_flag_ = 0;
       step_ = 0;
       hand_step = 0;
-      count_step = 0;
-
+      
   }
 
   void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& period)
@@ -279,7 +278,7 @@ namespace desperate_housewife
       // F_Rep_table = Eigen::Matrix<double,7,1>::Zero();
       JAC_repulsive.clear();
 
-      
+
     }
 
     else
@@ -300,6 +299,7 @@ namespace desperate_housewife
     x_des_ = frame_des_;
     cmd_flag_ = 1;
     ObjOrObst = true;
+    // std::cout<<"arrivato msg"<<std::endl;
   }
 
   void PotentialFieldControl::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
@@ -321,7 +321,7 @@ namespace desperate_housewife
   {
     KDL::Frame frame_des_;
     tf::poseMsgToKDL(obj_rem->pose, frame_des_);
-    error_pose_trajectory.WhichArm = obj_rem->info[obj_rem->info.size() - 2]; //last element is ration and size -2 is whicharm
+    error_pose_trajectory.WhichArm = obj_rem->info[obj_rem->info.size() - 1]; //last element is whicharm
     x_des_ = frame_des_;
     cmd_flag_ = 1;
     ObjOrObst = false;

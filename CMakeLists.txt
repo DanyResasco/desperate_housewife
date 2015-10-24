@@ -26,7 +26,7 @@ find_package(catkin REQUIRED
   lwr_controllers
   calibration)
 
-find_package(PCL REQUIRED)
+find_package(PCL 1.7.2 REQUIRED)
 
 include_directories(${GAZEBO_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})

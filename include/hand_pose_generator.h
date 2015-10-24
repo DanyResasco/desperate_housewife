@@ -56,6 +56,7 @@ public:
 
   geometry_msgs::Pose ObstacleReject( desperate_housewife::fittedGeometriesSingle Pose_rej_obs);
   void Error_info(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+  void SendObjRejectMsg(desperate_housewife::fittedGeometriesSingle obj_msg, int arm_);
 
 };
 

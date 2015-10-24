@@ -167,7 +167,8 @@ Eigen::Matrix4d HandPoseGenerator::FromMsgtoEigen(geometry_msgs::Pose &object)
 
 
 
-int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose ){
+int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose )
+{
 
 	tf::StampedTransform hand_left, hand_rigth;
 
