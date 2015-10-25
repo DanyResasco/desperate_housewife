@@ -13,6 +13,9 @@
 
 #include <math.h>
 
+
+
+
 namespace desperate_housewife 
 {
   PotentialFieldControl::PotentialFieldControl() {}
@@ -29,6 +32,8 @@ namespace desperate_housewife
     n.getParam("desired_hand_name", desired_hand_name);
     n.getParam("desired_hand_topic", desired_hand_topic);
     n.getParam("obstacle_avoidance", obstacle_avoidance);
+    n.getParam("tip_name", tip_name);
+
    
     jnt_to_jac_solver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
     id_solver_.reset(new KDL::ChainDynParam(kdl_chain_,gravity_));
@@ -48,14 +53,14 @@ namespace desperate_housewife
     J_last_.resize(kdl_chain_.getNrOfJoints());
 
     ROS_DEBUG("Subscribed for desired_hand_topic to: %s", desired_reference_topic.c_str());
+     //list of obstacles
+    ROS_INFO("Subscribed for obstacle_avoidance_topic to : %s", obstacle_avoidance.c_str());
+    obstacles_subscribe_ = n.subscribe(obstacle_avoidance.c_str(), 1, &PotentialFieldControl::InfoGeometry, this);
+
     //Hand_pose for graspable objects
     sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this); 
 
     // hand_publisher_ = n.advertise<trajectory_msgs::JointTrajectory>(desired_hand_topic, 1000);
-    
-    //list of obstacles
-    ROS_INFO("Subscribed for obstacle_avoidance_topic to : %s", obstacle_avoidance.c_str());
-    obstacles_subscribe_ = n.subscribe(obstacle_avoidance.c_str(), 1, &PotentialFieldControl::InfoGeometry, this);
 
     ROS_INFO("Subscribed for obstacle_remove_topic to : %s", obstacle_remove_topic.c_str());
     obstacles_remove_sub = n.subscribe(obstacle_remove_topic.c_str(), 1, &PotentialFieldControl::InfoOBj, this);     
@@ -64,6 +69,9 @@ namespace desperate_housewife
     pub_error_ = nh_.advertise<desperate_housewife::Error_msg>("error", 1000);
     pub_pose_ = nh_.advertise<std_msgs::Float64MultiArray>("pose", 1000);
     pub_marker_ = nh_.advertise<visualization_msgs::Marker>("marker",1000);
+    nh_.param<std::string>("/BasicGeometriesNode/cylinder_names", object_names_, "object");
+    publisher_wrench_command = nh_.advertise<geometry_msgs::WrenchStamped>("left_arm/PotentialFieldControl/wrench_msg", 1000);
+    publisher_wrench_command_rep = nh_.advertise<geometry_msgs::WrenchStamped>("left_arm/PotentialFieldControl/wrench_msg", 1000);
 
     return true;
   }
@@ -219,9 +227,15 @@ namespace desperate_housewife
           // msg_err_.data.push_back(Force_attractive(i));
           // msg_err_.data.push_back(x_err_(i));
         }
-        // wrench_msg.wrench.force.x = Force_attractive[0];
-        // wrench_msg.wrench.force.y = Force_attractive[1];
-        // wrench_msg.wrench.force.z = Force_attractive[2];
+        //std::string cylinder_frame;
+        //cylinder_frame = 
+        wrench_msg.header.stamp = ros::Time::now();
+        wrench_msg.header.frame_id = tip_name.c_str();
+        wrench_msg.wrench.force.x = Force_attractive[0];
+        wrench_msg.wrench.force.y = Force_attractive[1];
+        wrench_msg.wrench.force.z = Force_attractive[2];
+        publisher_wrench_command.publish(wrench_msg);
+
         // std::cout<<"Force_attractive: "<<Force_attractive<<std::endl;
         // computing b = J*M^-1*(c+g) - J_dot*q_dot
         b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
@@ -314,7 +328,7 @@ namespace desperate_housewife
         tf::poseMsgToKDL(msg->geometries[i].pose, frame_obj);
         Object_position.push_back(frame_obj); 
       } 
-    // cmd_flag_ = 1;
+    cmd_flag_ = 1;
   }
 
   void PotentialFieldControl::InfoOBj( const desperate_housewife::fittedGeometriesSingle::ConstPtr& obj_rem)
@@ -487,6 +501,18 @@ namespace desperate_housewife
                    F_rep.push_back(JAC_repulsive[14].data.transpose()* lambda_  * Force);
                   break;
           }
+
+           // std::string obstacle_frame;
+        //cylinder_frame = 
+        // wrench_msg_rep.header.stamp = ros::Time::now();
+        // wrench_msg_rep.header.frame_id = object_names_;
+        // wrench_msg_rep.wrench.force.x = Force[0];
+        // wrench_msg_rep.wrench.force.y = Force[1];
+        // wrench_msg_rep.wrench.force.z = Force[2];
+        // publisher_wrench_command_rep.publish(wrench_msg_rep);
+
+
+
         }
         // else
         // {
@@ -505,6 +531,7 @@ namespace desperate_housewife
       //   F_rep_tot = F_rep_tot + F_rep[j];
       // }
       // std::cout<<"F_rep_tot: "<<F_rep_tot<<std::endl;
+    
 
      return F_rep[0];
        

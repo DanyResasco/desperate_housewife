@@ -29,8 +29,8 @@ HandPoseGenerator::HandPoseGenerator()
 
   nh.param<std::string>("/PotentialFieldControl/desired_hand_frame", desired_hand_frame_, "desired_hand_pose");
   nh.param<std::string>("/PotentialFieldControl/base_frame", base_frame_, "vito_anchor");
-  nh.param<std::string>("/PotentialFieldControl/left_hand_frame", left_hand_frame_, "left_hand_palm_link");
-  nh.param<std::string>("/PotentialFieldControl/right_hand_frame", right_hand_frame_, "right_hand_palm_link");
+  nh.param<std::string>("/PotentialFieldControl/left_hand_frame", left_hand_frame_, "left_hand_palm_ref_link");
+  nh.param<std::string>("/PotentialFieldControl/right_hand_frame", right_hand_frame_, "right_hand_palm_ref_link");
 
   // nh.param<std::string>("/PotentialFieldControl/desired_hand_pose", desired_hand_pose_topic_, "/PotentialFieldControl/desired_hand_pose");
   // desired_hand_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > ("/PotentialFieldControl/desired_hand_pose",1);
@@ -120,7 +120,7 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
 {
 
   desperate_housewife::fittedGeometriesSingle obstacle;
-  desperate_housewife::fittedGeometriesSingle obstacle_rej;
+  // desperate_housewife::fittedGeometriesSingle obstacle_rej;
   desperate_housewife::fittedGeometriesArray obstaclesMsg;
   desperate_housewife::handPoseSingle DesiredHandPose;
 
@@ -163,8 +163,8 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
       // tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"ObstacleReject") );
  
       }
-
-      if(DesiredHandPose.isGraspable == true)
+      else
+     // if(DesiredHandPose.isGraspable == true)
         {
           if (DesiredHandPose.whichArm == 1) 
           {

@@ -23,6 +23,7 @@
 #include <desperate_housewife/fittedGeometriesSingle.h>
 #include <desperate_housewife/fittedGeometriesArray.h>
 #include <desperate_housewife/Error_msg.h>
+#include <geometry_msgs/WrenchStamped.h>
 
 
 
@@ -135,7 +136,10 @@ namespace desperate_housewife
 		desperate_housewife::Error_msg error_pose_trajectory;
 		//int WhichArm_obj_remove;
 		bool ObjOrObst = true;
-		// geometry_msgs::WrenchStamped wrench_msg;
+		geometry_msgs::WrenchStamped wrench_msg;
+		geometry_msgs::WrenchStamped wrench_msg_rep;
+		ros::Publisher publisher_wrench_command,publisher_wrench_command_rep ;
+		std::string tip_name, object_names_;
 		
 		
 	};
