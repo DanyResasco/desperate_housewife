@@ -69,9 +69,10 @@ namespace desperate_housewife
     pub_error_ = nh_.advertise<desperate_housewife::Error_msg>("error", 1000);
     pub_pose_ = nh_.advertise<std_msgs::Float64MultiArray>("pose", 1000);
     pub_marker_ = nh_.advertise<visualization_msgs::Marker>("marker",1000);
+
     nh_.param<std::string>("/BasicGeometriesNode/cylinder_names", object_names_, "object");
     publisher_wrench_command = nh_.advertise<geometry_msgs::WrenchStamped>("left_arm/PotentialFieldControl/wrench_msg", 1000);
-    publisher_wrench_command_rep = nh_.advertise<geometry_msgs::WrenchStamped>("left_arm/PotentialFieldControl/wrench_msg", 1000);
+    publisher_wrench_command_rep = nh_.advertise<geometry_msgs::WrenchStamped>("left_arm/PotentialFieldControl/wrench_msg2", 1000);
 
     return true;
   }
@@ -212,7 +213,7 @@ namespace desperate_housewife
         //   msg_pose_.data.push_back(x_.p(i));
 
         // setting marker parameters
-        set_marker(x_,msg_id_);
+        // set_marker(x_,msg_id_);
 
         // computing end-effector position/orientation error w.r.t. desired frame
         x_err_ = diff(x_,x_des_);
@@ -273,23 +274,15 @@ namespace desperate_housewife
       }
 
       // publishing markers for visualization in rviz
-      pub_marker_.publish(msg_marker_);
-      msg_id_++;
+      // pub_marker_.publish(msg_marker_);
+      // msg_id_++;
 
-      // publishing error 
-      // pub_error_.publish(msg_err_);
-      // publishing pose 
-      // pub_pose_.publish(msg_pose_);
-
+      std::cout<<"sum force: "<<(J_.data.transpose()*lambda_*Force_attractive)+Force_total_rep<<std::endl;
       
       x_chain.clear();
       Object_radius.clear();
       Object_height.clear();
       Object_position.clear();
-      // Force_total_rep = Eigen::Matrix<double,7,1>::Zero();
-      // Force_attractive = Eigen::Matrix<double,6,1>::Zero();
-      // Force_repulsive = Eigen::Matrix<double,7,1>::Zero();
-      // F_Rep_table = Eigen::Matrix<double,7,1>::Zero();
       JAC_repulsive.clear();
 
 
@@ -344,29 +337,29 @@ namespace desperate_housewife
 
 
 
-  void PotentialFieldControl::set_marker(KDL::Frame x, int id)
-  {     
-        msg_marker_.header.frame_id = "world";
-        msg_marker_.header.stamp = ros::Time();
-        msg_marker_.ns = "end_effector";
-        msg_marker_.id = id;
-        msg_marker_.type = visualization_msgs::Marker::SPHERE;
-        msg_marker_.action = visualization_msgs::Marker::ADD;
-        msg_marker_.pose.position.x = x.p(0);
-        msg_marker_.pose.position.y = x.p(1);
-        msg_marker_.pose.position.z = x.p(2);
-        msg_marker_.pose.orientation.x = 0.0;
-        msg_marker_.pose.orientation.y = 0.0;
-        msg_marker_.pose.orientation.z = 0.0;
-        msg_marker_.pose.orientation.w = 1.0;
-        msg_marker_.scale.x = 0.005;
-        msg_marker_.scale.y = 0.005;
-        msg_marker_.scale.z = 0.005;
-        msg_marker_.color.a = 1.0;
-        msg_marker_.color.r = 0.0;
-        msg_marker_.color.g = 1.0;
-        msg_marker_.color.b = 0.0;  
-  }
+  // void PotentialFieldControl::set_marker(KDL::Frame x, int id)
+  // {     
+  //       msg_marker_.header.frame_id = "world";
+  //       msg_marker_.header.stamp = ros::Time();
+  //       msg_marker_.ns = "end_effector";
+  //       msg_marker_.id = id;
+  //       msg_marker_.type = visualization_msgs::Marker::SPHERE;
+  //       msg_marker_.action = visualization_msgs::Marker::ADD;
+  //       msg_marker_.pose.position.x = x.p(0);
+  //       msg_marker_.pose.position.y = x.p(1);
+  //       msg_marker_.pose.position.z = x.p(2);
+  //       msg_marker_.pose.orientation.x = 0.0;
+  //       msg_marker_.pose.orientation.y = 0.0;
+  //       msg_marker_.pose.orientation.z = 0.0;
+  //       msg_marker_.pose.orientation.w = 1.0;
+  //       msg_marker_.scale.x = 0.005;
+  //       msg_marker_.scale.y = 0.005;
+  //       msg_marker_.scale.z = 0.005;
+  //       msg_marker_.color.a = 1.0;
+  //       msg_marker_.color.r = 0.0;
+  //       msg_marker_.color.g = 1.0;
+  //       msg_marker_.color.b = 0.0;  
+  // }
 
   double PotentialFieldControl::task_objective_function(KDL::JntArray q)
   {
@@ -395,7 +388,7 @@ namespace desperate_housewife
       std::vector<double>  min_d;
       std::vector<int> index_infl;
       int index_dist = 0;
-      double influence = 0.20;
+      double influence = 0.30;
 
       //F_rep_total = SUM(F_rep_each_ostacles)
       // std::cout<<"Object_position.size(): "<<Object_position.size()<<std::endl;
@@ -409,7 +402,7 @@ namespace desperate_housewife
       
       // double distance = diff(Object_position[0].p,Pos_chain[14].p).Norm();
 
-
+      // std::cout<<"distance_local_obj.size(): "<<distance_local_obj.size()<<std::endl;
         for(unsigned int i=0; i < distance_local_obj.size(); i++ )
         {
           if( distance_local_obj[i] <= influence )
@@ -458,16 +451,14 @@ namespace desperate_housewife
 
           Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
            // distance_der_partial = x^2/radius + y^2 / radius + 2*(z^2n) /l
-          // distance_der_partial[0] = (Object_position[index_obj].p.x()*2 / Object_radius[index_obj] );
-          // distance_der_partial[1] = (Object_position[index_obj].p.y()*2 / Object_radius[index_obj] );
-          // distance_der_partial[2] = (pow(Object_position[index_obj].p.z(),3)*16 / Object_height[index_obj] ); //n=1
-
+    
           distance_der_partial[0] = (Object_position[index_obj].p.x()*2 / Object_radius[index_obj] );
           distance_der_partial[1] = (Object_position[index_obj].p.y()*2 / Object_radius[index_obj] );
-          distance_der_partial[2] = (pow(Object_position[index_obj].p.z(),7)*16 / Object_height[index_obj] ); //n=2
+          // distance_der_partial[2] = (pow(Object_position[index_obj].p.z(),7)*16 / Object_height[index_obj] ); //n=2
+           distance_der_partial[2] = (Object_position[index_obj].p.z()*4 / Object_height[index_obj] ); //n=2
           
 
-          double Ni_ = 10;
+          double Ni_ = 0.1;
           
           // vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
           // std::cout<<"qui"<<std::endl;       
@@ -477,10 +468,6 @@ namespace desperate_housewife
           Force(3) = 0;
           Force(4) = 0;
           Force(5) = 0;
-
-        //   wrench_msg.wrench.force.x = Force[0];
-        // wrench_msg.wrench.force.y = Force[1];
-        // wrench_msg.wrench.force.z = Force[2];
 
           switch(index_jac) //T= J_transpose * lambda*repulsive_force
           {
@@ -504,12 +491,12 @@ namespace desperate_housewife
 
            // std::string obstacle_frame;
         //cylinder_frame = 
-        // wrench_msg_rep.header.stamp = ros::Time::now();
-        // wrench_msg_rep.header.frame_id = object_names_;
-        // wrench_msg_rep.wrench.force.x = Force[0];
-        // wrench_msg_rep.wrench.force.y = Force[1];
-        // wrench_msg_rep.wrench.force.z = Force[2];
-        // publisher_wrench_command_rep.publish(wrench_msg_rep);
+        wrench_msg_rep.header.stamp = ros::Time::now();
+        wrench_msg_rep.header.frame_id = object_names_.c_str();
+        wrench_msg_rep.wrench.force.x = Force[0];
+        wrench_msg_rep.wrench.force.y = Force[1];
+        wrench_msg_rep.wrench.force.z = Force[2];
+        publisher_wrench_command_rep.publish(wrench_msg_rep);
 
 
 

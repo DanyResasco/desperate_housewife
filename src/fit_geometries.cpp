@@ -22,7 +22,7 @@ BasicGeometriesNode::BasicGeometriesNode()
   geometries_publisher_ = nh.advertise<desperate_housewife::fittedGeometriesArray>( geometries_topic_.c_str(), 1 );
 
   nh.param<std::string>("/BasicGeometriesNode/cylinder_names", object_names_, "object");
-  nh.param<int>("/BasicGeometriesNode/cluster_tolerance", min_cluster_size_, 100);
+  nh.param<int>("/BasicGeometriesNode/cluster_tolerance", min_cluster_size_, 200);
   nh.param<double>("/BasicGeometriesNode/min_cluster_size", cluster_tolerance_, 0.07);
 
 
@@ -79,6 +79,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr > BasicGeometriesNode::getCl
   euclidean_cluster.extract (cluster_indices);
 
   ROS_DEBUG("Number of clusters %lu", cluster_indices.size());
+
   // from cluster[i] to point_cloud
   if (cluster_indices.size() > 0)
     {
@@ -104,6 +105,12 @@ std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr > BasicGeometriesNode::getCl
           cluster_vector.push_back(cloud_cluster);
         }
     }
+
+    // ROS_INFO("Size cluster_vector %lu", cluster_vector.size());
+    // for (unsigned int i = 0; i < cluster_vector.size() ; ++i)
+    // {
+    //   ROS_INFO("Num of points in cluster %d is %lu", i, cluster_vector[i]->points.size());
+    // }
 
   return cluster_vector;
 }

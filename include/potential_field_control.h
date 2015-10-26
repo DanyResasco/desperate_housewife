@@ -108,9 +108,6 @@ namespace desperate_housewife
 		int first_step_;
 		int msg_id_;
 		int cmd_flag_;
-		// int ntasks_;
-		// bool on_target_flag_;
-		// int links_index_;
 
 
 		boost::scoped_ptr<KDL::ChainJntToJacSolver> jnt_to_jac_solver_;
@@ -134,7 +131,6 @@ namespace desperate_housewife
 		std::vector<KDL::Jacobian> JAC_repulsive;
 		std::string obstacle_remove_topic, obstacle_avoidance;
 		desperate_housewife::Error_msg error_pose_trajectory;
-		//int WhichArm_obj_remove;
 		bool ObjOrObst = true;
 		geometry_msgs::WrenchStamped wrench_msg;
 		geometry_msgs::WrenchStamped wrench_msg_rep;

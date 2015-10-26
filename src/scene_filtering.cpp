@@ -50,7 +50,7 @@ class sceneFilter
 
     //parameters
     bool filter_, downsample_, keep_organized_, change_frame_, erase_plane_, filer_applied;
-    double xmin,xmax,ymin,ymax,zmin,zmax,leaf_;
+    double xmin,xmax,ymin,ymax,zmin,zmax,leaf_, table_pad_;
     std::string new_frame_, camera_frame_, new_scene_topic_;
 
     // geometry_msgs::TransformStamped tf_transform_;
@@ -79,13 +79,14 @@ sceneFilter::sceneFilter()
   nh.param<bool>("/scene_filter/keep_organized", keep_organized_, "false");
   nh.param<bool>("/scene_filter/change_frame", change_frame_, "false");
   nh.param<bool>("/scene_filter/erase_plane", erase_plane_, "false");
-  nh.param<double>("/scene_filter/xmin", xmin, -100);
-  nh.param<double>("/scene_filter/xmax", xmax, 100);
-  nh.param<double>("/scene_filter/ymin", ymin, -100);
-  nh.param<double>("/scene_filter/ymax", ymax, 100);
-  nh.param<double>("/scene_filter/zmin", zmin, -100);
-  nh.param<double>("/scene_filter/zmax", zmax, 100);
+  nh.param<double>("/scene_filter/xmin", xmin, -1.2);
+  nh.param<double>("/scene_filter/xmax", xmax, 0);
+  nh.param<double>("/scene_filter/ymin", ymin, -0.6);
+  nh.param<double>("/scene_filter/ymax", ymax, 0.4);
+  nh.param<double>("/scene_filter/zmin", zmin, -0.0);
+  nh.param<double>("/scene_filter/zmax", zmax, 1.0);
   nh.param<double>("/scene_filter/leaf_s", leaf_, 0.01);
+  nh.param<double>("/scene_filter/table_pad", table_pad_, 0.01);
   nh.param<std::string>("/scene_filter/camera_frame", camera_frame_, "camera_rgb_optical_frame");
 
   transform_ = Eigen::Affine3d::Identity();
@@ -137,6 +138,7 @@ void sceneFilter::new_cloud_in_stream(const sensor_msgs::PointCloud2::ConstPtr& 
     nh.getParam("/scene_filter/ymax", ymax);
     nh.getParam("/scene_filter/zmax", zmax);
     nh.getParam("/scene_filter/keep_organized", keep_organized_);
+    nh.getParam("/scene_filter/table_pad", table_pad_);
     pcl::PassThrough<pcl::PointXYZRGBA> pass;
     if (keep_organized_)
     {
@@ -167,9 +169,10 @@ void sceneFilter::new_cloud_in_stream(const sensor_msgs::PointCloud2::ConstPtr& 
 
     seg.setOptimizeCoefficients (true);
     seg.setModelType (pcl::SACMODEL_PLANE);
-    seg.setMethodType (pcl::SAC_RANSAC);
+    seg.setMethodType (pcl::SAC_LMEDS);
     seg.setMaxIterations (100);
-    seg.setDistanceThreshold (0.005);
+    seg.setDistanceThreshold (table_pad_);   
+    // 0.005 
 
     // Segment the largest planar component from the remaining cloud
     seg.setInputCloud (tmp);

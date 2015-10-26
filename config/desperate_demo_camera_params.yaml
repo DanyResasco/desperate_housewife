@@ -11,3 +11,4 @@ scene_filter/leaf_s: 0.01
 scene_filter/keep_organized: false
 scene_filter/change_frame: true
 scene_filter/new_frame: vito_anchor
+scene_filter/table_pad: 0.01

@@ -51,6 +51,7 @@ void HandPoseGenerator::Error_info(const desperate_housewife::Error_msg::ConstPt
   // }
   // else //object to move
   // {
+  // std::cout<<"MESSAGGIO ARRIVATO"<<std::endl;
   if(error_msg->ObjOrObst == false)
   {
     // std::cout<<"dentro error_info"<<std::endl;
@@ -58,7 +59,7 @@ void HandPoseGenerator::Error_info(const desperate_housewife::Error_msg::ConstPt
     // geometry_msgs::Pose pos_new, pose_local;
     New_Hand_Position.pose = error_msg->pose;
     New_Hand_Position.pose.position.x = New_Hand_Position.pose.position.x - 0.25;
-    // std::cout<<"error_msg->WhichArm: "<<error_msg->WhichArm<<std::endl;
+     // std::cout<<"error_msg->WhichArm: "<<error_msg->WhichArm<<std::endl;
 
      if (error_msg->WhichArm == 1) 
       {
@@ -78,6 +79,7 @@ void HandPoseGenerator::Error_info(const desperate_housewife::Error_msg::ConstPt
 
 }
 
+
 void HandPoseGenerator::SendObjRejectMsg(desperate_housewife::fittedGeometriesSingle obj_msg, int arm_)
 {
   desperate_housewife::fittedGeometriesSingle obstacle_rej;
@@ -89,11 +91,7 @@ void HandPoseGenerator::SendObjRejectMsg(desperate_housewife::fittedGeometriesSi
           //obstacle.info.push_back(obj_msg.geometries.info[j]);
   }
   obstacle_rej.info.push_back(arm_);
-  //obstacle.info.push_back(DesiredHandPose.whichArm);
-        // //obstaclesMsg.geometries.push_back( obstacle );
-  //obstaclesMsg.geometries.push_back( obstacle );
-        
-
+  
   if(arm_ == 1) //left
   {
     Reject_obstacles_publisher_left.publish(obstacle_rej);
@@ -106,9 +104,8 @@ void HandPoseGenerator::SendObjRejectMsg(desperate_housewife::fittedGeometriesSi
           // std::cout<<"right"<<std::endl
   } 
   tf::Transform tfHandTrasform2;
-      tf::poseMsgToTF( obstacle_rej.pose, tfHandTrasform2);
-      
-      tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"ObstacleReject") );
+  tf::poseMsgToTF( obstacle_rej.pose, tfHandTrasform2); 
+  tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"ObstacleReject") );
         
 }
 
@@ -120,67 +117,36 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
 {
 
   desperate_housewife::fittedGeometriesSingle obstacle;
-  // desperate_housewife::fittedGeometriesSingle obstacle_rej;
   desperate_housewife::fittedGeometriesArray obstaclesMsg;
   desperate_housewife::handPoseSingle DesiredHandPose;
 
   if ( msg->geometries.size() == 1)
   {
-     DesiredHandPose = generateHandPose( msg->geometries[0] );
+       DesiredHandPose = generateHandPose( msg->geometries[0] );
+        
       if(DesiredHandPose.isGraspable != true)
       {
-        // obstacle_rej.pose = ObstacleReject(msg->geometries[0]);
-        SendObjRejectMsg(msg->geometries[0] , DesiredHandPose.whichArm);
-        //   obstacle.pose = msg->geometries[0].pose;
-        
-        // for (unsigned j=0; j < msg->geometries[0].info.size(); j++)
-        // {
-        //   obstacle_rej.info.push_back(msg->geometries[0].info[j]);
-        //   obstacle.info.push_back(msg->geometries[0].info[j]);
-        // }
-        // obstacle_rej.info.push_back(DesiredHandPose.whichArm);
-        // obstacle.info.push_back(DesiredHandPose.whichArm);
-        // // //obstaclesMsg.geometries.push_back( obstacle );
-        //  obstaclesMsg.geometries.push_back( obstacle );
-        
-
-        // if(DesiredHandPose.whichArm == 1) //left
-        // {
-        //   Reject_obstacles_publisher_left.publish(obstacle_rej);
-        //   // obstacles_publisher_left.publish(obstaclesMsg);
-          
-        // }
-        // else
-        // {
-        //   Reject_obstacles_publisher_right.publish(obstacle_rej);
-        //   // obstacles_publisher_right.publish(obstaclesMsg);
-        //   // std::cout<<"right"<<std::endl;
-        // } 
-        
-      // tf::Transform tfHandTrasform2;
-      // tf::poseMsgToTF( obstacle_rej.pose, tfHandTrasform2);
-      
-      // tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"ObstacleReject") );
- 
+          SendObjRejectMsg(msg->geometries[0] , DesiredHandPose.whichArm);
       }
       else
-     // if(DesiredHandPose.isGraspable == true)
-        {
+       {
           if (DesiredHandPose.whichArm == 1) 
           {
-            //obstacles_publisher_left.publish(obstaclesMsg);
             desired_hand_left_pose_publisher_.publish( DesiredHandPose );
             
           }
           else
           {
-            //obstacles_publisher_right.publish(obstaclesMsg);
             desired_hand_right_pose_publisher_.publish( DesiredHandPose );
             
           }
         }
+    
+    tf::Transform tfHandTrasform;
+    tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform);
+    tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), desired_hand_frame_.c_str()) );
 
-    }
+  }
 
     else
     {
@@ -220,15 +186,12 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
           SendObjRejectMsg(objects_vec[k], arm_);
         }
 
-
-        ROS_ERROR("NO graspable objects found, exiting... :( ");
-        // return;
-
+        ROS_ERROR("NO graspable objects found, exiting... :( , all geometries are obstacles to remove");
+        
       }
       //locate some geometry graspable 
       else
       {
-        // std::cout<<"index_obj: "<<index_obj<<std::endl;
         DesiredHandPose = generateHandPose( objects_vec[index_obj] );
        
        //sending other geometries as obstacles
@@ -280,10 +243,7 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
 
       }
     }
-
-    
-
-    objects_vec.clear();
+ objects_vec.clear();
 }
 
 
@@ -310,19 +270,13 @@ desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( despera
 
 bool HandPoseGenerator::isGeometryGraspable ( desperate_housewife::fittedGeometriesSingle geometry )
 {
-  // std::cout<<"geometry.info[0]: "<<geometry.info[0]<<std::endl;
-  // if (( geometry.type == 3 && geometry.info[0] < .11 && geometry.info[4] > 65) ) //0.15
-  // {
-  //   return true;
-  // }
-  // return false;
-    if (geometry.info[geometry.info.size() - 1] >=55 && geometry.info[0] < 0.10)
-      {
+  if (geometry.info[geometry.info.size() - 1] >=55 && geometry.info[0] < 0.10)
+  {
 
-        return true;
-      }
-      return false;
-
+      return true;
+  }
+  
+  return false;
 
 
 }

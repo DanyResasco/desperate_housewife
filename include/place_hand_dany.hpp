@@ -42,12 +42,17 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   
   Eigen::Vector3d projection(retta_hand_obj.position.x, retta_hand_obj.position.y,0);
   projection.normalize();
+  Eigen::Vector3d Liyng_projection(retta_hand_obj.position.x, 0, retta_hand_obj.position.z);
+  Liyng_projection.normalize();
   //double y_projection = projection.norm();
   // std::cout<<"projectionNorm: "<<projection<<std::endl;
 
   M_desired_local.col(0) << z.cross(projection), 0; 
   M_desired_local.col(1) << projection,0; //y_porojection
   M_desired_local.col(2) << -z , 0; //z_cylinder
+
+
+
 
 
   if((isLying == 0) && (isFull == 0)) 
@@ -96,27 +101,30 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
   else if ((isLying != 0) && (radius < max_radius))
     {
-      if(whichArm == 1) //left
-      {
-         M_desired_local.col(0) << -z, 0;
-         M_desired_local.col(1) << -y.cross(-z), 0;	
-      
-      }
-      else //right
-      { 
-          M_desired_local.col(0) << z, 0;	
-          M_desired_local.col(1) << -y.cross(z), 0;	
-      }
+      M_desired_local.col(0) << y.cross(Liyng_projection), 0; 
+      M_desired_local.col(1) << Liyng_projection,0; //y_porojection
+      M_desired_local.col(2) << -y , 0; //z_cylinder
+
       
       Point_desired(0) = 0;
       Point_desired(1) = radius + 0.05;
       Point_desired(2) = 0; 
       Point_desired(3) = 1;
       ROS_DEBUG("cyl is lying");
-      
-      M_desired_local.col(2) << -y, 0;
+
       M_desired_local.col(3) << Point_desired;
-      T_w_h = T_vito_c * M_desired_local*Rot_z ;
+
+      if(whichArm == 1) //left
+      {
+         T_w_h = T_vito_c * M_desired_local;
+      
+      }
+      else //right
+      { 
+           T_w_h = T_vito_c * M_desired_local*Rot_z;
+      }
+      // std::cout<<"M_desired_local: "<<M_desired_local<<std::endl;
+
     }
   else
     {
