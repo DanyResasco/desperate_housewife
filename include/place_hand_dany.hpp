@@ -44,16 +44,10 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   projection.normalize();
   Eigen::Vector3d Liyng_projection(retta_hand_obj.position.x, 0, retta_hand_obj.position.z);
   Liyng_projection.normalize();
-  //double y_projection = projection.norm();
-  // std::cout<<"projectionNorm: "<<projection<<std::endl;
 
   M_desired_local.col(0) << z.cross(projection), 0; 
   M_desired_local.col(1) << projection,0; //y_porojection
   M_desired_local.col(2) << -z , 0; //z_cylinder
-
-
-
-
 
   if((isLying == 0) && (isFull == 0)) 
     {

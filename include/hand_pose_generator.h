@@ -29,7 +29,8 @@ private:
 
   geometry_msgs::Pose retta_hand_obj;
   double dist_to_left_hand;
-    double dist_to_right_hand;
+  double dist_to_right_hand;
+  bool vito_home = false;
 
 public:
 
@@ -37,6 +38,7 @@ public:
   ros::NodeHandle nh;
   ros::Publisher desired_hand_publisher_, desired_hand_right_pose_publisher_, desired_hand_left_pose_publisher_, obstacles_publisher_right, obstacles_publisher_left;
   ros::Publisher Reject_obstacles_publisher_left, Reject_obstacles_publisher_right ; 
+  ros::Publisher home_robot_pub;
   tf::TransformBroadcaster tf_desired_hand_pose;
   tf::TransformListener listener_info;
 
@@ -57,6 +59,7 @@ public:
   geometry_msgs::Pose ObstacleReject( desperate_housewife::fittedGeometriesSingle Pose_rej_obs);
   void Error_info(const desperate_housewife::Error_msg::ConstPtr& error_msg);
   void SendObjRejectMsg(desperate_housewife::fittedGeometriesSingle obj_msg, int arm_);
+  void SendHomeRobot();
 
 };
 

@@ -182,7 +182,7 @@ namespace desperate_housewife
           // j++;
         } 
 
-       if (Equal(x_,x_des_,0.05))
+       if (Equal(x_,x_des_,0.01))
        {
           // ROS_INFO("On target");
 
@@ -277,7 +277,7 @@ namespace desperate_housewife
       // pub_marker_.publish(msg_marker_);
       // msg_id_++;
 
-      std::cout<<"sum force: "<<(J_.data.transpose()*lambda_*Force_attractive)+Force_total_rep<<std::endl;
+      // std::cout<<"sum force: "<<(J_.data.transpose()*lambda_*Force_attractive)+Force_total_rep<<std::endl;
       
       x_chain.clear();
       Object_radius.clear();
