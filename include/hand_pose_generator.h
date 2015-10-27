@@ -25,12 +25,10 @@ private:
   std::string Reject_obstalces_topic_left, Reject_obstalces_topic_right, error_topic_left, error_topic_right;
   std::string base_frame_, desired_hand_frame_, right_hand_frame_, left_hand_frame_;
   std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec;
-  int step_obstacle = 1;
+  // int step_obstacle = 1;
 
   Eigen::Vector3d retta_hand_obj;
-  // double dist_to_left_hand;
-  // double dist_to_right_hand;
-  bool vito_home = false;
+  //bool vito_home = false;
 
 public:
 
@@ -49,20 +47,35 @@ public:
   ~HandPoseGenerator(){};
 
   void HandPoseGeneratorCallback(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
+
   desperate_housewife::handPoseSingle generateHandPose( desperate_housewife::fittedGeometriesSingle geometry );
+  /** Function to decide if object is graspable. If the ratio (number of inlier/number of point of cluster) >50 and the radius is minus than a threshold 
+  *the object is grasbale, otherwise is obstacle. 
+  */
   bool isGeometryGraspable ( desperate_housewife::fittedGeometriesSingle geometry );
 
-  ////////////////////////
+  /** Function that calculates the hand Pose. Depending on cylinder as is put the pose change. We consider if cylinder is:
+  *Lying --> hand is put in the middle and moved up by 5 cm
+  *Full and standing --> hand is put on the top
+  *Empty and standign --> hand is put on the top and moved along x axis of the quantity of the radius
+  */
   geometry_msgs::Pose placeHand ( desperate_housewife::fittedGeometriesSingle geometry, int whichArm );
+  /** Function that calulates whichArm use. It's calculate looking the shortes distance between the object and the arm.  
+  */
   int whichArm( geometry_msgs::Pose object_pose );
   void fromEigenToPose (Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &Hand_pose);
   Eigen::Matrix4d FromMsgtoEigen(geometry_msgs::Pose &object);
 
-
+  /** Function that calulates the hand pose to remove the obstacle 
+  */
   geometry_msgs::Pose ObstacleReject( desperate_housewife::fittedGeometriesSingle Pose_rej_obs);
   void Error_info_left(const desperate_housewife::Error_msg::ConstPtr& error_msg);
   void Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+  /** Function for send the obstacle messages
+  */
   void SendObjRejectMsg(desperate_housewife::fittedGeometriesSingle obj_msg, int arm_);
+  /** Function for move vito in the desired pose before control start   
+  */
   void SendHomeRobot();
 
 };

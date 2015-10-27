@@ -45,7 +45,7 @@ HandPoseGenerator::HandPoseGenerator()
   nh.param<std::string>("/right_arm/PotentialFieldControl/error", error_topic_right, "/right_arm/PotentialFieldControl/error");
   error_sub_right = nh.subscribe(error_topic_right, 1, &HandPoseGenerator::Error_info_right, this);
 }
-
+//move vito in desired location befor control start
 void HandPoseGenerator::SendHomeRobot()
 {
   desperate_housewife::handPoseSingle home_robot_left, home_robot_right;
@@ -82,7 +82,6 @@ void HandPoseGenerator::SendHomeRobot()
   
    Eigen::Matrix4d Vito_home_base_rot = Vito_home_base*ROT_y;
 
-  //std::cout<<"Tmatrix: "<<Tmatrix<<std::endl;
   Eigen::Quaterniond quat_eigen_hand(Vito_home_base_rot.block<3,3>(0,0));
   home_robot_left.pose.orientation.x = quat_eigen_hand.x();
   home_robot_left.pose.orientation.y = quat_eigen_hand.y();
@@ -246,10 +245,10 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
     if ( msg->geometries.size() == 1)
     {
          DesiredHandPose = generateHandPose( msg->geometries[0] );
-          
+          //check if is graspable (send hand desired pose) or not (remove object)
         if(DesiredHandPose.isGraspable != true)
         {
-            SendObjRejectMsg(msg->geometries[0] , DesiredHandPose.whichArm);
+          SendObjRejectMsg(msg->geometries[0] , DesiredHandPose.whichArm);
         }
         else
          {
@@ -271,9 +270,10 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
 
     }
 
-      else
-      {
+    else
+    {
         ROS_DEBUG("More than one geometry identified");
+        //sort the cylinder by the shortes distance from softhand 
         for (unsigned int i=0; i<msg->geometries.size(); i++)
         {
           objects_vec.push_back(msg->geometries[i]);

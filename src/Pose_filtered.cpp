@@ -44,7 +44,6 @@ void HandPoseFIltered::HandPoseFIlteredCallback_left(const desperate_housewife::
 {
     
   Controll(msg);
-
 }
 
 void HandPoseFIltered::HandPoseFIlteredCallback_right(const desperate_housewife::handPoseSingle::ConstPtr& msg)
@@ -56,7 +55,7 @@ void HandPoseFIltered::HandPoseFIlteredCallback_right(const desperate_housewife:
 
 void HandPoseFIltered::Controll(const desperate_housewife::handPoseSingle::ConstPtr& msg) 
 {
-    
+    //if it's the first step, send a desired pose
     if(first_step == 0)
     {    
       if( msg->whichArm  == 1) //left
@@ -69,11 +68,11 @@ void HandPoseFIltered::Controll(const desperate_housewife::handPoseSingle::Const
      } 
        first_step = 1;
     }
-
+    // if it's a second iteration  check whether the object has moved
     else
     { 
       tf::poseMsgToKDL(msg->pose, pose_obj);
-      if(dot_step == 0)
+      if(dot_step == 0) //save the pose to stabilize the controll
       {
         Pose_obj_stable.pose = msg->pose;
          pose_last = pose_obj;
@@ -81,11 +80,13 @@ void HandPoseFIltered::Controll(const desperate_housewife::handPoseSingle::Const
          Pose_obj_stable.isGraspable = msg->isGraspable;
          dot_step = 1;
       }
-        double diff_pose = (diff(pose_last.p, pose_obj.p)).Norm();
-        double diff_pose_rot = (diff(pose_last.M, pose_obj.M)).Norm();
+      
+      double diff_pose = (diff(pose_last.p, pose_obj.p)).Norm();
+      double diff_pose_rot = (diff(pose_last.M, pose_obj.M)).Norm();
         // std::cout<<"diff_pose_rot: "<<diff_pose_rot<<std::endl;
 
-        if(diff_pose < 0.02)
+      //if object doesn't mouve send last pose else the last one
+      if(diff_pose < 0.02)
         {
          std::cout<<"pubblico"<<std::endl;
          if( Pose_obj_stable.whichArm  == 1) //left
