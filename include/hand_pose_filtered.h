@@ -26,19 +26,23 @@ class HandPoseFIltered{
 
 private:
 
-  std::string desired_hand_pose_left_topic_, desired_hand_pose_right_topic_, desired_hand_right_pose_topic_, desired_hand_left_pose_topic_;
+  std::string desired_hand_pose_left_topic_, desired_hand_pose_right_topic_, desired_hand_right_pose_topic_, desired_hand_left_pose_topic_,desired_hand_frame_ ;
+  std::string base_frame_;
+  tf::TransformBroadcaster tf_desired_hand_pose;
 
-public:
 
   ros::Subscriber sub_command_left,sub_command_right ;
-  ros::NodeHandle nh;
+  // ros::NodeHandle nh;
   int test_read = 0;
   KDL::Frame pose_obj, pose_last;
    desperate_housewife::handPoseSingle Pose_obj_stable;
 
   int first_step = 0;
   ros::Publisher desired_hand_right_pose_publisher_, desired_hand_left_pose_publisher_;
+  
+public:
 
+ ros::NodeHandle nh;
 
 
 

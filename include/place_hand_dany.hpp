@@ -92,7 +92,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
        }
       else
       {
-         T_w_h = T_vito_c * M_desired_local;
+         T_w_h = T_vito_c * M_desired_local*Rot_z;
       }
   // std::cout<<"M_desired_local: "<<M_desired_local<<std::endl;
     }
