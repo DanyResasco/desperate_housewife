@@ -16,3 +16,5 @@ home_right_arm_position_z: 0.74494
 home_right_arm_A: 0.12690
 home_right_arm_B: 0.06571
 home_right_arm_C: 0.11774
+PotentialFieldControl/desired_hand_pose_right_filter: /right_arm/PotentialFieldControl/desired_hand_right_filter
+PotentialFieldControl/desired_hand_pose_left_filter: /left_arm/PotentialFieldControl/desired_hand_left_filter

@@ -27,9 +27,9 @@ private:
   std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec;
   int step_obstacle = 1;
 
-  geometry_msgs::Pose retta_hand_obj;
-  double dist_to_left_hand;
-  double dist_to_right_hand;
+  Eigen::Vector3d retta_hand_obj;
+  // double dist_to_left_hand;
+  // double dist_to_right_hand;
   bool vito_home = false;
 
 public:
@@ -38,9 +38,12 @@ public:
   ros::NodeHandle nh;
   ros::Publisher desired_hand_publisher_, desired_hand_right_pose_publisher_, desired_hand_left_pose_publisher_, obstacles_publisher_right, obstacles_publisher_left;
   ros::Publisher Reject_obstacles_publisher_left, Reject_obstacles_publisher_right ; 
-  ros::Publisher home_robot_pub;
+  ros::Publisher home_robot_pub, desired_hand_publisher_right, desired_hand_publisher_left;
+  std::string desired_hand_pose_left_topic_, desired_hand_pose_right_topic_;
   tf::TransformBroadcaster tf_desired_hand_pose;
   tf::TransformListener listener_info;
+  int start_controller_left = 0;
+  int start_controller_right = 0;
 
   HandPoseGenerator();
   ~HandPoseGenerator(){};
@@ -57,7 +60,8 @@ public:
 
 
   geometry_msgs::Pose ObstacleReject( desperate_housewife::fittedGeometriesSingle Pose_rej_obs);
-  void Error_info(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+  void Error_info_left(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+  void Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg);
   void SendObjRejectMsg(desperate_housewife::fittedGeometriesSingle obj_msg, int arm_);
   void SendHomeRobot();
 

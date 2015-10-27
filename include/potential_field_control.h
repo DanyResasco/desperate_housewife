@@ -127,7 +127,7 @@ namespace desperate_housewife
 		std::vector<double> Object_height;
 		std::vector<KDL::Frame> Object_position;
 		ros::Publisher hand_publisher_;
-		int hand_step;
+		int hand_step = 0;
 		std::vector<KDL::Jacobian> JAC_repulsive;
 		std::string obstacle_remove_topic, obstacle_avoidance;
 		desperate_housewife::Error_msg error_pose_trajectory;
@@ -136,6 +136,8 @@ namespace desperate_housewife
 		geometry_msgs::WrenchStamped wrench_msg_rep;
 		ros::Publisher publisher_wrench_command,publisher_wrench_command_rep ;
 		std::string tip_name, object_names_;
+		std::string error_topic;
+		ros::Publisher pub_error_right, pub_error_left;
 		
 		
 	};

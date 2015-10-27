@@ -39,16 +39,19 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   ROS_DEBUG ("isLying = %g", isLying);
   ROS_DEBUG ("isFull = %g", isFull);
 
-  
-  Eigen::Vector3d projection(retta_hand_obj.position.x, retta_hand_obj.position.y,0);
-  projection.normalize();
-  Eigen::Vector3d Liyng_projection(retta_hand_obj.position.x, 0, retta_hand_obj.position.z);
-  Liyng_projection.normalize();
+  // std::cout<<"retta_hand_obj: "<<retta_hand_obj<<std::endl;
+  retta_hand_obj.normalize();
+  // std::cout<<"retta_hand_obj normalize: "<< retta_hand_obj <<std::endl;
+  // retta_hand_obj.normalize();
+  Eigen::Vector3d projection(retta_hand_obj[0], retta_hand_obj[1],0);
+  // projection.normalize();
+  Eigen::Vector3d Liyng_projection(retta_hand_obj[0], 0, retta_hand_obj[2]);
+  // Liyng_projection.normalize();
 
   M_desired_local.col(0) << z.cross(projection), 0; 
   M_desired_local.col(1) << projection,0; //y_porojection
   M_desired_local.col(2) << -z , 0; //z_cylinder
-
+  // std::cout<<"M_desired_local: "<<M_desired_local<<std::
   if((isLying == 0) && (isFull == 0)) 
     {
       Point_desired(1) = 0;
@@ -84,13 +87,14 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       M_desired_local.col(3) << Point_desired;
       if (whichArm == 1) //left arm
       {
-         T_w_h = T_vito_c * M_desired_local*Rot_z;
+         T_w_h = T_vito_c * M_desired_local*Rot_z;  
+         // *Rot_z;
        }
       else
       {
          T_w_h = T_vito_c * M_desired_local;
       }
-   
+  // std::cout<<"M_desired_local: "<<M_desired_local<<std::endl;
     }
 
   else if ((isLying != 0) && (radius < max_radius))
@@ -184,13 +188,11 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose )
 	Eigen::Vector3d hand_left_position(hand_left.getOrigin().x(),hand_left.getOrigin().y(),hand_left.getOrigin().z());
 	Eigen::Vector3d hand_right_position(hand_rigth.getOrigin().x(),hand_rigth.getOrigin().y(),hand_rigth.getOrigin().z());
 
-	//double dist_to_left_hand = 
-  dist_to_left_hand = std::sqrt((object_position[0] - hand_left_position[0]) * (object_position[0] - hand_left_position[0]) +
+	double dist_to_left_hand = std::sqrt((object_position[0] - hand_left_position[0]) * (object_position[0] - hand_left_position[0]) +
 				   (object_position[1] - hand_left_position[1]) * (object_position[1] - hand_left_position[1]) +
 				   (object_position[2] - hand_left_position[2]) * (object_position[2] - hand_left_position[2]) );
 
-	//double dist_to_right_hand 
-  dist_to_right_hand = std::sqrt((object_position[0] - hand_right_position[0]) * (object_position[0] - hand_right_position[0]) +
+	double dist_to_right_hand = std::sqrt((object_position[0] - hand_right_position[0]) * (object_position[0] - hand_right_position[0]) +
 				   (object_position[1] - hand_right_position[1]) * (object_position[1] - hand_right_position[1]) +
 				   (object_position[2] - hand_right_position[2]) * (object_position[2] - hand_right_position[2]) );
 
@@ -202,17 +204,17 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose )
 	{
 	 
 	  ROS_DEBUG("Vito uses a: left arm");
-    retta_hand_obj.position.x = object_position[0] + (object_position[0] - hand_left_position[0]);
-    retta_hand_obj.position.y = object_position[1] + (object_position[1] - hand_left_position[1]);
-    retta_hand_obj.position.z = object_position[2] + (object_position[2] - hand_left_position[2]);
+    retta_hand_obj[0] = ( object_position[0] - hand_left_position[0]);
+    retta_hand_obj[1] = ( object_position[1] - hand_left_position[1]);
+    retta_hand_obj[2] = ( object_position[2] - hand_left_position[2]);
     return 1;
 	}
   else
   {
 	 	ROS_DEBUG("Vito uses a: Right arm");
-    retta_hand_obj.position.x = object_position[0] + (object_position[0] - hand_right_position[0]);
-    retta_hand_obj.position.y = object_position[1] + (object_position[1] - hand_right_position[1]);
-    retta_hand_obj.position.z = object_position[2] + (object_position[2] - hand_right_position[2]);
+    retta_hand_obj[0] = (object_position[0] - hand_right_position[0]);
+    retta_hand_obj[1] = (object_position[1] - hand_right_position[1]);
+    retta_hand_obj[2] = (object_position[2] - hand_right_position[2]);
 	 return 0;
   }
 }

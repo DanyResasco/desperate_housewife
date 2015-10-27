@@ -33,6 +33,7 @@ namespace desperate_housewife
     n.getParam("desired_hand_topic", desired_hand_topic);
     n.getParam("obstacle_avoidance", obstacle_avoidance);
     n.getParam("tip_name", tip_name);
+    n.getParam("error_topic", error_topic);
 
    
     jnt_to_jac_solver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
@@ -58,7 +59,7 @@ namespace desperate_housewife
     obstacles_subscribe_ = n.subscribe(obstacle_avoidance.c_str(), 1, &PotentialFieldControl::InfoGeometry, this);
 
     //Hand_pose for graspable objects
-    sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this); 
+    
 
     // hand_publisher_ = n.advertise<trajectory_msgs::JointTrajectory>(desired_hand_topic, 1000);
 
@@ -69,6 +70,8 @@ namespace desperate_housewife
     pub_error_ = nh_.advertise<desperate_housewife::Error_msg>("error", 1000);
     pub_pose_ = nh_.advertise<std_msgs::Float64MultiArray>("pose", 1000);
     pub_marker_ = nh_.advertise<visualization_msgs::Marker>("marker",1000);
+
+    sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this); 
 
     nh_.param<std::string>("/BasicGeometriesNode/cylinder_names", object_names_, "object");
     publisher_wrench_command = nh_.advertise<geometry_msgs::WrenchStamped>("left_arm/PotentialFieldControl/wrench_msg", 1000);
@@ -100,7 +103,7 @@ namespace desperate_housewife
       first_step_ = 1;
       cmd_flag_ = 0;
       step_ = 0;
-      hand_step = 0;
+    
       
   }
 
@@ -182,7 +185,7 @@ namespace desperate_housewife
           // j++;
         } 
 
-       if (Equal(x_,x_des_,0.01))
+       if (Equal(x_,x_des_,0.05))
        {
           // ROS_INFO("On target");
 
@@ -199,11 +202,13 @@ namespace desperate_housewife
           //   hand_step =1;
           // }
           
-            error_pose_trajectory.Value = 0;
+            error_pose_trajectory.start_controller = 1;
             tf::poseKDLToMsg (x_, error_pose_trajectory.pose);
             error_pose_trajectory.ObjOrObst = ObjOrObst;
+          
             pub_error_.publish(error_pose_trajectory);
 
+            // hand_step = 1;
           // Force_repulsive = Eigen::Matrix<double,7,1>::Zero();       
         }
 
@@ -386,7 +391,7 @@ namespace desperate_housewife
       Eigen::Matrix<double,7,1> F_rep_tot = Eigen::Matrix<double,7,1>::Zero();
       std::vector<Eigen::Matrix<double,7,1> > F_rep; 
       std::vector<double>  min_d;
-      std::vector<int> index_infl;
+      std::vector<unsigned int> index_infl;
       int index_dist = 0;
       double influence = 0.30;
 
@@ -411,6 +416,7 @@ namespace desperate_housewife
             min_d.push_back(distance_local_obj[0]);
             index_infl.push_back(i); //for tracking wich object is closet
             std::cout<<"index_infl: "<<index_infl[i]<<std::endl; 
+            std::cout<<"i: "<<i<<std::endl; 
           }
           else
           {

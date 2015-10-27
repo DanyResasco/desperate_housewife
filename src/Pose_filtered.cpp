@@ -27,11 +27,19 @@ int main(int argc, char **argv)
 
 HandPoseFIltered::HandPoseFIltered()
 {
-	
+	ROS_ERROR("QUI");
 	//ROS_INFO("Subscribed to: %s", desired_reference_topic.c_str());
-	nh.param<std::string>("/PotentialFieldControl/desired_hand_pose", desired_hand_pose_topic_, "/PotentialFieldControl/desired_hand_pose");
-	std::string topic = nh.resolveName(desired_hand_pose_topic_.c_str());
-    sub_command_ = nh.subscribe(topic, 1, &HandPoseFIltered::HandPoseFIlteredCallback, this);
+  nh.param<std::string>("/PotentialFieldControl/desired_hand_left_filter", desired_hand_pose_left_topic_, "/PotentialFieldControl/desired_hand_left_filter");
+  //desired_hand_publisher_left = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_pose_left_topic_.c_str(),1);
+
+  nh.param<std::string>("/PotentialFieldControl/desired_hand_right_filter", desired_hand_pose_right_topic_, "/PotentialFieldControl/desired_hand_right_filter");
+  //desired_hand_publisher_right = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_pose_right_topic_.c_str(),1);
+
+
+  sub_command_left = nh.subscribe(desired_hand_pose_left_topic_.c_str(), 1, &HandPoseFIltered::HandPoseFIlteredCallback_left, this);
+  sub_command_right = nh.subscribe(desired_hand_pose_right_topic_.c_str(), 1, &HandPoseFIltered::HandPoseFIlteredCallback_right, this);
+
+
 
     nh.param<std::string>("/PotentialFieldControl/desired_hand_pose_right", desired_hand_right_pose_topic_, "/PotentialFieldControl/desired_hand_right_pose");
   	desired_hand_right_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_right_pose_topic_.c_str(),1);
@@ -40,10 +48,24 @@ HandPoseFIltered::HandPoseFIltered()
   	desired_hand_left_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_left_pose_topic_.c_str(),1);
 }
 
-void HandPoseFIltered::HandPoseFIlteredCallback(const desperate_housewife::handPoseSingle::ConstPtr& msg)
+void HandPoseFIltered::HandPoseFIlteredCallback_left(const desperate_housewife::handPoseSingle::ConstPtr& msg)
+{
+    
+  Controll(msg);
+
+}
+
+void HandPoseFIltered::HandPoseFIlteredCallback_right(const desperate_housewife::handPoseSingle::ConstPtr& msg)
+{
+    
+  Controll(msg);
+
+}
+
+void HandPoseFIltered::Controll(const desperate_housewife::handPoseSingle::ConstPtr& msg) 
 {
     tf::poseMsgToKDL(msg->pose, pose_obj);
-  
+    std::cout<<"arrivato sms"<<std::endl;  
 
     if(first_step == 0)
     {  	
@@ -51,7 +73,7 @@ void HandPoseFIltered::HandPoseFIlteredCallback(const desperate_housewife::handP
       	pose_last = pose_obj;
       	Pose_obj_stable.whichArm = msg->whichArm;
       	Pose_obj_stable.isGraspable = msg->isGraspable;
-    	first_step = 1;
+    	  first_step = 1;
     }
 
     double diff_pose = (diff(pose_last.p, pose_obj.p)).Norm();
@@ -61,7 +83,7 @@ void HandPoseFIltered::HandPoseFIlteredCallback(const desperate_housewife::handP
     	std::cout<<"pubblico"<<std::endl;
     	if(	Pose_obj_stable.whichArm  == 1) //left
     	{
-	 		desired_hand_left_pose_publisher_.publish( Pose_obj_stable );
+	 		  desired_hand_left_pose_publisher_.publish( Pose_obj_stable );
     	}
     	else
     	{
@@ -72,9 +94,6 @@ void HandPoseFIltered::HandPoseFIlteredCallback(const desperate_housewife::handP
    	else
    	{
    		first_step = 0;
-   		   	std::cout<<"mi muovo"<<std::endl;
+   		std::cout<<"mi muovo"<<std::endl;
    	}
-
-
-
 }
