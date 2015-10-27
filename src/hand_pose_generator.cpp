@@ -188,6 +188,8 @@ void HandPoseGenerator::Error_info_right(const desperate_housewife::Error_msg::C
       tf::poseMsgToTF( New_Hand_Position.pose, tfHandTrasform2);  
       tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"ObstacleReject_new_pose") ); 
      }
+     else
+      std::cout<<"on target"<<std::endl;
   }
   return;
 
@@ -348,7 +350,7 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
             {
               obstacles_publisher_left.publish(obstaclesMsg);
               // desired_hand_left_pose_publisher_.publish( DesiredHandPose );
-               desired_hand_publisher_left.publish(DesiredHandPose);
+                desired_hand_publisher_left.publish(DesiredHandPose);
    
             }
             else

@@ -187,7 +187,7 @@ namespace desperate_housewife
 
        if (Equal(x_,x_des_,0.05))
        {
-          // ROS_INFO("On target");
+           // ROS_INFO("On target");
 
           // if(hand_step == 0)
           // {

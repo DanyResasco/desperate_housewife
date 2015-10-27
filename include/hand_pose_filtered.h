@@ -38,8 +38,9 @@ private:
    desperate_housewife::handPoseSingle Pose_obj_stable;
 
   int first_step = 0;
+  int dot_step=0;
   ros::Publisher desired_hand_right_pose_publisher_, desired_hand_left_pose_publisher_;
-  
+
 public:
 
  ros::NodeHandle nh;
