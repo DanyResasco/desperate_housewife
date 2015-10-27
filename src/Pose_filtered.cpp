@@ -83,7 +83,7 @@ void HandPoseFIltered::Controll(const desperate_housewife::handPoseSingle::Const
       }
         double diff_pose = (diff(pose_last.p, pose_obj.p)).Norm();
         double diff_pose_rot = (diff(pose_last.M, pose_obj.M)).Norm();
-        std::cout<<"diff_pose_rot: "<<diff_pose_rot<<std::endl;
+        // std::cout<<"diff_pose_rot: "<<diff_pose_rot<<std::endl;
 
         if(diff_pose < 0.02)
         {

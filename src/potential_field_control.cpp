@@ -201,7 +201,7 @@ namespace desperate_housewife
           //   hand_publisher_.publish(msg_jointT_hand);
           //   hand_step =1;
           // }
-          
+          // std::cout<<"x_err_: "<<x_err_<<std::endl;
             error_pose_trajectory.start_controller = 1;
             tf::poseKDLToMsg (x_, error_pose_trajectory.pose);
             error_pose_trajectory.ObjOrObst = ObjOrObst;
@@ -211,7 +211,10 @@ namespace desperate_housewife
             // hand_step = 1;
           // Force_repulsive = Eigen::Matrix<double,7,1>::Zero();       
         }
-
+       //  if (Equal(x_,x_des_,0.10))
+       // {
+       //   std::cout<<"x_err_ a 10 cm : "<<x_err_<<std::endl;
+       // }
 
         // pushing x to the pose msg
         // for (int i = 0; i < 3; i++)
@@ -222,6 +225,7 @@ namespace desperate_housewife
 
         // computing end-effector position/orientation error w.r.t. desired frame
         x_err_ = diff(x_,x_des_);
+
 
         x_dot_ = J_.data*joint_msr_states_.qdot.data; 
 
