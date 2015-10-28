@@ -56,7 +56,7 @@ namespace desperate_housewife
 
 	private:
 		ros::Subscriber sub_command_;
-		ros::Publisher pub_error_;
+		ros::Publisher pub_error_,  pub_tau_;
 		ros::Publisher pub_pose_;
 		ros::Publisher pub_marker_;
 		tf::TransformBroadcaster tf_now_hand;
@@ -139,6 +139,8 @@ namespace desperate_housewife
 		std::string tip_name, object_names_,set_gains_;
 		std::string error_topic;
 		ros::Publisher pub_error_right, pub_error_left;
+		std::string tau_commad;
+		std_msgs::Float64MultiArray tau_msg;
 		
 		
 	};

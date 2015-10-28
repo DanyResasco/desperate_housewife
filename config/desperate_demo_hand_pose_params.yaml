@@ -6,13 +6,13 @@ PotentialFieldControl/obstacle_list_left: /left_arm/PotentialFieldControl/obstac
 PotentialFieldControl/obstacle_list_right: /right_arm/PotentialFieldControl/obstacle_pose_right
 home_left_arm_position_x: -0.75022
 home_left_arm_position_y: -0.47078
-home_left_arm_position_z: 0.74494
+home_left_arm_position_z: 0.54494
 home_left_arm_A: -0.12690
 home_left_arm_B: -0.06571
 home_left_arm_C: -0.11774
 home_right_arm_position_x: -0.75022
 home_right_arm_position_y: 0.47078
-home_right_arm_position_z: 0.74494
+home_right_arm_position_z: 0.54494
 home_right_arm_A: 0.12690
 home_right_arm_B: 0.06571
 home_right_arm_C: 0.11774

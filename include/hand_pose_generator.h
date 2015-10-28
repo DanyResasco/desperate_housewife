@@ -50,6 +50,8 @@ public:
     ros::Publisher hand_publisher_left, hand_publisher_right;
   std::string hand_close_right, hand_close_left;
   std::string left_hand_synergy_joint, right_hand_synergy_joint;
+  int home = 0;
+  desperate_housewife::handPoseSingle home_robot_left, home_robot_right;
 
   HandPoseGenerator();
   ~HandPoseGenerator(){};
@@ -86,7 +88,7 @@ public:
   */
   void SendHomeRobot();
 
-    void ControllerStartAndNewPOse(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+    void ControllerStartAndNewPOse(const desperate_housewife::Error_msg::ConstPtr& error_msg, desperate_housewife::handPoseSingle &Robot_home);
 
 };
 

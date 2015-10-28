@@ -87,7 +87,8 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       M_desired_local.col(3) << Point_desired;
       if (whichArm == 1) //left arm
       {
-         T_w_h = T_vito_c * M_desired_local*Rot_z;  
+         T_w_h = T_vito_c * M_desired_local;
+           
          // *Rot_z;
        }
       else

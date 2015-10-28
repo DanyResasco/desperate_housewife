@@ -86,7 +86,7 @@ void HandPoseFIltered::Controll(const desperate_housewife::handPoseSingle::Const
         // std::cout<<"diff_pose_rot: "<<diff_pose_rot<<std::endl;
 
       //if object doesn't mouve send last pose else the last one
-      if(diff_pose < 0.02)
+      if(diff_pose < 0.02) 
         {
          // std::cout<<"pubblico"<<std::endl;
          if( Pose_obj_stable.whichArm  == 1) //left
@@ -102,7 +102,10 @@ void HandPoseFIltered::Controll(const desperate_housewife::handPoseSingle::Const
           tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), desired_hand_frame_.c_str()) );
         }
         else
+        {
           dot_step = 0;
+        }
+
 
     }
 

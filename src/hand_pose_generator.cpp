@@ -50,13 +50,16 @@ HandPoseGenerator::HandPoseGenerator()
   hand_publisher_left = nh.advertise<trajectory_msgs::JointTrajectory>(hand_close_left.c_str(), 1000);
   hand_publisher_right = nh.advertise<trajectory_msgs::JointTrajectory>(hand_close_right.c_str(), 1000);
 
+  // SendHomeRobot();
+  // ros::spinOnce();
+
 
 
 }
 //move vito in desired location befor control start
 void HandPoseGenerator::SendHomeRobot()
 {
-  desperate_housewife::handPoseSingle home_robot_left, home_robot_right;
+  // desperate_housewife::handPoseSingle home_robot_left, home_robot_right;
   double roll,pitch,yaw;
   nh.param<double>("/home_left_arm_position_x", home_robot_left.pose.position.x, -0.75022);
   nh.param<double>("/home_left_arm_position_y",  home_robot_left.pose.position.y,  -0.47078);
@@ -145,7 +148,8 @@ void HandPoseGenerator::Error_info_left(const desperate_housewife::Error_msg::Co
    if (Equal(frame_hand, frame_des, 0.05))
     {
       start_controller_left = 1;
-      ControllerStartAndNewPOse(error_msg);
+      ControllerStartAndNewPOse(error_msg, home_robot_left);
+  ;
     }
 }
 
@@ -157,19 +161,32 @@ void HandPoseGenerator::Error_info_right(const desperate_housewife::Error_msg::C
    if (Equal(frame_hand,frame_des,0.05))
     {
       start_controller_right = 1;
-      ControllerStartAndNewPOse(error_msg);
+      ControllerStartAndNewPOse(error_msg, home_robot_right);
+       
     }
 }
 
 
 
-void HandPoseGenerator::ControllerStartAndNewPOse(const desperate_housewife::Error_msg::ConstPtr& error_msg)
+void HandPoseGenerator::ControllerStartAndNewPOse(const desperate_housewife::Error_msg::ConstPtr& error_msg, desperate_housewife::handPoseSingle &Robot_home)
 {
-     if(error_msg->ObjOrObst == true) //object to grasp
-      {
-        //SendmsgToCloseHand
-        trajectory_msgs::JointTrajectory msg_jointT_hand;
-            msg_jointT_hand.joint_names.resize(1);
+    if(error_msg->ObjOrObst == true) //object to grasp
+    {
+       KDL::Frame frame_hand, frame_home;
+      tf::poseMsgToKDL(error_msg->pose_hand, frame_hand);
+      tf::poseMsgToKDL(Robot_home.pose, frame_home);
+      // std::cout<<"arrivato mex"<<std::endl;
+      trajectory_msgs::JointTrajectory msg_jointT_hand;
+      msg_jointT_hand.joint_names.resize(1);
+
+        if(!(Equal(frame_hand, frame_home, 0.02)))
+          {
+            std::cout<<"chiudo mano e sposto"<<std::endl;
+            //SendmsgToCloseHand
+            desperate_housewife::handPoseSingle new_obj_pos_remove;
+            // geometry_msgs::Pose pos_new, pose_local;
+            new_obj_pos_remove.pose = error_msg->pose_hand;
+  
             msg_jointT_hand.points.resize(1);
             msg_jointT_hand.points[0].positions.resize(1);
             // msg_jointT_hand.joint_names[0] = desired_hand_name;
@@ -177,14 +194,37 @@ void HandPoseGenerator::ControllerStartAndNewPOse(const desperate_housewife::Err
             msg_jointT_hand.points[0].time_from_start = ros::Duration(2); // 2s;
             if(error_msg->WhichArm ==1)
             {
+              new_obj_pos_remove.pose.position.y = new_obj_pos_remove.pose.position.y - 0.3;
                msg_jointT_hand.joint_names[0] = left_hand_synergy_joint.c_str();
               hand_publisher_left.publish(msg_jointT_hand);
+              desired_hand_left_pose_publisher_.publish( new_obj_pos_remove );
             }
             else
             {
-               msg_jointT_hand.joint_names[0] = right_hand_synergy_joint.c_str();
+              new_obj_pos_remove.pose.position.y = new_obj_pos_remove.pose.position.y + 0.3;
+              msg_jointT_hand.joint_names[0] = right_hand_synergy_joint.c_str();
               hand_publisher_right.publish(msg_jointT_hand);
+              desired_hand_left_pose_publisher_.publish( new_obj_pos_remove );
             }
+        
+          }
+          // else 
+          // {
+          //   std::cout<<"apro mano"<<std::endl;
+          //   // msg_jointT_hand.joint_names[0] = desired_hand_name;
+          //   msg_jointT_hand.points[0].positions[0] = 0.0;
+          //   msg_jointT_hand.points[0].time_from_start = ros::Duration(2); // 2s;
+          //   if(error_msg->WhichArm ==1)
+          //   {
+          //     msg_jointT_hand.joint_names[0] = left_hand_synergy_joint.c_str();
+          //     hand_publisher_left.publish(msg_jointT_hand);
+          //   }
+          //   else
+          //   {
+          //     msg_jointT_hand.joint_names[0] = right_hand_synergy_joint.c_str();
+          //     hand_publisher_right.publish(msg_jointT_hand);
+          //   }
+          // }    
       } 
       else //object to move
       {
@@ -239,8 +279,6 @@ void HandPoseGenerator::SendObjRejectMsg(desperate_housewife::fittedGeometriesSi
   else
   {
      Reject_obstacles_publisher_right.publish(obstacle_rej);
-          // obstacles_publisher_right.publish(obstaclesMsg);
-          // std::cout<<"right"<<std::endl
   } 
   tf::Transform tfHandTrasform2;
   tf::poseMsgToTF( obstacle_rej.pose, tfHandTrasform2); 
@@ -254,9 +292,35 @@ void HandPoseGenerator::SendObjRejectMsg(desperate_housewife::fittedGeometriesSi
 
 void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
 {
+  if(home == 0) //open soft hand and move vito to home position
+  {
+    trajectory_msgs::JointTrajectory msg_jointT_hand;
+    msg_jointT_hand.joint_names.resize(1);
+    msg_jointT_hand.points.resize(1);
+    msg_jointT_hand.points[0].positions.resize(1);
+
+    // std::cout<<"apro mano"<<std::endl;
+    // msg_jointT_hand.joint_names[0] = desired_hand_name;
+    msg_jointT_hand.points[0].positions[0] = 0.0;
+    msg_jointT_hand.points[0].time_from_start = ros::Duration(2); // 2s;
+    // std::cout<<"mandato duration"<<std::endl;
+
+      msg_jointT_hand.joint_names[0] = left_hand_synergy_joint.c_str();
+      hand_publisher_left.publish(msg_jointT_hand);
+
+      msg_jointT_hand.joint_names[0] = right_hand_synergy_joint.c_str();
+      hand_publisher_right.publish(msg_jointT_hand);
+    
+    // std::cout<<"invio mano"<<std::endl;          
+    SendHomeRobot();
+    home = 1;
+
+  }
+
   if((start_controller_left != 0) && (start_controller_right != 0))
   {
-  
+    std::cout<<"start control"<<std::endl;
+    
     desperate_housewife::fittedGeometriesSingle obstacle;
     desperate_housewife::fittedGeometriesArray obstaclesMsg;
     desperate_housewife::handPoseSingle DesiredHandPose;
@@ -388,11 +452,9 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
 
         }
       }
+
    objects_vec.clear();
   }
-  else
-  SendHomeRobot();
- 
   
 }
 

@@ -34,6 +34,7 @@ namespace desperate_housewife
     n.getParam("obstacle_avoidance", obstacle_avoidance);
     n.getParam("tip_name", tip_name);
     n.getParam("set_gains_topic", set_gains_);
+    // n.getParam("tau_commad", tau_commad);
 
    
     jnt_to_jac_solver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
@@ -68,6 +69,7 @@ namespace desperate_housewife
 
     // pub_error_ = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
     pub_error_ = nh_.advertise<desperate_housewife::Error_msg>("error", 1000);
+     pub_tau_ = nh_.advertise<std_msgs::Float64MultiArray>("tau_commad", 1000);
     // pub_pose_ = nh_.advertise<std_msgs::Float64MultiArray>("pose", 1000);
     // pub_marker_ = nh_.advertise<visualization_msgs::Marker>("marker",1000);
 
@@ -89,8 +91,8 @@ namespace desperate_housewife
         joint_msr_states_.qdot(i) = joint_handles_[i].getVelocity();
         joint_des_states_.q(i) = joint_msr_states_.q(i);
         joint_des_states_.qdot(i) = joint_msr_states_.qdot(i);
-        Kp_(i) = 1000;  
-        Kd_(i) = 200;
+        Kp_(i) = 100;  
+        Kd_(i) = 20;
        
       }
 
@@ -99,9 +101,10 @@ namespace desperate_housewife
       Force_repulsive = Eigen::Matrix<double,7,1>::Zero();
       F_Rep_table = Eigen::Matrix<double,7,1>::Zero();
       Force_total_rep = Eigen::Matrix<double,7,1>::Zero();
+      fk_pos_solver_->JntToCart(joint_msr_states_.q,x_des_);
 
       first_step_ = 1;
-      cmd_flag_ = 0;
+      // cmd_flag_ = 0;
       step_ = 0;
     
       
@@ -120,8 +123,8 @@ namespace desperate_housewife
       // msg_err_.data.clear();
       // msg_pose_.data.clear();
       
-      if (cmd_flag_)
-      { 
+      // if (cmd_flag_)
+      // { 
        
         // resetting N and tau(t=0) for the highest priority task
         N_trans_ = I_;  
@@ -242,32 +245,47 @@ namespace desperate_housewife
         // finally, computing the torque tau
         tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + b_)) + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
         // std::cout<<" tau_.data: "<< tau_.data<<std::endl;
+
+
         // saving J_ and phi of the last iteration
         J_last_ = J_;
         phi_last_ = phi_;
 
+        //saturation 70% of tau
+        tau_.data[0] = ((unsigned) tau_.data[0] >= 176 ? copysign(123.2,tau_.data[0]) : tau_.data[0]);
+        tau_.data[1] = ((unsigned) tau_.data[1] >= 176 ? copysign(123.2,tau_.data[1]) : tau_.data[1]); 
+        tau_.data[2] = ((unsigned) tau_.data[2] >= 100 ? copysign(70,tau_.data[2]): tau_.data[2]); 
+        tau_.data[3] = ((unsigned) tau_.data[3] >= 100 ? copysign(70,tau_.data[3]): tau_.data[3]); 
+        tau_.data[4] = ((unsigned) tau_.data[4] >= 100 ? copysign(70,tau_.data[4]): tau_.data[4]); 
+        tau_.data[5] = ((unsigned) tau_.data[5] >= 38 ? copysign(23.6,tau_.data[5]): tau_.data[5]); 
+        tau_.data[6] = ((unsigned) tau_.data[6] >= 38 ? copysign(23.6,tau_.data[6]): tau_.data[6]);  
+ 
       // set controls for joints
       for (unsigned int i = 0; i < joint_handles_.size(); i++)
       {
         joint_handles_[i].setCommand(tau_(i));
+        tau_msg.data.push_back(tau_(i));
+         
       }
-      
+        
+      pub_tau_.publish(tau_msg);
       x_chain.clear();
       Object_radius.clear();
       Object_height.clear();
       Object_position.clear();
       JAC_repulsive.clear();
+      tau_msg.data.clear();
 
 
-    }
+    // }
 
-    else
-    {
-      for (unsigned int i = 0; i < joint_handles_.size(); i++)
-      {
-           joint_handles_[i].setCommand(PIDs_[i].computeCommand(joint_des_states_.q(i) - joint_msr_states_.q(i),period));
-      }
-    }
+    // else
+    // {
+    //   for (unsigned int i = 0; i < joint_handles_.size(); i++)
+    //   {
+    //        joint_handles_[i].setCommand(PIDs_[i].computeCommand(joint_des_states_.q(i) - joint_msr_states_.q(i),period));
+    //   }
+    // }
       ros::spinOnce();
 
   }
@@ -309,30 +327,6 @@ namespace desperate_housewife
   }
 
 
-
-  // void PotentialFieldControl::set_marker(KDL::Frame x, int id)
-  // {     
-  //       msg_marker_.header.frame_id = "world";
-  //       msg_marker_.header.stamp = ros::Time();
-  //       msg_marker_.ns = "end_effector";
-  //       msg_marker_.id = id;
-  //       msg_marker_.type = visualization_msgs::Marker::SPHERE;
-  //       msg_marker_.action = visualization_msgs::Marker::ADD;
-  //       msg_marker_.pose.position.x = x.p(0);
-  //       msg_marker_.pose.position.y = x.p(1);
-  //       msg_marker_.pose.position.z = x.p(2);
-  //       msg_marker_.pose.orientation.x = 0.0;
-  //       msg_marker_.pose.orientation.y = 0.0;
-  //       msg_marker_.pose.orientation.z = 0.0;
-  //       msg_marker_.pose.orientation.w = 1.0;
-  //       msg_marker_.scale.x = 0.005;
-  //       msg_marker_.scale.y = 0.005;
-  //       msg_marker_.scale.z = 0.005;
-  //       msg_marker_.color.a = 1.0;
-  //       msg_marker_.color.r = 0.0;
-  //       msg_marker_.color.g = 1.0;
-  //       msg_marker_.color.b = 0.0;  
-  // }
 
   double PotentialFieldControl::task_objective_function(KDL::JntArray q)
   {
@@ -432,7 +426,7 @@ namespace desperate_housewife
            distance_der_partial[2] = (Object_position[index_obj].p.z()*4 / Object_height[index_obj] ); //n=2
           
 
-          double Ni_ = .01;
+          double Ni_ = .1;
           
           // vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
           // std::cout<<"qui"<<std::endl;       
