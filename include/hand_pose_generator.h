@@ -8,7 +8,11 @@
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
 #include <tf_conversions/tf_eigen.h>
+#include <tf_conversions/tf_kdl.h>
 #include <eigen_conversions/eigen_msg.h>
+#include <kdl/frames.hpp>
+#include <kdl_parser/kdl_parser.hpp>
+#include <kdl/kdl.hpp>
 
 #include <desperate_housewife/fittedGeometriesSingle.h>
 #include <desperate_housewife/fittedGeometriesArray.h>
@@ -16,6 +20,7 @@
 #include <desperate_housewife/obstacleArray.h>
 #include <desperate_housewife/handPoseSingle.h>
 #include <desperate_housewife/Error_msg.h>
+#include <trajectory_msgs/JointTrajectory.h>
 
 class HandPoseGenerator{
 
@@ -42,6 +47,9 @@ public:
   tf::TransformListener listener_info;
   int start_controller_left = 0;
   int start_controller_right = 0;
+    ros::Publisher hand_publisher_left, hand_publisher_right;
+  std::string hand_close_right, hand_close_left;
+  std::string left_hand_synergy_joint, right_hand_synergy_joint;
 
   HandPoseGenerator();
   ~HandPoseGenerator(){};
@@ -77,6 +85,8 @@ public:
   /** Function for move vito in the desired pose before control start   
   */
   void SendHomeRobot();
+
+    void ControllerStartAndNewPOse(const desperate_housewife::Error_msg::ConstPtr& error_msg);
 
 };
 

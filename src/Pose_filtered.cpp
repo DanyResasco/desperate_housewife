@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     ros::spinOnce(); 
     rate.sleep();
   }
-  ROS_ERROR("QUI");
+  // ROS_ERROR("QUI");
   return 0;
 }
 
@@ -88,7 +88,7 @@ void HandPoseFIltered::Controll(const desperate_housewife::handPoseSingle::Const
       //if object doesn't mouve send last pose else the last one
       if(diff_pose < 0.02)
         {
-         std::cout<<"pubblico"<<std::endl;
+         // std::cout<<"pubblico"<<std::endl;
          if( Pose_obj_stable.whichArm  == 1) //left
          {
             desired_hand_left_pose_publisher_.publish( Pose_obj_stable );

@@ -33,7 +33,7 @@ namespace desperate_housewife
     n.getParam("desired_hand_topic", desired_hand_topic);
     n.getParam("obstacle_avoidance", obstacle_avoidance);
     n.getParam("tip_name", tip_name);
-    n.getParam("error_topic", error_topic);
+    n.getParam("set_gains_topic", set_gains_);
 
    
     jnt_to_jac_solver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
@@ -59,7 +59,7 @@ namespace desperate_housewife
     obstacles_subscribe_ = n.subscribe(obstacle_avoidance.c_str(), 1, &PotentialFieldControl::InfoGeometry, this);
 
     //Hand_pose for graspable objects
-    
+    sub_gains_ = nh_.subscribe(set_gains_.c_str(), 1, &PotentialFieldControl::set_gains, this);
 
     // hand_publisher_ = n.advertise<trajectory_msgs::JointTrajectory>(desired_hand_topic, 1000);
 
@@ -68,14 +68,14 @@ namespace desperate_housewife
 
     // pub_error_ = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
     pub_error_ = nh_.advertise<desperate_housewife::Error_msg>("error", 1000);
-    pub_pose_ = nh_.advertise<std_msgs::Float64MultiArray>("pose", 1000);
-    pub_marker_ = nh_.advertise<visualization_msgs::Marker>("marker",1000);
+    // pub_pose_ = nh_.advertise<std_msgs::Float64MultiArray>("pose", 1000);
+    // pub_marker_ = nh_.advertise<visualization_msgs::Marker>("marker",1000);
 
     sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this); 
 
-    nh_.param<std::string>("/BasicGeometriesNode/cylinder_names", object_names_, "object");
-    publisher_wrench_command = nh_.advertise<geometry_msgs::WrenchStamped>("left_arm/PotentialFieldControl/wrench_msg", 1000);
-    publisher_wrench_command_rep = nh_.advertise<geometry_msgs::WrenchStamped>("left_arm/PotentialFieldControl/wrench_msg2", 1000);
+    // nh_.param<std::string>("/BasicGeometriesNode/cylinder_names", object_names_, "object");
+    // publisher_wrench_command = nh_.advertise<geometry_msgs::WrenchStamped>("left_arm/PotentialFieldControl/wrench_msg", 1000);
+    // publisher_wrench_command_rep = nh_.advertise<geometry_msgs::WrenchStamped>("left_arm/PotentialFieldControl/wrench_msg2", 1000);
 
     return true;
   }
@@ -89,7 +89,7 @@ namespace desperate_housewife
         joint_msr_states_.qdot(i) = joint_handles_[i].getVelocity();
         joint_des_states_.q(i) = joint_msr_states_.q(i);
         joint_des_states_.qdot(i) = joint_msr_states_.qdot(i);
-        Kp_(i) = 1000;
+        Kp_(i) = 1000;  
         Kd_(i) = 200;
        
       }
@@ -109,24 +109,16 @@ namespace desperate_housewife
 
   void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& period)
   {
-      //open the softh_hand
-      // msg_jointT_hand.joint_names[0] = desired_hand_name;
-      // msg_jointT_hand.points[0].positions[0] = 0;
-      // msg_jointT_hand.points[0].time_from_start = ros::Duration(0.000001); // 1s;
-      // hand_publisher_.publish(msg_jointT_hand);
-
-    // get joint positions
+      // get joint positions
       for(unsigned int i=0; i < joint_handles_.size(); i++) 
       {
         joint_msr_states_.q(i) = joint_handles_[i].getPosition();
         joint_msr_states_.qdot(i) = joint_handles_[i].getVelocity();
+       }
 
-       
-      }
-
-      // clearing msgs before publishing
-      msg_err_.data.clear();
-      msg_pose_.data.clear();
+      // // clearing msgs before publishing
+      // msg_err_.data.clear();
+      // msg_pose_.data.clear();
       
       if (cmd_flag_)
       { 
@@ -185,8 +177,8 @@ namespace desperate_housewife
           // j++;
         } 
 
-       if (Equal(x_,x_des_,0.05))
-       {
+       // if (Equal(x_,x_des_,0.05))
+       // {
            // ROS_INFO("On target");
 
           // if(hand_step == 0)
@@ -202,26 +194,16 @@ namespace desperate_housewife
           //   hand_step =1;
           // }
           // std::cout<<"x_err_: "<<x_err_<<std::endl;
-            error_pose_trajectory.start_controller = 1;
-            tf::poseKDLToMsg (x_, error_pose_trajectory.pose);
-            error_pose_trajectory.ObjOrObst = ObjOrObst;
-          
+            // error_pose_trajectory.start_controller = 1;
+            tf::poseKDLToMsg (x_, error_pose_trajectory.pose_hand);
+            tf::poseKDLToMsg (x_des_, error_pose_trajectory.pose_desired);
+            error_pose_trajectory.ObjOrObst = ObjOrObst;       
             pub_error_.publish(error_pose_trajectory);
 
             // hand_step = 1;
           // Force_repulsive = Eigen::Matrix<double,7,1>::Zero();       
-        }
-       //  if (Equal(x_,x_des_,0.10))
-       // {
-       //   std::cout<<"x_err_ a 10 cm : "<<x_err_<<std::endl;
-       // }
+        // }
 
-        // pushing x to the pose msg
-        // for (int i = 0; i < 3; i++)
-        //   msg_pose_.data.push_back(x_.p(i));
-
-        // setting marker parameters
-        // set_marker(x_,msg_id_);
 
         // computing end-effector position/orientation error w.r.t. desired frame
         x_err_ = diff(x_,x_des_);
@@ -234,19 +216,8 @@ namespace desperate_housewife
         {
           // e = x_des_dotdot + Kd*(x_des_dot - x_dot) + Kp*(x_des - x)
           Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + V_max_kuka*Kp_(i)*x_err_(i);
-          // msg_err_.data.push_back(Force_attractive(i));
-          // msg_err_.data.push_back(x_err_(i));
         }
-        //std::string cylinder_frame;
-        //cylinder_frame = 
-        wrench_msg.header.stamp = ros::Time::now();
-        wrench_msg.header.frame_id = tip_name.c_str();
-        wrench_msg.wrench.force.x = Force_attractive[0];
-        wrench_msg.wrench.force.y = Force_attractive[1];
-        wrench_msg.wrench.force.z = Force_attractive[2];
-        publisher_wrench_command.publish(wrench_msg);
 
-        // std::cout<<"Force_attractive: "<<Force_attractive<<std::endl;
         // computing b = J*M^-1*(c+g) - J_dot*q_dot
         b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
 
@@ -255,8 +226,7 @@ namespace desperate_housewife
 
         // computing lambda = omega^-1
         pseudo_inverse(omega_,lambda_);
-        //lambda_ = omega_.inverse();
-        // std::cout<<"Object_position.size(): "<<Object_position.size()<<std::endl;
+       
         if(Object_position.size() > 0)
         {
           Force_repulsive = GetRepulsiveForce(x_chain);    
@@ -271,7 +241,7 @@ namespace desperate_housewife
 
         // finally, computing the torque tau
         tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + b_)) + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
-
+        // std::cout<<" tau_.data: "<< tau_.data<<std::endl;
         // saving J_ and phi of the last iteration
         J_last_ = J_;
         phi_last_ = phi_;
@@ -281,12 +251,6 @@ namespace desperate_housewife
       {
         joint_handles_[i].setCommand(tau_(i));
       }
-
-      // publishing markers for visualization in rviz
-      // pub_marker_.publish(msg_marker_);
-      // msg_id_++;
-
-      // std::cout<<"sum force: "<<(J_.data.transpose()*lambda_*Force_attractive)+Force_total_rep<<std::endl;
       
       x_chain.clear();
       Object_radius.clear();
@@ -339,8 +303,8 @@ namespace desperate_housewife
     tf::poseMsgToKDL(obj_rem->pose, frame_des_);
     error_pose_trajectory.WhichArm = obj_rem->info[obj_rem->info.size() - 1]; //last element is whicharm
     x_des_ = frame_des_;
-    cmd_flag_ = 1;
     ObjOrObst = false;
+    cmd_flag_=1;
 
   }
 
@@ -419,8 +383,8 @@ namespace desperate_housewife
           {
             min_d.push_back(distance_local_obj[0]);
             index_infl.push_back(i); //for tracking wich object is closet
-            std::cout<<"index_infl: "<<index_infl[i]<<std::endl; 
-            std::cout<<"i: "<<i<<std::endl; 
+            // std::cout<<"index_infl: "<<index_infl[i]<<std::endl; 
+            // std::cout<<"i: "<<i<<std::endl; 
           }
           else
           {
@@ -430,7 +394,7 @@ namespace desperate_housewife
         }
                
         //ROS_INFO("finito for e la dimensione è di: %g", min_d.size());
-        std::cout<<"min_d.size(): "<<min_d.size()<<std::endl;
+        // std::cout<<"min_d.size(): "<<min_d.size()<<std::endl;
         if(min_d.size() != 0)
         {
           
@@ -454,9 +418,9 @@ namespace desperate_housewife
           }
 
           int index_obj = floor(index_infl[index_dist]/2) ;
-          std::cout<<"index_obj: "<<index_obj<<std::endl;
+          // std::cout<<"index_obj: "<<index_obj<<std::endl;
           int index_jac = index_infl[index_dist] % 2;
-          std::cout<<"index_jac: "<<index_jac<<std::endl;
+          // std::cout<<"index_jac: "<<index_jac<<std::endl;
 
 
           Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
@@ -468,7 +432,7 @@ namespace desperate_housewife
            distance_der_partial[2] = (Object_position[index_obj].p.z()*4 / Object_height[index_obj] ); //n=2
           
 
-          double Ni_ = 0.1;
+          double Ni_ = .01;
           
           // vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
           // std::cout<<"qui"<<std::endl;       
@@ -501,12 +465,12 @@ namespace desperate_housewife
 
            // std::string obstacle_frame;
         //cylinder_frame = 
-        wrench_msg_rep.header.stamp = ros::Time::now();
-        wrench_msg_rep.header.frame_id = object_names_.c_str();
-        wrench_msg_rep.wrench.force.x = Force[0];
-        wrench_msg_rep.wrench.force.y = Force[1];
-        wrench_msg_rep.wrench.force.z = Force[2];
-        publisher_wrench_command_rep.publish(wrench_msg_rep);
+        // wrench_msg_rep.header.stamp = ros::Time::now();
+        // wrench_msg_rep.header.frame_id = object_names_.c_str();
+        // wrench_msg_rep.wrench.force.x = Force[0];
+        // wrench_msg_rep.wrench.force.y = Force[1];
+        // wrench_msg_rep.wrench.force.z = Force[2];
+        // publisher_wrench_command_rep.publish(wrench_msg_rep);
 
 
 
@@ -641,7 +605,23 @@ Eigen::Matrix<double,7,1> PotentialFieldControl::RepulsiveWithTable(std::vector<
 
 
 
+void PotentialFieldControl::set_gains(const std_msgs::Float64MultiArray::ConstPtr &msg)
+  {
+    if(msg->data.size() == 2*joint_handles_.size())
+    {
+      for(unsigned int i = 0; i < joint_handles_.size(); i++)
+      {
+        Kp_(i) = msg->data[i];
+        Kd_(i) = msg->data[i + joint_handles_.size()];
+      }
+    }
+    else
+      ROS_INFO("Number of Joint handles = %lu", joint_handles_.size());
 
+    ROS_INFO("Num of Joint handles = %lu, dimension of message = %lu", joint_handles_.size(), msg->data.size());
+
+
+  }
 
 
 

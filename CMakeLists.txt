@@ -107,7 +107,7 @@ target_link_libraries(fit_geometries ${catkin_LIBRARIES}  ${PCL_LIBRARIES} )
 
 add_executable(hand_pose_generator src/hand_pose_generator_node.cpp src/hand_pose_generator.cpp)
 add_dependencies(hand_pose_generator ${PROJECT_NAME}_gencpp)
-target_link_libraries(hand_pose_generator ${catkin_LIBRARIES}  ${PCL_LIBRARIES} )
+target_link_libraries(hand_pose_generator ${catkin_LIBRARIES}  ${PCL_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES} )
 
 add_executable(test_fitting src/test_fitting.cpp)
 add_dependencies(test_fitting ${PROJECT_NAME}_gencpp)

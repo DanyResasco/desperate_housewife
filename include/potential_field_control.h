@@ -52,6 +52,7 @@ namespace desperate_housewife
 		void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
 		Eigen::Matrix<double,7,1> RepulsiveWithTable(std::vector<KDL::Frame> &Pos_arm);
 		void InfoOBj( const desperate_housewife::fittedGeometriesSingle::ConstPtr& obj_rem);
+		void set_gains(const std_msgs::Float64MultiArray::ConstPtr &msg);
 
 	private:
 		ros::Subscriber sub_command_;
@@ -122,7 +123,7 @@ namespace desperate_housewife
 		double V_max_kuka = 1.5;
 		std::vector<KDL::Frame> x_chain;	//14 is soft_hand (end_effector)
 		
-		ros::Subscriber obstacles_subscribe_, obstacles_remove_sub;
+		ros::Subscriber obstacles_subscribe_, obstacles_remove_sub, sub_gains_;
 		std::vector<double> Object_radius;
 		std::vector<double> Object_height;
 		std::vector<KDL::Frame> Object_position;
@@ -135,7 +136,7 @@ namespace desperate_housewife
 		geometry_msgs::WrenchStamped wrench_msg;
 		geometry_msgs::WrenchStamped wrench_msg_rep;
 		ros::Publisher publisher_wrench_command,publisher_wrench_command_rep ;
-		std::string tip_name, object_names_;
+		std::string tip_name, object_names_,set_gains_;
 		std::string error_topic;
 		ros::Publisher pub_error_right, pub_error_left;
 		
