@@ -131,9 +131,9 @@
         </group>
 
         <!-- spawn only desired controllers in current namespace -->
-        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller PotentialFieldControl"/>
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller joint_trajectory_controller "/>
 
-        <node name="controller_stopper" pkg="controller_manager" type="spawner" args="--stopped joint_trajectory_controller" />
+        <node name="controller_stopper" pkg="controller_manager" type="spawner" args="--stopped PotentialFieldControl" />
     </group>
     
     <group ns="left_hand">
@@ -179,9 +179,10 @@
         </group>
 
         <!-- spawn only desired controllers in current namespace -->
-        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller PotentialFieldControl"/>
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller joint_trajectory_controller"/>
+        <node name="controller_stopper" pkg="controller_manager" type="spawner" args="--stopped PotentialFieldControl" />
 
-        <node name="controller_stopper" pkg="controller_manager" type="spawner" args="--stopped joint_trajectory_controller" />
+
     </group>
 
     <group ns="right_hand">
@@ -215,6 +216,10 @@
     <include file="$(find desperate_housewife)/launch/desperate_demo_scene_filter.launch"/>
 
     <include file="$(find desperate_housewife)/launch/desperate_demo_fit_geometries.launch"/>
+
+    <include file="$(find desperate_housewife)/launch/Desperate_pose_filter.launch"/>
+    <include file="$(find desperate_housewife)/launch/desperate_Vito_home.launch"/>
+    <include file="$(find desperate_housewife)/launch/desperate_mind.launch"/>
 
     <include file="$(find desperate_housewife)/launch/desperate_demo_hand_pose_generator.launch"/>
 

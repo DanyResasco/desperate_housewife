@@ -1,0 +1,13 @@
+<launch>
+ 
+ 
+
+  <arg name="spin_rate" default="50" />
+	<!-- the scene acquirer node  -->
+	<node name="Vito_home_node" pkg="desperate_housewife" type="Vito_home" output="screen" >
+		 <rosparam command="load" file="$(find desperate_housewife)/config/desperate_home_position.yaml" />
+    <param name="spin_rate" value="$(arg spin_rate)" />
+  </node>
+
+</launch>
+

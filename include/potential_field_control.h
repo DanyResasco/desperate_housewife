@@ -132,7 +132,7 @@ namespace desperate_housewife
 		std::vector<KDL::Jacobian> JAC_repulsive;
 		std::string obstacle_remove_topic, obstacle_avoidance;
 		desperate_housewife::Error_msg error_pose_trajectory;
-		bool ObjOrObst = true;
+		int ObjOrObst;
 		geometry_msgs::WrenchStamped wrench_msg;
 		geometry_msgs::WrenchStamped wrench_msg_rep;
 		ros::Publisher publisher_wrench_command,publisher_wrench_command_rep ;

@@ -69,6 +69,8 @@ add_message_files(
   handPoseSingle.msg
   handPosesArray.msg
   Error_msg.msg
+  Start.msg
+  home.msg
 )
 
 generate_messages(
@@ -121,6 +123,14 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kd
 add_executable(Pose_filtered src/Pose_filtered.cpp)
 add_dependencies(Pose_filtered ${PROJECT_NAME}_gencpp)
 target_link_libraries(Pose_filtered ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+
+add_executable(Vito_home src/Vito_home_node.cpp)
+add_dependencies(Vito_home ${PROJECT_NAME}_gencpp)
+target_link_libraries(Vito_home ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+
+add_executable(desperate_mind src/desperate_mind.cpp)
+add_dependencies(desperate_mind ${PROJECT_NAME}_gencpp)
+target_link_libraries(desperate_mind ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
 # add_executable(phobic_camera src/main.cpp src/phobic_camera_old.cpp)
 # add_dependencies(phobic_camera ${PROJECT_NAME}_gencpp)

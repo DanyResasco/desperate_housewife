@@ -1,0 +1,32 @@
+In file included from /home/crosales/dany_demo/src/vito-robot/pisa-iit-soft-hand/soft_hand/gazebo_ros_soft_hand/src/default_soft_hand_hw_sim.cpp:46:0:
+/home/crosales/dany_demo/src/vito-robot/pisa-iit-soft-hand/soft_hand/gazebo_ros_soft_hand/include/gazebo_ros_soft_hand/default_soft_hand_hw_sim.h:62:66: fatal error: transmission_interface/adaptive_synergy_transmission.h: No such file or directory
+ #include <transmission_interface/adaptive_synergy_transmission.h>
+                                                                  ^
+compilation terminated.
+In file included from /home/crosales/dany_demo/src/vito-robot/pisa-iit-soft-hand/soft_hand/gazebo_ros_soft_hand/src/kinematic_ctrl_soft_hand_hw_sim.cpp:46:0:
+/home/crosales/dany_demo/src/vito-robot/pisa-iit-soft-hand/soft_hand/gazebo_ros_soft_hand/include/gazebo_ros_soft_hand/kinematic_ctrl_soft_hand_hw_sim.h:61:66: fatal error: transmission_interface/adaptive_synergy_transmission.h: No such file or directory
+ #include <transmission_interface/adaptive_synergy_transmission.h>
+                                                                  ^
+compilation terminated.
+make[2]: *** [vito-robot/pisa-iit-soft-hand/soft_hand/gazebo_ros_soft_hand/CMakeFiles/default_soft_hand_hw_sim.dir/src/default_soft_hand_hw_sim.cpp.o] Error 1
+make[1]: *** [vito-robot/pisa-iit-soft-hand/soft_hand/gazebo_ros_soft_hand/CMakeFiles/default_soft_hand_hw_sim.dir/all] Error 2
+make[1]: *** Waiting for unfinished jobs....
+make[2]: *** [vito-robot/pisa-iit-soft-hand/soft_hand/gazebo_ros_soft_hand/CMakeFiles/kinematic_ctrl_soft_hand_hw_sim.dir/src/kinematic_ctrl_soft_hand_hw_sim.cpp.o] Error 1
+make[1]: *** [vito-robot/pisa-iit-soft-hand/soft_hand/gazebo_ros_soft_hand/CMakeFiles/kinematic_ctrl_soft_hand_hw_sim.dir/all] Error 2
+/home/crosales/dany_demo/src/vito-robot/pisa-iit-soft-hand/soft_hand/gazebo_ros_soft_hand/src/gazebo_ros_soft_hand_plugin.cpp: In member function ‘bool gazebo_ros_soft_hand::GazeboRosSoftHandPlugin::parseTransmissionsFromURDF(const string&)’:
+/home/crosales/dany_demo/src/vito-robot/pisa-iit-soft-hand/soft_hand/gazebo_ros_soft_hand/src/gazebo_ros_soft_hand_plugin.cpp:264:38: error: ‘struct transmission_interface::TransmissionInfo’ has no member named ‘robot_namespace_’
+     if (robot_namespace_.compare(it->robot_namespace_) != 0)
+                                      ^
+/home/crosales/dany_demo/src/desperate_housewife/src/potential_field_control.cpp: In member function ‘Eigen::Matrix<double, 7, 1> desperate_housewife::PotentialFieldControl::GetRepulsiveForce(std::vector<KDL::Frame>&)’:
+/home/crosales/dany_demo/src/desperate_housewife/src/potential_field_control.cpp:353:33: warning: variable ‘F_rep_tot’ set but not used [-Wunused-but-set-variable]
+       Eigen::Matrix<double,7,1> F_rep_tot = Eigen::Matrix<double,7,1>::Zero();
+                                 ^
+/home/crosales/dany_demo/src/vito-robot/kit-head/kit_head_hw/src/kit_head_hw_sim_plugin.cpp: In member function ‘bool kit_head_hw::KITHeadHWSimPlugin::parseTransmissionsFromURDF(const string&)’:
+/home/crosales/dany_demo/src/vito-robot/kit-head/kit_head_hw/src/kit_head_hw_sim_plugin.cpp:294:38: error: ‘struct transmission_interface::TransmissionInfo’ has no member named ‘robot_namespace_’
+     if (robot_namespace_.compare(it->robot_namespace_) != 0)
+                                      ^
+make[2]: *** [vito-robot/pisa-iit-soft-hand/soft_hand/gazebo_ros_soft_hand/CMakeFiles/gazebo_ros_soft_hand.dir/src/gazebo_ros_soft_hand_plugin.cpp.o] Error 1
+make[1]: *** [vito-robot/pisa-iit-soft-hand/soft_hand/gazebo_ros_soft_hand/CMakeFiles/gazebo_ros_soft_hand.dir/all] Error 2
+Linking CXX executable /home/crosales/dany_demo/devel/lib/desperate_housewife/Pose_filtered
+make[2]: *** [vito-robot/kit-head/kit_head_hw/CMakeFiles/kit_head_hw_sim_plugin.dir/src/kit_head_hw_sim_plugin.cpp.o] Error 1
+make[1]: *** [vito-robot/kit-head/kit_head_hw/CMakeFiles/kit_head_hw_sim_plugin.dir/all] Error 2

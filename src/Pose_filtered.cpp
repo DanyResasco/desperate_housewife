@@ -78,16 +78,18 @@ void HandPoseFIltered::Controll(const desperate_housewife::handPoseSingle::Const
          pose_last = pose_obj;
          Pose_obj_stable.whichArm = msg->whichArm;
          Pose_obj_stable.isGraspable = msg->isGraspable;
+         Pose_obj_stable.obj = msg->obj;
+         std::cout<<"Pose_obj_stable.obj: "<<Pose_obj_stable.obj<<std::endl;
          dot_step = 1;
       }
       
       double diff_pose = (diff(pose_last.p, pose_obj.p)).Norm();
-      double diff_pose_rot = (diff(pose_last.M, pose_obj.M)).Norm();
+      // double diff_pose_rot = (diff(pose_last.M, pose_obj.M)).Norm();
         // std::cout<<"diff_pose_rot: "<<diff_pose_rot<<std::endl;
 
-      //if object doesn't mouve send last pose else the last one
+      //if object doesn't mouve send first pose else the last one
       if(diff_pose < 0.02) 
-        {
+      {
          // std::cout<<"pubblico"<<std::endl;
          if( Pose_obj_stable.whichArm  == 1) //left
          {
@@ -100,51 +102,11 @@ void HandPoseFIltered::Controll(const desperate_housewife::handPoseSingle::Const
           tf::Transform tfHandTrasform;
           tf::poseMsgToTF( Pose_obj_stable.pose, tfHandTrasform);
           tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), desired_hand_frame_.c_str()) );
-        }
-        else
-        {
+      }
+      else
+      {
           dot_step = 0;
-        }
-
-
+      }
     }
 
-
-
-    
-    // if(first_step == 0)
-    // {  	
-    //   	Pose_obj_stable.pose = msg->pose;
-    //   	pose_last = pose_obj;
-    //   	Pose_obj_stable.whichArm = msg->whichArm;
-    //   	Pose_obj_stable.isGraspable = msg->isGraspable;
-    // 	  first_step = 1;
-    // }
-
-    // double diff_pose = (diff(pose_last.p, pose_obj.p)).Norm();
-    // double diff_pose_rot = (diff(pose_last.M, pose_obj.M)).Norm();
-    // std::cout<<"diff_pose_rot: "<<diff_pose_rot<<std::endl;
-
-    // if(diff_pose < 0.02)
-    // {
-    // 	std::cout<<"pubblico"<<std::endl;
-    // 	if(	Pose_obj_stable.whichArm  == 1) //left
-    // 	{
-	 		//   desired_hand_left_pose_publisher_.publish( Pose_obj_stable );
-    // 	}
-    // 	else
-    // 	{
-    // 		desired_hand_right_pose_publisher_.publish( Pose_obj_stable );
-    // 	}
-
-    //   tf::Transform tfHandTrasform;
-    //       tf::poseMsgToTF( Pose_obj_stable.pose, tfHandTrasform);
-    //       tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), desired_hand_frame_.c_str()) );
-   	
-   	// }
-   	// else
-   	// {
-   	// 	first_step = 0;
-   	// 	std::cout<<"mi muovo"<<std::endl;
-   	// }
 }

@@ -21,6 +21,7 @@
 #include <desperate_housewife/handPoseSingle.h>
 #include <desperate_housewife/Error_msg.h>
 #include <trajectory_msgs/JointTrajectory.h>
+#include <desperate_housewife/Start.h>
 
 class HandPoseGenerator{
 
@@ -30,10 +31,13 @@ private:
   std::string Reject_obstalces_topic_left, Reject_obstalces_topic_right, error_topic_left, error_topic_right;
   std::string base_frame_, desired_hand_frame_, right_hand_frame_, left_hand_frame_;
   std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec;
-  // int step_obstacle = 1;
+  std::string start_topic_left, start_topic_right;
+  ros::Subscriber left_start_controller_sub, right_start_controller_sub;
 
   Eigen::Vector3d retta_hand_obj;
-  //bool vito_home = false;
+  int start_controller_left = 0;
+   int start_controller_right = 0;
+
 
 public:
 
@@ -45,13 +49,8 @@ public:
   std::string desired_hand_pose_left_topic_, desired_hand_pose_right_topic_;
   tf::TransformBroadcaster tf_desired_hand_pose;
   tf::TransformListener listener_info;
-  int start_controller_left = 0;
-  int start_controller_right = 0;
-    ros::Publisher hand_publisher_left, hand_publisher_right;
-  std::string hand_close_right, hand_close_left;
-  std::string left_hand_synergy_joint, right_hand_synergy_joint;
-  int home = 0;
-  desperate_housewife::handPoseSingle home_robot_left, home_robot_right;
+
+
 
   HandPoseGenerator();
   ~HandPoseGenerator(){};
@@ -86,9 +85,10 @@ public:
   void SendObjRejectMsg(desperate_housewife::fittedGeometriesSingle obj_msg, int arm_);
   /** Function for move vito in the desired pose before control start   
   */
-  void SendHomeRobot();
+  void Start_left(const desperate_housewife::Start::ConstPtr& msg);
+  void Start_right(const desperate_housewife::Start::ConstPtr& msg);
 
-    void ControllerStartAndNewPOse(const desperate_housewife::Error_msg::ConstPtr& error_msg, desperate_housewife::handPoseSingle &Robot_home);
+
 
 };
 
