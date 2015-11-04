@@ -44,7 +44,9 @@ HomeVitoPosition::HomeVitoPosition()
 
 void HomeVitoPosition::SendHomeRobot_left(const std_msgs::Bool::ConstPtr& home_msg)
 {
-      Eigen::Matrix4d ROT_y;
+    // desperate_housewife::handPoseSingle home_robot_left;
+
+    Eigen::Matrix4d ROT_y;
     ROT_y.row(0)<< -1,0,0,0;
     ROT_y.row(1)<< 0,1,0,0;
     ROT_y.row(2)<< 0,0,-1,0;
@@ -62,6 +64,7 @@ void HomeVitoPosition::SendHomeRobot_left(const std_msgs::Bool::ConstPtr& home_m
   {
     // std::cout<<"arrivato in node home left"<<std::endl;
     home_robot_left.home = 1;
+    home_robot_left.obj = 0;
 
     double roll,pitch,yaw;
     nh.param<double>("/home_left_arm_position_x", home_robot_left.pose.position.x, -0.75022);
@@ -100,12 +103,14 @@ void HomeVitoPosition::SendHomeRobot_left(const std_msgs::Bool::ConstPtr& home_m
   else
   {
     home_robot_left.home = 0;
+    home_robot_left.obj = 0;
     desired_hand_left_pose_publisher_.publish( home_robot_left );
   }
 }
 
 void HomeVitoPosition::SendHomeRobot_right(const std_msgs::Bool::ConstPtr& home_msg)
 {
+       
     Eigen::Matrix4d ROT_y;
     ROT_y.row(0)<< -1,0,0,0;
     ROT_y.row(1)<< 0,1,0,0;
@@ -124,7 +129,8 @@ void HomeVitoPosition::SendHomeRobot_right(const std_msgs::Bool::ConstPtr& home_
   if(home_msg->data == true)
   {
     // std::cout<<"arrivato in node home right"<<std::endl;
-    home_robot_right.home = 1; 
+    home_robot_right.home = 1;
+    home_robot_right.obj = 0; 
     // desired_hand_left_pose_publisher_.publish( home_robot_left );
     double roll_r,pitch_r,yaw_r;
     nh.param<double>("/home_right_arm_position_x", home_robot_right.pose.position.x, -0.75022);
@@ -169,6 +175,7 @@ void HomeVitoPosition::SendHomeRobot_right(const std_msgs::Bool::ConstPtr& home_
   {
     std::cout<<"invio data home a zero"<<std::endl;
     home_robot_right.home = 0;
+    home_robot_right.obj = 0;
     desired_hand_right_pose_publisher_.publish( home_robot_right );
     std::cout<<"inviato a zero"<<std::endl;
   }

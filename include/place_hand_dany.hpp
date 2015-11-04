@@ -222,13 +222,13 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose )
 
 
 //Function for clear the table when the only object is obstacle
-geometry_msgs::Pose HandPoseGenerator::ObstacleReject( desperate_housewife::fittedGeometriesSingle Pose_rej_obs)
+geometry_msgs::Pose HandPoseGenerator::ObstacleReject( desperate_housewife::fittedGeometriesSingle Pose_rej_obs, int arm_)
 {
   Eigen::Matrix4d T_vito_c, T_w_ob;
   Eigen::Matrix4d M_desired_local; // in cyl frame
   Eigen::Vector4d Point_desired;
   geometry_msgs::Pose pose_obj_hand;
-    Eigen::Vector3d x(1,0,0);
+  Eigen::Vector3d x(1,0,0);
   Eigen::Vector3d y(0,1,0), z(0,0,1);
 
   Eigen::Matrix4d Rot_z;
@@ -258,15 +258,29 @@ geometry_msgs::Pose HandPoseGenerator::ObstacleReject( desperate_housewife::fitt
   Point_desired(3) = 1;
   ROS_DEBUG("obstacle to move");
       
-  M_desired_local.col(0) << -y.cross(z), 0; 
-  M_desired_local.col(1) << -y,0;
-  M_desired_local.col(2) << z , 0;
+  // M_desired_local.col(0) << -y.cross(z), 0; 
+  // M_desired_local.col(1) << -y,0;
+  // M_desired_local.col(2) << z , 0;
   
   M_desired_local.col(3) << Point_desired;
 
+  if(arm_ == 1) //left
+  { 
+     M_desired_local.col(0) << -y.cross(z), 0; 
+    M_desired_local.col(1) << -y,0;
+    M_desired_local.col(2) << z , 0;
+     // T_w_ob = T_vito_c * M_desired_local*ROT_y*ROT_x;
+  }
+  else
+  {
+    M_desired_local.col(0) << y.cross(z), 0; 
+    M_desired_local.col(1) << y,0;
+    M_desired_local.col(2) << z, 0;
+    // T_w_ob = T_vito_c * M_desired_local*ROT_y*ROT_x;
+    // *ROT_y*ROT_x;
+  }
+  
   T_w_ob = T_vito_c * M_desired_local*ROT_y*ROT_x;
-  // *ROT_x*ROT_y ; 
-
   fromEigenToPose (T_w_ob, pose_obj_hand);
 
   // tf::Transform tfHandTrasform;

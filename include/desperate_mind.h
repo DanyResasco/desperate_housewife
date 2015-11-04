@@ -17,6 +17,7 @@
 
 #include <desperate_housewife/Error_msg.h>
 #include <desperate_housewife/handPoseSingle.h>
+#include <desperate_housewife/fittedGeometriesSingle.h>
 #include <std_msgs/Bool.h>
 #include <desperate_housewife/Start.h>
 #include <trajectory_msgs/JointTrajectory.h>
@@ -36,6 +37,8 @@ class DesperateDecisionMaker
   ros::Publisher hand_publisher_left, hand_publisher_right;
   std::string hand_close_left, hand_close_right;
   std::string right_hand_synergy_joint, left_hand_synergy_joint;
+  ros::Publisher Reject_obstacles_publisher_left, Reject_obstacles_publisher_right;
+  std::string Reject_obstalces_topic_left, Reject_obstalces_topic_right;
  
   //error threshold
   double x = 0.02;

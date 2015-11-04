@@ -1,7 +1,9 @@
 <launch>
  
+  
   <rosparam command="load" file="$(find desperate_housewife)/config/desperate_demo_hand_pose_params.yaml" />
   <include file="$(find desperate_housewife)/launch/hand_pose_generator_node.launch">
+  	 
   	
   </include>
 

@@ -141,6 +141,7 @@ namespace desperate_housewife
 		ros::Publisher pub_error_right, pub_error_left;
 		std::string tau_commad;
 		std_msgs::Float64MultiArray tau_msg;
+		int erro_arr, err_obj, err_home ;
 		
 		
 	};

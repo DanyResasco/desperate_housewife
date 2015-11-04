@@ -90,7 +90,8 @@ void HandPoseFIltered::Controll(const desperate_housewife::handPoseSingle::Const
       //if object doesn't mouve send first pose else the last one
       if(diff_pose < 0.02) 
       {
-         // std::cout<<"pubblico"<<std::endl;
+        Pose_obj_stable.obj = msg->obj;
+           // std::cout<<"pubblico"<<std::endl;
          if( Pose_obj_stable.whichArm  == 1) //left
          {
             desired_hand_left_pose_publisher_.publish( Pose_obj_stable );

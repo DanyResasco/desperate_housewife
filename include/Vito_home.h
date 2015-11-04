@@ -28,8 +28,9 @@ class HomeVitoPosition
 	  tf::TransformBroadcaster tf_desired_hand_pose;
 	  std::string base_frame_;
 
-	   desperate_housewife::handPoseSingle home_robot_right;
-	     desperate_housewife::handPoseSingle home_robot_left;
+	    desperate_housewife::handPoseSingle home_robot_right;
+	    desperate_housewife::handPoseSingle home_robot_left;
+	     
 	  
 
 	  HomeVitoPosition();

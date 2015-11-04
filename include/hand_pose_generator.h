@@ -30,13 +30,15 @@ private:
   std::string geometries_topic_, desired_hand_right_pose_topic_, desired_hand_left_pose_topic_, obstacles_topic_left,obstacles_topic_right, desired_hand_pose_topic_;
   std::string Reject_obstalces_topic_left, Reject_obstalces_topic_right, error_topic_left, error_topic_right;
   std::string base_frame_, desired_hand_frame_, right_hand_frame_, left_hand_frame_;
-  std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec;
+  // std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec;
   std::string start_topic_left, start_topic_right;
   ros::Subscriber left_start_controller_sub, right_start_controller_sub;
 
   Eigen::Vector3d retta_hand_obj;
   int start_controller_left = 0;
-   int start_controller_right = 0;
+  int start_controller_right = 0;
+  int demo;
+  int Number_obj;
 
 
 public:
@@ -77,7 +79,7 @@ public:
 
   /** Function that calulates the hand pose to remove the obstacle 
   */
-  geometry_msgs::Pose ObstacleReject( desperate_housewife::fittedGeometriesSingle Pose_rej_obs);
+  geometry_msgs::Pose ObstacleReject( desperate_housewife::fittedGeometriesSingle Pose_rej_obs, int arm_);
   void Error_info_left(const desperate_housewife::Error_msg::ConstPtr& error_msg);
   void Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg);
   /** Function for send the obstacle messages
@@ -87,6 +89,9 @@ public:
   */
   void Start_left(const desperate_housewife::Start::ConstPtr& msg);
   void Start_right(const desperate_housewife::Start::ConstPtr& msg);
+  void  DesperateDemo2(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
+  void  DesperateDemo1( const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
+  void Overturn();
 
 
 

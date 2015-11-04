@@ -157,9 +157,15 @@ namespace desperate_housewife
         
         tf::poseKDLToMsg (x_, error_pose_trajectory.pose_hand);
         tf::twistKDLToMsg (x_err_,  error_pose_trajectory.error_);
-   
-        // std::cout<<  "x_err_: "<<x_err_<<std::endl;
-      
+
+        if((ObjOrObst == 1) || (ObjOrObst == 2))
+        {
+          error_pose_trajectory.arrived = erro_arr;
+          error_pose_trajectory.obj = err_obj;
+          error_pose_trajectory.home = err_home;
+        }
+
+
         pub_error_.publish(error_pose_trajectory);
 
         for(unsigned int i=0; i<kdl_chain_.getNrOfSegments()+1;i++)  
@@ -188,12 +194,12 @@ namespace desperate_housewife
         for(int i = 0; i < Force_attractive.size(); i++)
         {
           // e = x_des_dotdot + Kd*(x_des_dot - x_dot) + Kp*(x_des - x)
-          // if (i >= 3)
+          // if (i == 5)
           // {
           //   Kd_(i) = 0.0;
           //   Kp_(i) = 0.0;
           // }
-          
+
           Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + V_max_kuka*Kp_(i)*x_err_(i);
         }
 
@@ -240,6 +246,7 @@ namespace desperate_housewife
       for (unsigned int i = 0; i < joint_handles_.size(); i++)
       {
         joint_handles_[i].setCommand(tau_(i));
+
         tau_msg.data.push_back(tau_(i));
          
       }
@@ -283,8 +290,15 @@ namespace desperate_housewife
 
         tf::poseMsgToKDL(msg->geometries[i].pose, frame_obj);
         Object_position.push_back(frame_obj); 
-      } 
-     ObjOrObst = 1;
+      }
+       
+    ObjOrObst = 1;
+    erro_arr = 1;
+    err_obj = 1;
+    err_home = 0;
+    // error_pose_trajectory.arrived = 1;
+    // error_pose_trajectory.obj = 1;
+    // error_pose_trajectory.home = 0;
   }
 
   void PotentialFieldControl::InfoOBj( const desperate_housewife::fittedGeometriesSingle::ConstPtr& obj_rem)
@@ -294,7 +308,15 @@ namespace desperate_housewife
     error_pose_trajectory.WhichArm = obj_rem->info[obj_rem->info.size() - 1]; //last element is whicharm
     x_des_ = frame_des_;
     ObjOrObst = 2;
+    // error_pose_trajectory.arrived = 1;
+    // error_pose_trajectory.obj = 1;
+    // error_pose_trajectory.home = 0;
+    // std::cout<<"ObjOrObst =: "<<ObjOrObst<<std::endl;
+    // std::cout<<"infoobj"<<std::endl;
     // cmd_flag_=1;
+    erro_arr = 1;
+    err_obj = 1;
+    err_home = 0;
 
   }
 
