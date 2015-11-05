@@ -296,9 +296,7 @@ namespace desperate_housewife
     erro_arr = 1;
     err_obj = 1;
     err_home = 0;
-    // error_pose_trajectory.arrived = 1;
-    // error_pose_trajectory.obj = 1;
-    // error_pose_trajectory.home = 0;
+
   }
 
   void PotentialFieldControl::InfoOBj( const desperate_housewife::fittedGeometriesSingle::ConstPtr& obj_rem)
@@ -308,12 +306,6 @@ namespace desperate_housewife
     error_pose_trajectory.WhichArm = obj_rem->info[obj_rem->info.size() - 1]; //last element is whicharm
     x_des_ = frame_des_;
     ObjOrObst = 2;
-    // error_pose_trajectory.arrived = 1;
-    // error_pose_trajectory.obj = 1;
-    // error_pose_trajectory.home = 0;
-    // std::cout<<"ObjOrObst =: "<<ObjOrObst<<std::endl;
-    // std::cout<<"infoobj"<<std::endl;
-    // cmd_flag_=1;
     erro_arr = 1;
     err_obj = 1;
     err_home = 0;
@@ -420,7 +412,7 @@ namespace desperate_housewife
            distance_der_partial[2] = (Object_position[index_obj].p.z()*4 / Object_height[index_obj] ); //n=2
           
 
-          double Ni_ = .1;
+          double Ni_ = 1;
           
           // vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
           // std::cout<<"qui"<<std::endl;       

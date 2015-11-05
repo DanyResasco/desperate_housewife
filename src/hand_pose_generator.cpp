@@ -44,22 +44,17 @@ HandPoseGenerator::HandPoseGenerator()
 void HandPoseGenerator::Start_left(const desperate_housewife::Start::ConstPtr& msg)
 {
   std::cout<<"start left"<<std::endl;
-  if(msg->start_left == 1)
-  {
-    start_controller_left = 1;
-  }
-  else
-    start_controller_left = 0;
+  start_controller_left = msg->start_left ;
+  flag_obj =  msg->objarrived;
+  flag_remove =  msg->objremoved;
 }
 void HandPoseGenerator::Start_right(const desperate_housewife::Start::ConstPtr& msg)
 {
    std::cout<<"start right"<<std::endl;
-  if(msg->start_right == 1)
-  {
-    start_controller_right = 1;
-  }
-  else
-    start_controller_right = 0;
+  
+  start_controller_right = msg->start_right;
+  flag_obj =  msg->objarrived;
+  flag_remove =  msg->objremoved;
 
 }
 
@@ -315,14 +310,22 @@ void  HandPoseGenerator::DesperateDemo2(const desperate_housewife::fittedGeometr
       double distsecond = std::sqrt( second.pose.position.x*second.pose.position.x + second.pose.position.y*second.pose.position.y + second.pose.position.z*second.pose.position.z);
       return (distfirst < distsecond); });
 
-    //find the first graspagle geometry      
+    //find the first graspable geometry      
     for(unsigned int k=0; k < objects_vec.size(); k++)
     {
         DesiredHandPose = generateHandPose( objects_vec[k] );
         std::cout<<"DesiredHandPose.whichArm: "<<DesiredHandPose.whichArm<<std::endl;
+
         if (DesiredHandPose.isGraspable )
         {
-          std::cout<<"grasp"<<std::endl;        //    
+          if((flag_remove == 0) && (flag_obj == 0))
+          {
+            flag_remove = 1;
+          }
+
+          if(flag_remove == 1)
+          {
+              std::cout<<"grasp"<<std::endl;        //    
              if (DesiredHandPose.whichArm == 1) 
               {
                desired_hand_publisher_left.publish(DesiredHandPose);
@@ -335,13 +338,19 @@ void  HandPoseGenerator::DesperateDemo2(const desperate_housewife::fittedGeometr
             tf::Transform tfHandTrasform;
             tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform);
             tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), desired_hand_frame_.c_str()) );  
+          }
         }
         else
         {
-          // int arm_;
-          // arm_ =  whichArm( objects_vec[k].pose );
-          std::cout<<"remove"<<std::endl;
-          SendObjRejectMsg(objects_vec[k], DesiredHandPose.whichArm);
+          if((flag_remove == 0) && (flag_obj == 0))
+          {
+            flag_obj = 1;
+          }
+          if(flag_obj == 1)
+          {
+            std::cout<<"remove"<<std::endl;
+            SendObjRejectMsg(objects_vec[k], DesiredHandPose.whichArm);
+          }
         }
     }
 

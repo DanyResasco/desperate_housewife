@@ -59,6 +59,9 @@ DesperateDecisionMaker::DesperateDecisionMaker()
 
   nh.param<std::string>("/PotentialFieldControl/base_frame", base_frame_, "vito_anchor");
 
+  // nh.param<std::string>("PotentialFieldControl/desperate_msg_demo2", desperate_msg_demo2, "/PotentialFieldControl/desperate_msg_demo2");
+  // desperate_msg_demo2_publisher_ = nh.advertise<std_msgs::Bool> (desperate_msg_demo2.c_str(),1);
+
   // nh.param<std::string>("/left_hand/PotentialFieldControl/Reject_obstacle_left", Reject_obstalces_topic_left, "/PotentialFieldControl/Reject_obstacle_list_left");
   // Reject_obstacles_publisher_left = nh.advertise<desperate_housewife::fittedGeometriesSingle > (Reject_obstalces_topic_left.c_str(),1);
 
@@ -242,14 +245,16 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
             msg_jointT_hand.points[0].positions.resize(1);
             msg_jointT_hand.points[0].positions[0] = 1.0;
             msg_jointT_hand.points[0].time_from_start = ros::Duration(2); // 2s;
-            // std::cout<<"inviato mano"<<std::endl;
-            // std::cout<<"error_msg->WhichArm: "<<error_msg->WhichArm<<std::endl;
+
             if(error_msg->WhichArm == 1)
             {
                 new_obj_pos_remove.pose.position.y = new_obj_pos_remove.pose.position.y - 0.3;
                 msg_jointT_hand.joint_names[0] = left_hand_synergy_joint.c_str();
                 hand_publisher_left.publish(msg_jointT_hand);
                 desired_hand_publisher_left.publish( new_obj_pos_remove );
+                start_controller.objarrived = 1;
+                left_start_controller_pub.publish(start_controller);
+
             }
             else
             {
@@ -257,6 +262,8 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
                 msg_jointT_hand.joint_names[0] = right_hand_synergy_joint.c_str();
                 hand_publisher_right.publish(msg_jointT_hand);
                 desired_hand_publisher_right.publish( new_obj_pos_remove );
+                start_controller.objarrived = 1;
+                right_start_controller_pub.publish(start_controller);
             }
 
             tf::Transform tfHandTrasform2;
@@ -272,11 +279,7 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
       case 2: //obstacle to remove
       {      std::cout<<"case 2"<<std::endl;     
             desperate_housewife::handPoseSingle New_Hand_Position;
-            // desperate_housewife::fittedGeometriesSingle New_Hand_Position;
-              // geometry_msgs::Pose pos_new, pose_local;
             New_Hand_Position.pose = error_msg->pose_hand;
-            // New_Hand_Position.pose.position.x = New_Hand_Position.pose.position.x - 0.10;
-               // std::cout<<"error_msg->WhichArm: "<<error_msg->WhichArm<<std::endl;
 
             trajectory_msgs::JointTrajectory msg_jointT_hand;
             msg_jointT_hand.joint_names.resize(1);
@@ -288,11 +291,13 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
 
             if(error_msg->WhichArm == 1)
             {
-                 New_Hand_Position.pose.position.y = New_Hand_Position.pose.position.y - 0.10;
+                New_Hand_Position.pose.position.y = New_Hand_Position.pose.position.y - 0.10;
                 msg_jointT_hand.joint_names[0] = left_hand_synergy_joint.c_str();
                 hand_publisher_left.publish(msg_jointT_hand);
                 // Reject_obstacles_publisher_left.publish(New_Hand_Position);
                 desired_hand_publisher_left.publish( New_Hand_Position );
+                start_controller.objremoved = 1;
+                left_start_controller_pub.publish(start_controller);
             }
             else
             {
@@ -301,11 +306,13 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
                 hand_publisher_right.publish(msg_jointT_hand);
                 // Reject_obstacles_publisher_right.publish(New_Hand_Position);
                 desired_hand_publisher_right.publish( New_Hand_Position );
+                start_controller.objremoved = 1;
+                right_start_controller_pub.publish(start_controller);
             }
 
-              tf::Transform tfHandTrasform;
-              tf::poseMsgToTF( New_Hand_Position.pose, tfHandTrasform);  
-              tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(),"ObstacleReject_new_pose") ); 
+            tf::Transform tfHandTrasform;
+            tf::poseMsgToTF( New_Hand_Position.pose, tfHandTrasform);  
+            tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(),"ObstacleReject_new_pose") ); 
          break;
       }
       case 3:

@@ -6,5 +6,5 @@ PotentialFieldControl/obstacle_list_left: /left_arm/PotentialFieldControl/obstac
 PotentialFieldControl/obstacle_list_right: /right_arm/PotentialFieldControl/obstacle_pose_right
 PotentialFieldControl/desired_hand_pose_right_filter: /right_arm/PotentialFieldControl/desired_hand_right_filter
 PotentialFieldControl/desired_hand_pose_left_filter: /left_arm/PotentialFieldControl/desired_hand_left_filter
-demo: 0
+demo: 1
 Number_obj: 5

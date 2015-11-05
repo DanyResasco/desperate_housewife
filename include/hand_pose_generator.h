@@ -39,6 +39,8 @@ private:
   int start_controller_right = 0;
   int demo;
   int Number_obj;
+  int flag_obj = 0;
+  int  flag_remove = 0;
 
 
 public:
