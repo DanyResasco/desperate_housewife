@@ -228,8 +228,7 @@ void HandPoseGenerator::DesperateDemo1(const desperate_housewife::fittedGeometri
         {
           int arm_;
           arm_ =  whichArm( objects_vec[k].pose );
-
-          SendObjRejectMsg(objects_vec[k], arm_);
+         SendObjRejectMsg(objects_vec[k], arm_);
         }
 
         ROS_ERROR("NO graspable objects found, exiting... :( , all geometries are obstacles to remove");
@@ -286,9 +285,7 @@ void HandPoseGenerator::DesperateDemo1(const desperate_housewife::fittedGeometri
         tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform);
         tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), desired_hand_frame_.c_str()) );
     }
-      
-   
-   // objects_vec.clear();
+
 }
 
 
@@ -318,6 +315,7 @@ void  HandPoseGenerator::DesperateDemo2(const desperate_housewife::fittedGeometr
 
         if (DesiredHandPose.isGraspable )
         {
+          //flag for wait the conclusion of grasp or remove
           if((flag_remove == 0) && (flag_obj == 0))
           {
             flag_remove = 1;
@@ -325,7 +323,7 @@ void  HandPoseGenerator::DesperateDemo2(const desperate_housewife::fittedGeometr
 
           if(flag_remove == 1)
           {
-              std::cout<<"grasp"<<std::endl;        //    
+              std::cout<<"grasp"<<std::endl;           
              if (DesiredHandPose.whichArm == 1) 
               {
                desired_hand_publisher_left.publish(DesiredHandPose);
@@ -338,6 +336,7 @@ void  HandPoseGenerator::DesperateDemo2(const desperate_housewife::fittedGeometr
             tf::Transform tfHandTrasform;
             tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform);
             tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), desired_hand_frame_.c_str()) );  
+            flag_remove = 0;
           }
         }
         else
@@ -350,11 +349,10 @@ void  HandPoseGenerator::DesperateDemo2(const desperate_housewife::fittedGeometr
           {
             std::cout<<"remove"<<std::endl;
             SendObjRejectMsg(objects_vec[k], DesiredHandPose.whichArm);
+            flag_obj = 0;
           }
         }
     }
-
-   // objects_vec.clear();
 }
 
 void HandPoseGenerator::Overturn()

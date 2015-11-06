@@ -24,6 +24,9 @@
 #include <desperate_housewife/fittedGeometriesArray.h>
 #include <desperate_housewife/Error_msg.h>
 #include <geometry_msgs/WrenchStamped.h>
+#include <interpolationmb.h>
+// #include <ecl/geometry.hpp>   
+// #include <ecl_geometry\geometry.hpp>
 
 
 
@@ -53,6 +56,9 @@ namespace desperate_housewife
 		Eigen::Matrix<double,7,1> RepulsiveWithTable(std::vector<KDL::Frame> &Pos_arm);
 		void InfoOBj( const desperate_housewife::fittedGeometriesSingle::ConstPtr& obj_rem);
 		void set_gains(const std_msgs::Float64MultiArray::ConstPtr &msg);
+		void PoseDesiredInterpolation(KDL::Frame frame_des_);
+
+		double GetCubicSpline(double t, double t_des);
 
 	private:
 		ros::Subscriber sub_command_;
@@ -70,10 +76,13 @@ namespace desperate_housewife
 		KDL::JntArray qdot_last_;
 
 		KDL::Frame x_,x0_;	//current e-e pose
+
 		
 		Eigen::Matrix<double,6,1> x_dot_;	//current e-e velocity
 
 		KDL::Frame x_des_;	//desired pose
+		KDL::Frame x_des_int;
+		KDL::Frame x_now_int;
 		KDL::Twist x_des_dot_;
 		KDL::Twist x_des_dotdot_;
 
@@ -142,6 +151,9 @@ namespace desperate_housewife
 		std::string tau_commad;
 		std_msgs::Float64MultiArray tau_msg;
 		int erro_arr, err_obj, err_home ;
+		double time_inter;
+		double T_des;
+		int Int = 0;
 		
 		
 	};

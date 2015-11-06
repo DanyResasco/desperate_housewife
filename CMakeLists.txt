@@ -14,6 +14,7 @@ find_package(catkin REQUIRED
   kdl_parser
   message_generation
   cmake_modules
+  ecl_geometry
   roscpp 
   pcl_conversions
   pcl_ros
@@ -95,6 +96,7 @@ catkin_package(
   lwr_hw
   lwr_controllers
   calibration
+  ecl_geometry
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME})
 
@@ -118,7 +120,7 @@ target_link_libraries(test_fitting ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 add_library(${PROJECT_NAME} src/potential_field_control.cpp)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES} ecl_geometry)
 
 add_executable(Pose_filtered src/Pose_filtered.cpp)
 add_dependencies(Pose_filtered ${PROJECT_NAME}_gencpp)
@@ -131,6 +133,11 @@ target_link_libraries(Vito_home ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBR
 add_executable(desperate_mind src/desperate_mind.cpp)
 add_dependencies(desperate_mind ${PROJECT_NAME}_gencpp)
 target_link_libraries(desperate_mind ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+
+
+add_executable(test_cubic_interpolator src/test_cubic_interpolator.cpp)
+add_dependencies(test_cubic_interpolator ${PROJECT_NAME}_gencpp)
+target_link_libraries(test_cubic_interpolator ${catkin_LIBRARIES} ecl_geometry)
 
 # add_executable(phobic_camera src/main.cpp src/phobic_camera_old.cpp)
 # add_dependencies(phobic_camera ${PROJECT_NAME}_gencpp)

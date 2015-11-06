@@ -29,11 +29,13 @@ namespace desperate_housewife
     // for swicht the hand_desired
     n.getParam("desired_reference_topic", desired_reference_topic);
     n.getParam("obstacle_remove_topic", obstacle_remove_topic);
-    n.getParam("desired_hand_name", desired_hand_name);
+    // n.getParam("desired_hand_name", desired_hand_name);
     n.getParam("desired_hand_topic", desired_hand_topic);
     n.getParam("obstacle_avoidance", obstacle_avoidance);
     n.getParam("tip_name", tip_name);
     n.getParam("set_gains_topic", set_gains_);
+    n.param<double>("time_interp_desired", T_des, 1);
+    
     // n.getParam("tau_commad", tau_commad);
 
    
@@ -91,9 +93,7 @@ namespace desperate_housewife
         joint_msr_states_.qdot(i) = joint_handles_[i].getVelocity();
         joint_des_states_.q(i) = joint_msr_states_.q(i);
         joint_des_states_.qdot(i) = joint_msr_states_.qdot(i);
-        Kp_(i) = 500;  
-        Kd_(i) = 80;
-       
+   
       }
 
       I_ = Eigen::Matrix<double,7,7>::Identity(7,7);
@@ -103,9 +103,15 @@ namespace desperate_housewife
       Force_total_rep = Eigen::Matrix<double,7,1>::Zero();
       fk_pos_solver_->JntToCart(joint_msr_states_.q,x_des_);
 
+      Kp_(0) = 100;  Kp_(1) = 100; Kp_(2) = 100;
+      Kp_(3) = 10;  Kp_(4) = 10; Kp_(5) = 10;
+      Kd_(0) = 20; Kd_(1) = 20; Kd_(2) = 20;
+      Kd_(3) = 5; Kd_(4) = 5; Kd_(5) = 5;
+
       first_step_ = 1;
       error_pose_trajectory.arrived = 0;
-      ObjOrObst = 3;   
+      ObjOrObst = 3;
+      time_inter = 0;   
       
   }
 
@@ -183,12 +189,31 @@ namespace desperate_housewife
           // j++;
         } 
 
-          // computing end-effector position/orientation error w.r.t. desired frame
-        x_err_ = diff(x_,x_des_);
+        // computing end-effector position/orientation error w.r.t. desired frame
+      
+
+        if(error_pose_trajectory.arrived == 1)
+        {
+        //   // GetCubicSpline();
+          // KDL::Twist err_int;
+          // err_int = diff(x_des_int, x_now_int);
+        //   // std::cout<<"err_int.vel: "<<err_int.vel<<std::endl;    
+          x_des_.p = x_now_int.p + interpolatormb(time_inter, T_des)* (x_des_int.p - x_now_int.p);
+          x_des_.M = x_des_int.M;
+          // std::cout<< time_inter << "\t" << T_des << "\t" << interpolatormb(time_inter, T_des);
+          // std::cout<< "\t" << x_des_.p.x() << "\t" << x_des_.p.y() << "\t" << x_des_.p.z();
+          // std::cout<< "\t" << x_des_int.p.x() << "\t" << x_des_int.p.y() << "\t" << x_des_int.p.z() << std::endl;
+        //   // std::cout<<"x_des_: "<<x_des_<<std::endl;
+        //   // x_des_.M = x_now_int.M + interpolatormb(time_inter, T_des)* rot_err;
+          time_inter = time_inter + period.toSec();
+        //   // std::cout<<"x_des_: "<<x_des_<<std::endl;
+        //   // std::cout<<"time_inter: "<<time_inter<<std::endl;
+        }
 
 
         x_dot_ = J_.data*joint_msr_states_.qdot.data; 
-
+        
+        x_err_ = diff(x_,x_des_);
         // setting error reference
         // for(int i = 0; i < Force_attractive.size(); i++)
         for(int i = 0; i < Force_attractive.size(); i++)
@@ -226,8 +251,6 @@ namespace desperate_housewife
 
         // finally, computing the torque tau
         tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + b_)) + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
-        // std::cout<<" tau_.data: "<< tau_.data<<std::endl;
-
 
         // saving J_ and phi of the last iteration
         J_last_ = J_;
@@ -270,7 +293,10 @@ namespace desperate_housewife
     // std::cout<<"command"<<std::endl;
     KDL::Frame frame_des_;
     tf::poseMsgToKDL(msg->pose, frame_des_);
-    x_des_ = frame_des_;
+    // x_des_ = frame_des_;
+
+    PoseDesiredInterpolation(frame_des_);
+
     ObjOrObst = 0;
     error_pose_trajectory.home = msg->home;
     error_pose_trajectory.arrived = 1;
@@ -304,7 +330,8 @@ namespace desperate_housewife
     KDL::Frame frame_des_;
     tf::poseMsgToKDL(obj_rem->pose, frame_des_);
     error_pose_trajectory.WhichArm = obj_rem->info[obj_rem->info.size() - 1]; //last element is whicharm
-    x_des_ = frame_des_;
+    // x_des_ = frame_des_;
+    PoseDesiredInterpolation(frame_des_);
     ObjOrObst = 2;
     erro_arr = 1;
     err_obj = 1;
@@ -312,7 +339,30 @@ namespace desperate_housewife
 
   }
 
+  void PotentialFieldControl::PoseDesiredInterpolation(KDL::Frame frame_des_)
+  {
+    if(Int == 0)
+    {
+      x_des_int = frame_des_;
+      x_des_ = x_des_int;
+      fk_pos_solver_->JntToCart(joint_msr_states_.q, x_now_int);
+      Int = 1;
+    }
+    else
+    {
+      if(!Equal(frame_des_, x_des_int,0.05))
+      {
+        // Int = 0;
+        x_des_int = frame_des_;
+        x_des_ = x_des_int;
+        fk_pos_solver_->JntToCart(joint_msr_states_.q, x_now_int);
+        time_inter = 0;
+      }
+    }
 
+
+
+  }
 
   double PotentialFieldControl::task_objective_function(KDL::JntArray q)
   {
@@ -602,6 +652,20 @@ void PotentialFieldControl::set_gains(const std_msgs::Float64MultiArray::ConstPt
 
 
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
