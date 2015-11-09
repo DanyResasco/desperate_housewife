@@ -20,7 +20,6 @@
     <arg name="use_robot_sim" default="true"/>
 
     <!-- LAUNCH IMPLEMENTATION -->
-
     <!-- #### -->
 
     <!-- load the full robot in robot_description, useful for visualization, collision detection and planning simultaneously -->
