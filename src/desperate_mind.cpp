@@ -166,15 +166,19 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
 
     if(error_msg->ObjOrObst == 2)
     {
+      
       vel.data[2] = -z;
+
      error_treshold.vel = vel;
      error_treshold.rot = rot;
     }
     else
     {
-      // vel.data[2] = z;
+      
+      rot.data[1] = rot_y;
+    
       error_treshold.vel = vel;
-     error_treshold.rot = rot;
+      error_treshold.rot = rot;
     }
 
     // KDL::Twist error_treshold(vel,rot);

@@ -29,16 +29,13 @@ namespace desperate_housewife
     // for swicht the hand_desired
     n.getParam("desired_reference_topic", desired_reference_topic);
     n.getParam("obstacle_remove_topic", obstacle_remove_topic);
-    // n.getParam("desired_hand_name", desired_hand_name);
     n.getParam("desired_hand_topic", desired_hand_topic);
     n.getParam("obstacle_avoidance", obstacle_avoidance);
     n.getParam("tip_name", tip_name);
     n.getParam("set_gains_topic", set_gains_);
     n.param<double>("time_interp_desired", T_des, 1);
     
-    // n.getParam("tau_commad", tau_commad);
-
-   
+  
     jnt_to_jac_solver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
     id_solver_.reset(new KDL::ChainDynParam(kdl_chain_,gravity_));
     fk_pos_solver_.reset(new KDL::ChainFkSolverPos_recursive(kdl_chain_));
@@ -64,22 +61,16 @@ namespace desperate_housewife
     //Hand_pose for graspable objects
     sub_gains_ = nh_.subscribe(set_gains_.c_str(), 1, &PotentialFieldControl::set_gains, this);
 
-    // hand_publisher_ = n.advertise<trajectory_msgs::JointTrajectory>(desired_hand_topic, 1000);
 
     ROS_INFO("Subscribed for obstacle_remove_topic to : %s", obstacle_remove_topic.c_str());
     obstacles_remove_sub = n.subscribe(obstacle_remove_topic.c_str(), 1, &PotentialFieldControl::InfoOBj, this);     
 
-    // pub_error_ = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
+   
     pub_error_ = nh_.advertise<desperate_housewife::Error_msg>("error", 1000);
-     pub_tau_ = nh_.advertise<std_msgs::Float64MultiArray>("tau_commad", 1000);
-    // pub_pose_ = nh_.advertise<std_msgs::Float64MultiArray>("pose", 1000);
-    // pub_marker_ = nh_.advertise<visualization_msgs::Marker>("marker",1000);
+    pub_tau_ = nh_.advertise<std_msgs::Float64MultiArray>("tau_commad", 1000);
+  
 
     sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this); 
-
-    // nh_.param<std::string>("/BasicGeometriesNode/cylinder_names", object_names_, "object");
-    // publisher_wrench_command = nh_.advertise<geometry_msgs::WrenchStamped>("left_arm/PotentialFieldControl/wrench_msg", 1000);
-    // publisher_wrench_command_rep = nh_.advertise<geometry_msgs::WrenchStamped>("left_arm/PotentialFieldControl/wrench_msg2", 1000);
 
     return true;
   }
@@ -93,7 +84,6 @@ namespace desperate_housewife
         joint_msr_states_.qdot(i) = joint_handles_[i].getVelocity();
         joint_des_states_.q(i) = joint_msr_states_.q(i);
         joint_des_states_.qdot(i) = joint_msr_states_.qdot(i);
-   
       }
 
       I_ = Eigen::Matrix<double,7,7>::Identity(7,7);
@@ -103,10 +93,15 @@ namespace desperate_housewife
       Force_total_rep = Eigen::Matrix<double,7,1>::Zero();
       fk_pos_solver_->JntToCart(joint_msr_states_.q,x_des_);
 
-      Kp_(0) = 100;  Kp_(1) = 100; Kp_(2) = 100;
-      Kp_(3) = 10;  Kp_(4) = 10; Kp_(5) = 10;
-      Kd_(0) = 20; Kd_(1) = 20; Kd_(2) = 20;
-      Kd_(3) = 5; Kd_(4) = 5; Kd_(5) = 5;
+      // Kp_(0) = 100;  Kp_(1) = 100; Kp_(2) = 100;
+      // Kp_(3) = 10;  Kp_(4) = 10; Kp_(5) = 10;
+      // Kd_(0) = 20; Kd_(1) = 20; Kd_(2) = 20;
+      // Kd_(3) = 5; Kd_(4) = 5; Kd_(5) = 5;
+
+      Kp_(0) = 500;  Kp_(1) = 500; Kp_(2) = 500;
+      Kp_(3) = 500;  Kp_(4) = 500; Kp_(5) = 500;
+      Kd_(0) = 100; Kd_(1) = 100; Kd_(2) = 100;
+      Kd_(3) = 100; Kd_(4) = 100; Kd_(5) = 100;
 
       first_step_ = 1;
       error_pose_trajectory.arrived = 0;
@@ -135,11 +130,10 @@ namespace desperate_housewife
         G_.data.setZero();
 
         // computing the inverse of M_ now, since it will be used often
-        pseudo_inverse(M_.data,M_inv_,false); //M_inv_ = M_.data.inverse(); 
+        pseudo_inverse(M_.data,M_inv_,false); 
 
         // computing Jacobian J(q)
         jnt_to_jac_solver_->JntToJac(joint_msr_states_.q,J_);
-        // std::cout<<"jac_ok: "<<J_.data<<std::endl;
 
         // computing the distance from the mid points of the joint ranges as objective function to be minimized
         phi_ = task_objective_function(joint_msr_states_.q);
@@ -159,10 +153,59 @@ namespace desperate_housewife
         // computing forward kinematics
         fk_pos_solver_->JntToCart(joint_msr_states_.q,x_);
      
+        //error msg for desperate mind
         error_pose_trajectory.ObjOrObst = ObjOrObst;
         
+        
+
+        //calculate jacobian and position keeping track of all joints
+        for(unsigned int i=0; i<kdl_chain_.getNrOfSegments()+1;i++)  
+        {
+           KDL::Frame x_test;     
+          fk_pos_solver_->JntToCart(joint_msr_states_.q,x_test,i);
+          x_chain.push_back(x_test);  //x_chain[1-7 + 14];
+          KDL::Jacobian jac_repulsive;
+          jac_repulsive = KDL::Jacobian(7);
+          jnt_to_jac_solver_->JntToJac (joint_msr_states_.q,jac_repulsive , i);
+          JAC_repulsive.push_back(jac_repulsive);
+        } 
+
+       
+      
+        //interpolate the position
+        if(error_pose_trajectory.arrived == 1)
+        { 
+          x_des_.p = x_now_int.p + interpolatormb(time_inter, T_des)* (x_des_int.p - x_now_int.p);
+
+          tfScalar Time = interpolatormb(time_inter, T_des);
+
+          x_des_int.M.GetQuaternion(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
+          x_now_int.M.GetQuaternion(quat_now.v(0),quat_now.v(1),quat_now.v(2),quat_now.a);
+
+          tf::Quaternion quat_tf_des_int(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
+          tf::Quaternion quat_tf_now_int(quat_now.v(0),quat_now.v(1),quat_now.v(2),quat_now.a);
+
+          quat_tf = tf::slerp(quat_tf_now_int,quat_tf_des_int,Time);
+
+          tf::quaternionTFToKDL(quat_tf,x_des_.M);
+          KDL::Twist x_err_int;  //error
+
+          x_err_int = diff(x_, x_des_int);
+          tf::twistKDLToMsg (x_err_int,  error_pose_trajectory.error_);
+          // std::cout<<"x_des_.M: "<<x_des_.M<<std::endl;
+
+          // x_des_.M = x_des_int.M;
+          time_inter = time_inter + period.toSec();
+        }
+
+
+        x_dot_ = J_.data*joint_msr_states_.qdot.data; 
+        
+        x_err_ = diff(x_,x_des_);
+            
+
         tf::poseKDLToMsg (x_, error_pose_trajectory.pose_hand);
-        tf::twistKDLToMsg (x_err_,  error_pose_trajectory.error_);
+        
 
         if((ObjOrObst == 1) || (ObjOrObst == 2))
         {
@@ -170,61 +213,10 @@ namespace desperate_housewife
           error_pose_trajectory.obj = err_obj;
           error_pose_trajectory.home = err_home;
         }
-
-
         pub_error_.publish(error_pose_trajectory);
-
-        for(unsigned int i=0; i<kdl_chain_.getNrOfSegments()+1;i++)  
-        {
-          // std::cout<<"name segment n: "<<j<<std::endl;
-          // std::cout<<"_ " <<it->getName()<<std::endl;
-          KDL::Frame x_test;     
-          fk_pos_solver_->JntToCart(joint_msr_states_.q,x_test,i);
-          x_chain.push_back(x_test);  //x_chain[1-7 + 14];
-          KDL::Jacobian jac_repulsive;
-          jac_repulsive = KDL::Jacobian(7);
-          jnt_to_jac_solver_->JntToJac (joint_msr_states_.q,jac_repulsive , i);
-          // std::cout<<"jac_repulsive: "<<jac_repulsive.data<<std::endl;
-          JAC_repulsive.push_back(jac_repulsive);
-          // j++;
-        } 
-
-        // computing end-effector position/orientation error w.r.t. desired frame
       
-
-        if(error_pose_trajectory.arrived == 1)
-        {
-        //   // GetCubicSpline();
-          // KDL::Twist err_int;
-          // err_int = diff(x_des_int, x_now_int);
-        //   // std::cout<<"err_int.vel: "<<err_int.vel<<std::endl;    
-          x_des_.p = x_now_int.p + interpolatormb(time_inter, T_des)* (x_des_int.p - x_now_int.p);
-          x_des_.M = x_des_int.M;
-          // std::cout<< time_inter << "\t" << T_des << "\t" << interpolatormb(time_inter, T_des);
-          // std::cout<< "\t" << x_des_.p.x() << "\t" << x_des_.p.y() << "\t" << x_des_.p.z();
-          // std::cout<< "\t" << x_des_int.p.x() << "\t" << x_des_int.p.y() << "\t" << x_des_int.p.z() << std::endl;
-        //   // std::cout<<"x_des_: "<<x_des_<<std::endl;
-        //   // x_des_.M = x_now_int.M + interpolatormb(time_inter, T_des)* rot_err;
-          time_inter = time_inter + period.toSec();
-        //   // std::cout<<"x_des_: "<<x_des_<<std::endl;
-        //   // std::cout<<"time_inter: "<<time_inter<<std::endl;
-        }
-
-
-        x_dot_ = J_.data*joint_msr_states_.qdot.data; 
-        
-        x_err_ = diff(x_,x_des_);
-        // setting error reference
-        // for(int i = 0; i < Force_attractive.size(); i++)
         for(int i = 0; i < Force_attractive.size(); i++)
         {
-          // e = x_des_dotdot + Kd*(x_des_dot - x_dot) + Kp*(x_des - x)
-          // if (i == 5)
-          // {
-          //   Kd_(i) = 0.0;
-          //   Kp_(i) = 0.0;
-          // }
-
           Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + V_max_kuka*Kp_(i)*x_err_(i);
         }
 
@@ -290,7 +282,6 @@ namespace desperate_housewife
 
   void PotentialFieldControl::command(const desperate_housewife::handPoseSingle::ConstPtr& msg)
   { 
-    // std::cout<<"command"<<std::endl;
     KDL::Frame frame_des_;
     tf::poseMsgToKDL(msg->pose, frame_des_);
     // x_des_ = frame_des_;

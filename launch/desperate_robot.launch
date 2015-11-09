@@ -1,23 +1,23 @@
 <launch>
     <!-- LAUNCH INTERFACE -->
-    <arg name="gui" default="false" />
+     <arg name="gui" default="false" />
     <arg name="robot_name" default="vito"/>
     <arg name="use_rviz" default="false"/>
     <arg name="use_joint_state_publisher" default="true"/>
     <arg name="load_moveit" default="false"/>
     <arg name="use_calibration_package" default="false"/>
-    <arg name="use_grasp_estimator" default="false"/>
+    <arg name="use_grasp_estimator" default="true"/>
 
     <!-- configure whether the real hardware is enabled or not -->
     <arg name="head_enabled" default="false"/>
-    <arg name="left_arm_enabled" default="true"/>
+    <arg name="left_arm_enabled" default="false"/>
     <arg name="left_hand_enabled" default="false"/>
-    <arg name="right_arm_enabled" default="true"/>
+    <arg name="right_arm_enabled" default="false"/>
     <arg name="right_hand_enabled" default="false"/>
     <arg name="start_openni2" default="true"/>
 
     <!-- choose whether or not to start the full robot simulation -->
-    <arg name="use_robot_sim" default="false"/>
+    <arg name="use_robot_sim" default="true"/>
 
     <!-- LAUNCH IMPLEMENTATION -->
 
@@ -160,7 +160,7 @@
     <rosparam command="load" file="$(find desperate_housewife)/config/hw_interface.yaml"/>
 
     <!-- load all controller configurations to rosparam server -->
-    <rosparam file="$(find desperate_housewife)/config/controllers.yaml" command="load"/>
+    <rosparam file="$(find desperate_housewife)/config/vito_controllers.yaml" command="load"/>
 
     <!-- real robot and controllers -->
     <group ns="right_arm">
