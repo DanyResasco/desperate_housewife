@@ -30,8 +30,8 @@ class HomeVitoPosition
 
 	    desperate_housewife::handPoseSingle home_robot_right;
 	    desperate_housewife::handPoseSingle home_robot_left;
-	     
-	  
+	std::string left_hand_frame_, right_hand_frame_;    
+	  tf::TransformListener listener_info; 
 
 	  HomeVitoPosition();
 	  ~HomeVitoPosition(){};

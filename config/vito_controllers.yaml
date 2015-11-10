@@ -23,6 +23,7 @@ left_arm:
     obstacle_avoidance: obstacle_pose_left
     set_gains_topic: set_gains_left
     time_interp_desired: 5
+    percentage: 0.3
 
   one_task_inverse_dynamics_jl:
     type: lwr_controllers/OneTaskInverseDynamicsJL
@@ -44,6 +45,7 @@ right_arm:
     obstacle_avoidance: obstacle_pose_right
     set_gains_topic: set_gains_right
     time_interp_desired: 5
+    percentage: 0.3
 
   joint_trajectory_controller:
     type: position_controllers/JointTrajectoryController

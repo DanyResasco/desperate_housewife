@@ -179,6 +179,7 @@ namespace desperate_housewife
 		} quat_now, quat_des_;
 
 		tf::Quaternion quat_tf;
+		double percentage;
 		
 		
 	};
