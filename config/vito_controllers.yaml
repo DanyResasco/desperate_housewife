@@ -6,13 +6,14 @@ left_arm:
   joint_trajectory_controller:
     type: position_controllers/JointTrajectoryController
     joints: 
-      - left_arm_0_joint
-      - left_arm_1_joint
-      - left_arm_2_joint
-      - left_arm_3_joint
-      - left_arm_4_joint
-      - left_arm_5_joint
-      - left_arm_6_joint
+      - left_arm_a1_joint
+      - left_arm_a2_joint
+      - left_arm_e1_joint
+      - left_arm_a3_joint
+      - left_arm_a4_joint
+      - left_arm_a5_joint
+      - left_arm_a6_joint
+
   PotentialFieldControl:
     type: desperate_housewife/PotentialFieldControl
     root_name: vito_anchor
@@ -22,13 +23,11 @@ left_arm:
     obstacle_avoidance: obstacle_pose_left
     set_gains_topic: set_gains_left
     time_interp_desired: 5
-    pid_left_arm_0_joint: {p: 250,  i: 10, d: 30, i_clamp_min: -0.3, i_clamp_max: 0.3}
-    pid_left_arm_1_joint: {p: 220,  i: 10, d: 30, i_clamp_min: -0.3, i_clamp_max: 0.3}
-    pid_left_arm_2_joint: {p: 150,  i: 6, d: 20, i_clamp_min: -0.3, i_clamp_max: 0.3}
-    pid_left_arm_3_joint: {p: 150,  i: 5, d: 12, i_clamp_min: -0.3, i_clamp_max: 0.3}
-    pid_left_arm_4_joint: {p: 90,  i: 5, d: 10, i_clamp_min: -0.3, i_clamp_max: 0.3}
-    pid_left_arm_5_joint: {p: 40,  i: 5, d: 7, i_clamp_min: -0.3, i_clamp_max: 0.3}
-    pid_left_arm_6_joint: {p: 15,  i: 2, d: 5, i_clamp_min: -0.3, i_clamp_max: 0.3}
+
+  one_task_inverse_dynamics_jl:
+    type: lwr_controllers/OneTaskInverseDynamicsJL
+    root_name: vito_anchor
+    tip_name: left_hand_palm_ref_link
 
 right_arm:
   # CONTROLLERS USED IN THE EXAMLE
@@ -45,20 +44,19 @@ right_arm:
     obstacle_avoidance: obstacle_pose_right
     set_gains_topic: set_gains_right
     time_interp_desired: 5
-    pid_right_arm_0_joint: {p: 250,  i: 10, d: 30, i_clamp_min: -0.3, i_clamp_max: 0.3}
-    pid_right_arm_1_joint: {p: 220,  i: 10, d: 30, i_clamp_min: -0.3, i_clamp_max: 0.3}
-    pid_right_arm_2_joint: {p: 150,  i: 6, d: 20, i_clamp_min: -0.3, i_clamp_max: 0.3}
-    pid_right_arm_3_joint: {p: 150,  i: 5, d: 12, i_clamp_min: -0.3, i_clamp_max: 0.3}
-    pid_right_arm_4_joint: {p: 90,  i: 5, d: 10, i_clamp_min: -0.3, i_clamp_max: 0.3}
-    pid_right_arm_5_joint: {p: 40,  i: 5, d: 7, i_clamp_min: -0.3, i_clamp_max: 0.3}
-    pid_right_arm_6_joint: {p: 15,  i: 2, d: 5, i_clamp_min: -0.3, i_clamp_max: 0.3}
+
   joint_trajectory_controller:
     type: position_controllers/JointTrajectoryController
     joints: 
-      - right_arm_0_joint
-      - right_arm_1_joint
-      - right_arm_2_joint
-      - right_arm_3_joint
-      - right_arm_4_joint
-      - right_arm_5_joint
-      - right_arm_6_joint
+      - right_arm_a1_joint
+      - right_arm_a2_joint
+      - right_arm_e1_joint
+      - right_arm_a3_joint
+      - right_arm_a4_joint
+      - right_arm_a5_joint
+      - right_arm_a6_joint
+
+  one_task_inverse_dynamics_jl:
+    type: lwr_controllers/OneTaskInverseDynamicsJL
+    root_name: vito_anchor
+    tip_name: right_hand_palm_ref_link

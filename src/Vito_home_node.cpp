@@ -34,10 +34,10 @@ HomeVitoPosition::HomeVitoPosition()
 
     nh.param<std::string>("/PotentialFieldControl/base_frame", base_frame_, "vito_anchor");
 
-  nh.param<std::string>("/PotentialFieldControl/desired_hand_pose_right", desired_hand_right_pose_topic_, "/PotentialFieldControl/desired_hand_right_pose");
+  nh.param<std::string>("/PotentialFieldControl/desired_hand_pose_right", desired_hand_right_pose_topic_, "/right_arm/PotentialFieldControl/desired_hand_right_pose");
   desired_hand_right_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_right_pose_topic_.c_str(),1);
 
-  nh.param<std::string>("/PotentialFieldControl/desired_hand_pose_left", desired_hand_left_pose_topic_, "/PotentialFieldControl/desired_hand_left_pose");
+  nh.param<std::string>("/PotentialFieldControl/desired_hand_pose_left", desired_hand_left_pose_topic_, "/left_arm/PotentialFieldControl/desired_hand_left_pose");
   desired_hand_left_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_left_pose_topic_.c_str(),1);
 }
 
@@ -123,11 +123,14 @@ void HomeVitoPosition::SendHomeRobot_right(const std_msgs::Bool::ConstPtr& home_
     Rot_z.row(2)<< 0,0,1,0;
     Rot_z.row(3)<< 0,0,0,1;
 
+    std::cout << "test" << std::endl;
+    ROS_INFO("publishing on %s", desired_hand_right_pose_topic_.c_str());
+
 
 
   // desperate_housewife::handPoseSingle home_robot_right;
-  if(home_msg->data == true)
-  {
+  // if(home_msg->data == true)
+  // {
     // std::cout<<"arrivato in node home right"<<std::endl;
     home_robot_right.home = 1;
     home_robot_right.obj = 0; 
@@ -170,15 +173,15 @@ void HomeVitoPosition::SendHomeRobot_right(const std_msgs::Bool::ConstPtr& home_
       tf::poseMsgToTF( home_robot_right.pose, tfHandTrasform1);    
       tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform1, ros::Time::now(), base_frame_.c_str(),"home_robot_right") ); 
 
-  }
-  else
-  {
-    std::cout<<"invio data home a zero"<<std::endl;
-    home_robot_right.home = 0;
-    home_robot_right.obj = 0;
-    desired_hand_right_pose_publisher_.publish( home_robot_right );
-    std::cout<<"inviato a zero"<<std::endl;
-  }
+  // }
+  // else
+  // {
+  //   std::cout<<"invio data home a zero"<<std::endl;
+  //   home_robot_right.home = 0;
+  //   home_robot_right.obj = 0;
+  //   desired_hand_right_pose_publisher_.publish( home_robot_right );
+  //   std::cout<<"inviato a zero"<<std::endl;
+  // }
   
 }
 

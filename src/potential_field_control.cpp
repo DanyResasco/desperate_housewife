@@ -23,7 +23,7 @@ namespace desperate_housewife
 
   bool PotentialFieldControl::init(hardware_interface::EffortJointInterface *robot, ros::NodeHandle &n)
   {
-      PIDKinematicChainControllerBase<hardware_interface::EffortJointInterface>::init(robot, n);
+      KinematicChainControllerBase<hardware_interface::EffortJointInterface>::init(robot, n);
       ROS_INFO("Starting controller");
       ROS_WARN("Number of segments: %d", kdl_chain_.getNrOfSegments());
     // for swicht the hand_desired
@@ -56,6 +56,7 @@ namespace desperate_housewife
     ROS_DEBUG("Subscribed for desired_hand_topic to: %s", desired_reference_topic.c_str());
      //list of obstacles
     ROS_INFO("Subscribed for obstacle_avoidance_topic to : %s", obstacle_avoidance.c_str());
+
     obstacles_subscribe_ = n.subscribe(obstacle_avoidance.c_str(), 1, &PotentialFieldControl::InfoGeometry, this);
 
     //Hand_pose for graspable objects
@@ -93,20 +94,22 @@ namespace desperate_housewife
       Force_total_rep = Eigen::Matrix<double,7,1>::Zero();
       fk_pos_solver_->JntToCart(joint_msr_states_.q,x_des_);
 
-      // Kp_(0) = 100;  Kp_(1) = 100; Kp_(2) = 100;
-      // Kp_(3) = 10;  Kp_(4) = 10; Kp_(5) = 10;
-      // Kd_(0) = 20; Kd_(1) = 20; Kd_(2) = 20;
-      // Kd_(3) = 5; Kd_(4) = 5; Kd_(5) = 5;
+      Kp_(0) = 50;  Kp_(1) = 50; Kp_(2) = 50;
+      Kp_(3) = 10;  Kp_(4) = 10; Kp_(5) = 10;
+      Kd_(0) = 10; Kd_(1) = 10; Kd_(2) = 10;
+      Kd_(3) = 5; Kd_(4) = 5; Kd_(5) = 5;
 
-      Kp_(0) = 500;  Kp_(1) = 500; Kp_(2) = 500;
-      Kp_(3) = 500;  Kp_(4) = 500; Kp_(5) = 500;
-      Kd_(0) = 100; Kd_(1) = 100; Kd_(2) = 100;
-      Kd_(3) = 100; Kd_(4) = 100; Kd_(5) = 100;
+      // Kp_(0) = 500;  Kp_(1) = 500; Kp_(2) = 500;
+      // Kp_(3) = 500;  Kp_(4) = 500; Kp_(5) = 500;
+      // Kd_(0) = 100; Kd_(1) = 100; Kd_(2) = 100;
+      // Kd_(3) = 100; Kd_(4) = 100; Kd_(5) = 100;
 
       first_step_ = 1;
       error_pose_trajectory.arrived = 0;
       ObjOrObst = 3;
       time_inter = 0;   
+
+
       
   }
 
@@ -139,7 +142,7 @@ namespace desperate_housewife
         phi_ = task_objective_function(joint_msr_states_.q);
 
         // using the first step to compute jacobian of the tasks
-        if (first_step_)
+        if (first_step_ == 1)
         {
           J_last_ = J_;
           phi_last_ = phi_;
@@ -161,7 +164,7 @@ namespace desperate_housewife
         //calculate jacobian and position keeping track of all joints
         for(unsigned int i=0; i<kdl_chain_.getNrOfSegments()+1;i++)  
         {
-           KDL::Frame x_test;     
+          KDL::Frame x_test;     
           fk_pos_solver_->JntToCart(joint_msr_states_.q,x_test,i);
           x_chain.push_back(x_test);  //x_chain[1-7 + 14];
           KDL::Jacobian jac_repulsive;
@@ -213,11 +216,13 @@ namespace desperate_housewife
           error_pose_trajectory.obj = err_obj;
           error_pose_trajectory.home = err_home;
         }
+
         pub_error_.publish(error_pose_trajectory);
       
         for(int i = 0; i < Force_attractive.size(); i++)
         {
-          Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + V_max_kuka*Kp_(i)*x_err_(i);
+          //Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + V_max_kuka*Kp_(i)*x_err_(i);
+          Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + Kp_(i)*x_err_(i);
         }
 
         // computing b = J*M^-1*(c+g) - J_dot*q_dot
@@ -242,31 +247,38 @@ namespace desperate_housewife
         N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
 
         // finally, computing the torque tau
-        tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + b_)) + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
+        tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + b_));// + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
 
         // saving J_ and phi of the last iteration
         J_last_ = J_;
         phi_last_ = phi_;
 
-        //saturation 70% of tau
-        tau_.data[0] = (std::abs(tau_.data[0]) >= 176 ? std::copysign(123.2,tau_.data[0]) : tau_.data[0]);
-        tau_.data[1] = (std::abs(tau_.data[1]) >= 176 ? std::copysign(123.2,tau_.data[1]) : tau_.data[1]); 
-        tau_.data[2] = (std::abs(tau_.data[2] )>= 100 ? std::copysign(70,tau_.data[2]): tau_.data[2]); 
-        tau_.data[3] = (std::abs(tau_.data[3] )>= 100 ? std::copysign(70,tau_.data[3]): tau_.data[3]); 
-        tau_.data[4] = (std::abs(tau_.data[4]) >= 100 ? std::copysign(70,tau_.data[4]): tau_.data[4]); 
-        tau_.data[5] = (std::abs(tau_.data[5]) >= 38 ? std::copysign(23.6,tau_.data[5]): tau_.data[5]); 
-        tau_.data[6] = (std::abs(tau_.data[6]) >= 38 ? std::copysign(23.6,tau_.data[6]): tau_.data[6]);  
+        
+        tau_(0) = (std::abs(tau_(0)) >= 176 ? std::copysign(123.2,tau_(0)) : tau_(0));
+        tau_(1) = (std::abs(tau_(1)) >= 176 ? std::copysign(123.2,tau_(1)) : tau_(1)); 
+        tau_(2) = (std::abs(tau_(2)) >= 100 ? std::copysign(70,tau_(2)): tau_(2)); 
+        tau_(3) = (std::abs(tau_(3)) >= 100 ? std::copysign(70,tau_(3)): tau_(3)); 
+        tau_(4) = (std::abs(tau_(4)) >= 100 ? std::copysign(70,tau_(4)): tau_(4)); 
+        tau_(5) = (std::abs(tau_(5)) >= 38 ? std::copysign(23.6,tau_(5)): tau_(5)); 
+        tau_(6) = (std::abs(tau_(6)) >= 38 ? std::copysign(23.6,tau_(6)): tau_(6));  
+
+        
  
       // set controls for joints
       for (unsigned int i = 0; i < joint_handles_.size(); i++)
       {
+
+
         joint_handles_[i].setCommand(tau_(i));
+        // if (i==6)
+        // {
+        //   tau_(i) = 1.0;
+        //   joint_handles_[i].setCommand(tau_(i));
+        // }
 
         tau_msg.data.push_back(tau_(i));
-         
-      }
 
-     
+      }
         
       pub_tau_.publish(tau_msg);
       x_chain.clear();
@@ -282,10 +294,10 @@ namespace desperate_housewife
 
   void PotentialFieldControl::command(const desperate_housewife::handPoseSingle::ConstPtr& msg)
   { 
+
     KDL::Frame frame_des_;
     tf::poseMsgToKDL(msg->pose, frame_des_);
     // x_des_ = frame_des_;
-
     PoseDesiredInterpolation(frame_des_);
 
     ObjOrObst = 0;
@@ -293,6 +305,7 @@ namespace desperate_housewife
     error_pose_trajectory.arrived = 1;
     error_pose_trajectory.obj = msg->obj;
     error_pose_trajectory.WhichArm = msg->whichArm;
+
 
   }
 
@@ -350,8 +363,6 @@ namespace desperate_housewife
         time_inter = 0;
       }
     }
-
-
 
   }
 

@@ -31,7 +31,7 @@
 
 namespace desperate_housewife
 {
-	class PotentialFieldControl: public controller_interface::PIDKinematicChainControllerBase<hardware_interface::EffortJointInterface>
+	class PotentialFieldControl: public controller_interface::KinematicChainControllerBase<hardware_interface::EffortJointInterface>
 	{
 	public:
 		PotentialFieldControl();

@@ -99,7 +99,7 @@ sceneFilter::sceneFilter()
     ROS_INFO("Waiting for transform from %s to %s", new_frame_.c_str(), camera_frame_.c_str());
     tf::TransformListener listener_transform;
     tf::StampedTransform transformToBaseLink;
-    if (listener_transform.waitForTransform(new_frame_.c_str(), camera_frame_.c_str() , ros::Time::now(), ros::Duration(10)))
+    if (listener_transform.waitForTransform(new_frame_.c_str(), camera_frame_.c_str() , ros::Time(0), ros::Duration(10)))
     {
       listener_transform.lookupTransform(new_frame_.c_str(), camera_frame_.c_str() , ros::Time(0), transformToBaseLink);
       ROS_INFO("Transform from %s to %s exists", new_frame_.c_str(), camera_frame_.c_str());
