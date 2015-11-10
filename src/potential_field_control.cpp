@@ -34,6 +34,7 @@ namespace desperate_housewife
     n.getParam("tip_name", tip_name);
     n.getParam("set_gains_topic", set_gains_);
     n.param<double>("time_interp_desired", T_des, 1);
+    n.param<double>("percentage",percentage,0.3);
     
   
     jnt_to_jac_solver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
@@ -94,15 +95,15 @@ namespace desperate_housewife
       Force_total_rep = Eigen::Matrix<double,7,1>::Zero();
       fk_pos_solver_->JntToCart(joint_msr_states_.q,x_des_);
 
-      Kp_(0) = 50;  Kp_(1) = 50; Kp_(2) = 50;
-      Kp_(3) = 10;  Kp_(4) = 10; Kp_(5) = 10;
-      Kd_(0) = 10; Kd_(1) = 10; Kd_(2) = 10;
-      Kd_(3) = 5; Kd_(4) = 5; Kd_(5) = 5;
+      // Kp_(0) = 50;  Kp_(1) = 50; Kp_(2) = 50;
+      // Kp_(3) = 10;  Kp_(4) = 10; Kp_(5) = 10;
+      // Kd_(0) = 10; Kd_(1) = 10; Kd_(2) = 10;
+      // Kd_(3) = 5; Kd_(4) = 5; Kd_(5) = 5;
 
-      // Kp_(0) = 500;  Kp_(1) = 500; Kp_(2) = 500;
-      // Kp_(3) = 500;  Kp_(4) = 500; Kp_(5) = 500;
-      // Kd_(0) = 100; Kd_(1) = 100; Kd_(2) = 100;
-      // Kd_(3) = 100; Kd_(4) = 100; Kd_(5) = 100;
+      Kp_(0) = 500;  Kp_(1) = 500; Kp_(2) = 500;
+      Kp_(3) = 500;  Kp_(4) = 500; Kp_(5) = 500;
+      Kd_(0) = 100; Kd_(1) = 100; Kd_(2) = 100;
+      Kd_(3) = 100; Kd_(4) = 100; Kd_(5) = 100;
 
       first_step_ = 1;
       error_pose_trajectory.arrived = 0;
@@ -253,14 +254,17 @@ namespace desperate_housewife
         J_last_ = J_;
         phi_last_ = phi_;
 
-        
-        tau_(0) = (std::abs(tau_(0)) >= 176 ? std::copysign(123.2,tau_(0)) : tau_(0));
-        tau_(1) = (std::abs(tau_(1)) >= 176 ? std::copysign(123.2,tau_(1)) : tau_(1)); 
-        tau_(2) = (std::abs(tau_(2)) >= 100 ? std::copysign(70,tau_(2)): tau_(2)); 
-        tau_(3) = (std::abs(tau_(3)) >= 100 ? std::copysign(70,tau_(3)): tau_(3)); 
-        tau_(4) = (std::abs(tau_(4)) >= 100 ? std::copysign(70,tau_(4)): tau_(4)); 
-        tau_(5) = (std::abs(tau_(5)) >= 38 ? std::copysign(23.6,tau_(5)): tau_(5)); 
-        tau_(6) = (std::abs(tau_(6)) >= 38 ? std::copysign(23.6,tau_(6)): tau_(6));  
+        std::cout<<"tau_.data[0]: " <<tau_.data[0]<<std::endl;
+        std::cout<<"tau_(0): " <<tau_(0)<<std::endl;
+
+
+        tau_(0) = (std::abs(tau_(0)) >= 176 ? std::copysign(176*percentage,tau_(0)) : tau_(0));
+        tau_(1) = (std::abs(tau_(1)) >= 176 ? std::copysign(176*percentage,tau_(1)) : tau_(1)); 
+        tau_(2) = (std::abs(tau_(2)) >= 100 ? std::copysign(100*percentage,tau_(2)): tau_(2)); 
+        tau_(3) = (std::abs(tau_(3)) >= 100 ? std::copysign(100*percentage,tau_(3)): tau_(3)); 
+        tau_(4) = (std::abs(tau_(4)) >= 100 ? std::copysign(100*percentage,tau_(4)): tau_(4)); 
+        tau_(5) = (std::abs(tau_(5)) >= 38 ? std::copysign(38*percentage,tau_(5)): tau_(5)); 
+        tau_(6) = (std::abs(tau_(6)) >= 38 ? std::copysign(38*percentage,tau_(6)): tau_(6));  
 
         
  
