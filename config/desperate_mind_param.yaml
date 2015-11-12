@@ -1,0 +1,4 @@
+PotentialFieldControl/home_desperate_left: /left_arm/PotentialFieldControl/home_left
+PotentialFieldControl/home_desperate_right: /right_arm/PotentialFieldControl/home_right
+PotentialFieldControl/stop_pub_right:  /right_arm/PotentialFieldControl/stop_pub_filter_right
+PotentialFieldControl/stop_pub_left:  /left_arm/PotentialFieldControl/stop_pub_filter_left

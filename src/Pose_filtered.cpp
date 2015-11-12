@@ -38,18 +38,41 @@ HandPoseFIltered::HandPoseFIltered()
 
  	nh.param<std::string>("/left_arm/PotentialFieldControl/desired_hand_left_pose", desired_hand_left_pose_topic_, "/left_arm/PotentialFieldControl/desired_hand_left_pose");
  	desired_hand_left_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_left_pose_topic_.c_str(),1);
+
+  //  nh.param<std::string>("right_arm/PotentialFieldControl/stop_pub_right", stop_pub_filter_topic_r, "right_arm/PotentialFieldControl/stop_pub_filter_right");
+  // stop_subscribe_r = nh.subscribe(stop_pub_filter_topic_r.c_str(),1, &HandPoseFIltered::Stop_right,this);
+  // nh.param<std::string>("left_arm/PotentialFieldControl/stop_pub_left", stop_pub_filter_topic_l, "left_arm/PotentialFieldControl/stop_pub_filter_right");
+  // stop_subscribe_l = nh.subscribe(stop_pub_filter_topic_l.c_str(),1, &HandPoseFIltered::Stop_left,this);
+
 }
+
+// void HandPoseFIltered::Stop_right()
+// {
+//   stop = 1;
+// }
+// void HandPoseFIltered::Stop_left()
+// {
+//   stop = 1;
+// }
+
+
+
 
 void HandPoseFIltered::HandPoseFIlteredCallback_left(const desperate_housewife::handPoseSingle::ConstPtr& msg)
 {
-    
-  Controll(msg);
+  // if(stop != 1)
+  // {  
+    Controll(msg);
+  // }
 }
 
 void HandPoseFIltered::HandPoseFIlteredCallback_right(const desperate_housewife::handPoseSingle::ConstPtr& msg)
 {
     
-  Controll(msg);
+  // if(stop != 1)
+  // {  
+    Controll(msg);
+  // }
 
 }
 

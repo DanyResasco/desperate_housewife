@@ -15,6 +15,7 @@
 #include <tf/transform_datatypes.h>
 #include <tf_conversions/tf_kdl.h>
 #include <math.h>
+#include <std_msgs/UInt16.h>
 
 #include <desperate_housewife/handPoseSingle.h>
 
@@ -37,8 +38,11 @@ private:
   desperate_housewife::handPoseSingle Pose_obj_stable;
 
   int first_step = 0;
-  int dot_step=0;
+  int dot_step = 0;
+  int stop = 0;
   ros::Publisher desired_hand_right_pose_publisher_, desired_hand_left_pose_publisher_;
+  ros::Subscriber  stop_subscribe_r, stop_subscribe_l;
+  std::string stop_pub_filter_topic_r, stop_pub_filter_topic_l;
 
 
 public:
@@ -59,6 +63,9 @@ public:
   /**controll to stabilize the and pose.
   */
   void Controll(const desperate_housewife::handPoseSingle::ConstPtr& msg) ;
+
+  // void Stop_left(const std_msgs::UInt16::ConstPtr& stop_left_msg);
+  // void Stop_right(const std_msgs::UInt16::ConstPtr& stop_right_msg);
 
 
 

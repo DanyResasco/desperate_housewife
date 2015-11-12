@@ -1,9 +1,9 @@
 <launch>
 
-  <arg name="spin_rate" default="50" />
-  
-	<node name="desperate_mond_node" pkg="desperate_housewife" type="desperate_mind" output="screen" >
-    <param name="spin_rate" value="$(arg spin_rate)" />
-  </node>
+ 	 
+	<!-- <node name="desperate_mind_node" pkg="desperate_housewife" type="desperate_mind" output="screen" > -->
+	<node name="test_mind" pkg="desperate_housewife" type="test_mind" output="screen" >
+		<rosparam command="load" file="$(find desperate_housewife)/config/desperate_mind_param.yaml" />
+    </node>
 
 </launch>

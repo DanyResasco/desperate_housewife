@@ -254,8 +254,8 @@ namespace desperate_housewife
         J_last_ = J_;
         phi_last_ = phi_;
 
-        std::cout<<"tau_.data[0]: " <<tau_.data[0]<<std::endl;
-        std::cout<<"tau_(0): " <<tau_(0)<<std::endl;
+        // std::cout<<"tau_.data[0]: " <<tau_.data[0]<<std::endl;
+        // std::cout<<"tau_(0): " <<tau_(0)<<std::endl;
 
 
         tau_(0) = (std::abs(tau_(0)) >= 176 ? std::copysign(176*percentage,tau_(0)) : tau_(0));

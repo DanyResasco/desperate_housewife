@@ -1,11 +1,12 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 
-#include <hand_pose_generator.h>
+// #include <hand_pose_generator.h>
+#include <test_hand_pose_generator.h>
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "HandPoseGenerator Node");
+  ros::init(argc, argv, "HandPoseGenerator_Node");
   HandPoseGenerator node;
   ROS_INFO("[HandPoseGenerator] Node is ready");
 

@@ -294,3 +294,67 @@ geometry_msgs::Pose HandPoseGenerator::ObstacleReject( desperate_housewife::fitt
   return pose_obj_hand;
 
 }
+
+void HandPoseGenerator::Overturn()
+{
+  // std::cout<<"overturn"<<std::endl;
+  Eigen::Matrix3d rot_left;
+  Eigen::Matrix3d rot_right;
+
+  desperate_housewife::handPoseSingle DesiredHandPose_left;
+  desperate_housewife::handPoseSingle DesiredHandPose_right;
+  Eigen::Vector3d x(1,0,0);
+  Eigen::Vector3d y(0,1,0), z(0,0,1);
+  
+  Eigen::Matrix4d Rot_z;
+  Rot_z.row(0)<< -1,0,0,0;
+  Rot_z.row(1)<< 0,-1,0,0;
+  Rot_z.row(2)<< 0,0,1,0;
+  Rot_z.row(3)<< 0,0,0,1;
+
+  Eigen::Matrix3d ROT_y;
+  ROT_y.row(0)<< 0,0,1;
+  ROT_y.row(1)<< 0,1,0;
+  ROT_y.row(2)<< -1,0,0;
+  // ROT_y.row(3)<< 0,0,0,1;
+
+  rot_left.col(0) << x;
+  rot_left.col(1) << -z;
+  rot_left.col(2) << y;
+
+
+  rot_right.col(0) << -x;
+  rot_right.col(1) << y.cross(x);
+  rot_right.col(2) << -y;
+
+
+  Eigen::Quaterniond quat_eigen_harm_left(rot_left);
+  DesiredHandPose_left.pose.orientation.x = quat_eigen_harm_left.x();
+  DesiredHandPose_left.pose.orientation.y = quat_eigen_harm_left.y();
+  DesiredHandPose_left.pose.orientation.z = quat_eigen_harm_left.z();
+  DesiredHandPose_left.pose.orientation.w = quat_eigen_harm_left.w();
+
+  Eigen::Quaterniond quat_eigen_harm_right(rot_right);
+  DesiredHandPose_right.pose.orientation.x = quat_eigen_harm_right.x();
+  DesiredHandPose_right.pose.orientation.y = quat_eigen_harm_right.y();
+  DesiredHandPose_right.pose.orientation.z = quat_eigen_harm_right.z();
+  DesiredHandPose_right.pose.orientation.w = quat_eigen_harm_right.w();
+  
+
+  DesiredHandPose_left.pose.position.x = -1.0;
+  DesiredHandPose_left.pose.position.y = -0.5;
+  DesiredHandPose_left.pose.position.z = 0.15;
+
+  tf::Transform tfHandTrasform;
+  tf::poseMsgToTF( DesiredHandPose_left.pose, tfHandTrasform);
+  tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(),"left ribalto") );  
+
+  DesiredHandPose_right.pose.position.x = -1.0;
+  DesiredHandPose_right.pose.position.y = 0.5;
+  DesiredHandPose_right.pose.position.z = 0.15;
+
+  tf::Transform tfHandTrasform2;
+  tf::poseMsgToTF( DesiredHandPose_right.pose, tfHandTrasform2);
+  tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str()," right ribalto") ); 
+  ROS_INFO("BUTTO TUTTO");
+}
