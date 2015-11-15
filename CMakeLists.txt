@@ -107,9 +107,9 @@ add_executable(fit_geometries src/fit_geometries_node.cpp src/fit_geometries.cpp
 add_dependencies(fit_geometries ${PROJECT_NAME}_gencpp)
 target_link_libraries(fit_geometries ${catkin_LIBRARIES}  ${PCL_LIBRARIES} )
 
-# add_executable(hand_pose_generator src/hand_pose_generator_node.cpp src/hand_pose_generator.cpp)
-# add_dependencies(hand_pose_generator ${PROJECT_NAME}_gencpp)
-# target_link_libraries(hand_pose_generator ${catkin_LIBRARIES}  ${PCL_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES} )
+add_executable(hand_pose_generator src/hand_pose_generator_node.cpp src/hand_pose_generator.cpp)
+add_dependencies(hand_pose_generator ${PROJECT_NAME}_gencpp)
+target_link_libraries(hand_pose_generator ${catkin_LIBRARIES}  ${PCL_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES} )
 
 add_executable(test_fitting src/test_fitting.cpp)
 add_dependencies(test_fitting ${PROJECT_NAME}_gencpp)
@@ -128,17 +128,9 @@ add_executable(Vito_home src/Vito_home_node.cpp)
 add_dependencies(Vito_home ${PROJECT_NAME}_gencpp)
 target_link_libraries(Vito_home ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
-# add_executable(desperate_mind src/desperate_mind.cpp)
-# add_dependencies(desperate_mind ${PROJECT_NAME}_gencpp)
-# target_link_libraries(desperate_mind ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
-
-add_executable(test_mind src/test_mind.cpp)
-add_dependencies(test_mind ${PROJECT_NAME}_gencpp)
-target_link_libraries(test_mind ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
-
-add_executable(test_hand_pose_generator src/test_hand_pose_generator.cpp src/hand_pose_generator_node.cpp)
-add_dependencies(test_hand_pose_generator ${PROJECT_NAME}_gencpp)
-target_link_libraries(test_hand_pose_generator ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+add_executable(desperate_mind src/desperate_mind.cpp)
+add_dependencies(desperate_mind ${PROJECT_NAME}_gencpp)
+target_link_libraries(desperate_mind ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
 
 # add_executable(test_cubic_interpolator src/test_cubic_interpolator.cpp)

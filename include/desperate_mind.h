@@ -21,6 +21,7 @@
 #include <std_msgs/Bool.h>
 #include <desperate_housewife/Start.h>
 #include <trajectory_msgs/JointTrajectory.h>
+#include <std_msgs/UInt16.h>
 
 
 
@@ -39,6 +40,8 @@ class DesperateDecisionMaker
   std::string right_hand_synergy_joint, left_hand_synergy_joint;
   ros::Publisher Reject_obstacles_publisher_left, Reject_obstacles_publisher_right;
   std::string Reject_obstalces_topic_left, Reject_obstalces_topic_right;
+  std::string desired_hand_left_pose_topic_, desired_hand_right_pose_topic_;
+  ros::Subscriber pose_sub_left, pose_sub_right;
  
   //error threshold
   double x = 0.02;
@@ -55,20 +58,39 @@ class DesperateDecisionMaker
   int start_controller_left = 0;
   int start_controller_right = 0;
 
-  std::string desired_hand_right_pose_topic_, desired_hand_left_pose_topic_;
+  // std::string desired_hand_right_pose_topic_, desired_hand_left_pose_topic_;
   ros::Publisher desired_hand_publisher_left, desired_hand_publisher_right;
   tf::TransformBroadcaster tf_desired_hand_pose;
 
+  geometry_msgs::Pose pose_obj;
+  int whichArm;
+  int ObjOrObst;
+  int arrived = 0;
+  int home  = 1;
+  int restart = 0;
+  int stop_home = 0;
+  geometry_msgs::Pose pose_removed;
+
+  ros::Subscriber objects_info_right_sub, objects_info_left_sub;
+  std::string obj_info_topic_r, obj_info_topic_l;
+
+  ros::Publisher stop_publisher_r, stop_publisher_l;
+  std::string stop_pub_filter_topic_r, stop_pub_filter_topic_l;
 
   DesperateDecisionMaker();
     ~DesperateDecisionMaker(){};
+     void SendVitoHome();
   private:
 
 
     void Error_info_left(const desperate_housewife::Error_msg::ConstPtr& error_msg);
     void Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg);
     void ControllerStartAndNewPOse(const desperate_housewife::Error_msg::ConstPtr& error_msg);
-
+   
+    void hand_left(const desperate_housewife::handPoseSingle::ConstPtr& left_msg);
+    void hand_right(const desperate_housewife::handPoseSingle::ConstPtr& right_msg);
+    void ObjOrObst_right(const std_msgs::UInt16::ConstPtr& obj_msg);
+    void ObjOrObst_left(const std_msgs::UInt16::ConstPtr& obj_msg);
 
 };
 

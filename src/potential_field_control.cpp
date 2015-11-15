@@ -157,9 +157,7 @@ namespace desperate_housewife
         // computing forward kinematics
         fk_pos_solver_->JntToCart(joint_msr_states_.q,x_);
      
-        //error msg for desperate mind
-        error_pose_trajectory.ObjOrObst = ObjOrObst;
-        
+          
         
 
         //calculate jacobian and position keeping track of all joints
@@ -210,13 +208,6 @@ namespace desperate_housewife
 
         tf::poseKDLToMsg (x_, error_pose_trajectory.pose_hand);
         
-
-        if((ObjOrObst == 1) || (ObjOrObst == 2))
-        {
-          error_pose_trajectory.arrived = erro_arr;
-          error_pose_trajectory.obj = err_obj;
-          error_pose_trajectory.home = err_home;
-        }
 
         pub_error_.publish(error_pose_trajectory);
       
@@ -304,13 +295,7 @@ namespace desperate_housewife
     // x_des_ = frame_des_;
     PoseDesiredInterpolation(frame_des_);
 
-    ObjOrObst = 0;
-    error_pose_trajectory.home = msg->home;
     error_pose_trajectory.arrived = 1;
-    error_pose_trajectory.obj = msg->obj;
-    error_pose_trajectory.WhichArm = msg->whichArm;
-
-
   }
 
   void PotentialFieldControl::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
@@ -326,10 +311,10 @@ namespace desperate_housewife
         Object_position.push_back(frame_obj); 
       }
        
-    ObjOrObst = 1;
-    erro_arr = 1;
-    err_obj = 1;
-    err_home = 0;
+    // ObjOrObst = 1;
+    // erro_arr = 1;
+    // err_obj = 1;
+    // err_home = 0;
 
   }
 
@@ -337,13 +322,14 @@ namespace desperate_housewife
   {
     KDL::Frame frame_des_;
     tf::poseMsgToKDL(obj_rem->pose, frame_des_);
-    error_pose_trajectory.WhichArm = obj_rem->info[obj_rem->info.size() - 1]; //last element is whicharm
+    // error_pose_trajectory.WhichArm = obj_rem->info[obj_rem->info.size() - 1]; //last element is whicharm
     // x_des_ = frame_des_;
     PoseDesiredInterpolation(frame_des_);
-    ObjOrObst = 2;
-    erro_arr = 1;
-    err_obj = 1;
-    err_home = 0;
+     error_pose_trajectory.arrived = 1;
+    // ObjOrObst = 2;
+    // erro_arr = 1;
+    // err_obj = 1;
+    // err_home = 0;
 
   }
 

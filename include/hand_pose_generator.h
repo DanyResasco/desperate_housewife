@@ -22,6 +22,7 @@
 #include <desperate_housewife/Error_msg.h>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <desperate_housewife/Start.h>
+#include <std_msgs/UInt16.h>
 
 class HandPoseGenerator{
 
@@ -40,8 +41,9 @@ private:
   int demo;
   int Number_obj;
   int flag_obj = 0;
-  int  flag_remove = 0;
+  int flag_remove = 0;
   int step_grasp = 0;
+  int stop;
 
 
 public:
@@ -54,8 +56,9 @@ public:
   std::string desired_hand_pose_left_topic_, desired_hand_pose_right_topic_;
   tf::TransformBroadcaster tf_desired_hand_pose;
   tf::TransformListener listener_info;
-
-
+  ros::Publisher objects_info_right_pub, objects_info_left_pub;
+  std::string obj_info_topic_r, obj_info_topic_l;
+ 
 
   HandPoseGenerator();
   ~HandPoseGenerator(){};

@@ -197,9 +197,9 @@
 
     <include file="$(find desperate_housewife)/launch/Desperate_pose_filter.launch"/>
     <include file="$(find desperate_housewife)/launch/desperate_Vito_home.launch"/>
-   <!--  <include file="$(find desperate_housewife)/launch/desperate_mind.launch"/>
+    <include file="$(find desperate_housewife)/launch/desperate_mind.launch"/>
 
-    <include file="$(find desperate_housewife)/launch/desperate_demo_hand_pose_generator.launch"/> -->
+    <include file="$(find desperate_housewife)/launch/desperate_demo_hand_pose_generator.launch"/>
 
     <node name="desperate_rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find desperate_housewife)/launch/rviz_config.rviz" output="screen"/>
 

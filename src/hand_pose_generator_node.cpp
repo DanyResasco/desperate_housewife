@@ -2,7 +2,7 @@
 #include <ros/console.h>
 
 // #include <hand_pose_generator.h>
-#include <test_hand_pose_generator.h>
+#include <hand_pose_generator.h>
 
 int main(int argc, char **argv)
 {
