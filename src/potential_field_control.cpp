@@ -100,15 +100,15 @@ namespace desperate_housewife
       // Kd_(0) = 10; Kd_(1) = 10; Kd_(2) = 10;
       // Kd_(3) = 5; Kd_(4) = 5; Kd_(5) = 5;
 
-      Kp_(0) = 500;  Kp_(1) = 500; Kp_(2) = 500;
-      Kp_(3) = 500;  Kp_(4) = 500; Kp_(5) = 500;
-      Kd_(0) = 100; Kd_(1) = 100; Kd_(2) = 100;
-      Kd_(3) = 100; Kd_(4) = 100; Kd_(5) = 100;
+      Kp_(0) = 800;  Kp_(1) = 800; Kp_(2) = 800;
+      Kp_(3) = 800;  Kp_(4) = 800; Kp_(5) = 800;
+      Kd_(0) = 200; Kd_(1) = 200; Kd_(2) = 200;
+      Kd_(3) = 200; Kd_(4) = 200; Kd_(5) = 200;
 
       first_step_ = 1;
       error_pose_trajectory.arrived = 0;
       ObjOrObst = 3;
-      time_inter = 0;   
+      // time_inter = 0;   
 
 
       
@@ -179,7 +179,7 @@ namespace desperate_housewife
         { 
           x_des_.p = x_now_int.p + interpolatormb(time_inter, T_des)* (x_des_int.p - x_now_int.p);
 
-          tfScalar Time = interpolatormb(time_inter, T_des);
+          // tfScalar Time = interpolatormb(time_inter, T_des);
 
           x_des_int.M.GetQuaternion(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
           x_now_int.M.GetQuaternion(quat_now.v(0),quat_now.v(1),quat_now.v(2),quat_now.a);
@@ -187,17 +187,17 @@ namespace desperate_housewife
           tf::Quaternion quat_tf_des_int(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
           tf::Quaternion quat_tf_now_int(quat_now.v(0),quat_now.v(1),quat_now.v(2),quat_now.a);
 
-          quat_tf = tf::slerp(quat_tf_now_int,quat_tf_des_int,Time);
-
-          tf::quaternionTFToKDL(quat_tf,x_des_.M);
+          tf::quaternionTFToKDL((tf::slerp(quat_tf_now_int,quat_tf_des_int,Time)).normalize(),x_des_.M);
+          
           KDL::Twist x_err_int;  //error
 
           x_err_int = diff(x_, x_des_int);
           tf::twistKDLToMsg (x_err_int,  error_pose_trajectory.error_);
-          // std::cout<<"x_des_.M: "<<x_des_.M<<std::endl;
-
+         
           // x_des_.M = x_des_int.M;
           time_inter = time_inter + period.toSec();
+          // Time = Time + period.toSec();
+          Time = interpolatormb(time_inter, T_des);
         }
 
 
@@ -341,6 +341,8 @@ namespace desperate_housewife
       x_des_ = x_des_int;
       fk_pos_solver_->JntToCart(joint_msr_states_.q, x_now_int);
       Int = 1;
+      Time = 0;
+      time_inter = 0;
     }
     else
     {
@@ -348,9 +350,14 @@ namespace desperate_housewife
       {
         // Int = 0;
         x_des_int = frame_des_;
-        x_des_ = x_des_int;
+        // x_des_ = x_des_int;
         fk_pos_solver_->JntToCart(joint_msr_states_.q, x_now_int);
         time_inter = 0;
+        Time = 0;
+        std::cout<<"aggiorno tempi"<<std::endl;
+        std::cout<<"time_inter: "<<time_inter<<std::endl;
+        std::cout<<"Time: "<<Time<<std::endl;
+        a = 1;
       }
     }
 

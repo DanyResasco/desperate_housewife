@@ -196,7 +196,7 @@
     <include file="$(find desperate_housewife)/launch/desperate_demo_fit_geometries.launch"/>
 
     <include file="$(find desperate_housewife)/launch/Desperate_pose_filter.launch"/>
-    <include file="$(find desperate_housewife)/launch/desperate_Vito_home.launch"/>
+    <!-- <include file="$(find desperate_housewife)/launch/desperate_Vito_home.launch"/> -->
     <include file="$(find desperate_housewife)/launch/desperate_mind.launch"/>
 
     <include file="$(find desperate_housewife)/launch/desperate_demo_hand_pose_generator.launch"/>

@@ -42,6 +42,8 @@ class DesperateDecisionMaker
   std::string Reject_obstalces_topic_left, Reject_obstalces_topic_right;
   std::string desired_hand_left_pose_topic_, desired_hand_right_pose_topic_;
   ros::Subscriber pose_sub_left, pose_sub_right;
+  int home_r = 1;
+  int home_l = 1;
  
   //error threshold
   double x = 0.02;
@@ -60,15 +62,17 @@ class DesperateDecisionMaker
 
   // std::string desired_hand_right_pose_topic_, desired_hand_left_pose_topic_;
   ros::Publisher desired_hand_publisher_left, desired_hand_publisher_right;
-  tf::TransformBroadcaster tf_desired_hand_pose;
+  // tf::TransformBroadcaster tf_desired_hand_pose;
 
   geometry_msgs::Pose pose_obj;
   int whichArm;
   int ObjOrObst;
-  int arrived = 0;
-  int home  = 1;
+  int arrived_l = 0;
+  int arrived_r = 0;
+  // int home  = 1;
   int restart = 0;
-  int stop_home = 0;
+  int stop_home = 1;
+  int stop_home_r = 1;
   geometry_msgs::Pose pose_removed;
 
   ros::Subscriber objects_info_right_sub, objects_info_left_sub;
@@ -77,9 +81,23 @@ class DesperateDecisionMaker
   ros::Publisher stop_publisher_r, stop_publisher_l;
   std::string stop_pub_filter_topic_r, stop_pub_filter_topic_l;
 
+
+  //home
+  ros::Publisher desired_hand_right_pose_publisher_, desired_hand_left_pose_publisher_;
+    // std::string desired_hand_right_pose_topic_, desired_hand_left_pose_topic_;
+    ros::Subscriber left_home_subscribe_, right_home_subscribe_;
+    // std::string home_left_topic_, home_right_topic_;
+    tf::TransformBroadcaster tf_desired_hand_pose;
+    // std::string base_frame_;
+
+      // desperate_housewife::handPoseSingle home_robot_right;
+      // desperate_housewife::handPoseSingle home_robot_left;
+  std::string left_hand_frame_, right_hand_frame_;    
+    tf::TransformListener listener_info; 
+
   DesperateDecisionMaker();
     ~DesperateDecisionMaker(){};
-     void SendVitoHome();
+     
   private:
 
 
@@ -91,7 +109,8 @@ class DesperateDecisionMaker
     void hand_right(const desperate_housewife::handPoseSingle::ConstPtr& right_msg);
     void ObjOrObst_right(const std_msgs::UInt16::ConstPtr& obj_msg);
     void ObjOrObst_left(const std_msgs::UInt16::ConstPtr& obj_msg);
-
+    void SendHomeRobot_right();
+    void SendHomeRobot_left();
 };
 
 

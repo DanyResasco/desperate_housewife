@@ -4,6 +4,7 @@
 	<node name="desperate_mind_node" pkg="desperate_housewife" type="desperate_mind" output="screen" >
 	<!-- <node name="test_mind" pkg="desperate_housewife" type="test_mind" output="screen" > -->
 		<rosparam command="load" file="$(find desperate_housewife)/config/desperate_mind_param.yaml" />
+		<rosparam command="load" file="$(find desperate_housewife)/config/desperate_home_position.yaml" />
     </node>
 
 </launch>

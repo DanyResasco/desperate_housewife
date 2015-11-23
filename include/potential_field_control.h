@@ -91,6 +91,8 @@ namespace desperate_housewife
 		*/
 		void PoseDesiredInterpolation(KDL::Frame frame_des_);
 
+
+
 	private:
 		ros::Subscriber sub_command_;
 		ros::Publisher pub_error_,  pub_tau_;
@@ -180,6 +182,8 @@ namespace desperate_housewife
 
 		tf::Quaternion quat_tf;
 		double percentage;
+		tfScalar Time;
+		int a = 0;
 		
 		
 	};

@@ -124,11 +124,11 @@ add_executable(Pose_filtered src/Pose_filtered.cpp)
 add_dependencies(Pose_filtered ${PROJECT_NAME}_gencpp)
 target_link_libraries(Pose_filtered ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
-add_executable(Vito_home src/Vito_home_node.cpp)
-add_dependencies(Vito_home ${PROJECT_NAME}_gencpp)
-target_link_libraries(Vito_home ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+# add_executable(Vito_home src/Vito_home_node.cpp)
+# add_dependencies(Vito_home ${PROJECT_NAME}_gencpp)
+# target_link_libraries(Vito_home ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
-add_executable(desperate_mind src/desperate_mind.cpp)
+add_executable(desperate_mind src/desperate_mind.cpp src/home_robot)
 add_dependencies(desperate_mind ${PROJECT_NAME}_gencpp)
 target_link_libraries(desperate_mind ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 

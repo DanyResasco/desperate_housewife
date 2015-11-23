@@ -68,6 +68,13 @@ DesperateDecisionMaker::DesperateDecisionMaker()
   nh.param<std::string>("/PotentialFieldControl/objects_info_l", obj_info_topic_l, "/PotentialFieldControl/objects_info_left");
   objects_info_left_sub = nh.subscribe(obj_info_topic_l.c_str(),1, &DesperateDecisionMaker::ObjOrObst_left,this);
 
+  nh.param<std::string>("/PotentialFieldControl/desired_hand_pose_right", desired_hand_right_pose_topic_, "/right_arm/PotentialFieldControl/desired_hand_right_pose");
+  desired_hand_right_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_right_pose_topic_.c_str(),1);
+
+  nh.param<std::string>("/PotentialFieldControl/desired_hand_pose_left", desired_hand_left_pose_topic_, "/left_arm/PotentialFieldControl/desired_hand_left_pose");
+  desired_hand_left_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_left_pose_topic_.c_str(),1);
+
+
   //stop the filter publisher
   // nh.param<std::string>("/PotentialFieldControl/stop_pub_right", stop_pub_filter_topic_r, "/PotentialFieldControl/stop_pub_filter_right");
   // stop_publisher_r = nh.advertise<std_msgs::UInt16 > (stop_pub_filter_topic_r.c_str(),1);
@@ -86,26 +93,26 @@ DesperateDecisionMaker::DesperateDecisionMaker()
  
 }
 
-void DesperateDecisionMaker::SendVitoHome()
-{
-    if(home == 1)
-    {
-      ROS_INFO("*****Send vito at home");
-      std_msgs::Bool home_vito;
-      home_vito.data = true;
-      left_home_publisher_.publish(home_vito);
-      right_home_publisher_.publish(home_vito);
-      home = 0;
-      stop_home = 1;
-      ObjOrObst = 0;
-    }
-}
+// void DesperateDecisionMaker::SendVitoHome()
+// {
+//     if(home == 1)
+//     {
+//       ROS_INFO("*****Send vito at home");
+//       std_msgs::Bool home_vito;
+//       home_vito.data = true;
+//       left_home_publisher_.publish(home_vito);
+//       right_home_publisher_.publish(home_vito);
+//       home = 0;
+//       stop_home = 1;
+//       ObjOrObst = 0;
+//     }
+// }
 
 void DesperateDecisionMaker::ObjOrObst_right(const std_msgs::UInt16::ConstPtr& obj_msg)
 {
   whichArm = 0;
   ObjOrObst = obj_msg->data;
-  arrived = 1;
+  arrived_r = 1;
   //stop the generator pose
   // std_msgs::UInt16 stop;
   // stop.data = 1;
@@ -116,7 +123,7 @@ void DesperateDecisionMaker::ObjOrObst_left(const std_msgs::UInt16::ConstPtr& ob
 {
   whichArm = 1;
   ObjOrObst = obj_msg->data;
-  arrived = 1; 
+  arrived_l = 1; 
   //stop the generator pose
   // std_msgs::UInt16 stop;
   // stop.data = 1;
@@ -137,21 +144,27 @@ void DesperateDecisionMaker::Error_info_left(const desperate_housewife::Error_ms
   std_msgs::Bool home_vito;
   KDL::Twist error_treshold;
   //if potential filed has riceved one msg 
-  SendVitoHome();
+  
+  if(home_l == 1)
+  {
+    SendHomeRobot_left();
+    ObjOrObst = 0;
+    home_l = 0;
+  }
   KDL::Twist e_;
   tf::twistMsgToKDL (error_msg->error_, e_);
 
-  if(ObjOrObst == 1) // to remove
+  if(ObjOrObst == 0)   //to grasp
   {
       vel.data[0] = -x;
-      vel.data[1] = -y;
-      vel.data[2] = -z;
       rot.data[0] = -rot_x;
+      rot.data[1] = rot_y;
+
       error_treshold.vel = vel;
       error_treshold.rot = rot;
   }
-  //to grasp
-  else
+
+  else// to remove
   {
       error_treshold.vel = vel;
       error_treshold.rot = rot;
@@ -169,7 +182,7 @@ void DesperateDecisionMaker::Error_info_left(const desperate_housewife::Error_ms
         left_start_controller_pub.publish(start_controller);
         stop_home = 0;
       }
-      else
+      else if(arrived_l == 1)
       {
 
         if(restart != 1)
@@ -200,7 +213,13 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
   rot.data[2] = -rot_z;
   std_msgs::Bool home_vito;
   KDL::Twist error_treshold;
-  SendVitoHome();
+ 
+ if(home_r == 1)
+  {
+    SendHomeRobot_right();
+    ObjOrObst = 0;
+    home_r = 0;
+  }
   
    
   if(error_msg->arrived == 1)
@@ -208,19 +227,15 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
     // std::cout<<"ricevuto errore right"<<std::endl;
     KDL::Twist e_;
 
-    if(ObjOrObst == 1)
-    {
-      
-     vel.data[2] = -z;
-
-     error_treshold.vel = vel;
-     error_treshold.rot = rot;
+    if(ObjOrObst == 0)
+    {      
+      rot.data[0] = rot_x;
+      error_treshold.vel = vel;
+      error_treshold.rot = rot;
     }
     else
     {
-      
-      rot.data[1] = rot_y;
-    
+      rot.data[1] = rot_y;  
       error_treshold.vel = vel;
       error_treshold.rot = rot;
     }
@@ -230,15 +245,15 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
 
    if(Equal(e_, error_treshold, 0.05))
     {
-      
-      if(stop_home == 1)
+      // vito at home.. start the controller
+      if(stop_home_r == 1)
       {
         start_controller.start_right = 1;
         start_controller.stop = 0;
         right_start_controller_pub.publish(start_controller);
-        stop_home = 0;
+        stop_home_r = 0;
       }
-      else
+      else if(arrived_r == 1)
       {
 
        if(restart != 1)
