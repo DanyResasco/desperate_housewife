@@ -100,14 +100,15 @@ namespace desperate_housewife
       // Kd_(0) = 10; Kd_(1) = 10; Kd_(2) = 10;
       // Kd_(3) = 5; Kd_(4) = 5; Kd_(5) = 5;
 
-      Kp_(0) = 800;  Kp_(1) = 800; Kp_(2) = 800;
-      Kp_(3) = 800;  Kp_(4) = 800; Kp_(5) = 800;
+      Kp_(0) = 1000;  Kp_(1) = 1000; Kp_(2) = 1000;
+      Kp_(3) = 1000;  Kp_(4) = 1000; Kp_(5) = 1000;
       Kd_(0) = 200; Kd_(1) = 200; Kd_(2) = 200;
       Kd_(3) = 200; Kd_(4) = 200; Kd_(5) = 200;
 
       first_step_ = 1;
       error_pose_trajectory.arrived = 0;
       ObjOrObst = 3;
+      // a = 0;
       // time_inter = 0;   
 
 
@@ -177,7 +178,7 @@ namespace desperate_housewife
         //interpolate the position
         if(error_pose_trajectory.arrived == 1)
         { 
-          x_des_.p = x_now_int.p + interpolatormb(time_inter, T_des)* (x_des_int.p - x_now_int.p);
+          x_des_.p = x_now_int.p + interpolatormb_line(time_inter, T_des)* (x_des_int.p - x_now_int.p);
 
           // tfScalar Time = interpolatormb(time_inter, T_des);
 
@@ -186,8 +187,8 @@ namespace desperate_housewife
 
           tf::Quaternion quat_tf_des_int(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
           tf::Quaternion quat_tf_now_int(quat_now.v(0),quat_now.v(1),quat_now.v(2),quat_now.a);
-
-          tf::quaternionTFToKDL((tf::slerp(quat_tf_now_int,quat_tf_des_int,Time)).normalize(),x_des_.M);
+          quat_tf = (tf::slerp(quat_tf_now_int,quat_tf_des_int,Time)).normalize();
+          tf::quaternionTFToKDL(quat_tf,x_des_.M);
           
           KDL::Twist x_err_int;  //error
 
@@ -197,7 +198,13 @@ namespace desperate_housewife
           // x_des_.M = x_des_int.M;
           time_inter = time_inter + period.toSec();
           // Time = Time + period.toSec();
-          Time = interpolatormb(time_inter, T_des);
+          Time = interpolatormb_line(time_inter, T_des);
+
+          // if(a == 1)
+          // {
+          //   std::cout<<"quaternione posa des di: "<<desired_reference_topic.c_str() <<'\t'<<quat_des_.v(0)<<'\t'<<quat_des_.v(1)<<'\t'<<quat_des_.v(2)<<'\t'<<quat_des_.a<<std::endl;
+          //   std::cout<<"quaternione posa inter di: "<<desired_reference_topic.c_str() <<'\t'<<quat_tf.getX()<<'\t'<<quat_tf.getY()<<'\t'<<quat_tf.getZ()<<'\t'<<quat_tf.getW()<<std::endl;
+          // }
         }
 
 
@@ -296,6 +303,14 @@ namespace desperate_housewife
     PoseDesiredInterpolation(frame_des_);
 
     error_pose_trajectory.arrived = 1;
+    // if(msg->whichArm == 1)
+    // {
+    //   a = 1;
+    // }
+    // else
+    //   a=0;
+    // std::cout<<"a: "<<a<<std::endl;
+    // a = msg->whichArm;
   }
 
   void PotentialFieldControl::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
@@ -354,10 +369,10 @@ namespace desperate_housewife
         fk_pos_solver_->JntToCart(joint_msr_states_.q, x_now_int);
         time_inter = 0;
         Time = 0;
-        std::cout<<"aggiorno tempi"<<std::endl;
-        std::cout<<"time_inter: "<<time_inter<<std::endl;
-        std::cout<<"Time: "<<Time<<std::endl;
-        a = 1;
+        // std::cout<<"aggiorno tempi"<<std::endl;
+        // std::cout<<"time_inter: "<<time_inter<<std::endl;
+        // std::cout<<"Time: "<<Time<<std::endl;
+       
       }
     }
 

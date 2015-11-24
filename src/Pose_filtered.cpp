@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     ros::spinOnce(); 
     rate.sleep();
   }
-  // ROS_ERROR("QUI");
+
   return 0;
 }
 

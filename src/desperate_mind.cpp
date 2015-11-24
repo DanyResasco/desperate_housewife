@@ -113,6 +113,7 @@ void DesperateDecisionMaker::ObjOrObst_right(const std_msgs::UInt16::ConstPtr& o
   whichArm = 0;
   ObjOrObst = obj_msg->data;
   arrived_r = 1;
+  restart = 0;
   //stop the generator pose
   // std_msgs::UInt16 stop;
   // stop.data = 1;
@@ -124,6 +125,7 @@ void DesperateDecisionMaker::ObjOrObst_left(const std_msgs::UInt16::ConstPtr& ob
   whichArm = 1;
   ObjOrObst = obj_msg->data;
   arrived_l = 1; 
+  restart = 0;
   //stop the generator pose
   // std_msgs::UInt16 stop;
   // stop.data = 1;
@@ -193,7 +195,7 @@ void DesperateDecisionMaker::Error_info_left(const desperate_housewife::Error_ms
         {
           start_controller.stop = 0;
           left_start_controller_pub.publish(start_controller);
-          restart = 0;
+          // restart = 0;
         }
       }
 
@@ -262,9 +264,10 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
         }
         else
         {
-          start_controller.stop = 1;
+          start_controller.stop = 0;
           right_start_controller_pub.publish(start_controller);
-          restart = 0;
+          // restart = 0;
+
         }
       }
 
@@ -279,9 +282,8 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
   //start decison hand maker
   std::cout<<"ControllerStartAndNewPOse"<<std::endl;
   //wait both arms
-  if((start_controller_right !=0) && (start_controller_left !=0))
+  if((start_controller.start_right !=0) && (start_controller.start_left !=0))
   {
-    // std::cout<<"error_msg->ObjOrObst: "<<error_msg->ObjOrObst<<std::endl;
     switch(ObjOrObst)
     {
       
@@ -296,21 +298,23 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
             msg_jointT_hand.points.resize(1);
             msg_jointT_hand.points[0].positions.resize(1);
             msg_jointT_hand.points[0].positions[0] = 1.0;
-            msg_jointT_hand.points[0].time_from_start = ros::Duration(2); // 2s;
+            msg_jointT_hand.points[0].time_from_start = ros::Duration(1.0); // 1s;
 
             if(whichArm == 1)
             {
-                new_obj_pos_remove.pose.position.y = new_obj_pos_remove.pose.position.y - 0.3;
+                new_obj_pos_remove.pose.position.y = new_obj_pos_remove.pose.position.y - 0.4;
                 msg_jointT_hand.joint_names[0] = left_hand_synergy_joint.c_str();
                 hand_publisher_left.publish(msg_jointT_hand);
+                // ros::Duration(1.2).sleep();
                 desired_hand_publisher_left.publish( new_obj_pos_remove );
                 
             }
             else
             {
-                new_obj_pos_remove.pose.position.y = new_obj_pos_remove.pose.position.y + 0.3;
+                new_obj_pos_remove.pose.position.y = new_obj_pos_remove.pose.position.y + 0.4;
                 msg_jointT_hand.joint_names[0] = right_hand_synergy_joint.c_str();
                 hand_publisher_right.publish(msg_jointT_hand);
+                 // ros::Duration(1.2).sleep();
                 desired_hand_publisher_right.publish( new_obj_pos_remove );
                
             }
@@ -339,7 +343,7 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
             msg_jointT_hand.points.resize(1);
             msg_jointT_hand.points[0].positions.resize(1);
             msg_jointT_hand.points[0].positions[0] = 0.0;
-            msg_jointT_hand.points[0].time_from_start = ros::Duration(2); // 2s;
+            msg_jointT_hand.points[0].time_from_start = ros::Duration(1); // 1s;
 
             if(whichArm == 1)
             {

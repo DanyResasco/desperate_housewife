@@ -183,7 +183,7 @@ namespace desperate_housewife
 		tf::Quaternion quat_tf;
 		double percentage;
 		tfScalar Time;
-		int a = 0;
+		int a ;
 		
 		
 	};

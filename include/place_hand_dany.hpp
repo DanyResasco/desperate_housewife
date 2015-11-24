@@ -27,7 +27,13 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   Rot_z.row(1)<< 0,-1,0,0;
   Rot_z.row(2)<< 0,0,1,0;
   Rot_z.row(3)<< 0,0,0,1;
+  Eigen::Matrix4d Rot_x;
+  Rot_x.row(0)<< -1,0,0,0;
+  Rot_x.row(1)<< 0,1,0,0;
+  Rot_x.row(2)<< 0,0,-1,0;
+  Rot_x.row(3)<< 0,0,0,1;
 
+  //Rot_z = Rot_z*Rot_x;
 
 
   double  radius = geometry.info[0];
@@ -80,7 +86,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
     {
       Point_desired(0) = 0;
       Point_desired(1) = 0;
-      Point_desired(2) = height *0.5+ 0.05; 
+      Point_desired(2) = height *0.5+ 0.10; 
       Point_desired(3) = 1;
       ROS_DEBUG("cyl upright and full");
       
@@ -134,6 +140,9 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   geometry_msgs::Pose local_sh_pose;
   fromEigenToPose( T_w_h ,local_sh_pose);
 
+  // local_sh_pose.orientation.normalize();
+
+
   return local_sh_pose;
 
 }
@@ -143,10 +152,11 @@ void HandPoseGenerator::fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry
   Eigen::Matrix<double,3,3> Tmatrix;
   Tmatrix = tranfs_matrix.block<3,3>(0,0) ;
   Eigen::Quaterniond quat_eigen_hand(Tmatrix);
-  Hand_pose.orientation.x = quat_eigen_hand.x();
-  Hand_pose.orientation.y = quat_eigen_hand.y();
-  Hand_pose.orientation.z = quat_eigen_hand.z();
-  Hand_pose.orientation.w = quat_eigen_hand.w();
+  // quat_eigen_hand.normalized();
+  Hand_pose.orientation.x = (quat_eigen_hand.normalized()).x();
+  Hand_pose.orientation.y = (quat_eigen_hand.normalized()).y();
+  Hand_pose.orientation.z = (quat_eigen_hand.normalized()).z();
+  Hand_pose.orientation.w = (quat_eigen_hand.normalized()).w();
   Hand_pose.position.x = tranfs_matrix(0,3);
   Hand_pose.position.y = tranfs_matrix(1,3);
   Hand_pose.position.z = tranfs_matrix(2,3);
