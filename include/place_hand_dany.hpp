@@ -86,7 +86,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
     {
       Point_desired(0) = 0;
       Point_desired(1) = 0;
-      Point_desired(2) = height *0.5+ 0.10; 
+      Point_desired(2) = height *0.5+ 0.05; 
       Point_desired(3) = 1;
       ROS_DEBUG("cyl upright and full");
       

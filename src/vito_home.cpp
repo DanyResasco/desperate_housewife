@@ -18,7 +18,7 @@ void DesperateDecisionMaker::SendHomeRobot_left()
 
   // if(home_left == 1)
   // {
-    std::cout<<"arrivato in node home left"<<std::endl;
+    // std::cout<<"arrivato in node home left"<<std::endl;
     home_robot_left.home = 1;
     home_robot_left.obj = 0;
 
@@ -40,7 +40,7 @@ void DesperateDecisionMaker::SendHomeRobot_left()
     Vito_home_base.block<3,3>(0,0) = Tmatrix;
     Vito_home_base(0,3) = home_robot_left.pose.position.x;
     Vito_home_base(1,3) = home_robot_left.pose.position.y;
-    Vito_home_base(2,3) = home_robot_left.pose.position.z + 0.1;
+    Vito_home_base(2,3) = home_robot_left.pose.position.z;
     
      Eigen::Matrix4d Vito_home_base_rot = Vito_home_base*ROT_y;
 
@@ -71,7 +71,7 @@ void DesperateDecisionMaker::SendHomeRobot_left()
     tf::Transform tfHandTrasform2;
     tf::poseMsgToTF( home_robot_left.pose, tfHandTrasform2);
     tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"home_robot_left") ); 
-    home_left = 0;
+    // home_left = 0;
   // }
 
 }
@@ -91,8 +91,8 @@ void DesperateDecisionMaker::SendHomeRobot_right()
     Rot_z.row(2)<< 0,0,1,0;
     Rot_z.row(3)<< 0,0,0,1;
 
-    std::cout << "test" << std::endl;
-    ROS_INFO("publishing on %s", desired_hand_right_pose_topic_.c_str());
+    // std::cout << "test" << std::endl;
+    // ROS_INFO("publishing on %s", desired_hand_right_pose_topic_.c_str());
 
 
 
@@ -153,7 +153,7 @@ void DesperateDecisionMaker::SendHomeRobot_right()
       tf::Transform tfHandTrasform1;    
       tf::poseMsgToTF( home_robot_right.pose, tfHandTrasform1);    
       tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform1, ros::Time::now(), base_frame_.c_str(),"home_robot_right") ); 
-      home_right = 0;
+      // home_right = 0;
   // }
   // else
   // {

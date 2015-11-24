@@ -73,6 +73,7 @@ class DesperateDecisionMaker
   int restart = 0;
   int stop_home = 1;
   int stop_home_r = 1;
+  int test_;
   geometry_msgs::Pose pose_removed;
 
   ros::Subscriber objects_info_right_sub, objects_info_left_sub;

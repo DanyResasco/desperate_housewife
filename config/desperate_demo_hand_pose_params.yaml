@@ -8,5 +8,5 @@ PotentialFieldControl/desired_hand_pose_right_filter: /right_arm/PotentialFieldC
 PotentialFieldControl/desired_hand_pose_left_filter: /left_arm/PotentialFieldControl/desired_hand_left_filter
 PotentialFieldControl/objects_info_r: /right_arm/PotentialFieldControl/objects_info_right
 PotentialFieldControl/objects_info_l: /left_arm/PotentialFieldControl/objects_info_left
-demo: 1
+demo: 0
 Number_obj: 5

@@ -73,6 +73,9 @@ namespace desperate_housewife
   
 
     sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this); 
+    sub_command_start = n.subscribe("start_control", 1, &PotentialFieldControl::command_start, this); 
+
+    start_flag = false;
 
     return true;
   }
@@ -95,19 +98,19 @@ namespace desperate_housewife
       Force_total_rep = Eigen::Matrix<double,7,1>::Zero();
       fk_pos_solver_->JntToCart(joint_msr_states_.q,x_des_);
 
-      // Kp_(0) = 50;  Kp_(1) = 50; Kp_(2) = 50;
-      // Kp_(3) = 10;  Kp_(4) = 10; Kp_(5) = 10;
-      // Kd_(0) = 10; Kd_(1) = 10; Kd_(2) = 10;
-      // Kd_(3) = 5; Kd_(4) = 5; Kd_(5) = 5;
+      Kp_(0) = 80;  Kp_(1) = 80; Kp_(2) = 80;
+      Kp_(3) = 15;  Kp_(4) = 15; Kp_(5) = 15;
+      Kd_(0) = 1; Kd_(1) = 1; Kd_(2) = 1;
+      Kd_(3) = 1; Kd_(4) = 1; Kd_(5) = 1;
 
-      Kp_(0) = 1000;  Kp_(1) = 1000; Kp_(2) = 1000;
-      Kp_(3) = 1000;  Kp_(4) = 1000; Kp_(5) = 1000;
-      Kd_(0) = 200; Kd_(1) = 200; Kd_(2) = 200;
-      Kd_(3) = 200; Kd_(4) = 200; Kd_(5) = 200;
+      // Kp_(0) = 1000;  Kp_(1) = 1000; Kp_(2) = 1000;
+      // Kp_(3) = 1000;  Kp_(4) = 1000; Kp_(5) = 1000;
+      // Kd_(0) = 200; Kd_(1) = 200; Kd_(2) = 200;
+      // Kd_(3) = 200; Kd_(4) = 200; Kd_(5) = 200;
 
       first_step_ = 1;
       error_pose_trajectory.arrived = 0;
-      ObjOrObst = 3;
+      // ObjOrObst = 3;
       // a = 0;
       // time_inter = 0;   
 
@@ -127,156 +130,149 @@ namespace desperate_housewife
         // resetting N and tau(t=0) for the highest priority task
         N_trans_ = I_;  
         SetToZero(tau_);
-
-        // computing Inertia, Coriolis and Gravity matrices
-        id_solver_->JntToMass(joint_msr_states_.q, M_);
-        id_solver_->JntToCoriolis(joint_msr_states_.q, joint_msr_states_.qdot, C_);
-        id_solver_->JntToGravity(joint_msr_states_.q, G_);
-        G_.data.setZero();
-
-        // computing the inverse of M_ now, since it will be used often
-        pseudo_inverse(M_.data,M_inv_,false); 
-
-        // computing Jacobian J(q)
-        jnt_to_jac_solver_->JntToJac(joint_msr_states_.q,J_);
-
-        // computing the distance from the mid points of the joint ranges as objective function to be minimized
-        phi_ = task_objective_function(joint_msr_states_.q);
-
-        // using the first step to compute jacobian of the tasks
-        if (first_step_ == 1)
+    
+        if (start_flag)
         {
+        // computing Inertia, Coriolis and Gravity matrices
+          id_solver_->JntToMass(joint_msr_states_.q, M_);
+          id_solver_->JntToCoriolis(joint_msr_states_.q, joint_msr_states_.qdot, C_);
+          id_solver_->JntToGravity(joint_msr_states_.q, G_);
+          G_.data.setZero();
+
+          // computing the inverse of M_ now, since it will be used often
+          pseudo_inverse(M_.data,M_inv_,false); 
+
+          // computing Jacobian J(q)
+          jnt_to_jac_solver_->JntToJac(joint_msr_states_.q,J_);
+
+          // computing the distance from the mid points of the joint ranges as objective function to be minimized
+          phi_ = task_objective_function(joint_msr_states_.q);
+
+          // using the first step to compute jacobian of the tasks
+          if (first_step_ == 1)
+          {
+            J_last_ = J_;
+            phi_last_ = phi_;
+            first_step_ = 0;
+            return;
+          }
+
+          // computing the derivative of Jacobian J_dot(q) through numerical differentiation
+          J_dot_.data = (J_.data - J_last_.data)/period.toSec();
+
+          // computing forward kinematics
+          fk_pos_solver_->JntToCart(joint_msr_states_.q,x_); 
+            
+          
+
+          //calculate jacobian and position keeping track of all joints
+          for(unsigned int i=0; i<kdl_chain_.getNrOfSegments()+1;i++)  
+          {
+            KDL::Frame x_test;     
+            fk_pos_solver_->JntToCart(joint_msr_states_.q,x_test,i);
+            x_chain.push_back(x_test);  //x_chain[1-7 + 14];
+            KDL::Jacobian jac_repulsive;
+            jac_repulsive = KDL::Jacobian(7);
+            jnt_to_jac_solver_->JntToJac (joint_msr_states_.q,jac_repulsive , i);
+            JAC_repulsive.push_back(jac_repulsive);
+          } 
+        //interpolate the position
+          if(error_pose_trajectory.arrived == 1)
+          { 
+            x_des_.p = x_now_int.p + interpolatormb_line(time_inter, T_des)* (x_des_int.p - x_now_int.p);
+
+            x_des_int.M.GetQuaternion(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
+            x_now_int.M.GetQuaternion(quat_now.v(0),quat_now.v(1),quat_now.v(2),quat_now.a);
+
+            tf::Quaternion quat_tf_des_int(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
+            tf::Quaternion quat_tf_now_int(quat_now.v(0),quat_now.v(1),quat_now.v(2),quat_now.a);
+            quat_tf = (tf::slerp(quat_tf_now_int,quat_tf_des_int,Time)).normalize();
+            tf::quaternionTFToKDL(quat_tf,x_des_.M);
+            
+            KDL::Twist x_err_int;  //error
+
+            x_err_int = diff(x_, x_des_int);
+            tf::twistKDLToMsg (x_err_int,  error_pose_trajectory.error_);
+           
+            // x_des_.M = x_des_int.M;
+            time_inter = time_inter + period.toSec();
+            // Time = Time + period.toSec();
+            Time = interpolatormb_line(time_inter, T_des);
+
+            // if(a == 1)
+            // {
+            //   std::cout<<"quaternione posa des di: "<<desired_reference_topic.c_str() <<'\t'<<quat_des_.v(0)<<'\t'<<quat_des_.v(1)<<'\t'<<quat_des_.v(2)<<'\t'<<quat_des_.a<<std::endl;
+            //   std::cout<<"quaternione posa inter di: "<<desired_reference_topic.c_str() <<'\t'<<quat_tf.getX()<<'\t'<<quat_tf.getY()<<'\t'<<quat_tf.getZ()<<'\t'<<quat_tf.getW()<<std::endl;
+            // }
+          }
+
+
+          x_dot_ = J_.data*joint_msr_states_.qdot.data; 
+          
+          x_err_ = diff(x_,x_des_);
+              
+
+          tf::poseKDLToMsg (x_, error_pose_trajectory.pose_hand);
+          
+
+          pub_error_.publish(error_pose_trajectory);
+        
+          for(int i = 0; i < Force_attractive.size(); i++)
+          {
+            // Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + V_max_kuka*Kp_(i)*x_err_(i);
+            Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + Kp_(i)*x_err_(i);
+          }
+
+          // computing b = J*M^-1*(c+g) - J_dot*q_dot
+          b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
+
+          // computing omega = J*M^-1*N^T*J
+          omega_ = J_.data*M_inv_*N_trans_*J_.data.transpose();
+
+          // computing lambda = omega^-1
+          pseudo_inverse(omega_,lambda_);
+         
+          if(Object_position.size() > 0)
+          {
+            Force_repulsive = GetRepulsiveForce(x_chain);    
+          }
+              
+
+          F_Rep_table = RepulsiveWithTable(x_chain);
+          Force_total_rep = Force_repulsive + F_Rep_table;
+
+          // computing nullspace
+          N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
+
+          // finally, computing the torque tau
+          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + b_)) + F_Rep_table;// + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
+
+          // saving J_ and phi of the last iteration
           J_last_ = J_;
           phi_last_ = phi_;
-          first_step_ = 0;
-          return;
-        }
 
-        // computing the derivative of Jacobian J_dot(q) through numerical differentiation
-        J_dot_.data = (J_.data - J_last_.data)/period.toSec();
-
-        // computing forward kinematics
-        fk_pos_solver_->JntToCart(joint_msr_states_.q,x_);
-     
-          
-        
-
-        //calculate jacobian and position keeping track of all joints
-        for(unsigned int i=0; i<kdl_chain_.getNrOfSegments()+1;i++)  
-        {
-          KDL::Frame x_test;     
-          fk_pos_solver_->JntToCart(joint_msr_states_.q,x_test,i);
-          x_chain.push_back(x_test);  //x_chain[1-7 + 14];
-          KDL::Jacobian jac_repulsive;
-          jac_repulsive = KDL::Jacobian(7);
-          jnt_to_jac_solver_->JntToJac (joint_msr_states_.q,jac_repulsive , i);
-          JAC_repulsive.push_back(jac_repulsive);
-        } 
-
-       
-      
-        //interpolate the position
-        if(error_pose_trajectory.arrived == 1)
-        { 
-          x_des_.p = x_now_int.p + interpolatormb_line(time_inter, T_des)* (x_des_int.p - x_now_int.p);
-
-          // tfScalar Time = interpolatormb(time_inter, T_des);
-
-          x_des_int.M.GetQuaternion(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
-          x_now_int.M.GetQuaternion(quat_now.v(0),quat_now.v(1),quat_now.v(2),quat_now.a);
-
-          tf::Quaternion quat_tf_des_int(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
-          tf::Quaternion quat_tf_now_int(quat_now.v(0),quat_now.v(1),quat_now.v(2),quat_now.a);
-          quat_tf = (tf::slerp(quat_tf_now_int,quat_tf_des_int,Time)).normalize();
-          tf::quaternionTFToKDL(quat_tf,x_des_.M);
-          
-          KDL::Twist x_err_int;  //error
-
-          x_err_int = diff(x_, x_des_int);
-          tf::twistKDLToMsg (x_err_int,  error_pose_trajectory.error_);
-         
-          // x_des_.M = x_des_int.M;
-          time_inter = time_inter + period.toSec();
-          // Time = Time + period.toSec();
-          Time = interpolatormb_line(time_inter, T_des);
-
-          // if(a == 1)
-          // {
-          //   std::cout<<"quaternione posa des di: "<<desired_reference_topic.c_str() <<'\t'<<quat_des_.v(0)<<'\t'<<quat_des_.v(1)<<'\t'<<quat_des_.v(2)<<'\t'<<quat_des_.a<<std::endl;
-          //   std::cout<<"quaternione posa inter di: "<<desired_reference_topic.c_str() <<'\t'<<quat_tf.getX()<<'\t'<<quat_tf.getY()<<'\t'<<quat_tf.getZ()<<'\t'<<quat_tf.getW()<<std::endl;
-          // }
-        }
+          // std::cout<<"tau_.data[0]: " <<tau_.data[0]<<std::endl;
+          // std::cout<<"tau_(0): " <<tau_(0)<<std::endl;
 
 
-        x_dot_ = J_.data*joint_msr_states_.qdot.data; 
-        
-        x_err_ = diff(x_,x_des_);
-            
-
-        tf::poseKDLToMsg (x_, error_pose_trajectory.pose_hand);
-        
-
-        pub_error_.publish(error_pose_trajectory);
-      
-        for(int i = 0; i < Force_attractive.size(); i++)
-        {
-          //Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + V_max_kuka*Kp_(i)*x_err_(i);
-          Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + Kp_(i)*x_err_(i);
-        }
-
-        // computing b = J*M^-1*(c+g) - J_dot*q_dot
-        b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
-
-        // computing omega = J*M^-1*N^T*J
-        omega_ = J_.data*M_inv_*N_trans_*J_.data.transpose();
-
-        // computing lambda = omega^-1
-        pseudo_inverse(omega_,lambda_);
-       
-        if(Object_position.size() > 0)
-        {
-          Force_repulsive = GetRepulsiveForce(x_chain);    
-        }
-            
-
-        F_Rep_table = RepulsiveWithTable(x_chain);
-        Force_total_rep = Force_repulsive + F_Rep_table;
-
-        // computing nullspace
-        N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
-
-        // finally, computing the torque tau
-        tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + b_));// + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
-
-        // saving J_ and phi of the last iteration
-        J_last_ = J_;
-        phi_last_ = phi_;
-
-        // std::cout<<"tau_.data[0]: " <<tau_.data[0]<<std::endl;
-        // std::cout<<"tau_(0): " <<tau_(0)<<std::endl;
-
-
-        tau_(0) = (std::abs(tau_(0)) >= 176 ? std::copysign(176*percentage,tau_(0)) : tau_(0));
-        tau_(1) = (std::abs(tau_(1)) >= 176 ? std::copysign(176*percentage,tau_(1)) : tau_(1)); 
-        tau_(2) = (std::abs(tau_(2)) >= 100 ? std::copysign(100*percentage,tau_(2)): tau_(2)); 
-        tau_(3) = (std::abs(tau_(3)) >= 100 ? std::copysign(100*percentage,tau_(3)): tau_(3)); 
-        tau_(4) = (std::abs(tau_(4)) >= 100 ? std::copysign(100*percentage,tau_(4)): tau_(4)); 
-        tau_(5) = (std::abs(tau_(5)) >= 38 ? std::copysign(38*percentage,tau_(5)): tau_(5)); 
-        tau_(6) = (std::abs(tau_(6)) >= 38 ? std::copysign(38*percentage,tau_(6)): tau_(6));  
-
-        
+          tau_(0) = (std::abs(tau_(0)) >= 176*percentage ? std::copysign(176*percentage,tau_(0)) : tau_(0));
+          tau_(1) = (std::abs(tau_(1)) >= 176*percentage ? std::copysign(176*percentage,tau_(1)) : tau_(1)); 
+          tau_(2) = (std::abs(tau_(2)) >= 100*percentage ? std::copysign(100*percentage,tau_(2)): tau_(2)); 
+          tau_(3) = (std::abs(tau_(3)) >= 100*percentage ? std::copysign(100*percentage,tau_(3)): tau_(3)); 
+          tau_(4) = (std::abs(tau_(4)) >= 100*percentage ? std::copysign(100*percentage,tau_(4)): tau_(4)); 
+          tau_(5) = (std::abs(tau_(5)) >= 38*percentage ? std::copysign(38*percentage,tau_(5)): tau_(5)); 
+          tau_(6) = (std::abs(tau_(6)) >= 38*percentage ? std::copysign(38*percentage,tau_(6)): tau_(6));  
+      }
  
       // set controls for joints
       for (unsigned int i = 0; i < joint_handles_.size(); i++)
       {
 
 
-        joint_handles_[i].setCommand(tau_(i));
-        // if (i==6)
-        // {
-        //   tau_(i) = 1.0;
-        //   joint_handles_[i].setCommand(tau_(i));
-        // }
+          joint_handles_[i].setCommand(tau_(i));  
+
+        // std::cout<<"tau_(" << i << "): " << tau_(i)<<std::endl;
+        
 
         tau_msg.data.push_back(tau_(i));
 
@@ -311,6 +307,12 @@ namespace desperate_housewife
     //   a=0;
     // std::cout<<"a: "<<a<<std::endl;
     // a = msg->whichArm;
+  }
+
+
+    void PotentialFieldControl::command_start(const std_msgs::Bool::ConstPtr& msg)
+  { 
+     start_flag = true;
   }
 
   void PotentialFieldControl::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)

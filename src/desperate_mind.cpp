@@ -114,6 +114,7 @@ void DesperateDecisionMaker::ObjOrObst_right(const std_msgs::UInt16::ConstPtr& o
   ObjOrObst = obj_msg->data;
   arrived_r = 1;
   restart = 0;
+  std::cout<<"ricevuto msg"<<std::endl;
   //stop the generator pose
   // std_msgs::UInt16 stop;
   // stop.data = 1;
@@ -126,6 +127,7 @@ void DesperateDecisionMaker::ObjOrObst_left(const std_msgs::UInt16::ConstPtr& ob
   ObjOrObst = obj_msg->data;
   arrived_l = 1; 
   restart = 0;
+  test_ = 1;
   //stop the generator pose
   // std_msgs::UInt16 stop;
   // stop.data = 1;
@@ -161,9 +163,19 @@ void DesperateDecisionMaker::Error_info_left(const desperate_housewife::Error_ms
       vel.data[0] = -x;
       rot.data[0] = -rot_x;
       rot.data[1] = rot_y;
+      // if(test_ == 1 )
+      // { vel.data[0] = x;
+      // vel.data[1] = y;
+      // vel.data[2] = -z;
+      // rot.data[0] = -rot_x;
+      // rot.data[1] = rot_y;
+      // rot.data[2] = -rot_z;
 
+      // }
       error_treshold.vel = vel;
       error_treshold.rot = rot;
+
+
   }
 
   else// to remove
@@ -231,6 +243,7 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
 
     if(ObjOrObst == 0)
     {      
+
       rot.data[0] = rot_x;
       error_treshold.vel = vel;
       error_treshold.rot = rot;
@@ -247,17 +260,21 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
 
    if(Equal(e_, error_treshold, 0.05))
     {
-      // vito at home.. start the controller
+      std::cout<<"sono arrivato in home"<<std::endl;
+      std::cout<<"restart: "<<restart<<std::endl;
+      std::cout<<"arrived_r: "<<arrived_r<<std::endl;
+            // vito at home.. start the controller
       if(stop_home_r == 1)
       {
         start_controller.start_right = 1;
+         start_controller.start_left = 1;
         start_controller.stop = 0;
         right_start_controller_pub.publish(start_controller);
         stop_home_r = 0;
       }
       else if(arrived_r == 1)
       {
-
+        std::cout<<"arrived =1"<<std::endl;
        if(restart != 1)
         {
           ControllerStartAndNewPOse(error_msg);

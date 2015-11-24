@@ -6,6 +6,7 @@
 #include <desperate_housewife/handPoseSingle.h>
 #include <visualization_msgs/Marker.h>
 #include <std_msgs/Float64MultiArray.h>
+#include <std_msgs/Bool.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread/condition.hpp>
@@ -83,6 +84,9 @@ namespace desperate_housewife
 		* Description: callback that change inline the gains
 		*/
 		void set_gains(const std_msgs::Float64MultiArray::ConstPtr &msg);
+
+
+		void command_start(const std_msgs::Bool::ConstPtr& msg);
 		
 
 		/** Function: PoseDesiredInterpolation
@@ -94,7 +98,7 @@ namespace desperate_housewife
 
 
 	private:
-		ros::Subscriber sub_command_;
+		ros::Subscriber sub_command_, sub_command_start;
 		ros::Publisher pub_error_,  pub_tau_;
 		ros::Publisher pub_pose_;
 		tf::TransformBroadcaster tf_now_hand;
@@ -184,6 +188,7 @@ namespace desperate_housewife
 		double percentage;
 		tfScalar Time;
 		int a ;
+		bool start_flag;
 		
 		
 	};

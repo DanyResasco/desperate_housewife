@@ -59,6 +59,7 @@ void HandPoseGenerator::Start_right(const desperate_housewife::Start::ConstPtr& 
    std::cout<<"start right"<<std::endl;
   
   start_controller_right = msg->start_right;
+  start_controller_left = msg->start_left;
   stop = msg->stop;
 }
 
@@ -134,6 +135,7 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
           else
           {
             Obj_info.data = 0;
+            std::cout<<"grasp"<<std::endl;
           }  
           
           if (DesiredHandPose.whichArm == 1) 
@@ -149,7 +151,8 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
                 desired_hand_publisher_right.publish( DesiredHandPose );
                 // Obj_info.data = 0;
                 objects_info_right_pub.publish(Obj_info);
-                  stop = 1;       
+                  stop = 1;    
+                  std::cout<<"pubblico right"<<std::endl;   
               }
               
         tf::Transform tfHandTrasform;
@@ -228,6 +231,7 @@ void HandPoseGenerator::DesperateDemo1(const desperate_housewife::fittedGeometri
   desperate_housewife::handPoseSingle DesiredHandPose;
   desperate_housewife::fittedGeometriesSingle obstacle;
   desperate_housewife::fittedGeometriesArray obstaclesMsg;
+  std_msgs::UInt16 Obj_info;
   //sort the cylinder by the shortes distance from softhand 
   for (unsigned int i=0; i< msg->geometries.size(); i++)
   {
@@ -306,12 +310,17 @@ void HandPoseGenerator::DesperateDemo1(const desperate_housewife::fittedGeometri
             {
               obstacles_publisher_left.publish(obstaclesMsg);
               desired_hand_publisher_left.publish(DesiredHandPose);
+               Obj_info.data = 0;
+                objects_info_left_pub.publish(Obj_info);
+
               stop = 1;
             }
             else
             {
               obstacles_publisher_right.publish(obstaclesMsg);
               desired_hand_publisher_right.publish(DesiredHandPose);
+               Obj_info.data = 0;
+                objects_info_right_pub.publish(Obj_info);
               stop = 1;
             }
         }
