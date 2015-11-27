@@ -9,9 +9,9 @@
 
     <!-- configure whether the real hardware is enabled or not -->
     <arg name="head_enabled" default="false"/>
-    <arg name="left_arm_enabled" default="true"/>
+    <arg name="left_arm_enabled" default="false"/>
     <arg name="left_hand_enabled" default="false"/>
-    <arg name="right_arm_enabled" default="true"/>
+    <arg name="right_arm_enabled" default="false"/>
     <arg name="right_hand_enabled" default="false"/>
     <arg name="start_openni2" default="true"/>
 
@@ -19,7 +19,7 @@
     <!-- <arg name="left_arm_enabled" default="false"/>
     <arg name="right_arm_enabled" default="false"/> -->
     <arg name="use_calibration_package" default="false"/>
-    <arg name="use_robot_sim" default="false"/>
+    <arg name="use_robot_sim" default="true"/>
 
     <!-- LAUNCH IMPLEMENTATION -->
 

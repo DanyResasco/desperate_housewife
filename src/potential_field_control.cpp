@@ -98,24 +98,18 @@ namespace desperate_housewife
       Force_total_rep = Eigen::Matrix<double,7,1>::Zero();
       fk_pos_solver_->JntToCart(joint_msr_states_.q,x_des_);
 
-      Kp_(0) = 80;  Kp_(1) = 80; Kp_(2) = 80;
-      Kp_(3) = 15;  Kp_(4) = 15; Kp_(5) = 15;
-      Kd_(0) = 1; Kd_(1) = 1; Kd_(2) = 1;
-      Kd_(3) = 1; Kd_(4) = 1; Kd_(5) = 1;
+      // Kp_(0) = 80;  Kp_(1) = 80; Kp_(2) = 80;
+      // Kp_(3) = 15;  Kp_(4) = 15; Kp_(5) = 15;
+      // Kd_(0) = 1; Kd_(1) = 1; Kd_(2) = 1;
+      // Kd_(3) = 1; Kd_(4) = 1; Kd_(5) = 1;
 
-      // Kp_(0) = 1000;  Kp_(1) = 1000; Kp_(2) = 1000;
-      // Kp_(3) = 1000;  Kp_(4) = 1000; Kp_(5) = 1000;
-      // Kd_(0) = 200; Kd_(1) = 200; Kd_(2) = 200;
-      // Kd_(3) = 200; Kd_(4) = 200; Kd_(5) = 200;
+      Kp_(0) = 1000;  Kp_(1) = 1000; Kp_(2) = 1000;
+      Kp_(3) = 1000;  Kp_(4) = 1000; Kp_(5) = 1000;
+      Kd_(0) = 200; Kd_(1) = 200; Kd_(2) = 200;
+      Kd_(3) = 200; Kd_(4) = 200; Kd_(5) = 200;
 
       first_step_ = 1;
-      error_pose_trajectory.arrived = 0;
-      // ObjOrObst = 3;
-      // a = 0;
-      // time_inter = 0;   
-
-
-      
+      error_pose_trajectory.arrived = 0;   
   }
 
   void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& period)
@@ -131,8 +125,9 @@ namespace desperate_housewife
         N_trans_ = I_;  
         SetToZero(tau_);
     
-        if (start_flag)
-        {
+        //flag to use this code with real robot
+        // if (start_flag)
+        // {
         // computing Inertia, Coriolis and Gravity matrices
           id_solver_->JntToMass(joint_msr_states_.q, M_);
           id_solver_->JntToCoriolis(joint_msr_states_.q, joint_msr_states_.qdot, C_);
@@ -162,8 +157,6 @@ namespace desperate_housewife
 
           // computing forward kinematics
           fk_pos_solver_->JntToCart(joint_msr_states_.q,x_); 
-            
-          
 
           //calculate jacobian and position keeping track of all joints
           for(unsigned int i=0; i<kdl_chain_.getNrOfSegments()+1;i++)  
@@ -176,7 +169,7 @@ namespace desperate_housewife
             jnt_to_jac_solver_->JntToJac (joint_msr_states_.q,jac_repulsive , i);
             JAC_repulsive.push_back(jac_repulsive);
           } 
-        //interpolate the position
+          //interpolate the position and rotation
           if(error_pose_trajectory.arrived == 1)
           { 
             x_des_.p = x_now_int.p + interpolatormb_line(time_inter, T_des)* (x_des_int.p - x_now_int.p);
@@ -193,17 +186,10 @@ namespace desperate_housewife
 
             x_err_int = diff(x_, x_des_int);
             tf::twistKDLToMsg (x_err_int,  error_pose_trajectory.error_);
-           
-            // x_des_.M = x_des_int.M;
-            time_inter = time_inter + period.toSec();
-            // Time = Time + period.toSec();
-            Time = interpolatormb_line(time_inter, T_des);
 
-            // if(a == 1)
-            // {
-            //   std::cout<<"quaternione posa des di: "<<desired_reference_topic.c_str() <<'\t'<<quat_des_.v(0)<<'\t'<<quat_des_.v(1)<<'\t'<<quat_des_.v(2)<<'\t'<<quat_des_.a<<std::endl;
-            //   std::cout<<"quaternione posa inter di: "<<desired_reference_topic.c_str() <<'\t'<<quat_tf.getX()<<'\t'<<quat_tf.getY()<<'\t'<<quat_tf.getZ()<<'\t'<<quat_tf.getW()<<std::endl;
-            // }
+            time_inter = time_inter + period.toSec();
+            // SO3 Time 
+            Time = interpolatormb_line(time_inter, T_des);
           }
 
 
@@ -211,7 +197,7 @@ namespace desperate_housewife
           
           x_err_ = diff(x_,x_des_);
               
-
+          //to decide the pose of the object to be removed
           tf::poseKDLToMsg (x_, error_pose_trajectory.pose_hand);
           
 
@@ -245,7 +231,8 @@ namespace desperate_housewife
           N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
 
           // finally, computing the torque tau
-          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + b_)) + F_Rep_table;// + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
+          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + b_)) + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
+          // + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
 
           // saving J_ and phi of the last iteration
           J_last_ = J_;
@@ -254,7 +241,7 @@ namespace desperate_housewife
           // std::cout<<"tau_.data[0]: " <<tau_.data[0]<<std::endl;
           // std::cout<<"tau_(0): " <<tau_(0)<<std::endl;
 
-
+          //CREA PROBLEMI IN SIMULAZIONE --> PROVARE SE È QUESTO CHE MI DA FASTIDIO IN REALE --> percentage 0.3 non va bene 
           tau_(0) = (std::abs(tau_(0)) >= 176*percentage ? std::copysign(176*percentage,tau_(0)) : tau_(0));
           tau_(1) = (std::abs(tau_(1)) >= 176*percentage ? std::copysign(176*percentage,tau_(1)) : tau_(1)); 
           tau_(2) = (std::abs(tau_(2)) >= 100*percentage ? std::copysign(100*percentage,tau_(2)): tau_(2)); 
@@ -262,27 +249,21 @@ namespace desperate_housewife
           tau_(4) = (std::abs(tau_(4)) >= 100*percentage ? std::copysign(100*percentage,tau_(4)): tau_(4)); 
           tau_(5) = (std::abs(tau_(5)) >= 38*percentage ? std::copysign(38*percentage,tau_(5)): tau_(5)); 
           tau_(6) = (std::abs(tau_(6)) >= 38*percentage ? std::copysign(38*percentage,tau_(6)): tau_(6));  
-      }
+      // }
  
       // set controls for joints
       for (unsigned int i = 0; i < joint_handles_.size(); i++)
       {
-
-
-          joint_handles_[i].setCommand(tau_(i));  
-
-        // std::cout<<"tau_(" << i << "): " << tau_(i)<<std::endl;
-        
-
+        joint_handles_[i].setCommand(tau_(i));  
+        // std::cout<<"tau_(" << i << "): " << tau_(i)<<std::endl;      
         tau_msg.data.push_back(tau_(i));
-
       }
         
       pub_tau_.publish(tau_msg);
       x_chain.clear();
-      Object_radius.clear();
-      Object_height.clear();
-      Object_position.clear();
+      // Object_radius.clear();
+      // Object_height.clear();
+      // Object_position.clear();
       JAC_repulsive.clear();
       tau_msg.data.clear();
 
@@ -295,18 +276,11 @@ namespace desperate_housewife
 
     KDL::Frame frame_des_;
     tf::poseMsgToKDL(msg->pose, frame_des_);
-    // x_des_ = frame_des_;
+   
     PoseDesiredInterpolation(frame_des_);
 
     error_pose_trajectory.arrived = 1;
-    // if(msg->whichArm == 1)
-    // {
-    //   a = 1;
-    // }
-    // else
-    //   a=0;
-    // std::cout<<"a: "<<a<<std::endl;
-    // a = msg->whichArm;
+  
   }
 
 
@@ -327,26 +301,15 @@ namespace desperate_housewife
         tf::poseMsgToKDL(msg->geometries[i].pose, frame_obj);
         Object_position.push_back(frame_obj); 
       }
-       
-    // ObjOrObst = 1;
-    // erro_arr = 1;
-    // err_obj = 1;
-    // err_home = 0;
-
   }
 
   void PotentialFieldControl::InfoOBj( const desperate_housewife::fittedGeometriesSingle::ConstPtr& obj_rem)
   {
     KDL::Frame frame_des_;
     tf::poseMsgToKDL(obj_rem->pose, frame_des_);
-    // error_pose_trajectory.WhichArm = obj_rem->info[obj_rem->info.size() - 1]; //last element is whicharm
-    // x_des_ = frame_des_;
     PoseDesiredInterpolation(frame_des_);
      error_pose_trajectory.arrived = 1;
-    // ObjOrObst = 2;
-    // erro_arr = 1;
-    // err_obj = 1;
-    // err_home = 0;
+
 
   }
 
@@ -365,16 +328,13 @@ namespace desperate_housewife
     {
       if(!Equal(frame_des_, x_des_int,0.05))
       {
-        // Int = 0;
+        // update desired frame;
         x_des_int = frame_des_;
-        // x_des_ = x_des_int;
+        // update robot position
         fk_pos_solver_->JntToCart(joint_msr_states_.q, x_now_int);
+        //time update
         time_inter = 0;
-        Time = 0;
-        // std::cout<<"aggiorno tempi"<<std::endl;
-        // std::cout<<"time_inter: "<<time_inter<<std::endl;
-        // std::cout<<"Time: "<<Time<<std::endl;
-       
+        Time = 0;     
       }
     }
 
@@ -427,7 +387,7 @@ namespace desperate_housewife
           if( distance_local_obj[i] <= influence )
           // if( distance <= influence )
           {
-            min_d.push_back(distance_local_obj[0]);
+            min_d.push_back(distance_local_obj[i]);
             index_infl.push_back(i); //for tracking wich object is closet
             // std::cout<<"index_infl: "<<index_infl[i]<<std::endl; 
             // std::cout<<"i: "<<i<<std::endl; 

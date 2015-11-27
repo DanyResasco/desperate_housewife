@@ -228,6 +228,8 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose )
     retta_hand_obj[2] = (object_position[2] - hand_right_position[2]);
 	 return 0;
   }
+
+  // return 0; //just to use right arm
 }
 
 
@@ -345,10 +347,10 @@ void HandPoseGenerator::Overturn()
   DesiredHandPose_left.pose.orientation.w = quat_eigen_harm_left.w();
 
   Eigen::Quaterniond quat_eigen_harm_right(rot_right);
-  DesiredHandPose_right.pose.orientation.x = quat_eigen_harm_right.x();
-  DesiredHandPose_right.pose.orientation.y = quat_eigen_harm_right.y();
-  DesiredHandPose_right.pose.orientation.z = quat_eigen_harm_right.z();
-  DesiredHandPose_right.pose.orientation.w = quat_eigen_harm_right.w();
+  DesiredHandPose_right.pose.orientation.x = (quat_eigen_harm_right.normalized()).x();
+  DesiredHandPose_right.pose.orientation.y = (quat_eigen_harm_right.normalized()).y();
+  DesiredHandPose_right.pose.orientation.z = (quat_eigen_harm_right.normalized()).z();
+  DesiredHandPose_right.pose.orientation.w = (quat_eigen_harm_right.normalized()).w();
   
 
   DesiredHandPose_left.pose.position.x = -1.0;

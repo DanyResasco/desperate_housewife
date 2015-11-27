@@ -114,11 +114,10 @@ void DesperateDecisionMaker::ObjOrObst_right(const std_msgs::UInt16::ConstPtr& o
   ObjOrObst = obj_msg->data;
   arrived_r = 1;
   restart = 0;
+  test_ = 1;
   std::cout<<"ricevuto msg"<<std::endl;
-  //stop the generator pose
-  // std_msgs::UInt16 stop;
-  // stop.data = 1;
-  // stop_publisher_r.publish(stop); 
+  std::cout<<"arrived_r: "<<arrived_r<<std::endl;
+  std::cout<<"restart: "<<restart<<std::endl;
 }
 
 void DesperateDecisionMaker::ObjOrObst_left(const std_msgs::UInt16::ConstPtr& obj_msg)
@@ -127,11 +126,7 @@ void DesperateDecisionMaker::ObjOrObst_left(const std_msgs::UInt16::ConstPtr& ob
   ObjOrObst = obj_msg->data;
   arrived_l = 1; 
   restart = 0;
-  test_ = 1;
-  //stop the generator pose
-  // std_msgs::UInt16 stop;
-  // stop.data = 1;
-  // stop_publisher_l.publish(stop) ;
+
 }
 
 
@@ -143,8 +138,8 @@ void DesperateDecisionMaker::Error_info_left(const desperate_housewife::Error_ms
   vel.data[1] = y;
   vel.data[2] = z;
   rot.data[0] = rot_x;
-  rot.data[1] = -rot_y;
-  rot.data[2] = -rot_z;
+  rot.data[1] = rot_y;
+  rot.data[2] = rot_z;
   std_msgs::Bool home_vito;
   KDL::Twist error_treshold;
   //if potential filed has riceved one msg 
@@ -158,37 +153,16 @@ void DesperateDecisionMaker::Error_info_left(const desperate_housewife::Error_ms
   KDL::Twist e_;
   tf::twistMsgToKDL (error_msg->error_, e_);
 
-  if(ObjOrObst == 0)   //to grasp
-  {
-      vel.data[0] = -x;
-      rot.data[0] = -rot_x;
-      rot.data[1] = rot_y;
-      // if(test_ == 1 )
-      // { vel.data[0] = x;
-      // vel.data[1] = y;
-      // vel.data[2] = -z;
-      // rot.data[0] = -rot_x;
-      // rot.data[1] = rot_y;
-      // rot.data[2] = -rot_z;
-
-      // }
-      error_treshold.vel = vel;
-      error_treshold.rot = rot;
-
-
-  }
-
-  else// to remove
-  {
-      error_treshold.vel = vel;
-      error_treshold.rot = rot;
-  }
-
   if(error_msg->arrived == 1)
   {
-    if(Equal(e_, error_treshold, 0.05))
-    { 
 
+
+    error_treshold.vel = vel;
+    error_treshold.rot = rot;
+    
+    if(IsEqual(e_,error_treshold))
+    // if(Equal(e_, error_treshold, 0.05))
+    { 
       if(stop_home == 1)
       {
         start_controller.start_left = 1;
@@ -220,13 +194,13 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
   KDL::Vector vel;
   KDL::Vector rot;
   vel.data[0] = x;
-  vel.data[1] = -y;
+  vel.data[1] = y;
   vel.data[2] = z;
-  rot.data[0] = -rot_x;
-  rot.data[1] = -rot_y;
-  rot.data[2] = -rot_z;
+  rot.data[0] = rot_x;
+  rot.data[1] = rot_y;
+  rot.data[2] = rot_z;
   std_msgs::Bool home_vito;
-  KDL::Twist error_treshold;
+ 
  
  if(home_r == 1)
   {
@@ -240,41 +214,29 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
   {
     // std::cout<<"ricevuto errore right"<<std::endl;
     KDL::Twist e_;
+     KDL::Twist error_treshold;
+    error_treshold.vel = vel;
+    error_treshold.rot = rot;
 
-    if(ObjOrObst == 0)
-    {      
-
-      rot.data[0] = rot_x;
-      error_treshold.vel = vel;
-      error_treshold.rot = rot;
-    }
-    else
-    {
-      rot.data[1] = rot_y;  
-      error_treshold.vel = vel;
-      error_treshold.rot = rot;
-    }
-
-    // KDL::Twist error_treshold(vel,rot);
     tf::twistMsgToKDL (error_msg->error_, e_);
-
-   if(Equal(e_, error_treshold, 0.05))
+    if(IsEqual(e_,error_treshold))  //if true
+   // if(Equal(e_, error_treshold, 0.05))
     {
       std::cout<<"sono arrivato in home"<<std::endl;
       std::cout<<"restart: "<<restart<<std::endl;
       std::cout<<"arrived_r: "<<arrived_r<<std::endl;
-            // vito at home.. start the controller
+      // vito at home.. start the controller
       if(stop_home_r == 1)
       {
         start_controller.start_right = 1;
-         start_controller.start_left = 1;
+         // start_controller.start_left = 1;
         start_controller.stop = 0;
         right_start_controller_pub.publish(start_controller);
         stop_home_r = 0;
       }
       else if(arrived_r == 1)
       {
-        std::cout<<"arrived =1"<<std::endl;
+        // std::cout<<"arrived =1"<<std::endl;
        if(restart != 1)
         {
           ControllerStartAndNewPOse(error_msg);
@@ -292,7 +254,26 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
   }
  
 }
+ bool  DesperateDecisionMaker::IsEqual(KDL::Twist E_pf, KDL::Twist E_t)
+{
+  KDL::Twist E_pf_abs;
 
+  E_pf_abs.vel.data[0] = std::abs(E_pf.vel.data[0] );
+  E_pf_abs.vel.data[1] = std::abs(E_pf.vel.data[1] );
+  E_pf_abs.vel.data[2] = std::abs(E_pf.vel.data[2] );
+  E_pf_abs.rot.data[0] = std::abs(E_pf.rot.data[0] );
+  E_pf_abs.rot.data[1] = std::abs(E_pf.rot.data[1] );
+  E_pf_abs.rot.data[2] = std::abs(E_pf.rot.data[2] );
+
+  if(Equal(E_pf_abs, E_t,0.05))
+  {
+  return true;
+  }
+  else
+  {
+    return false;
+  }
+}
 
 void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife::Error_msg::ConstPtr& error_msg)
 {

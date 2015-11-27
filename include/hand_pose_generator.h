@@ -31,7 +31,6 @@ private:
   std::string geometries_topic_, desired_hand_right_pose_topic_, desired_hand_left_pose_topic_, obstacles_topic_left,obstacles_topic_right, desired_hand_pose_topic_;
   std::string Reject_obstalces_topic_left, Reject_obstalces_topic_right, error_topic_left, error_topic_right;
   std::string base_frame_, desired_hand_frame_, right_hand_frame_, left_hand_frame_;
-  // std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec;
   std::string start_topic_left, start_topic_right;
   ros::Subscriber left_start_controller_sub, right_start_controller_sub;
 
@@ -66,37 +65,77 @@ public:
   void HandPoseGeneratorCallback(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
 
   desperate_housewife::handPoseSingle generateHandPose( desperate_housewife::fittedGeometriesSingle geometry );
-  /** Function to decide if object is graspable. If the ratio (number of inlier/number of point of cluster) >50 and the radius is minus than a threshold 
+  /** Function: isGeometryGraspable
+  *input: cylinder
+  *output: bool
+  *Description: Function to decide if object is graspable. If the ratio (number of inlier/number of point of cluster) >50 and the radius is minus than a threshold 
   *the object is grasbale, otherwise is obstacle. 
   */
   bool isGeometryGraspable ( desperate_housewife::fittedGeometriesSingle geometry );
 
-  /** Function that calculates the hand Pose. Depending on cylinder as is put the pose change. We consider if cylinder is:
+  /**Function: placeHand
+  *input: cylinder, integrer 1 left arm 0 right arm
+  *output: pose
+  *Description:Function that calculates the hand Pose. Depending on cylinder as is put the pose change. We consider if cylinder is:
   *Lying --> hand is put in the middle and moved up by 5 cm
   *Full and standing --> hand is put on the top
   *Empty and standign --> hand is put on the top and moved along x axis of the quantity of the radius
   */
   geometry_msgs::Pose placeHand ( desperate_housewife::fittedGeometriesSingle geometry, int whichArm );
-  /** Function that calulates whichArm use. It's calculate looking the shortes distance between the object and the arm.  
+  /** Function: whichArm
+  *input: pose
+  *output: integrer 1 left arm 0 right arm
+  *Description:Function that calulates whichArm use. It's calculate looking the shortes distance between the object and the arm.  
   */
   int whichArm( geometry_msgs::Pose object_pose );
+   /** Function: fromEigenToPose
+  *input: eigen matrix, geoemtry_pose to save the hand pose 
+  *output: void
+  *Description:convert eigen matrix to geometry_pose  
+  */
   void fromEigenToPose (Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &Hand_pose);
+   /** Function: FromMsgtoEigen
+  *input: geometry pose
+  *output: eigen matrix
+  *Description:convert geometry_pose to eigen matrix 
+  */
   Eigen::Matrix4d FromMsgtoEigen(geometry_msgs::Pose &object);
 
-  /** Function that calulates the hand pose to remove the obstacle 
+  /** Function: ObstacleReject
+  *input: cylinder,integrer 1 left arm 0 right arm
+  *output: geometry pose
+  *Description:Function that calulates the hand pose to remove the obstacle 
   */
   geometry_msgs::Pose ObstacleReject( desperate_housewife::fittedGeometriesSingle Pose_rej_obs, int arm_);
-  void Error_info_left(const desperate_housewife::Error_msg::ConstPtr& error_msg);
-  void Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+ 
   /** Function for send the obstacle messages
   */
-  void SendObjRejectMsg(desperate_housewife::fittedGeometriesSingle obj_msg, int arm_);
-  /** Function for move vito in the desired pose before control start   
+  // void SendObjRejectMsg(desperate_housewife::fittedGeometriesSingle obj_msg, int arm_);
+
+  /** FUnction: Start_left and Start_right
+  *input: start msgs
+  *output: void
+  *Description:Function for move vito in the desired pose before control start   
   */
   void Start_left(const desperate_housewife::Start::ConstPtr& msg);
   void Start_right(const desperate_housewife::Start::ConstPtr& msg);
+  /** FUnction: DesperateDemo2
+  *input: cylinder
+  *output: void
+  *Description:Second Demo. grasp object without obstacles avoidance. if item isn't graspable will be removed 
+  */
   void  DesperateDemo2(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
+   /** FUnction: DesperateDemo2
+  *input: cylinder
+  *output: void
+  *Description:First Demo. grasp object with obstacles avoidance. 
+  */
   void  DesperateDemo1( const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
+   /** FUnction: DesperateDemo2
+  *input: void
+  *output: void
+  *Description:If there are more than 5 objects or all objects aren't graspable, overturn table 
+  */
   void Overturn();
 
 

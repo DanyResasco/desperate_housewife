@@ -52,6 +52,7 @@ class DesperateDecisionMaker
   double rot_x = 0.03;
   double rot_y = 0.005;
   double rot_z = 0.005;
+
   
   std::string start_topic_left, start_topic_right;
   ros::Publisher left_start_controller_pub, right_start_controller_pub;
@@ -112,6 +113,7 @@ class DesperateDecisionMaker
     void ObjOrObst_left(const std_msgs::UInt16::ConstPtr& obj_msg);
     void SendHomeRobot_right();
     void SendHomeRobot_left();
+    bool IsEqual(KDL::Twist E_pf, KDL::Twist E_t);
 };
 
 
