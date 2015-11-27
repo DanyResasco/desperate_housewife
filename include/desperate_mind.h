@@ -61,20 +61,17 @@ class DesperateDecisionMaker
   int start_controller_left = 0;
   int start_controller_right = 0;
 
-  // std::string desired_hand_right_pose_topic_, desired_hand_left_pose_topic_;
   ros::Publisher desired_hand_publisher_left, desired_hand_publisher_right;
-  // tf::TransformBroadcaster tf_desired_hand_pose;
-
+  
   geometry_msgs::Pose pose_obj;
   int whichArm;
   int ObjOrObst;
   int arrived_l = 0;
   int arrived_r = 0;
-  // int home  = 1;
   int restart = 0;
   int stop_home = 1;
   int stop_home_r = 1;
-  int test_;
+ 
   geometry_msgs::Pose pose_removed;
 
   ros::Subscriber objects_info_right_sub, objects_info_left_sub;
@@ -86,33 +83,70 @@ class DesperateDecisionMaker
 
   //home
   ros::Publisher desired_hand_right_pose_publisher_, desired_hand_left_pose_publisher_;
-    // std::string desired_hand_right_pose_topic_, desired_hand_left_pose_topic_;
-    ros::Subscriber left_home_subscribe_, right_home_subscribe_;
-    // std::string home_left_topic_, home_right_topic_;
-    tf::TransformBroadcaster tf_desired_hand_pose;
-    // std::string base_frame_;
-
-      // desperate_housewife::handPoseSingle home_robot_right;
-      // desperate_housewife::handPoseSingle home_robot_left;
+  ros::Subscriber left_home_subscribe_, right_home_subscribe_;
+  tf::TransformBroadcaster tf_desired_hand_pose;
   std::string left_hand_frame_, right_hand_frame_;    
-    tf::TransformListener listener_info; 
+  tf::TransformListener listener_info; 
 
   DesperateDecisionMaker();
     ~DesperateDecisionMaker(){};
      
   private:
 
-
+    /** Function: Error_info_left
+    *input: error msgs
+    *output: void
+    *Description:Function that manages the various nodes, like sends vito at home, sends start controller etc 
+    */
     void Error_info_left(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+    
+    /** Function: Error_info_right
+    *input: error msgs
+    *output: void
+    *Description:Function that manages the various nodes, like sends vito at home, sends start controller etc 
+    */
     void Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+    
+    /** Function: ControllerStartAndNewPOse
+    *input: error msgs
+    *output: void
+    *Description:Function that sends the new hand pose   
+    */
     void ControllerStartAndNewPOse(const desperate_housewife::Error_msg::ConstPtr& error_msg);
-   
-    void hand_left(const desperate_housewife::handPoseSingle::ConstPtr& left_msg);
-    void hand_right(const desperate_housewife::handPoseSingle::ConstPtr& right_msg);
+       
+    /** Function: ObjOrObst_right
+    *input: integrer 0 graspable objects, 1 remove
+    *output: void
+    *Description:Function that save the objects information 
+    */
     void ObjOrObst_right(const std_msgs::UInt16::ConstPtr& obj_msg);
+    
+    /** Function: ObjOrObst_left
+    *input: integrer 0 graspable objects, 1 remove
+    *output: void
+    *Description:Function that save the objects information 
+    */
     void ObjOrObst_left(const std_msgs::UInt16::ConstPtr& obj_msg);
+    
+    /** Function: SendHomeRobot_right
+    *input: void
+    *output: void
+    *Description:Function that send right arm at home position. It's called only one time  
+    */
     void SendHomeRobot_right();
+  
+    /** Function: SendHomeRobot_left
+    *input: void
+    *output: void
+    *Description:Function that send left arm at home position. It's called only one time  
+    */
     void SendHomeRobot_left();
+
+    /** Function: IsEqual
+    *input: twist error, twist error_treshold
+    *output: bool
+    *Description:Function that calulates if hand is arrived.  
+    */
     bool IsEqual(KDL::Twist E_pf, KDL::Twist E_t);
 };
 

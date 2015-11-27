@@ -93,20 +93,6 @@ DesperateDecisionMaker::DesperateDecisionMaker()
  
 }
 
-// void DesperateDecisionMaker::SendVitoHome()
-// {
-//     if(home == 1)
-//     {
-//       ROS_INFO("*****Send vito at home");
-//       std_msgs::Bool home_vito;
-//       home_vito.data = true;
-//       left_home_publisher_.publish(home_vito);
-//       right_home_publisher_.publish(home_vito);
-//       home = 0;
-//       stop_home = 1;
-//       ObjOrObst = 0;
-//     }
-// }
 
 void DesperateDecisionMaker::ObjOrObst_right(const std_msgs::UInt16::ConstPtr& obj_msg)
 {
@@ -114,10 +100,6 @@ void DesperateDecisionMaker::ObjOrObst_right(const std_msgs::UInt16::ConstPtr& o
   ObjOrObst = obj_msg->data;
   arrived_r = 1;
   restart = 0;
-  test_ = 1;
-  std::cout<<"ricevuto msg"<<std::endl;
-  std::cout<<"arrived_r: "<<arrived_r<<std::endl;
-  std::cout<<"restart: "<<restart<<std::endl;
 }
 
 void DesperateDecisionMaker::ObjOrObst_left(const std_msgs::UInt16::ConstPtr& obj_msg)
@@ -172,16 +154,15 @@ void DesperateDecisionMaker::Error_info_left(const desperate_housewife::Error_ms
       }
       else if(arrived_l == 1)
       {
-
         if(restart != 1)
         {
           ControllerStartAndNewPOse(error_msg);
         }
         else
         {
+          //unlock hand_pose_generator
           start_controller.stop = 0;
           left_start_controller_pub.publish(start_controller);
-          // restart = 0;
         }
       }
 
@@ -212,9 +193,9 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
    
   if(error_msg->arrived == 1)
   {
-    // std::cout<<"ricevuto errore right"<<std::endl;
+    
     KDL::Twist e_;
-     KDL::Twist error_treshold;
+    KDL::Twist error_treshold;
     error_treshold.vel = vel;
     error_treshold.rot = rot;
 
@@ -243,10 +224,9 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
         }
         else
         {
+          //unlock hand_pose_generator
           start_controller.stop = 0;
           right_start_controller_pub.publish(start_controller);
-          // restart = 0;
-
         }
       }
 
