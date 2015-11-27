@@ -138,15 +138,15 @@ void DesperateDecisionMaker::Error_info_left(const desperate_housewife::Error_ms
   if(error_msg->arrived == 1)
   {
 
-
     error_treshold.vel = vel;
     error_treshold.rot = rot;
     
     if(IsEqual(e_,error_treshold))
-    // if(Equal(e_, error_treshold, 0.05))
-    { 
+    {
+      ROS_DEBUG("Arrived in position"); 
       if(stop_home == 1)
-      {
+      { 
+        //send flag to start hand_pose_generator
         start_controller.start_left = 1;
         start_controller.stop = 0;
         left_start_controller_pub.publish(start_controller);
@@ -189,8 +189,7 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
     ObjOrObst = 0;
     home_r = 0;
   }
-  
-   
+    
   if(error_msg->arrived == 1)
   {
     
@@ -201,14 +200,12 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
 
     tf::twistMsgToKDL (error_msg->error_, e_);
     if(IsEqual(e_,error_treshold))  //if true
-   // if(Equal(e_, error_treshold, 0.05))
     {
-      std::cout<<"sono arrivato in home"<<std::endl;
-      std::cout<<"restart: "<<restart<<std::endl;
-      std::cout<<"arrived_r: "<<arrived_r<<std::endl;
+      ROS_DEBUG("Arrived in position");
       // vito at home.. start the controller
       if(stop_home_r == 1)
       {
+        //send flag to start hand_pose_generator
         start_controller.start_right = 1;
          // start_controller.start_left = 1;
         start_controller.stop = 0;
@@ -267,6 +264,7 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
       
       case 0: //object to grasp
       {     
+            ROS_DEBUG("Case 0: graspable object");
             std::cout<<"case 0"<<std::endl;   
             trajectory_msgs::JointTrajectory msg_jointT_hand;
             msg_jointT_hand.joint_names.resize(1);
@@ -296,8 +294,7 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
                 desired_hand_publisher_right.publish( new_obj_pos_remove );
                
             }
-
-
+            
             restart = 1;
 
             tf::Transform tfHandTrasform2;
@@ -305,13 +302,10 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
             tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"Moveobj_") );
           break;
       }
-
-      // case 1: //obstacle
-      //     std::cout<<"case 1"<<std::endl; 
-      //       break;
-
       case 1: //obstacle to remove
-      {     std::cout<<"case 1"<<std::endl;     
+      {     
+            ROS_DEBUG("Case 1: remove object");
+            std::cout<<"case 1"<<std::endl;     
             desperate_housewife::handPoseSingle New_Hand_Position;
             New_Hand_Position.pose = error_msg->pose_hand;
 
