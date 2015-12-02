@@ -207,7 +207,7 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
       {
         //send flag to start hand_pose_generator
         start_controller.start_right = 1;
-         // start_controller.start_left = 1;
+         start_controller.start_left = 1;
         start_controller.stop = 0;
         right_start_controller_pub.publish(start_controller);
         stop_home_r = 0;

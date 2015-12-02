@@ -26,58 +26,61 @@ namespace desperate_housewife
       KinematicChainControllerBase<hardware_interface::EffortJointInterface>::init(robot, n);
       ROS_INFO("Starting controller");
       ROS_WARN("Number of segments: %d", kdl_chain_.getNrOfSegments());
-    // for swicht the hand_desired
-    n.getParam("desired_reference_topic", desired_reference_topic);
-    n.getParam("obstacle_remove_topic", obstacle_remove_topic);
-    n.getParam("desired_hand_topic", desired_hand_topic);
-    n.getParam("obstacle_avoidance", obstacle_avoidance);
-    n.getParam("tip_name", tip_name);
-    n.getParam("set_gains_topic", set_gains_);
-    n.param<double>("time_interp_desired", T_des, 1);
-    n.param<double>("percentage",percentage,0.3);
+      // for swicht the hand_desired
+      n.getParam("desired_reference_topic", desired_reference_topic);
+      n.getParam("obstacle_remove_topic", obstacle_remove_topic);
+      n.getParam("desired_hand_topic", desired_hand_topic);
+      n.getParam("obstacle_avoidance", obstacle_avoidance);
+      n.getParam("tip_name", tip_name);
+      n.getParam("set_gains_topic", set_gains_);
+      n.param<double>("time_interp_desired", T_des, 1);
+      n.param<double>("percentage",percentage,0.3);
+      
     
-  
-    jnt_to_jac_solver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
-    id_solver_.reset(new KDL::ChainDynParam(kdl_chain_,gravity_));
-    fk_pos_solver_.reset(new KDL::ChainFkSolverPos_recursive(kdl_chain_));
-        
-    qdot_last_.resize(kdl_chain_.getNrOfJoints());
-    tau_.resize(kdl_chain_.getNrOfJoints());
-    J_.resize(kdl_chain_.getNrOfJoints());
-    J_dot_.resize(kdl_chain_.getNrOfJoints());
-    J_star_.resize(kdl_chain_.getNrOfJoints());
-    Kp_.resize(kdl_chain_.getNrOfJoints());
-    Kd_.resize(kdl_chain_.getNrOfJoints());
-    M_.resize(kdl_chain_.getNrOfJoints());
-    C_.resize(kdl_chain_.getNrOfJoints());
-    G_.resize(kdl_chain_.getNrOfJoints());
+      jnt_to_jac_solver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
+      id_solver_.reset(new KDL::ChainDynParam(kdl_chain_,gravity_));
+      fk_pos_solver_.reset(new KDL::ChainFkSolverPos_recursive(kdl_chain_));
+          
+      qdot_last_.resize(kdl_chain_.getNrOfJoints());
+      tau_.resize(kdl_chain_.getNrOfJoints());
+      J_.resize(kdl_chain_.getNrOfJoints());
+      J_dot_.resize(kdl_chain_.getNrOfJoints());
+      J_star_.resize(kdl_chain_.getNrOfJoints());
+      Kp_.resize(kdl_chain_.getNrOfJoints());
+      Kd_.resize(kdl_chain_.getNrOfJoints());
+      M_.resize(kdl_chain_.getNrOfJoints());
+      C_.resize(kdl_chain_.getNrOfJoints());
+      G_.resize(kdl_chain_.getNrOfJoints());
 
-    J_last_.resize(kdl_chain_.getNrOfJoints());
+      J_last_.resize(kdl_chain_.getNrOfJoints());
 
-    ROS_DEBUG("Subscribed for desired_hand_topic to: %s", desired_reference_topic.c_str());
-     //list of obstacles
-    ROS_INFO("Subscribed for obstacle_avoidance_topic to : %s", obstacle_avoidance.c_str());
+      ROS_DEBUG("Subscribed for desired_hand_topic to: %s", desired_reference_topic.c_str());
+       //list of obstacles
+      ROS_INFO("Subscribed for obstacle_avoidance_topic to : %s", obstacle_avoidance.c_str());
 
-    obstacles_subscribe_ = n.subscribe(obstacle_avoidance.c_str(), 1, &PotentialFieldControl::InfoGeometry, this);
+      obstacles_subscribe_ = n.subscribe(obstacle_avoidance.c_str(), 1, &PotentialFieldControl::InfoGeometry, this);
 
-    //Hand_pose for graspable objects
-    sub_gains_ = nh_.subscribe(set_gains_.c_str(), 1, &PotentialFieldControl::set_gains, this);
+      //Hand_pose for graspable objects
+      sub_gains_ = nh_.subscribe(set_gains_.c_str(), 1, &PotentialFieldControl::set_gains, this);
 
 
-    // ROS_INFO("Subscribed for obstacle_remove_topic to : %s", obstacle_remove_topic.c_str());
-    // obstacles_remove_sub = n.subscribe(obstacle_remove_topic.c_str(), 1, &PotentialFieldControl::InfoOBj, this);     
+      // ROS_INFO("Subscribed for obstacle_remove_topic to : %s", obstacle_remove_topic.c_str());
+      // obstacles_remove_sub = n.subscribe(obstacle_remove_topic.c_str(), 1, &PotentialFieldControl::InfoOBj, this);     
 
-   
-    pub_error_ = nh_.advertise<desperate_housewife::Error_msg>("error", 1000);
-    pub_tau_ = nh_.advertise<std_msgs::Float64MultiArray>("tau_commad", 1000);
-  
+     
+      pub_error_ = nh_.advertise<desperate_housewife::Error_msg>("error", 1000);
+      pub_tau_ = nh_.advertise<std_msgs::Float64MultiArray>("tau_commad", 1000);
+      pub_qdot_ = nh_.advertise<std_msgs::Float64MultiArray>("qdot_commad", 1000);
+      pub_Fa_ = nh_.advertise<std_msgs::Float64MultiArray>("Factrative_commad", 1000);
+      // pub_Freptavolo_ = nh_.advertise<std_msgs::Float64MultiArray>("Freptavolo_commad", 1000);
+      pub_diff  = nh_.advertise<std_msgs::Float64MultiArray>("Diff_commad", 1000);
+      pub_xdot = nh_.advertise<std_msgs::Float64MultiArray>("xdot_commad", 1000);
+      sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this); 
+      sub_command_start = n.subscribe("start_control", 1, &PotentialFieldControl::command_start, this); 
 
-    sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this); 
-    sub_command_start = n.subscribe("start_control", 1, &PotentialFieldControl::command_start, this); 
+      start_flag = false;
 
-    start_flag = false;
-
-    return true;
+      return true;
   }
 
   void PotentialFieldControl::starting(const ros::Time& time)
@@ -97,7 +100,7 @@ namespace desperate_housewife
       F_Rep_table = Eigen::Matrix<double,7,1>::Zero();
       Force_total_rep = Eigen::Matrix<double,7,1>::Zero();
       fk_pos_solver_->JntToCart(joint_msr_states_.q,x_des_);
-
+      //gains in cartesian space
       // Kp_(0) = 80;  Kp_(1) = 80; Kp_(2) = 80;
       // Kp_(3) = 15;  Kp_(4) = 15; Kp_(5) = 15;
       // Kd_(0) = 1; Kd_(1) = 1; Kd_(2) = 1;
@@ -109,18 +112,22 @@ namespace desperate_housewife
       Kd_(3) = 200; Kd_(4) = 200; Kd_(5) = 200;
 
       first_step_ = 1;
-      error_pose_trajectory.arrived = 0;   
-  }
+      error_pose_trajectory.arrived = 0;  
+      switch_trajectory = false;
+ }
 
   void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& period)
-  {
+  {   
+      std_msgs::Float64MultiArray tau_msg;
+       std_msgs::Float64MultiArray qdot_msg;
       // get joint positions
       for(unsigned int i=0; i < joint_handles_.size(); i++) 
       {
         joint_msr_states_.q(i) = joint_handles_[i].getPosition();
         joint_msr_states_.qdot(i) = joint_handles_[i].getVelocity();
+        // qdot_msg.data.push_back(joint_handles_[i].getVelocity());
       }
-
+        // pub_qdot_.publish(qdot_msg);
         // resetting N and tau(t=0) for the highest priority task
         N_trans_ = I_;  
         SetToZero(tau_);
@@ -172,7 +179,7 @@ namespace desperate_housewife
           //interpolate the position and rotation
           if(error_pose_trajectory.arrived == 1)
           { 
-            x_des_.p = x_now_int.p + interpolatormb_line(time_inter, T_des)* (x_des_int.p - x_now_int.p);
+            x_des_.p = x_now_int.p + interpolatormb(time_inter, T_des)* (x_des_int.p - x_now_int.p);
 
             x_des_int.M.GetQuaternion(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
             x_now_int.M.GetQuaternion(quat_now.v(0),quat_now.v(1),quat_now.v(2),quat_now.a);
@@ -188,27 +195,59 @@ namespace desperate_housewife
             tf::twistKDLToMsg (x_err_int,  error_pose_trajectory.error_);
 
             time_inter = time_inter + period.toSec();
+
             // SO3 Time 
-            Time = interpolatormb_line(time_inter, T_des);
+            Time = interpolatormb(time_inter, T_des);
           }
 
 
           x_dot_ = J_.data*joint_msr_states_.qdot.data; 
-          
+          // std_msgs::Float64MultiArray x_dot_msg;
+                   
+          // for(int i=0; i<6; i++)
+          // {
+          //   x_dot_msg.data.push_back(x_dot_(i));
+          // }
+          // pub_xdot.publish(x_dot_msg);
+
+          std_msgs::Float64MultiArray xerr_msg;
           x_err_ = diff(x_,x_des_);
-              
+          
+          for(int i=0; i<6; i++)
+          {
+            xerr_msg.data.push_back(x_err_(i));
+          }
+          pub_diff.publish(xerr_msg);
+
           //to decide the pose of the object to be removed
           tf::poseKDLToMsg (x_, error_pose_trajectory.pose_hand);
           
 
           pub_error_.publish(error_pose_trajectory);
-        
+          std_msgs::Float64MultiArray Fa_msg;
           for(int i = 0; i < Force_attractive.size(); i++)
           {
             // Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + V_max_kuka*Kp_(i)*x_err_(i);
             Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + Kp_(i)*x_err_(i);
+
+            
+            Fa_msg.data.push_back(Force_attractive(i));
+          }
+          //jerk trajectory
+          if(switch_trajectory == true)
+          {
+            Time_traj = interpolatormb(time_inter, 2);
+            Force_attractive = Force_attractive_last + (Force_attractive - Force_attractive_last) *(10*pow(Time_traj,3) - 15*pow(Time_traj,4) + 6*pow(Time_traj,5));
+            if(Time_traj == 1)
+            {
+              switch_trajectory = false;
+            }
           }
 
+
+
+          std::cout<<"Force_attractive: "<<Force_attractive<<std::endl;
+          pub_Fa_.publish(Fa_msg);
           // computing b = J*M^-1*(c+g) - J_dot*q_dot
           b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
 
@@ -225,13 +264,14 @@ namespace desperate_housewife
               
 
           F_Rep_table = RepulsiveWithTable(x_chain);
-          Force_total_rep = Force_repulsive + F_Rep_table;
+          // Force_total_rep = Force_repulsive + F_Rep_table;
 
           // computing nullspace
           N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
 
           // finally, computing the torque tau
-          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + b_)) + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
+          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + b_)) + F_Rep_table;
+           // + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
           // + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
 
           // saving J_ and phi of the last iteration
@@ -240,6 +280,19 @@ namespace desperate_housewife
 
           // std::cout<<"tau_.data[0]: " <<tau_.data[0]<<std::endl;
           // std::cout<<"tau_(0): " <<tau_(0)<<std::endl;
+          // if(error_pose_trajectory.arrived == 1)
+          // { 
+          //   KDL::JntArray tau_prev_;
+          // tau_prev.resize(kdl_chain_.getNrOfJoints());
+          //   for (unsigned int j = 0; j < joint_handles_.size(); j++)
+          //   {
+          //     tau_prev_(j) = tau_(j);
+          //     tau_(j) = filters::exponentialSmoothing((tau_(j)-tau_prev_(j))/period.toSec(), tau_(j), 0.2);
+              
+          //   }
+          // }
+
+
 
           //CREA PROBLEMI IN SIMULAZIONE --> PROVARE SE È QUESTO CHE MI DA FASTIDIO IN REALE --> percentage 0.3 non va bene 
           tau_(0) = (std::abs(tau_(0)) >= 176*percentage ? std::copysign(176*percentage,tau_(0)) : tau_(0));
@@ -261,12 +314,7 @@ namespace desperate_housewife
         
       pub_tau_.publish(tau_msg);
       x_chain.clear();
-      // Object_radius.clear();
-      // Object_height.clear();
-      // Object_position.clear();
       JAC_repulsive.clear();
-      tau_msg.data.clear();
-
       ros::spinOnce();
 
   }
@@ -284,13 +332,17 @@ namespace desperate_housewife
   }
 
 
-    void PotentialFieldControl::command_start(const std_msgs::Bool::ConstPtr& msg)
+  void PotentialFieldControl::command_start(const std_msgs::Bool::ConstPtr& msg)
   { 
      start_flag = true;
   }
 
   void PotentialFieldControl::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
   {
+      Object_radius.clear();
+      Object_height.clear();
+      Object_position.clear();
+
       //get info for calculates objects surface
       for(unsigned int i=0; i < msg->geometries.size(); i++)
       {
@@ -318,7 +370,7 @@ namespace desperate_housewife
     if(Int == 0)
     {
       x_des_int = frame_des_;
-      x_des_ = x_des_int;
+      // x_des_ = x_des_int;
       fk_pos_solver_->JntToCart(joint_msr_states_.q, x_now_int);
       Int = 1;
       Time = 0;
@@ -326,15 +378,18 @@ namespace desperate_housewife
     }
     else
     {
+      //new pose
       if(!Equal(frame_des_, x_des_int,0.05))
       {
         // update desired frame;
+        Force_attractive_last = Force_attractive; 
         x_des_int = frame_des_;
         // update robot position
         fk_pos_solver_->JntToCart(joint_msr_states_.q, x_now_int);
         //time update
         time_inter = 0;
-        Time = 0;     
+        Time = 0;   
+        switch_trajectory = true;  
       }
     }
 
@@ -371,14 +426,14 @@ namespace desperate_housewife
 
       //F_rep_total = SUM(F_rep_each_ostacles)
       // std::cout<<"Object_position.size(): "<<Object_position.size()<<std::endl;
-      // for(unsigned int i=0; i < Object_position.size();i++)
-      // {
+      for(unsigned int i=0; i < Object_position.size();i++)
+      {
       //   distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[4].p)).Norm() );
       //   distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[5].p)).Norm() );
       //   distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[6].p)).Norm() );
-         distance_local_obj.push_back( (diff(Object_position[0].p,Pos_chain[7].p)).Norm() );
-        distance_local_obj.push_back( (diff(Object_position[0].p,Pos_chain[14].p)).Norm() );
-      
+         distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[7].p)).Norm() );
+        distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[14].p)).Norm() );
+      // }
       // double distance = diff(Object_position[0].p,Pos_chain[14].p).Norm();
 
       // std::cout<<"distance_local_obj.size(): "<<distance_local_obj.size()<<std::endl;
@@ -468,161 +523,142 @@ namespace desperate_housewife
                    F_rep.push_back(JAC_repulsive[14].data.transpose()* lambda_  * Force);
                   break;
           }
-
-           // std::string obstacle_frame;
-        //cylinder_frame = 
-        // wrench_msg_rep.header.stamp = ros::Time::now();
-        // wrench_msg_rep.header.frame_id = object_names_.c_str();
-        // wrench_msg_rep.wrench.force.x = Force[0];
-        // wrench_msg_rep.wrench.force.y = Force[1];
-        // wrench_msg_rep.wrench.force.z = Force[2];
-        // publisher_wrench_command_rep.publish(wrench_msg_rep);
-
-
-
         }
-        // else
-        // {
-        //   continue;
-        // }
-      // }
-    else
-    {
-      F_rep.push_back(Eigen::Matrix<double,7,1>::Zero());
-    }
-      // std::cout<<"F_rep.size: "<<F_rep.size()<<std::endl;
-    // std::cout<<"f_rep: "<<F_rep[0]<<std::endl;
-    // std::cout<<"Force_attractive: "<<Force_attractive<<std::endl;
-      // for(unsigned int j=0; j < F_rep.size(); j++)
-      // {
-      //   F_rep_tot = F_rep_tot + F_rep[j];
-      // }
-      // std::cout<<"F_rep_tot: "<<F_rep_tot<<std::endl;
-    
-
-     return F_rep[0];
-}
-
-
-Eigen::Matrix<double,7,1> PotentialFieldControl::RepulsiveWithTable(std::vector<KDL::Frame> &Pos_arm)
-{
-    // ROS_INFO("dentro_set_repulsive");
-    // for the obstacles avoidance we consired only segments 6,8,14 (14 is the softhand)
-    KDL::Vector Table_position(0,0,0.15);
-    double Rep_inf_table = 0.20;
-    Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
-    std::vector<double> distance_local_obj;
-    std::vector<double> distance_influence;
-    Eigen::Vector3d vec_Temp(0,0,0);
-    std::vector<int> index_infl;
-    int index_dist = 0;
-    Eigen::Matrix<double,7,1> F_rep = Eigen::Matrix<double,7,1>::Zero();
-
-     distance_local_obj.push_back(- Table_position.z()+ Pos_arm[4].p.z());
-    distance_local_obj.push_back(- Table_position.z()+ Pos_arm[5].p.z());
-    distance_local_obj.push_back(- Table_position.z()+ Pos_arm[6].p.z());
-    distance_local_obj.push_back(- Table_position.z()+ Pos_arm[7].p.z());
-    distance_local_obj.push_back(- Table_position.z()+ Pos_arm[14].p.z());
-
-    for(unsigned int i= 0; i< distance_local_obj.size(); i++)
-    {
-      if(distance_local_obj[i] < Rep_inf_table )
-      {
-        distance_influence.push_back(distance_local_obj[i] );
-        index_infl.push_back(i);
-
-      }
-      else
-      {
-        continue;
-      }
-    }
-    
-    //std::cout<<"distance_influence.size(): "<<distance_influence.size()<<std::endl;
-    
-    if(distance_influence.size() != 0)
-    {
-      double min_distance = distance_influence[0];
-      for (unsigned int i=0; i< distance_influence.size();i++)
-      {         
-        if(min_distance > distance_influence[i])
+        else
         {
-          min_distance = distance_influence[i];
-          index_dist = i ;
+          F_rep.push_back(Eigen::Matrix<double,7,1>::Zero());
+        }
+      }
+ 
+      for(unsigned int j=0; j < F_rep.size(); j++)
+      {
+         F_rep_tot = F_rep_tot + F_rep[j];
+      }
+
+       return F_rep_tot; 
+  }
+
+
+  Eigen::Matrix<double,7,1> PotentialFieldControl::RepulsiveWithTable(std::vector<KDL::Frame> &Pos_arm)
+  {
+      // ROS_INFO("dentro_set_repulsive");
+      // for the obstacles avoidance we consired only segments 6,8,14 (14 is the softhand)
+      KDL::Vector Table_position(0,0,0.15);
+      double Rep_inf_table = 0.10;
+      Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
+      std::vector<double> distance_local_obj;
+      std::vector<double> distance_influence;
+      Eigen::Vector3d vec_Temp(0,0,0);
+      std::vector<int> index_infl;
+      int index_dist = 0;
+      Eigen::Matrix<double,7,1> F_rep = Eigen::Matrix<double,7,1>::Zero();
+
+      distance_local_obj.push_back(- Table_position.z()+ Pos_arm[4].p.z());
+      distance_local_obj.push_back(- Table_position.z()+ Pos_arm[5].p.z());
+      distance_local_obj.push_back(- Table_position.z()+ Pos_arm[6].p.z());
+      distance_local_obj.push_back(- Table_position.z()+ Pos_arm[7].p.z());
+      distance_local_obj.push_back(- Table_position.z()+ Pos_arm[14].p.z());
+
+      for(unsigned int i= 0; i< distance_local_obj.size(); i++)
+      {
+        if(distance_local_obj[i] < Rep_inf_table )
+        {
+          distance_influence.push_back(distance_local_obj[i] );
+          index_infl.push_back(i);
+
         }
         else
         {
           continue;
         }
       }
-            
-      double Ni_ = 200;
-      Eigen::Vector3d distance_der_partial(0,0,1);
       
-      int index_jacobian = index_infl[index_dist] % 5; 
-      // std::cout<<"index_jacobian: "<<index_jacobian<<std::endl;
+      //std::cout<<"distance_influence.size(): "<<distance_influence.size()<<std::endl;
       
-      vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/Rep_inf_table) * distance_der_partial;
-
-        Force.row(0) << vec_Temp[0];
-        Force.row(1) << vec_Temp[1];
-        Force.row(2) << vec_Temp[2];
-        Force.row(3) <<  0;
-        Force.row(4) <<  0;
-        Force.row(5) <<  0;
-
-      // std::cout<<"index_jacobian: "<<index_jacobian<<std::endl;
-      switch(index_jacobian) //T= J_transpose * lambda*repulsive_force
-        {
-
-          case 0: 
-                F_rep = JAC_repulsive[4].data.transpose()* lambda_ * Force;
-                // std::cout<<" JAC_repulsive[6].data"<< JAC_repulsive[6].data<<std::endl;
-                break;
-          case 1:
-                F_rep = JAC_repulsive[5].data.transpose()* lambda_  * Force;
-                 // std::cout<<" JAC_repulsive[8].data"<< JAC_repulsive[8].data<<std::endl;
-                break;
-          case 2:
-                 F_rep = JAC_repulsive[6].data.transpose()* lambda_  * Force;
-                  // std::cout<<" JAC_repulsive[11].data"<< JAC_repulsive[11].data<<std::endl;
-                break;
-          case 3:
-                 F_rep = JAC_repulsive[7].data.transpose()* lambda_  * Force;
-                  // std::cout<<" JAC_repulsive[14].data"<< JAC_repulsive[14].data<<std::endl;
-                break;
-          case 4:
-                 F_rep = JAC_repulsive[14].data.transpose()* lambda_  * Force;
-                  // std::cout<<" JAC_repulsive[14].data"<< JAC_repulsive[14].data<<std::endl;
-                break;
-        }
-
-    }
-
-     return F_rep;
-
-
-}
-
-
-
-
-
-
-void PotentialFieldControl::set_gains(const std_msgs::Float64MultiArray::ConstPtr &msg)
-  {
-    if(msg->data.size() == 2*joint_handles_.size())
-    {
-      for(unsigned int i = 0; i < joint_handles_.size(); i++)
+      if(distance_influence.size() != 0)
       {
-        Kp_(i) = msg->data[i];
-        Kd_(i) = msg->data[i + joint_handles_.size()];
-      }
-    }
-    else
-      ROS_INFO("Number of Joint handles = %lu", joint_handles_.size());
+        //min element in the vector and index
+        std::vector<double>::iterator result = std::min_element(std::begin(distance_influence), std::end(distance_influence));
+        index_dist = std::distance(std::begin(distance_influence), result);
+        double min_distance;
+        min_distance = distance_influence[index_dist];
+            
+        double Ni_ = 0.1; //repulsive gain
+        Eigen::Vector3d distance_der_partial(0,0,1);  //direction of the field
+        
+        int index_jacobian = index_infl[index_dist] % 5; 
+        // std::cout<<"index_jacobian: "<<index_jacobian<<std::endl;
+        
+        vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/Rep_inf_table) * distance_der_partial;
 
-    ROS_INFO("Num of Joint handles = %lu, dimension of message = %lu", joint_handles_.size(), msg->data.size());
+          Force.row(0) << vec_Temp[0];
+          Force.row(1) << vec_Temp[1];
+          Force.row(2) << vec_Temp[2];
+          Force.row(3) <<  0;
+          Force.row(4) <<  0;
+          Force.row(5) <<  0;
+
+        // std::cout<<"index_jacobian: "<<index_jacobian<<std::endl;
+        switch(index_jacobian) //T= J_transpose * lambda*repulsive_force
+          {
+
+            case 0: 
+                  F_rep = JAC_repulsive[4].data.transpose()* lambda_ * Force;
+                  // std::cout<<" JAC_repulsive[6].data"<< JAC_repulsive[6].data<<std::endl;
+                  break;
+            case 1:
+                  F_rep = JAC_repulsive[5].data.transpose()* lambda_  * Force;
+                   // std::cout<<" JAC_repulsive[8].data"<< JAC_repulsive[8].data<<std::endl;
+                  break;
+            case 2:
+                   F_rep = JAC_repulsive[6].data.transpose()* lambda_  * Force;
+                    // std::cout<<" JAC_repulsive[11].data"<< JAC_repulsive[11].data<<std::endl;
+                  break;
+            case 3:
+                   F_rep = JAC_repulsive[7].data.transpose()* lambda_  * Force;
+                    // std::cout<<" JAC_repulsive[14].data"<< JAC_repulsive[14].data<<std::endl;
+                  break;
+            case 4:
+                   F_rep = JAC_repulsive[14].data.transpose()* lambda_  * Force;
+                    // std::cout<<" JAC_repulsive[14].data"<< JAC_repulsive[14].data<<std::endl;
+                  break;
+          }
+
+      }
+
+      //test with rqt plot
+      // std_msgs::Float64MultiArray Freptavolo_msg;
+      // for(int i=0; i<F_rep.size();i++)
+      // {
+      //   Freptavolo_msg.data.push_back(F_rep(i));
+      // }
+      // pub_Freptavolo_.publish(Freptavolo_msg);
+
+      // std::cout<<"F rep tavolo: "<< F_rep.col(0)<<std::endl; 
+      return F_rep;
+
+
+  }
+
+
+
+
+
+
+  void PotentialFieldControl::set_gains(const std_msgs::Float64MultiArray::ConstPtr &msg)
+  {
+      if(msg->data.size() == 2*joint_handles_.size())
+      {
+        for(unsigned int i = 0; i < joint_handles_.size(); i++)
+        {
+          Kp_(i) = msg->data[i];
+          Kd_(i) = msg->data[i + joint_handles_.size()];
+        }
+      }
+      else
+        ROS_INFO("Number of Joint handles = %lu", joint_handles_.size());
+
+      ROS_INFO("Num of Joint handles = %lu, dimension of message = %lu", joint_handles_.size(), msg->data.size());
 
 
   }

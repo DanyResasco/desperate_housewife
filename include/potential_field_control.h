@@ -26,6 +26,7 @@
 #include <interpolationmb.h>
 
 
+#include <control_toolbox/filters.h>
 
 
 
@@ -77,7 +78,7 @@ namespace desperate_housewife
 		* input: desperate message with information about obstacle to remove
 		* Description: callback that save the obstacle position
 		*/
-		void InfoOBj( const desperate_housewife::fittedGeometriesSingle::ConstPtr& obj_rem);
+		// void InfoOBj( const desperate_housewife::fittedGeometriesSingle::ConstPtr& obj_rem);
 		
 		/** Caalback: set_gains
 		* input: ros message
@@ -85,7 +86,10 @@ namespace desperate_housewife
 		*/
 		void set_gains(const std_msgs::Float64MultiArray::ConstPtr &msg);
 
-
+		/** Caalback: command_start
+		* input: ros message
+		* Description: callback for start the code with real robot
+		*/
 		void command_start(const std_msgs::Bool::ConstPtr& msg);
 		
 
@@ -159,7 +163,7 @@ namespace desperate_housewife
 		std::vector<double> Object_radius;
 		std::vector<double> Object_height;
 		std::vector<KDL::Frame> Object_position;
-		ros::Publisher hand_publisher_;
+		ros::Publisher hand_publisher_ ,pub_xdes_;
 		std::vector<KDL::Jacobian> JAC_repulsive;	//vector with all jabobian
 		std::string obstacle_remove_topic, obstacle_avoidance;
 		desperate_housewife::Error_msg error_pose_trajectory;
@@ -169,9 +173,10 @@ namespace desperate_housewife
 		// ros::Publisher publisher_wrench_command,publisher_wrench_command_rep ;
 		std::string tip_name, object_names_,set_gains_;
 		std::string error_topic;
-		ros::Publisher pub_error_right, pub_error_left;
+		ros::Publisher pub_error_right, pub_error_left,pub_qdot_;
 		std::string tau_commad;
-		std_msgs::Float64MultiArray tau_msg;
+		// std_msgs::Float64MultiArray tau_msg;
+		// std_msgs::Float64MultiArray qdot_msg;
 		//information for message
 		int erro_arr, err_obj, err_home ;
 		double time_inter; //time to interpolate
@@ -189,7 +194,11 @@ namespace desperate_housewife
 		tfScalar Time;
 		int a ;
 		bool start_flag;
-		
+		ros::Publisher pub_Freptavolo_, pub_Fa_, pub_diff,pub_xdot;
+		std::vector<KDL::Frame> test_pos_jerk;
+		Eigen::Matrix<double,6,1> Force_attractive_last;
+		bool switch_trajectory;
+		double Time_traj;
 		
 	};
 }
