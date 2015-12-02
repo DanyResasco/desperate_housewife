@@ -119,7 +119,7 @@ namespace desperate_housewife
   void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& period)
   {   
       std_msgs::Float64MultiArray tau_msg;
-       std_msgs::Float64MultiArray qdot_msg;
+      std_msgs::Float64MultiArray qdot_msg;
       // get joint positions
       for(unsigned int i=0; i < joint_handles_.size(); i++) 
       {
@@ -244,8 +244,6 @@ namespace desperate_housewife
             }
           }
 
-
-
           std::cout<<"Force_attractive: "<<Force_attractive<<std::endl;
           pub_Fa_.publish(Fa_msg);
           // computing b = J*M^-1*(c+g) - J_dot*q_dot
@@ -264,13 +262,13 @@ namespace desperate_housewife
               
 
           F_Rep_table = RepulsiveWithTable(x_chain);
-          // Force_total_rep = Force_repulsive + F_Rep_table;
+          Force_total_rep = Force_repulsive + F_Rep_table;
 
           // computing nullspace
           N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
 
           // finally, computing the torque tau
-          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + b_)) + F_Rep_table;
+          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + b_)) + Force_total_rep;
            // + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
           // + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
 
@@ -432,7 +430,7 @@ namespace desperate_housewife
       //   distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[5].p)).Norm() );
       //   distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[6].p)).Norm() );
          distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[7].p)).Norm() );
-        distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[14].p)).Norm() );
+         distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[14].p)).Norm() );
       // }
       // double distance = diff(Object_position[0].p,Pos_chain[14].p).Norm();
 
@@ -443,10 +441,10 @@ namespace desperate_housewife
           // if( distance <= influence )
           {
             min_d.push_back(distance_local_obj[i]);
-            index_infl.push_back(i); //for tracking wich object is closet
+            //index_infl.push_back(i); //for tracking wich object is closet
             // std::cout<<"index_infl: "<<index_infl[i]<<std::endl; 
             // std::cout<<"i: "<<i<<std::endl; 
-          }
+          }  
           else
           {
             continue;
@@ -458,29 +456,19 @@ namespace desperate_housewife
         // std::cout<<"min_d.size(): "<<min_d.size()<<std::endl;
         if(min_d.size() != 0)
         {
+
+          //min element in the vector and index
+          std::vector<double>::iterator result = std::min_element(std::begin(min_d), std::end(min_d));
+          index_dist = std::distance(std::begin(min_d), result);
+          double min_distance;
+          min_distance = min_d[index_dist];
           
-          double min_distance = min_d[0];
           Eigen::Vector3d distance_der_partial(0,0,0);
           Eigen::Vector3d vec_Temp(0,0,0);
-              
-          for (unsigned int i=0; i < min_d.size(); i++)
-          {
-            if(min_distance > min_d[i])
-            {
-              min_distance = min_d[i];
-              index_dist = i;
-              
-            }
-
-            else
-            {
-              continue;
-            }
-          }
-
-          int index_obj = floor(index_infl[index_dist]/2) ;
+            
+          int index_obj = i; //floor(index_infl[index_dist]/2) ;
           // std::cout<<"index_obj: "<<index_obj<<std::endl;
-          int index_jac = index_infl[index_dist] % 2;
+          int index_jac = i %2 ;// index_infl[index_dist] % 2;
           // std::cout<<"index_jac: "<<index_jac<<std::endl;
 
 
@@ -493,13 +481,13 @@ namespace desperate_housewife
            distance_der_partial[2] = (Object_position[index_obj].p.z()*4 / Object_height[index_obj] ); //n=2
           
 
-          double Ni_ = 1;
+          double Ni_ = 5;
           
           // vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
           // std::cout<<"qui"<<std::endl;       
-          Force(0) = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial[0];
-          Force(1) = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial[1];
-          Force(2) = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial[2];
+          Force(0) = (Ni_/pow(min_distance,2)) * (1.0/min_distance - 1.0/influence) * distance_der_partial[0];
+          Force(1) = (Ni_/pow(min_distance,2)) * (1.0/min_distance - 1.0/influence) * distance_der_partial[1];
+          Force(2) = (Ni_/pow(min_distance,2)) * (1.0/min_distance - 1.0/influence) * distance_der_partial[2];
           Force(3) = 0;
           Force(4) = 0;
           Force(5) = 0;
@@ -523,6 +511,11 @@ namespace desperate_housewife
                    F_rep.push_back(JAC_repulsive[14].data.transpose()* lambda_  * Force);
                   break;
           }
+
+          distance_local_obj.clear();
+          min_d.clear();
+
+
         }
         else
         {
