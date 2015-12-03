@@ -51,6 +51,7 @@ namespace desperate_housewife
       M_.resize(kdl_chain_.getNrOfJoints());
       C_.resize(kdl_chain_.getNrOfJoints());
       G_.resize(kdl_chain_.getNrOfJoints());
+      tau_prev_.resize(kdl_chain_.getNrOfJoints());
 
       J_last_.resize(kdl_chain_.getNrOfJoints());
 
@@ -72,6 +73,7 @@ namespace desperate_housewife
       pub_tau_ = nh_.advertise<std_msgs::Float64MultiArray>("tau_commad", 1000);
       pub_qdot_ = nh_.advertise<std_msgs::Float64MultiArray>("qdot_commad", 1000);
       pub_Fa_ = nh_.advertise<std_msgs::Float64MultiArray>("Factrative_commad", 1000);
+      pub_sing_val = nh_.advertise<std_msgs::Float64MultiArray>("sing_vals_commad", 1000);
       // pub_Freptavolo_ = nh_.advertise<std_msgs::Float64MultiArray>("Freptavolo_commad", 1000);
       pub_diff  = nh_.advertise<std_msgs::Float64MultiArray>("Diff_commad", 1000);
       pub_xdot = nh_.advertise<std_msgs::Float64MultiArray>("xdot_commad", 1000);
@@ -114,6 +116,7 @@ namespace desperate_housewife
       first_step_ = 1;
       error_pose_trajectory.arrived = 0;  
       switch_trajectory = false;
+      SetToZero(tau_prev_);
  }
 
   void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& period)
@@ -131,7 +134,8 @@ namespace desperate_housewife
         // resetting N and tau(t=0) for the highest priority task
         N_trans_ = I_;  
         SetToZero(tau_);
-    
+
+           
         //flag to use this code with real robot
         // if (start_flag)
         // {
@@ -141,8 +145,10 @@ namespace desperate_housewife
           id_solver_->JntToGravity(joint_msr_states_.q, G_);
           G_.data.setZero();
 
+          JacobiSVD<MatrixXd>::SingularValuesType sing_vals_;
           // computing the inverse of M_ now, since it will be used often
-          pseudo_inverse(M_.data,M_inv_,false); 
+          pseudo_inverse(M_.data,M_inv_,sing_vals_,false);
+         
 
           // computing Jacobian J(q)
           jnt_to_jac_solver_->JntToJac(joint_msr_states_.q,J_);
@@ -244,16 +250,21 @@ namespace desperate_housewife
             }
           }
 
-          std::cout<<"Force_attractive: "<<Force_attractive<<std::endl;
+          // std::cout<<"Force_attractive: "<<Force_attractive<<std::endl;
           pub_Fa_.publish(Fa_msg);
           // computing b = J*M^-1*(c+g) - J_dot*q_dot
           b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
 
           // computing omega = J*M^-1*N^T*J
           omega_ = J_.data*M_inv_*N_trans_*J_.data.transpose();
-
+          JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
           // computing lambda = omega^-1
-          pseudo_inverse(omega_,lambda_);
+          pseudo_inverse(omega_,lambda_,sing_vals_2);
+            std_msgs::Float64MultiArray sing_vals_msg;
+          for (int i = 0; i < sing_vals_2.size(); i++)
+            sing_vals_msg.data.push_back(sing_vals_2(i));
+          pub_sing_val.publish(sing_vals_msg);
+
          
           if(Object_position.size() > 0)
           {
@@ -278,20 +289,14 @@ namespace desperate_housewife
 
           // std::cout<<"tau_.data[0]: " <<tau_.data[0]<<std::endl;
           // std::cout<<"tau_(0): " <<tau_(0)<<std::endl;
-          // if(error_pose_trajectory.arrived == 1)
-          // { 
-          //   KDL::JntArray tau_prev_;
-          // tau_prev.resize(kdl_chain_.getNrOfJoints());
-          //   for (unsigned int j = 0; j < joint_handles_.size(); j++)
-          //   {
-          //     tau_prev_(j) = tau_(j);
-          //     tau_(j) = filters::exponentialSmoothing((tau_(j)-tau_prev_(j))/period.toSec(), tau_(j), 0.2);
+          for (unsigned int j = 0; j < joint_handles_.size(); j++)
+          {
               
-          //   }
-          // }
-
-
-
+              tau_(j) = filters::exponentialSmoothing(tau_(j), tau_prev_(j), 0.2);
+              tau_prev_(j) = tau_(j);
+              
+          }
+        
           //CREA PROBLEMI IN SIMULAZIONE --> PROVARE SE È QUESTO CHE MI DA FASTIDIO IN REALE --> percentage 0.3 non va bene 
           tau_(0) = (std::abs(tau_(0)) >= 176*percentage ? std::copysign(176*percentage,tau_(0)) : tau_(0));
           tau_(1) = (std::abs(tau_(1)) >= 176*percentage ? std::copysign(176*percentage,tau_(1)) : tau_(1)); 
@@ -316,6 +321,7 @@ namespace desperate_housewife
       ros::spinOnce();
 
   }
+
 
   void PotentialFieldControl::command(const desperate_housewife::handPoseSingle::ConstPtr& msg)
   { 
@@ -420,14 +426,14 @@ namespace desperate_housewife
       std::vector<double>  min_d;
       std::vector<unsigned int> index_infl;
       int index_dist = 0;
-      double influence = 0.30;
+      double influence = 0.20;
 
       //F_rep_total = SUM(F_rep_each_ostacles)
       // std::cout<<"Object_position.size(): "<<Object_position.size()<<std::endl;
       for(unsigned int i=0; i < Object_position.size();i++)
       {
       //   distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[4].p)).Norm() );
-      //   distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[5].p)).Norm() );
+          distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[6].p)).Norm() );
       //   distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[6].p)).Norm() );
          distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[7].p)).Norm() );
          distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[14].p)).Norm() );
@@ -468,7 +474,7 @@ namespace desperate_housewife
             
           int index_obj = i; //floor(index_infl[index_dist]/2) ;
           // std::cout<<"index_obj: "<<index_obj<<std::endl;
-          int index_jac = i %2 ;// index_infl[index_dist] % 2;
+          int index_jac = i % 3 ;// index_infl[index_dist] % 2;
           // std::cout<<"index_jac: "<<index_jac<<std::endl;
 
 
@@ -481,7 +487,7 @@ namespace desperate_housewife
            distance_der_partial[2] = (Object_position[index_obj].p.z()*4 / Object_height[index_obj] ); //n=2
           
 
-          double Ni_ = 5;
+          double Ni_ = 1;
           
           // vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
           // std::cout<<"qui"<<std::endl;       
@@ -495,19 +501,19 @@ namespace desperate_housewife
           switch(index_jac) //T= J_transpose * lambda*repulsive_force
           {
 
-            // case 0: 
-            //       F_rep.push_back(JAC_repulsive[4].data.transpose()* lambda_ * Force);
-            //       break;
-            // case 1:
-            //       F_rep.push_back(JAC_repulsive[6].data.transpose()* lambda_  * Force);
-            //       break;
+            case 0: 
+                  F_rep.push_back(JAC_repulsive[6].data.transpose()* lambda_ * Force);
+                  break;
+             // case 0:
+             //       F_rep.push_back(JAC_repulsive[6].data.transpose()* lambda_  * Force);
+             //       break;
             // case 2:
             //       F_rep.push_back(JAC_repulsive[8].data.transpose()* lambda_  * Force);
             //       break;
-            case 0:
+            case 1:
                   F_rep.push_back(JAC_repulsive[7].data.transpose()* lambda_  * Force);
                   break;
-            case 1:
+            case 2:
                    F_rep.push_back(JAC_repulsive[14].data.transpose()* lambda_  * Force);
                   break;
           }

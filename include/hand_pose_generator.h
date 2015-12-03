@@ -62,6 +62,10 @@ public:
   HandPoseGenerator();
   ~HandPoseGenerator(){};
 
+  /** Caalback: HandPoseGeneratorCallback
+  * input: ros message
+  * Description: callback that called all function for make a desired pose for each object 
+  */
   void HandPoseGeneratorCallback(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
 
   desperate_housewife::handPoseSingle generateHandPose( desperate_housewife::fittedGeometriesSingle geometry );
@@ -125,13 +129,13 @@ public:
   *Description:Second Demo. grasp object without obstacles avoidance. if item isn't graspable will be removed 
   */
   void  DesperateDemo2(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
-   /** FUnction: DesperateDemo2
+   /** FUnction: DesperateDemo1
   *input: cylinder
   *output: void
   *Description:First Demo. grasp object with obstacles avoidance. 
   */
   void  DesperateDemo1( const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
-   /** FUnction: DesperateDemo2
+   /** FUnction: Overturn
   *input: void
   *output: void
   *Description:If there are more than 5 objects or all objects aren't graspable, overturn table 

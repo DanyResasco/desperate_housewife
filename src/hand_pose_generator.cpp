@@ -87,7 +87,7 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
       desperate_housewife::handPoseSingle DesiredHandPose;
       
       DesiredHandPose.home = 0;
-      std_msgs::UInt16 Obj_info;
+      std_msgs::UInt16 Obj_info;  //msg for desperate_mind with object's information
 
       if ( msg->geometries.size() == 1)
       {
@@ -97,9 +97,8 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
           if(DesiredHandPose.isGraspable != true)
           {
             ROS_DEBUG("Object to Reject");
-            // SendObjRejectMsg(msg->geometries[0] , DesiredHandPose.whichArm);
             DesiredHandPose.pose = ObstacleReject(msg->geometries[0] , DesiredHandPose.whichArm);
-            Obj_info.data = 1;
+            Obj_info.data = 1;  //flag for desperate_mind code. 
             tf::Transform tfHandTrasform2;
             tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform2); 
             tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"ObstacleReject") );
@@ -112,19 +111,19 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
             std::cout<<"grasp"<<std::endl;
           }  
           
-          if (DesiredHandPose.whichArm == 1) 
+          if (DesiredHandPose.whichArm == 1) //left arm
           {
               desired_hand_publisher_left.publish( DesiredHandPose );
               objects_info_left_pub.publish(Obj_info);
               stop = 1;
           } 
-          else
+          else //right arm
           {
               desired_hand_publisher_right.publish( DesiredHandPose );
               objects_info_right_pub.publish(Obj_info);
               stop = 1;      
           }
-              
+          //to show with rviz    
           tf::Transform tfHandTrasform;
           tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform);
           tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), desired_hand_frame_.c_str()) );
@@ -136,8 +135,7 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
         Overturn();
       }
       else
-      {
-        
+      {      
         switch(demo)
         {
           case 0: 

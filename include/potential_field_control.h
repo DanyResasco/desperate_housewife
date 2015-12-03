@@ -28,11 +28,11 @@
 
 #include <control_toolbox/filters.h>
 
-
-
-
 namespace desperate_housewife
 {
+	
+	static int Int(0);
+
 	class PotentialFieldControl: public controller_interface::KinematicChainControllerBase<hardware_interface::EffortJointInterface>
 	{
 	public:
@@ -95,10 +95,9 @@ namespace desperate_housewife
 
 		/** Function: PoseDesiredInterpolation
 		* input: desired pose
-		* Description: this function save the position of endeffector and desired pose when msg arrived
+		* Description: this function save the position of endeffector, desired pose, and updaes interpolate times when msg arrived
 		*/
 		void PoseDesiredInterpolation(KDL::Frame frame_des_);
-
 
 
 	private:
@@ -181,7 +180,7 @@ namespace desperate_housewife
 		int erro_arr, err_obj, err_home ;
 		double time_inter; //time to interpolate
 		double T_des; //time desired to interpolate
-		int Int = 0; 
+		// int Int = 0; 
 
 		struct quaternion_
 		{
@@ -194,11 +193,12 @@ namespace desperate_housewife
 		tfScalar Time;
 		int a ;
 		bool start_flag;
-		ros::Publisher pub_Freptavolo_, pub_Fa_, pub_diff,pub_xdot;
+		ros::Publisher pub_Freptavolo_, pub_Fa_, pub_diff,pub_xdot,pub_sing_val;
 		std::vector<KDL::Frame> test_pos_jerk;
 		Eigen::Matrix<double,6,1> Force_attractive_last;
 		bool switch_trajectory;
 		double Time_traj;
+		KDL::JntArray tau_prev_;
 		
 	};
 }
