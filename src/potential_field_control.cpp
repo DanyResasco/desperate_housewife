@@ -71,12 +71,12 @@ namespace desperate_housewife
      
       pub_error_ = nh_.advertise<desperate_housewife::Error_msg>("error", 1000);
       pub_tau_ = nh_.advertise<std_msgs::Float64MultiArray>("tau_commad", 1000);
-      pub_qdot_ = nh_.advertise<std_msgs::Float64MultiArray>("qdot_commad", 1000);
+      // pub_qdot_ = nh_.advertise<std_msgs::Float64MultiArray>("qdot_commad", 1000);
       pub_Fa_ = nh_.advertise<std_msgs::Float64MultiArray>("Factrative_commad", 1000);
-      pub_sing_val = nh_.advertise<std_msgs::Float64MultiArray>("sing_vals_commad", 1000);
+      // pub_sing_val = nh_.advertise<std_msgs::Float64MultiArray>("sing_vals_commad", 1000);
       // pub_Freptavolo_ = nh_.advertise<std_msgs::Float64MultiArray>("Freptavolo_commad", 1000);
-      pub_diff  = nh_.advertise<std_msgs::Float64MultiArray>("Diff_commad", 1000);
-      pub_xdot = nh_.advertise<std_msgs::Float64MultiArray>("xdot_commad", 1000);
+      // pub_diff  = nh_.advertise<std_msgs::Float64MultiArray>("Diff_commad", 1000);
+      // pub_xdot = nh_.advertise<std_msgs::Float64MultiArray>("xdot_commad", 1000);
       sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this); 
       sub_command_start = n.subscribe("start_control", 1, &PotentialFieldControl::command_start, this); 
 
@@ -101,6 +101,7 @@ namespace desperate_housewife
       Force_repulsive = Eigen::Matrix<double,7,1>::Zero();
       F_Rep_table = Eigen::Matrix<double,7,1>::Zero();
       Force_total_rep = Eigen::Matrix<double,7,1>::Zero();
+      Force_repulsive_prev = Eigen::Matrix<double,7,1>::Zero();
       fk_pos_solver_->JntToCart(joint_msr_states_.q,x_des_);
       //gains in cartesian space
       // Kp_(0) = 80;  Kp_(1) = 80; Kp_(2) = 80;
@@ -216,14 +217,14 @@ namespace desperate_housewife
           // }
           // pub_xdot.publish(x_dot_msg);
 
-          std_msgs::Float64MultiArray xerr_msg;
+          // std_msgs::Float64MultiArray xerr_msg;
           x_err_ = diff(x_,x_des_);
           
-          for(int i=0; i<6; i++)
-          {
-            xerr_msg.data.push_back(x_err_(i));
-          }
-          pub_diff.publish(xerr_msg);
+          // for(int i=0; i<6; i++)
+          // {
+          //   xerr_msg.data.push_back(x_err_(i));
+          // }
+          // pub_diff.publish(xerr_msg);
 
           //to decide the pose of the object to be removed
           tf::poseKDLToMsg (x_, error_pose_trajectory.pose_hand);
@@ -236,6 +237,7 @@ namespace desperate_housewife
             // Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + V_max_kuka*Kp_(i)*x_err_(i);
             Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + Kp_(i)*x_err_(i);
 
+
             
             Fa_msg.data.push_back(Force_attractive(i));
           }
@@ -244,11 +246,13 @@ namespace desperate_housewife
           {
             Time_traj = interpolatormb(time_inter, 2);
             Force_attractive = Force_attractive_last + (Force_attractive - Force_attractive_last) *(10*pow(Time_traj,3) - 15*pow(Time_traj,4) + 6*pow(Time_traj,5));
+            // Force_attractive_last = Force_attractive;
             if(Time_traj == 1)
             {
               switch_trajectory = false;
             }
           }
+            // std::cout<<"Force_attractive: "<<Force_attractive<<std::endl;
 
           // std::cout<<"Force_attractive: "<<Force_attractive<<std::endl;
           pub_Fa_.publish(Fa_msg);
@@ -260,15 +264,15 @@ namespace desperate_housewife
           JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
           // computing lambda = omega^-1
           pseudo_inverse(omega_,lambda_,sing_vals_2);
-            std_msgs::Float64MultiArray sing_vals_msg;
-          for (int i = 0; i < sing_vals_2.size(); i++)
-            sing_vals_msg.data.push_back(sing_vals_2(i));
-          pub_sing_val.publish(sing_vals_msg);
+          //   std_msgs::Float64MultiArray sing_vals_msg;
+          // for (int i = 0; i < sing_vals_2.size(); i++)
+          //   sing_vals_msg.data.push_back(sing_vals_2(i));
+          // pub_sing_val.publish(sing_vals_msg);
 
          
           if(Object_position.size() > 0)
           {
-            Force_repulsive = GetRepulsiveForce(x_chain);    
+            Force_repulsive = GetRepulsiveForce(x_chain);
           }
               
 
@@ -279,9 +283,8 @@ namespace desperate_housewife
           N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
 
           // finally, computing the torque tau
-          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + b_)) + Force_total_rep;
-           // + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
-          // + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
+          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive )) + Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
+          //Fa * b??
 
           // saving J_ and phi of the last iteration
           J_last_ = J_;
@@ -346,7 +349,8 @@ namespace desperate_housewife
       Object_radius.clear();
       Object_height.clear();
       Object_position.clear();
-
+      Time_traj_rep = 0;
+      
       //get info for calculates objects surface
       for(unsigned int i=0; i < msg->geometries.size(); i++)
       {
@@ -393,7 +397,9 @@ namespace desperate_housewife
         //time update
         time_inter = 0;
         Time = 0;   
-        switch_trajectory = true;  
+        switch_trajectory = true; 
+        Time_traj_rep = 0;
+      
       }
     }
 
@@ -419,123 +425,120 @@ namespace desperate_housewife
 
   Eigen::Matrix<double,7,1> PotentialFieldControl::GetRepulsiveForce(std::vector<KDL::Frame> &Pos_chain)
   {
-      // for the obstacles avoidance we consired only segments 6,8,14 (14 is the softhand)
+      // obstacles avoidance  ( pos_chain 14 is the softhand)
       std::vector<double> distance_local_obj;
       Eigen::Matrix<double,7,1> F_rep_tot = Eigen::Matrix<double,7,1>::Zero();
-      std::vector<Eigen::Matrix<double,7,1> > F_rep; 
-      std::vector<double>  min_d;
-      std::vector<unsigned int> index_infl;
-      int index_dist = 0;
-      double influence = 0.20;
-
+      std::vector<Eigen::Matrix<double,7,1> > F_rep;      
+      int index_dist;
+      
       //F_rep_total = SUM(F_rep_each_ostacles)
       // std::cout<<"Object_position.size(): "<<Object_position.size()<<std::endl;
       for(unsigned int i=0; i < Object_position.size();i++)
       {
-      //   distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[4].p)).Norm() );
-          distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[6].p)).Norm() );
-      //   distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[6].p)).Norm() );
+        std::vector<double>  min_d;
+        std::vector<unsigned int> index_infl;
+        double influence = Object_radius[i] +  0.20;
+        // std::cout<<"influence: "<<influence<<std::endl;
+         distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[4].p)).Norm() );
+         distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[5].p)).Norm() );
+         distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[6].p)).Norm() );
          distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[7].p)).Norm() );
          distance_local_obj.push_back( (diff(Object_position[i].p,Pos_chain[14].p)).Norm() );
-      // }
-      // double distance = diff(Object_position[0].p,Pos_chain[14].p).Norm();
 
-      // std::cout<<"distance_local_obj.size(): "<<distance_local_obj.size()<<std::endl;
-        for(unsigned int i=0; i < distance_local_obj.size(); i++ )
+        // std::cout<<"distance_local_obj.size(): "<<distance_local_obj.size()<<std::endl;
+        for(unsigned int j=0; j< distance_local_obj.size(); j++ )
         {
-          if( distance_local_obj[i] <= influence )
-          // if( distance <= influence )
+          if( distance_local_obj[j] <= influence )
           {
-            min_d.push_back(distance_local_obj[i]);
-            //index_infl.push_back(i); //for tracking wich object is closet
-            // std::cout<<"index_infl: "<<index_infl[i]<<std::endl; 
-            // std::cout<<"i: "<<i<<std::endl; 
-          }  
-          else
-          {
-            continue;
+            min_d.push_back(distance_local_obj[j]);
+            index_infl.push_back(j);
           }
-   
         }
-               
-        //ROS_INFO("finito for e la dimensione è di: %g", min_d.size());
-        // std::cout<<"min_d.size(): "<<min_d.size()<<std::endl;
-        if(min_d.size() != 0)
+
+        if(min_d.size() > 0)
         {
 
-          //min element in the vector and index
           std::vector<double>::iterator result = std::min_element(std::begin(min_d), std::end(min_d));
           index_dist = std::distance(std::begin(min_d), result);
           double min_distance;
           min_distance = min_d[index_dist];
-          
-          Eigen::Vector3d distance_der_partial(0,0,0);
-          Eigen::Vector3d vec_Temp(0,0,0);
+
+            //double min_distance = distance_local_obj[j];
+            // std::cout<<"min_distance: "<<min_distance<<std::endl;
+             
+            Eigen::Vector3d distance_der_partial(0,0,0);
+            Eigen::Vector3d vec_Temp(0,0,0);
+              
+            int index_obj = i; //floor(index_infl[index_dist]/2) ;
+            // std::cout<<"index_obj: "<<index_obj<<std::endl;
+            int index_jac = index_infl[index_dist] % 5; 
+            // index_infl[index_dist] % 5;
+            // std::cout<<"index_jac: "<<index_jac<<std::endl;
+            Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
+             // distance_der_partial = x^2/radius + y^2 / radius + 2*(z^2n) /l
+      
+            distance_der_partial[0] = (Object_position[index_obj].p.x()*2 / Object_radius[index_obj] );
+            // std::cout<<"distance_der_partial[0]: "<<distance_der_partial[0]<<std::endl;
+            distance_der_partial[1] = (Object_position[index_obj].p.y()*2 / Object_radius[index_obj] );
+            // std::cout<<"distance_der_partial[1]: "<<distance_der_partial[1]<<std::endl;
+            // distance_der_partial[2] = (pow(Object_position[index_obj].p.z(),7)*16 / Object_height[index_obj] ); //n=2
+            distance_der_partial[2] = (Object_position[index_obj].p.z()*4 / Object_height[index_obj] ); //n=1
+            // std::cout<<"distance_der_partial[2]: "<<distance_der_partial[2]<<std::endl;
+
+            double Ni_ = 1.0;
             
-          int index_obj = i; //floor(index_infl[index_dist]/2) ;
-          // std::cout<<"index_obj: "<<index_obj<<std::endl;
-          int index_jac = i % 3 ;// index_infl[index_dist] % 2;
-          // std::cout<<"index_jac: "<<index_jac<<std::endl;
+            // vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
+            // std::cout<<"qui"<<std::endl;
+                  
+            Force(0) = (Ni_/pow(min_distance,2)) * (1.0/min_distance - 1.0/influence) * distance_der_partial[0];
+            Force(1) = (Ni_/pow(min_distance,2)) * (1.0/min_distance - 1.0/influence) * distance_der_partial[1];
+            Force(2) = (Ni_/pow(min_distance,2)) * (1.0/min_distance - 1.0/influence) * distance_der_partial[2];
+            Force(3) = 0;
+            Force(4) = 0;
+            Force(5) = 0;
+            // std::cout<<"Force: "<<Force<<std::endl;
+           
+            switch(index_jac) //T= J_transpose * lambda*repulsive_force
+            {
 
+              case 0: 
+                    F_rep.push_back(JAC_repulsive[4].data.transpose()* lambda_ * Force);
+                    break;
+               case 1:
+                     F_rep.push_back(JAC_repulsive[5].data.transpose()* lambda_  * Force);
+                     break;
+              case 2:
+                    F_rep.push_back(JAC_repulsive[6].data.transpose()* lambda_  * Force);
+                    break;
+              case 3:
+                    F_rep.push_back(JAC_repulsive[7].data.transpose()* lambda_  * Force);
+                    break;
+              case 4:
+                     F_rep.push_back(JAC_repulsive[14].data.transpose()* lambda_  * Force);
+                    break;
+            }
 
-          Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
-           // distance_der_partial = x^2/radius + y^2 / radius + 2*(z^2n) /l
-    
-          distance_der_partial[0] = (Object_position[index_obj].p.x()*2 / Object_radius[index_obj] );
-          distance_der_partial[1] = (Object_position[index_obj].p.y()*2 / Object_radius[index_obj] );
-          // distance_der_partial[2] = (pow(Object_position[index_obj].p.z(),7)*16 / Object_height[index_obj] ); //n=2
-           distance_der_partial[2] = (Object_position[index_obj].p.z()*4 / Object_height[index_obj] ); //n=2
+            // std::cout<<"F_rep: "<<F_rep[j]<<std::endl;
           
 
-          double Ni_ = 1;
-          
-          // vec_Temp = (Ni_/pow(min_distance,2)) * (1/min_distance - 1/influence) * distance_der_partial;
-          // std::cout<<"qui"<<std::endl;       
-          Force(0) = (Ni_/pow(min_distance,2)) * (1.0/min_distance - 1.0/influence) * distance_der_partial[0];
-          Force(1) = (Ni_/pow(min_distance,2)) * (1.0/min_distance - 1.0/influence) * distance_der_partial[1];
-          Force(2) = (Ni_/pow(min_distance,2)) * (1.0/min_distance - 1.0/influence) * distance_der_partial[2];
-          Force(3) = 0;
-          Force(4) = 0;
-          Force(5) = 0;
-
-          switch(index_jac) //T= J_transpose * lambda*repulsive_force
-          {
-
-            case 0: 
-                  F_rep.push_back(JAC_repulsive[6].data.transpose()* lambda_ * Force);
-                  break;
-             // case 0:
-             //       F_rep.push_back(JAC_repulsive[6].data.transpose()* lambda_  * Force);
-             //       break;
-            // case 2:
-            //       F_rep.push_back(JAC_repulsive[8].data.transpose()* lambda_  * Force);
-            //       break;
-            case 1:
-                  F_rep.push_back(JAC_repulsive[7].data.transpose()* lambda_  * Force);
-                  break;
-            case 2:
-                   F_rep.push_back(JAC_repulsive[14].data.transpose()* lambda_  * Force);
-                  break;
-          }
-
-          distance_local_obj.clear();
-          min_d.clear();
-
+            distance_local_obj.clear();
 
         }
-        else
-        {
-          F_rep.push_back(Eigen::Matrix<double,7,1>::Zero());
-        }
+          // else
+          // {
+          //   F_rep.push_back(Eigen::Matrix<double,7,1>::Zero());
+          // }
+        // }
       }
  
-      for(unsigned int j=0; j < F_rep.size(); j++)
-      {
+    for(unsigned int j=0; j < F_rep.size(); j++)
+    {
          F_rep_tot = F_rep_tot + F_rep[j];
-      }
+    }
+    std::cout<<"F_rep_tot: "<<F_rep_tot<<std::endl;
 
-       return F_rep_tot; 
-  }
+  return F_rep_tot; 
+}
 
 
   Eigen::Matrix<double,7,1> PotentialFieldControl::RepulsiveWithTable(std::vector<KDL::Frame> &Pos_arm)
@@ -664,7 +667,17 @@ namespace desperate_housewife
 
 
 
+// double DiffAndNorm(KDL::Frame Object_position, KDL::Frame &Pos_chain )
+// {
+//   double x,y,z;
+  
+//   x = (Object_position.p.x() - Pos_chain.p.x());
+//   y = (Object_position.p.y() - Pos_chain.p.y());
+//   z = (Object_position.p.z() - Pos_chain.p.z());
+//   KDL::Vector temp_diff(x,y,z);
 
+//   return temp_diff.Norm();
+// }
 
 
 

@@ -153,6 +153,7 @@ namespace desperate_housewife
 
 		Eigen::Matrix<double,6,1> Force_attractive;
 		Eigen::Matrix<double,7,1> Force_total_rep;
+		Eigen::Matrix<double,7,1> Force_repulsive_prev;
 		Eigen::Matrix<double,7,1> Force_repulsive;
 		Eigen::Matrix<double,7,1> F_Rep_table;
 		double V_max_kuka = 1.5;
@@ -197,11 +198,14 @@ namespace desperate_housewife
 		std::vector<KDL::Frame> test_pos_jerk;
 		Eigen::Matrix<double,6,1> Force_attractive_last;
 		bool switch_trajectory;
-		double Time_traj;
+		double Time_traj, Time_traj_rep;
 		KDL::JntArray tau_prev_;
 		
 	};
 }
+
+
+double DiffAndNorm(KDL::Frame Object_position, KDL::Frame &Pos_chain );
 
 #endif
 
