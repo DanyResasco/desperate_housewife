@@ -175,7 +175,7 @@ namespace BasicGeometries{
 
     double isLaying = 0.0;
     //45 degree is the threshold chosen 
-    if(((theta >= -45.*(3.14/180.)) && (theta <= 45.*(3.14/180.)))) 
+    if(((theta >= -15.*(3.14/180.)) && (theta <= 15.*(3.14/180.)))) 
     {
       isLaying = 0.;
     }
