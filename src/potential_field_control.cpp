@@ -78,7 +78,9 @@ namespace desperate_housewife
       // pub_diff  = nh_.advertise<std_msgs::Float64MultiArray>("Diff_commad", 1000);
       // pub_xdot = nh_.advertise<std_msgs::Float64MultiArray>("xdot_commad", 1000);
       sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this); 
-      sub_command_start = n.subscribe("start_control", 1, &PotentialFieldControl::command_start, this); 
+      sub_command_start = n.subscribe("start_control", 1, &PotentialFieldControl::command_start, this);
+
+      
 
       start_flag = false;
 
@@ -236,9 +238,6 @@ namespace desperate_housewife
           {
             // Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + V_max_kuka*Kp_(i)*x_err_(i);
             Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + Kp_(i)*x_err_(i);
-
-
-            
             Fa_msg.data.push_back(Force_attractive(i));
           }
           //jerk trajectory
@@ -678,8 +677,6 @@ namespace desperate_housewife
 
 //   return temp_diff.Norm();
 // }
-
-
 
 
 

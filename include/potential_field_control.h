@@ -24,6 +24,7 @@
 #include <desperate_housewife/Error_msg.h>
 #include <geometry_msgs/WrenchStamped.h>
 #include <interpolationmb.h>
+#include <visualization_msgs/Marker.h>
 
 
 #include <control_toolbox/filters.h>
@@ -98,6 +99,8 @@ namespace desperate_housewife
 		* Description: this function save the position of endeffector, desired pose, and updaes interpolate times when msg arrived
 		*/
 		void PoseDesiredInterpolation(KDL::Frame frame_des_);
+
+		void gridspace(const std_msgs::Float64MultiArray::ConstPtr &msg);
 
 
 	private:
@@ -200,6 +203,7 @@ namespace desperate_housewife
 		bool switch_trajectory;
 		double Time_traj, Time_traj_rep;
 		KDL::JntArray tau_prev_;
+		ros::Subscriber sub_grid_;
 		
 	};
 }
