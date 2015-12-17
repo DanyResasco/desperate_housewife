@@ -86,28 +86,70 @@ void gridspace(const std_msgs::Float64MultiArray::ConstPtr &msg)
   double zmin: 0.0
   double zmax: 1.0
 
-  KDL::Vector point_pos(msg->data[0],msg->data[1],msg->data[2]);
-  // x =  msg->data[0];
-  // y =  msg->data[1];
-  // z =  msg->data[2];
-  x_res =  msg->data[3];
-  y_res =  msg->data[4];
-  z_res =  msg->data[5];
-
-  vector<vector<vector< KDL::Vector> > > array3D;
-
-  for(int i = xmin, i <= xmax , i = i + x_res)
+  if(msg->data[0] == 1) //start
   {
-   for(int j = ymin, j <= ymax , j = j + y_res)
-   {    
-      for(int k = zmin, k <= zmax , k = k + k_res)
+      KDL::Vector point_pos(msg->data[1],msg->data[2],msg->data[3]);
+      std::vector<double> distance_local_obj;
+      distance_local_obj.push_back( (diff(Object_position, point_pos)).Norm() );
+      //repulsive with obj
+      for(unsigned int i=0; i < Object_position.size();i++)
       {
-        KDL::Vector point_(i,j,k);
-        array3D[i][j][k] = GetRepulsiveWithTable(point_) + GetRepulsiveWithObstacles(point_);
-        DrawArrow(array3D[i][j][k], point_);
-      } 
-    }
+        std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
+        
+        ForceAndIndex = GetRepulsiveForce(distance_local_obj, influence, i);
+        
+      }
+
+      std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex_table;
+      ForceAndIndex_table = RepulsiveWithTable(distance_local_obj);
+
+      Eigen::Matrix<double,6,1> Force_tot_grid;
+      Force_tot_grid = ForceAndIndex.first + ForceAndIndex_table.first;
+      DrawArrow(Force_tot_grid, point_pos);   
   }
+  // else
+  // {
+  //   x_res =  msg->data[4];
+  //   y_res =  msg->data[5];
+  //   z_res =  msg->data[6];
+
+  //   vector<vector<vector< KDL::Vector> > > array3D;
+  //   //grid
+  //   for(int i = xmin, i <= xmax , i = i + x_res)
+  //   {
+  //    for(int j = ymin, j <= ymax , j = j + y_res)
+  //    {    
+  //       for(int k = zmin, k <= zmax , k = k + k_res)
+  //       {
+  //         KDL::Vector point_(i,j,k);
+  //         std::vector<double> distance_local_obj;
+  //         distance_local_obj.push_back( (diff(point_, Pos_chain[list_of_link[i]].p)).Norm() );
+  //         DistanceAndIndex = GetMinDistance(Pos_chain, Object_position[i].p , influence);
+          
+  //         if(DistanceAndIndex[0] == 1 )
+  //         {
+  //           std::cout<<"qui dentro"<<std::endl;
+  //           Eigen::Vector3d distance_der_partial = GetPartialDerivate(Object_position[i].p, Object_radius[i], Object_height[i]);
+
+  //           Eigen::Matrix<double,6,1> Force = GetFIRAS(DistanceAndIndex[1], distance_der_partial, influence);
+  //           std::cout<<"fuori GetFIRAS"<<std::endl;   
+        
+  //           F_rep.push_back(JAC_repulsive[DistanceAndIndex[2]].data.transpose()* lambda_ * Force);
+  //         }
+
+
+
+
+
+
+
+
+  //         array3D[i][j][k] = GetRepulsiveWithTable(point_) + GetRepulsiveWithObstacles(point_);
+  //         DrawArrow(array3D[i][j][k], point_);
+  //       } 
+  //     }
+  //   }
+  // }
 
 
 }
@@ -126,10 +168,12 @@ DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point )
     marker.pose.position.x = gridspace_point.x;
     marker.pose.position.y = gridspace_point.y;
     marker.pose.position.z = gridspace_point.z;
-    marker.pose.orientation.x = 0.0;
-    marker.pose.orientation.y = 0.0;
-    marker.pose.orientation.z = 0.0;
-    marker.pose.orientation.w = 1.0;
+    tf::Quaternion quat(gridspace_Force.x, gridspace_Force.y, gridspace_Force.z, 0);
+    marker.pose.orientation.x = (quat.normalize()).getX();
+    marker.pose.orientation.y = (quat.normalize()).getY();
+    marker.pose.orientation.z = (quat.normalize()).getZ();
+    marker.pose.orientation.w = (quat.normalize()).getW();
+    RotationMarker(gridspace_Force);
     marker.scale.x = 1.0;
     marker.scale.y = 1.0;
     marker.scale.z = 1.0;
@@ -141,6 +185,29 @@ DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point )
     
 
 }
+
+KDL::Vector grid::RotationMarker(KDL::Vector &ris_Force)
+{
+  KDL::Vector z(0,0,1);
+  double angle = z.dot(ris_Force);
+
+  Eigen::Matrix4d Rot_z;
+  Rot_z.row(0)<< std::cos(angle), - std::sin(angle), 0, 0;
+  Rot_z.row(1)<< std::sin(angle), std::cos(angle), 0,0;
+  Rot_z.row(2)<< 0,0,1,0;
+  Rot_z.row(3)<< 0,0,0,1;
+
+
+
+
+}
+
+
+
+
+
+
+
 
 
 KDL::Vector grid::GetRepulsiveWithTable(KDL::Vector &point_pos)

@@ -1,4 +1,4 @@
-#include <potential_field_control.h>
+#include <test_pf.h>
 #include <utils/pseudo_inversion.h>
 #include <utils/skew_symmetric.h>
 #include <ros/node_handle.h>

@@ -56,11 +56,18 @@ namespace desperate_housewife
 
 
 		/** Function: GetRepulsiveForce
-		* input: position of all joint
+		* input: distanza between object and robot, field influence , index for objects
 		* output: force repulsive 
 		* Description: this function calculates the repulsive force between robot arm and object
 		*/
-		// Eigen::Matrix<double,7,1> GetRepulsiveForce(std::vector<KDL::Frame> &Pos_now);
+		std::pair<Eigen::Matrix<double,6,1>, double>  GetRepulsiveForce(std::vector<double> distance_local_obj, double influence, int inde_obj);
+
+		/** Function: GetFIRAS
+		* input: distanza between object and robot, field influence , partial derivate
+		* output: force repulsive 
+		* Description: this function calculates firas
+		*/
+		Eigen::Matrix<double,6,1> GetFIRAS(double &min_distance, Eigen::Vector3d &distance_der_partial , double &influence);
 		
 		/** Caalback: InfoGeometry
 		* input: desperate message with obstacle information
@@ -69,7 +76,7 @@ namespace desperate_housewife
 		void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
 		
 		/** Function: RepulsiveWithTable
-		* input: position of all joint
+		* input: distanza between table and robot
 		* output: force repulsive 
 		* Description: this function calculates the repulsive force between robot arm and table
 		*/
@@ -104,11 +111,18 @@ namespace desperate_housewife
 
 		void gridspace(const std_msgs::Float64MultiArray::ConstPtr &msg);
 
+		/** Function: GetPartialDerivate
+		* input: object information
+		* Description: this function calculates the partial derivate of objects surface 
+		*/
 		Eigen::Vector3d GetPartialDerivate(KDL::Vector &Object_pos, double &radius, double &height);
-		// std::vector<double> GetMinDistance(std::vector<KDL::Frame> &Pos_chain, KDL::Vector &Object_position, double influence );
-		   Eigen::Matrix<double,6,1> GetFIRAS(double &min_distance, Eigen::Vector3d &distance_der_partial , double &influence);
-		   std::vector<double> GetMinDistance(std::vector<double> distance_local_obj,  double influence );
-		std::pair<Eigen::Matrix<double,6,1>, double>  GetRepulsiveForce(std::vector<double> distance_local_obj, double influence, int inde_obj);
+		
+		/** Function: GetMinDistance
+		* input: distance, influence
+		* Description: this function give back the minus distance of vector 
+		*/
+		std::vector<double> GetMinDistance(std::vector<double> distance_local_obj,  double influence );
+		
 		
 
 	private:
@@ -179,20 +193,13 @@ namespace desperate_housewife
 		std::string obstacle_remove_topic, obstacle_avoidance;
 		desperate_housewife::Error_msg error_pose_trajectory;
 		int ObjOrObst;
-		// geometry_msgs::WrenchStamped wrench_msg;
-		// geometry_msgs::WrenchStamped wrench_msg_rep;
-		// ros::Publisher publisher_wrench_command,publisher_wrench_command_rep ;
 		std::string tip_name, object_names_,set_gains_;
 		std::string error_topic;
 		ros::Publisher pub_error_right, pub_error_left,pub_qdot_;
 		std::string tau_commad;
-		// std_msgs::Float64MultiArray tau_msg;
-		// std_msgs::Float64MultiArray qdot_msg;
-		//information for message
 		int erro_arr, err_obj, err_home ;
 		double time_inter; //time to interpolate
 		double T_des; //time desired to interpolate
-		// int Int = 0; 
 
 		struct quaternion_
 		{
@@ -203,9 +210,9 @@ namespace desperate_housewife
 		tf::Quaternion quat_tf;
 		double percentage;
 		tfScalar Time;
-		int a ;
+		
 		bool start_flag;
-		ros::Publisher pub_Freptavolo_, pub_Fa_, pub_diff,pub_xdot,pub_sing_val;
+		
 		std::vector<KDL::Frame> test_pos_jerk;
 		Eigen::Matrix<double,6,1> Force_attractive_last;
 		bool switch_trajectory;
@@ -221,5 +228,9 @@ namespace desperate_housewife
 
 
 #endif
+
+
+
+
 
 
