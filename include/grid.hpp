@@ -3,10 +3,16 @@
 
 #include <ros/ros.h>
 #include <ros/console.h>
+#include <std_msgs/Float64MultiArray.h>
+#include <kdl_parser/kdl_parser.hpp>
+#include <Eigen/LU>
+#include <kdl/frames.hpp>
+#include <kdl/frames_io.hpp>
 
 class grid
 {
 public:
+  ros::NodeHandle nh;
   void gridspace(const std_msgs::Float64MultiArray::ConstPtr &msg);
   KDL::Vector GetRepulsiveWithTable();
   KDL::Vector GetRepulsiveWithObstacles();
@@ -14,7 +20,7 @@ public:
   grid();
   ~grid(){};
 private:
-  ros::Subscribe sub_grid_,obstacles_subscribe_;
+  ros::Subscriber sub_grid_,obstacles_subscribe_;
   std::vector<double> Object_radius;
   std::vector<double> Object_height;
   std::vector<KDL::Frame> Object_position;
@@ -51,9 +57,9 @@ int main(int argc, char **argv)
 grid::grid()
 {
     //grid
-    sub_grid_ = nh_.subscribe("gridspace", 1, &PotentialFieldControl::gridspace, this);
-    obstacles_subscribe_ = n.subscribe(obstacle_avoidance.c_str(), 1, &PotentialFieldControl::InfoGeometry, this); 
-    marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+    sub_grid_ = nh.subscribe("gridspace", 1, &grid::gridspace, this);
+    obstacles_subscribe_ = nh.subscribe(obstacle_avoidance.c_str(), 1, &grid::InfoGeometry, this); 
+    marker_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 1);
 }
 
 void grid::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
@@ -168,13 +174,16 @@ DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point )
     marker.pose.position.x = gridspace_point.x;
     marker.pose.position.y = gridspace_point.y;
     marker.pose.position.z = gridspace_point.z;
-    tf::Quaternion quat(gridspace_Force.x, gridspace_Force.y, gridspace_Force.z, 0);
-    marker.pose.orientation.x = (quat.normalize()).getX();
-    marker.pose.orientation.y = (quat.normalize()).getY();
-    marker.pose.orientation.z = (quat.normalize()).getZ();
-    marker.pose.orientation.w = (quat.normalize()).getW();
-    RotationMarker(gridspace_Force);
-    marker.scale.x = 1.0;
+
+    // tf::Quaternion quat;
+    // quat =  RotationMarker(gridspace_Force, gridspace_point);
+    
+    marker.pose.orientation.x = 0;
+    marker.pose.orientation.y = 0;
+    marker.pose.orientation.z = 0;
+    marker.pose.orientation.w = 1;
+    
+    marker.scale.x = gridspace_Force / 10;
     marker.scale.y = 1.0;
     marker.scale.z = 1.0;
     marker.color.r = 0.0f;
@@ -186,10 +195,10 @@ DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point )
 
 }
 
-KDL::Vector grid::RotationMarker(KDL::Vector &ris_Force)
+tf::Quaternion grid::RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point)
 {
-  KDL::Vector z(0,0,1);
-  double angle = z.dot(ris_Force);
+  KDL::Vector x(1,0,0);
+  double angle = x.dot(ris_Force);
 
   Eigen::Matrix4d Rot_z;
   Rot_z.row(0)<< std::cos(angle), - std::sin(angle), 0, 0;
@@ -197,8 +206,8 @@ KDL::Vector grid::RotationMarker(KDL::Vector &ris_Force)
   Rot_z.row(2)<< 0,0,1,0;
   Rot_z.row(3)<< 0,0,0,1;
 
-
-
+  KDL::Rotation rot_arrow;
+  rot_arrow = 
 
 }
 

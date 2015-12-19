@@ -26,6 +26,11 @@
 #include <interpolationmb.h>
 #include <visualization_msgs/Marker.h>
 
+#include <Eigen/LU>
+#include <Eigen/Dense>
+#include <Eigen/LU>
+#include <Eigen/Geometry> 
+
 
 #include <control_toolbox/filters.h>
 
@@ -104,13 +109,20 @@ namespace desperate_housewife
 
 		void gridspace(const std_msgs::Float64MultiArray::ConstPtr &msg);
 
+		// std::pair<std::vector<KDL::Frame>, std::vector< Eigen::Matrix<double,1,2>>> GetInfoObject(); 
+		// bool GetInfoObject(desperate_housewife::potential_field_control::Request &req, desperate_housewife::potential_field_control::Response &res);
+
+
 		Eigen::Vector3d GetPartialDerivate(KDL::Vector &Object_pos, double &radius, double &height);
 		// std::vector<double> GetMinDistance(std::vector<KDL::Frame> &Pos_chain, KDL::Vector &Object_position, double influence );
-		   Eigen::Matrix<double,6,1> GetFIRAS(double &min_distance, Eigen::Vector3d &distance_der_partial , double &influence);
-		   std::vector<double> GetMinDistance(std::vector<double> distance_local_obj,  double influence );
+		Eigen::Matrix<double,6,1> GetFIRAS(double &min_distance, Eigen::Vector3d &distance_der_partial , double &influence);
+		std::vector<double> GetMinDistance(std::vector<double> distance_local_obj,  double influence );
 		std::pair<Eigen::Matrix<double,6,1>, double>  GetRepulsiveForce(std::vector<double> distance_local_obj, double influence, int inde_obj);
-		
+		// void GetForce(const std_msgs::Float64MultiArray::ConstPtr &msg );
+		// void DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point );
 
+		
+		
 	private:
 		ros::Subscriber sub_command_, sub_command_start;
 		ros::Publisher pub_error_,  pub_tau_;
@@ -213,8 +225,17 @@ namespace desperate_housewife
 		KDL::JntArray tau_prev_;
 		ros::Subscriber sub_grid_;
 		std::vector<int> list_of_link;
+		// ros::ServiceServer service;
+		std::string point_;
+		ros::Subscriber sub_force_point_;
+		ros::Publisher vis_pub;
 		
 	};
+
+	// Eigen::Quaterniond RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point);
+	  
+
+
 }
 
 

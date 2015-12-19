@@ -1,0 +1,2 @@
+PotentialFieldControl/obstacle_list: /left_arm/PotentialFieldControl/obstacle_pose_left
+PotentialFieldControl/obstacle_list: /right_arm/PotentialFieldControl/obstacle_pose_right

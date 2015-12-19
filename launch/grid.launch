@@ -1,0 +1,9 @@
+<launch>
+
+	<rosparam command="load" file="$(find desperate_housewife)/config/grid.yaml" />
+  <include file="$(find desperate_housewife)/launch/grid_main.launch">
+  	 
+  	
+  </include>
+
+</launch>
