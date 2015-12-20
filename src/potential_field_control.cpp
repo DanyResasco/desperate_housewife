@@ -83,16 +83,13 @@ namespace desperate_housewife
 
       sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this); 
       sub_command_start = n.subscribe("start_control", 1, &PotentialFieldControl::command_start, this);
-      //vis_pub = n.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
+      // vis_pub = n.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
       // service = n.advertiseService("grid", GetInfoObject);
       
       start_flag = false;
 
       return true;
   }
-
-
-
 
 
   void PotentialFieldControl::starting(const ros::Time& time)
@@ -269,7 +266,7 @@ namespace desperate_housewife
                 }
                 std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
                 ForceAndIndex = GetRepulsiveForce(distance_local_obj, influence, i);
-                vect_rep.push_back (JAC_repulsive[ForceAndIndex.second].data.transpose()* lambda_ * ForceAndIndex.first);
+                vect_rep.push_back (JAC_repulsive[list_of_link[ForceAndIndex.second]].data.transpose()* lambda_ * ForceAndIndex.first);
                 //Force_repulsive =  JAC_repulsive[ForceAndIndex.second].data.transpose()* lambda_ * ForceAndIndex.first;
             }
             
@@ -378,51 +375,7 @@ namespace desperate_housewife
 
   }
 
-  // void PotentialFieldControl::GetForce(const std_msgs::Float64MultiArray::ConstPtr &msg )
-  // {
-  //     KDL::Vector point_pos(msg->data[0],msg->data[1],msg->data[2]);
-  //     std::cout<<"qui"<<std::endl;
-  //     std::vector<Eigen::Matrix<double,6,1> > F_rep;
-  //     std::vector<double> distance_local_obj;
-  //     for(unsigned int i=0; i< Object_position.size(); i++)
-  //     {  
-  //       std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
-  //       distance_local_obj.push_back( (diff(Object_position[i].p, point_pos)).Norm() );
-
-  //       double influence = Object_radius[i] + 0.2;
-
-  //       ForceAndIndex = GetRepulsiveForce(distance_local_obj, influence, i);
-
-  //       F_rep.push_back(ForceAndIndex.first);
-  //     }
-      
-  //     Eigen::Matrix<double,6,1> f = Eigen::Matrix<double,6,1>::Zero(); 
-      
-  //     for(unsigned int k=0; k < F_rep.size();k++)
-  //     {
-  //       f = f + F_rep[k];
-  //     }
-
-  //     //repulsive with table
-  //     std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex_table;
-  //     KDL::Vector Table_position(0,0,0.15);  
-  //     std::vector<double> dist;
-  //     dist.push_back(- Table_position.z() + point_pos.z() );
-  //     ForceAndIndex_table = RepulsiveWithTable(dist);
-
-  //     Eigen::Matrix<double,6,1> Force_tot_grid;
-  //     Force_tot_grid = f + ForceAndIndex_table.first;
-  //     KDL::Vector force_vect(Force_tot_grid(0), Force_tot_grid(1),Force_tot_grid(2));
-  //     KDL::Vector null(0,0,0);
-  //     if(!Equal(force_vect,null,0.05))
-  //     {
-  //       DrawArrow(force_vect, point_pos); 
-  //     }
-  //     else
-  //       std::cout<<"F ris nulla"<<std::endl;
-
-  // }
-
+  // 
 
   void PotentialFieldControl::PoseDesiredInterpolation(KDL::Frame frame_des_)
   {
@@ -480,32 +433,32 @@ namespace desperate_housewife
       std::vector<double> DistanceAndIndex;
       std::vector<double>::iterator result = std::min_element(std::begin(distance_local_obj), std::end(distance_local_obj));
       int index_dist = std::distance(std::begin(distance_local_obj), result); 
- 
+    
       if(distance_local_obj[index_dist] <= influence)
       {
           DistanceAndIndex.push_back(1);
           DistanceAndIndex.push_back( distance_local_obj[index_dist] );
-          DistanceAndIndex.push_back( list_of_link[index_dist] );
+          // DistanceAndIndex.push_back( list_of_link[index_dist] );
+          DistanceAndIndex.push_back( index_dist);
           std::cout<<"distance_local_obj: "<< distance_local_obj[index_dist]<<std::endl;
-          std::cout<<"list_of_link: "<< list_of_link[index_dist]<<std::endl;
       }
       else
         DistanceAndIndex.push_back(0);
       
       return DistanceAndIndex;
-
   }
 
   std::pair<Eigen::Matrix<double,6,1>, double> PotentialFieldControl::GetRepulsiveForce(std::vector<double> distance_local_obj, double influence, int inde_obj)
   {
       std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
-      ForceAndIndex.first =  Eigen::Matrix<double,6,1>::Zero();  
+      ForceAndIndex.first =  Eigen::Matrix<double,6,1>::Zero();
+      ForceAndIndex.second = 0;  
       std::vector<double> DistanceAndIndex;
       DistanceAndIndex = GetMinDistance(distance_local_obj, influence);
-       std::cout<<"fuori da GetMinDistance"<<std::endl;
+      std::cout<<"fuori da GetMinDistance"<<std::endl;
       if(DistanceAndIndex[0] == 1 )
       {
-        std::cout<<"dentro"<<std::endl;
+          std::cout<<"dentro"<<std::endl;
           Eigen::Vector3d distance_der_partial = GetPartialDerivate(Object_position[inde_obj].p, Object_radius[inde_obj], Object_height[inde_obj]);
           ForceAndIndex.first = GetFIRAS(DistanceAndIndex[1], distance_der_partial, influence);
           std::cout<<"ForceAndIndex.first: "<<ForceAndIndex.first<<std::endl;
@@ -598,6 +551,51 @@ namespace desperate_housewife
   }
 
 
+  // void PotentialFieldControl::GetForce(const std_msgs::Float64MultiArray::ConstPtr &msg )
+  // {
+  //     KDL::Vector point_pos(msg->data[0],msg->data[1],msg->data[2]);
+  //     std::cout<<"qui"<<std::endl;
+  //     std::vector<Eigen::Matrix<double,6,1> > F_rep;
+  //     std::vector<double> distance_local_obj;
+  //     for(unsigned int i=0; i< Object_position.size(); i++)
+  //     {  
+  //       std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
+  //       distance_local_obj.push_back( (diff(Object_position[i].p, point_pos)).Norm() );
+
+  //       double influence = Object_radius[i] + 0.2;
+
+  //       ForceAndIndex = GetRepulsiveForce(distance_local_obj, influence, i);
+
+  //       F_rep.push_back(ForceAndIndex.first);
+  //     }
+      
+  //     Eigen::Matrix<double,6,1> f = Eigen::Matrix<double,6,1>::Zero(); 
+      
+  //     for(unsigned int k=0; k < F_rep.size();k++)
+  //     {
+  //       f = f + F_rep[k];
+  //     }
+
+  //     //repulsive with table
+  //     std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex_table;
+  //     KDL::Vector Table_position(0,0,0.15);  
+  //     std::vector<double> dist;
+  //     dist.push_back(- Table_position.z() + point_pos.z() );
+  //     ForceAndIndex_table = RepulsiveWithTable(dist);
+
+  //     Eigen::Matrix<double,6,1> Force_tot_grid;
+  //     Force_tot_grid = f + ForceAndIndex_table.first;
+  //     KDL::Vector force_vect(Force_tot_grid(0), Force_tot_grid(1),Force_tot_grid(2));
+  //     KDL::Vector null(0,0,0);
+  //     if(!Equal(force_vect,null,0.05))
+  //     {
+  //       DrawArrow(force_vect, point_pos); 
+  //     }
+  //     else
+  //       std::cout<<"F ris nulla"<<std::endl;
+
+  // }
+
   // std::pair<std::vector<KDL::Frame>, std::vector< Eigen::Matrix<double,1,2>>> 
   // bool PotentialFieldControl::GetInfoObject(desperate_housewife::potential_field_control::Request &req, desperate_housewife::potential_field_control::Response &res) 
   // {
@@ -628,7 +626,7 @@ namespace desperate_housewife
   //   uint32_t shape = visualization_msgs::Marker::ARROW;
   //   visualization_msgs::Marker marker;
   //   // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-  //   marker.header.frame_id = "/my_frame";
+  //   marker.header.frame_id = "vito_anchor";
   //   marker.header.stamp = ros::Time::now();
   //   marker.ns = "basic_shapes";
   //   marker.id = 0;
@@ -646,14 +644,14 @@ namespace desperate_housewife
   //   marker.pose.orientation.z = quat.z();
   //   marker.pose.orientation.w = quat.w();
     
-  //   marker.scale.x = gridspace_Force.x() / 10;
-  //   marker.scale.y = gridspace_Force.y() / 10;
-  //   marker.scale.z = gridspace_Force.z() / 10;
+  //   marker.scale.x = 1;
+  //   marker.scale.y = 1;
+  //   marker.scale.z = 1;
   //   marker.color.r = 0.0f;
   //   marker.color.g = 1.0f;
   //   marker.color.b = 0.0f;
   //   marker.color.a = 1.0;
-  //   marker.lifetime = ros::Duration();
+  //   marker.lifetime = ros::Duration(25.0);
   //   vis_pub.publish( marker ); 
      
 

@@ -31,6 +31,7 @@ public:
   void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
   grid();
   ~grid(){};
+    void grid::GetForceAndDraw(KDL::Vector point_pos);
 private:
   ros::Subscriber sub_grid_,obstacles_subscribe_;
   std::vector<double> Object_radius;
@@ -41,7 +42,7 @@ private:
   std::vector<KDL::Frame> Object_position;
   ros::Publisher vis_pub;
   ros::ServiceClient client;
-  std::vector<int> list_of_link; 
+
 
 };
 

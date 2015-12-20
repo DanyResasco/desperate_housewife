@@ -191,9 +191,6 @@ namespace desperate_housewife
 		std::string obstacle_remove_topic, obstacle_avoidance;
 		desperate_housewife::Error_msg error_pose_trajectory;
 		int ObjOrObst;
-		// geometry_msgs::WrenchStamped wrench_msg;
-		// geometry_msgs::WrenchStamped wrench_msg_rep;
-		// ros::Publisher publisher_wrench_command,publisher_wrench_command_rep ;
 		std::string tip_name, object_names_,set_gains_;
 		std::string error_topic;
 		ros::Publisher pub_error_right, pub_error_left,pub_qdot_;
@@ -232,7 +229,7 @@ namespace desperate_housewife
 		
 	};
 
-	// Eigen::Quaterniond RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point);
+	Eigen::Quaterniond RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point);
 	  
 
 
