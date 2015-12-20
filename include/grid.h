@@ -26,12 +26,12 @@ class grid
 public:
   ros::NodeHandle nh;
   void gridspace(const std_msgs::Float64MultiArray::ConstPtr &msg);
-  void  DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point );  
+  void  DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point, int K );  
   Eigen::Quaterniond RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point);
   void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
   grid();
   ~grid(){};
-    void grid::GetForceAndDraw(KDL::Vector point_pos);
+    KDL::Vector GetForce(KDL::Vector point_pos);
 private:
   ros::Subscriber sub_grid_,obstacles_subscribe_;
   std::vector<double> Object_radius;
@@ -42,6 +42,7 @@ private:
   std::vector<KDL::Frame> Object_position;
   ros::Publisher vis_pub;
   ros::ServiceClient client;
+  std::vector<KDL::Vector> Force;
 
 
 };
