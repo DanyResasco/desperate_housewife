@@ -18,7 +18,7 @@ grid::grid()
 }
 
 void grid::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
-  {
+{
       Object_radius.clear();
       Object_height.clear();
       Object_position.clear();
@@ -34,20 +34,99 @@ void grid::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstP
         tf::poseMsgToKDL(msg->geometries[i].pose, frame_obj);
         Object_position.push_back(frame_obj); 
       }
-          list_of_link.push_back(1);
-       list_of_link.push_back(2);
-  }
+   
+}
 
 void grid::gridspace(const std_msgs::Float64MultiArray::ConstPtr &msg)
 {
-  if(msg->data[0] == 1) //start
-  {
-      std::cout<<"sms ricevuto"<<std::endl;
-       // list_of_link.push_back(1);
-       // list_of_link.push_back(2);
-       std::cout<<"list_of_link: "<<list_of_link[0]<<std::endl;
-      KDL::Vector point_pos(msg->data[1],msg->data[2],msg->data[3]);
+    std::cout<<"sms ricevuto"<<std::endl;
+    int count = 0;
+      
+    for(unsigned int i = msg->data[0]; i <= msg->data[1]; i = i + msg->data[2] )
+    {
+     for(unsigned int j = msg->data[3]; j <= msg->data[4]; j = j + msg->data[5] )
+      {
+        for(unsigned int k = msg->data[6]; k <= msg->data[7]; k = k + msg->data[8] )
+        {
+          KDL::Vector vect_pos(i,j,k);
+          GetForceAndDraw(vect_pos, count);
+          count ++;  
+        }
+      }
+    }
+
+
+}
+
+void grid::DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point, int K )
+{
+    std::cout<<"disegno"<<std::endl;
+    int32_t shape = visualization_msgs::Marker::ARROW;
+    visualization_msgs::Marker marker;
+    // Set the frame ID and timestamp.  See the TF tutorials for information on these.
+    marker.header.frame_id = "vito_anchor";
+    marker.header.stamp = ros::Time::now();
+    marker.ns = "basic_shapes";
+    marker.id = K;
+    marker.type = shape;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose.position.x = gridspace_point.x();
+    marker.pose.position.y = gridspace_point.y();
+    marker.pose.position.z = gridspace_point.z();
+
+    Eigen::Quaterniond quat;
+    quat =  RotationMarker(gridspace_Force, gridspace_point);
+    
+    marker.pose.orientation.x = quat.x();
+    marker.pose.orientation.y = quat.y();
+    marker.pose.orientation.z = quat.z();
+    marker.pose.orientation.w = quat.w();
+    
+    marker.scale.x = 0.2;
+    marker.scale.y = 0.02;
+    marker.scale.z = 0.02;
+    marker.color.r = 0.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 0.0f;
+    marker.color.a = 1.0;
+    marker.lifetime = ros::Duration(25.0);
+    vis_pub.publish( marker ); 
      
+
+}
+
+Eigen::Quaterniond grid::RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point)
+{
+  Eigen::Vector3d  x(1,0,0);
+  Eigen::Vector3d Force_eigen(ris_Force.x(),ris_Force.y(),ris_Force.z());
+  double pi = 3.14159264;
+  double angle = std::acos( (-x.dot(Force_eigen))/(x.norm()*Force_eigen.norm()));
+  std::cout<<"angle: "<<angle<<std::endl;
+  Eigen::Matrix3d transformation_ = Eigen::Matrix3d::Identity();
+  // Eigen::Quaterniond quat_eigen_hand(transformation_);
+  // if(angle != 0)
+  // {
+    Eigen::Vector3d axis(0,0,0);
+    axis = (x.cross(Force_eigen)) / (x.cross(Force_eigen)).norm();
+    std::cout<<"axis: "<<axis[0]<<'\t'<<axis[1]<<'\t'<<axis[2]<<std::endl;
+    // Eigen::Matrix3d transformation_ = Eigen::Matrix3d::Identity();
+    Eigen::Vector3d row0(axis[0]*axis[0]*(1-cos(angle))+cos(angle), axis[0]*axis[1]*(1-cos(angle))-axis[2]*sin(angle), axis[0]*axis[2]*(1-cos(angle))+axis[1]*sin(angle));
+    Eigen::Vector3d row1(axis[0]*axis[1]*(1-cos(angle))+axis[2]*sin(angle), axis[1]*axis[1]*(1-cos(angle))+cos(angle), axis[1]*axis[2]*(1-cos(angle))-axis[0]*sin(angle));
+    Eigen::Vector3d row2(axis[0]*axis[2]*(1-cos(angle))-axis[1]*sin(angle), axis[1]*axis[2]*(1-cos(angle))+axis[0]*sin(angle),axis[2]*axis[2]*(1-cos(angle))+cos(angle));
+    
+    transformation_.row(0) << row0.transpose();
+    transformation_.row(1) << row1.transpose();
+    transformation_.row(2) << row2.transpose();
+    Eigen::Quaterniond quat_eigen_hand(transformation_);
+    std::cout<<"quat_eigen_hand: "<<quat_eigen_hand.x()<<'\t'<<quat_eigen_hand.y()<<'\t'<<quat_eigen_hand.z()<<'\t'<<quat_eigen_hand.w()<<std::endl;
+  // }
+  
+ return quat_eigen_hand.normalized();
+
+}
+
+void grid::GetForceAndDraw(KDL::Vector &point_pos, int num)
+{
       std::vector<Eigen::Matrix<double,6,1> > F_rep;
 
       //repulsive with obj
@@ -102,77 +181,9 @@ void grid::gridspace(const std_msgs::Float64MultiArray::ConstPtr &msg)
 
       if(!Equal(force_vect,null,0.05))
       {
-        DrawArrow(force_vect, point_pos); 
+        DrawArrow(force_vect, point_pos,num); 
       }
       else
         std::cout<<"F ris nulla"<<std::endl;
-      
-  }
-}
-
-void grid::DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point )
-{
-    std::cout<<"disegno"<<std::endl;
-    int32_t shape = visualization_msgs::Marker::ARROW;
-    visualization_msgs::Marker marker;
-    // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = "vito_anchor";
-    marker.header.stamp = ros::Time::now();
-    marker.ns = "basic_shapes";
-    marker.id = 0;
-    marker.type = shape;
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.pose.position.x = gridspace_point.x();
-    marker.pose.position.y = gridspace_point.y();
-    marker.pose.position.z = gridspace_point.z();
-
-    Eigen::Quaterniond quat;
-    quat =  RotationMarker(gridspace_Force, gridspace_point);
-    
-    marker.pose.orientation.x = quat.x();
-    marker.pose.orientation.y = quat.y();
-    marker.pose.orientation.z = quat.z();
-    marker.pose.orientation.w = quat.w();
-    
-    marker.scale.x = 0.2;
-    marker.scale.y = 0.02;
-    marker.scale.z = 0.02;
-    marker.color.r = 0.0f;
-    marker.color.g = 1.0f;
-    marker.color.b = 0.0f;
-    marker.color.a = 1.0;
-    marker.lifetime = ros::Duration(25.0);
-    vis_pub.publish( marker ); 
-     
-
-}
-
-Eigen::Quaterniond grid::RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point)
-{
-  Eigen::Vector3d  x(1,0,0);
-  Eigen::Vector3d Force_eigen(ris_Force.x(),ris_Force.y(),ris_Force.z());
-  double pi = 3.14159264;
-  double angle = std::acos( (-x.dot(Force_eigen))/(x.norm()*Force_eigen.norm()));
-  std::cout<<"angle: "<<angle<<std::endl;
-  Eigen::Matrix3d transformation_ = Eigen::Matrix3d::Identity();
-  // Eigen::Quaterniond quat_eigen_hand(transformation_);
-  // if(angle != 0)
-  // {
-    Eigen::Vector3d axis(0,0,0);
-    axis = (x.cross(Force_eigen)) / (x.cross(Force_eigen)).norm();
-    std::cout<<"axis: "<<axis[0]<<'\t'<<axis[1]<<'\t'<<axis[2]<<std::endl;
-    // Eigen::Matrix3d transformation_ = Eigen::Matrix3d::Identity();
-    Eigen::Vector3d row0(axis[0]*axis[0]*(1-cos(angle))+cos(angle), axis[0]*axis[1]*(1-cos(angle))-axis[2]*sin(angle), axis[0]*axis[2]*(1-cos(angle))+axis[1]*sin(angle));
-    Eigen::Vector3d row1(axis[0]*axis[1]*(1-cos(angle))-axis[2]*sin(angle), axis[1]*axis[1]*(1-cos(angle))+cos(angle), axis[1]*axis[2]*(1-cos(angle))-axis[0]*sin(angle));
-    Eigen::Vector3d row2(axis[0]*axis[2]*(1-cos(angle))-axis[1]*sin(angle), axis[1]*axis[2]*(1-cos(angle))+axis[0]*sin(angle),axis[2]*axis[2]*(1-cos(angle))+cos(angle));
-    
-    transformation_.row(0) << row0.transpose();
-    transformation_.row(1) << row1.transpose();
-    transformation_.row(2) << row2.transpose();
-    Eigen::Quaterniond quat_eigen_hand(transformation_);
-    std::cout<<"quat_eigen_hand: "<<quat_eigen_hand.x()<<'\t'<<quat_eigen_hand.y()<<'\t'<<quat_eigen_hand.z()<<'\t'<<quat_eigen_hand.w()<<std::endl;
-  // }
-  
- return quat_eigen_hand.normalized();
 
 }

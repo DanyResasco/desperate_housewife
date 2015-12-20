@@ -31,7 +31,7 @@ public:
   void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
   grid();
   ~grid(){};
-    KDL::Vector GetForce(KDL::Vector point_pos);
+  void grid::GetForceAndDraw(KDL::Vector &point_pos, int num);
 private:
   ros::Subscriber sub_grid_,obstacles_subscribe_;
   std::vector<double> Object_radius;
