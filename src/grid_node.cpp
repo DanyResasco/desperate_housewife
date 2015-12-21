@@ -5,16 +5,11 @@ grid::grid()
     //grid
    
     sub_grid_ = nh.subscribe("gridspace", 1, &grid::gridspace, this);
-    // marker_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 1);
     vis_pub = nh.advertise<visualization_msgs::Marker>( "visualization_marker", 1 );
+    // vis_pub = nh.advertise<visualization_msgs::MarkerArray>( "visualization_marker", 1 );
     nh.param<std::string>("PotentialFieldControl/obstacle_list" , obstacle_avoidance, "/right_arm/PotentialFieldControl/obstacle_pose_right");
     obstacles_subscribe_ = nh.subscribe(obstacle_avoidance.c_str(), 1, &grid::InfoGeometry, this);
-    // client = n.serviceClient<desperate_housewife::potential_field_control>("grid");
-    // desperate_housewife::potential_field_control srv;
-    // srv.request.pos = Object_position;
-    // srv.request.radius = Object_radius;
-    // srv.request.height = Object_height;
-    // client.call(srv);
+
 }
 
 void grid::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
@@ -42,18 +37,23 @@ void grid::gridspace(const std_msgs::Float64MultiArray::ConstPtr &msg)
     std::cout<<"sms ricevuto"<<std::endl;
     int count = 0;
       
-    for(unsigned int i = msg->data[0]; i <= msg->data[1]; i = i + msg->data[2] )
+    for( double i = msg->data[0]; i <= msg->data[1]; i = i + msg->data[2] )
     {
-     for(unsigned int j = msg->data[3]; j <= msg->data[4]; j = j + msg->data[5] )
+      vect_pos.data[0] = i;
+     for( double j = msg->data[3]; j <= msg->data[4]; j = j + msg->data[5] )
       {
-        for(unsigned int k = msg->data[6]; k <= msg->data[7]; k = k + msg->data[8] )
+        vect_pos.data[1] = j;
+        for( double k = msg->data[6]; k <= msg->data[7]; k = k + msg->data[8] )
         {
-          KDL::Vector vect_pos(i,j,k);
+          vect_pos.data[2] = k;
+          // KDL::Vector vect_pos(i,j,k);
           GetForceAndDraw(vect_pos, count);
-          count ++;  
+          count = count + 1 ;  
         }
+
       }
     }
+    std::cout<<"finito"<<std::endl;
 
 
 }
@@ -61,8 +61,11 @@ void grid::gridspace(const std_msgs::Float64MultiArray::ConstPtr &msg)
 void grid::DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point, int K )
 {
     std::cout<<"disegno"<<std::endl;
+    // std::cout<<"k: "<<K<<std::endl;
+
     int32_t shape = visualization_msgs::Marker::ARROW;
     visualization_msgs::Marker marker;
+    // visualization_msgs::MarkerArray vect_marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
     marker.header.frame_id = "vito_anchor";
     marker.header.stamp = ros::Time::now();
@@ -90,7 +93,11 @@ void grid::DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point
     marker.color.b = 0.0f;
     marker.color.a = 1.0;
     marker.lifetime = ros::Duration(25.0);
+    // vect_marker.markers.push_back(marker);
     vis_pub.publish( marker ); 
+    // std::cout<<"publish"<<std::endl;
+    // vis_pub.publish( vect_marker ); 
+    // ros::Duration(0.01).sleep();
      
 
 }
@@ -128,7 +135,7 @@ Eigen::Quaterniond grid::RotationMarker(KDL::Vector &ris_Force, KDL::Vector &poi
 void grid::GetForceAndDraw(KDL::Vector &point_pos, int num)
 {
       std::vector<Eigen::Matrix<double,6,1> > F_rep;
-
+      std::cout<<"point: "<<point_pos[0]<<'\t'<<point_pos[1]<<'\t'<<point_pos[2]<<std::endl;
       //repulsive with obj
       for(unsigned int i=0; i < Object_position.size(); i++)
       {    
@@ -167,6 +174,7 @@ void grid::GetForceAndDraw(KDL::Vector &point_pos, int num)
       KDL::Vector Table_position(0,0,0.15);  
       std::vector<double> dist;
       dist.push_back(- Table_position.z() + point_pos.z() );
+      std::cout<<"dist table: "<<dist[0]<<std::endl;
 
       ForceAndIndex_table = pfc.RepulsiveWithTable(dist);
 
@@ -185,5 +193,7 @@ void grid::GetForceAndDraw(KDL::Vector &point_pos, int num)
       }
       else
         std::cout<<"F ris nulla"<<std::endl;
+
+      
 
 }

@@ -13,6 +13,7 @@
 #include <kdl/frames_io.hpp>
 #include <desperate_housewife/fittedGeometriesArray.h>
 #include <visualization_msgs/Marker.h>
+// #include <visualization_msgs/MarkerArray.h>
 //Tf
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
@@ -31,7 +32,7 @@ public:
   void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
   grid();
   ~grid(){};
-  void grid::GetForceAndDraw(KDL::Vector &point_pos, int num);
+  void GetForceAndDraw(KDL::Vector &point_pos, int num);
 private:
   ros::Subscriber sub_grid_,obstacles_subscribe_;
   std::vector<double> Object_radius;
@@ -43,6 +44,7 @@ private:
   ros::Publisher vis_pub;
   ros::ServiceClient client;
   std::vector<KDL::Vector> Force;
+  KDL::Vector vect_pos;
 
 
 };
