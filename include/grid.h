@@ -54,7 +54,7 @@ private:
 
 
 };
-
+double Scale(double Fmin, double Fmax, double Force_field_norm );
 
 #endif
 

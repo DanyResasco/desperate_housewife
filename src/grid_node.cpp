@@ -92,7 +92,7 @@ void grid::DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point
     marker.pose.orientation.z = quat.z();
     marker.pose.orientation.w = quat.w();
     
-    marker.scale.x = 0.2;
+    marker.scale.x = Scale(Fmin,Fmax, gridspace_Force.Norm());
     marker.scale.y = 0.02;
     marker.scale.z = 0.02;
 
@@ -105,6 +105,15 @@ void grid::DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point
     vect_marker.markers.push_back(marker);
 }
 
+double Scale(double Fmin, double Fmax, double Force_field_norm )
+{
+  //y=mx+q with P1=(F_min,0.01), P2=(F_max,1)
+  double m = ((1-0.01)/(Fmax-Fmin));
+  double y = ((Force_field_norm - Fmin)*m)+0.01; 
+  
+  return y;
+
+}
 std::pair<double,double> grid::GetMinAndMax(std::vector<double> &field)
 {
       std::pair<double,double> MinAndMAx;
@@ -121,14 +130,14 @@ std::pair<double,double> grid::GetMinAndMax(std::vector<double> &field)
       std::cout<<"MinAndMAx.second : "<<MinAndMAx.second <<std::endl;
 
       return MinAndMAx;
-  }
+}
 
 
 Eigen::Quaterniond grid::RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point)
 {
   Eigen::Vector3d  x(1,0,0);
   Eigen::Vector3d Force_eigen(ris_Force.x(),ris_Force.y(),ris_Force.z());
-  double pi = 3.14159264;
+  // double pi = 3.14159264;
   double angle = std::acos( (x.dot(Force_eigen))/(x.norm()*Force_eigen.norm()));
   // std::cout<<"angle: "<<angle<<std::endl;
   Eigen::Matrix3d transformation_ = Eigen::Matrix3d::Identity();
@@ -159,7 +168,6 @@ void grid::GetForceAndDraw(KDL::Vector &point_pos, int num)
       std::vector<Eigen::Matrix<double,6,1> > F_rep;
       // std::cout<<"point: "<<point_pos[0]<<'\t'<<point_pos[1]<<'\t'<<point_pos[2]<<std::endl;
       //repulsive with obj
-
       for(unsigned int i=0; i < Object_position.size(); i++)
       {  
           double influence = Object_radius[i] + 0.2;
@@ -169,8 +177,7 @@ void grid::GetForceAndDraw(KDL::Vector &point_pos, int num)
           ForceAndIndex = pfc.GetRepulsiveForce(pos, influence, Object_position[i], Object_radius[i], Object_height[i]);
           F_rep.push_back(ForceAndIndex.first);  
       }
-    
-      
+  
       Eigen::Matrix<double,6,1> f = Eigen::Matrix<double,6,1>::Zero(); 
       
       for(unsigned int k=0; k < F_rep.size();k++)
@@ -188,6 +195,9 @@ void grid::GetForceAndDraw(KDL::Vector &point_pos, int num)
       
       Eigen::Matrix<double,6,1> Force_tot_grid;
       Force_tot_grid = f + ForceAndIndex_table.first;
+      // std::cout<<"ForceAndIndex_table.first: "<<ForceAndIndex_table.first<<std::endl;
+      // std::cout<<"f: "<<f<<std::endl;
+
 
       // std::cout<<"Force: "<< Force_tot_grid(0) <<'\t'<<Force_tot_grid(1)<<'\t'<<Force_tot_grid(2)<<std::endl;
       KDL::Vector force_vect(Force_tot_grid(0), Force_tot_grid(1),Force_tot_grid(2));
@@ -199,9 +209,4 @@ void grid::GetForceAndDraw(KDL::Vector &point_pos, int num)
         Force.push_back(force_vect);
         Total_point.push_back(point_pos);
       }
-      // else
-      //   std::cout<<"F ris nulla"<<std::endl;
-
-      
-
 }
