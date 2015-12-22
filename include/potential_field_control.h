@@ -113,7 +113,7 @@ namespace desperate_housewife
 		// bool GetInfoObject(desperate_housewife::potential_field_control::Request &req, desperate_housewife::potential_field_control::Response &res);
 
 
-		Eigen::Vector3d GetPartialDerivate(KDL::Vector &ObjPointDistnce, double &radius, double &height);
+		Eigen::Vector3d GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double &radius, double &height);
 		// std::vector<double> GetMinDistance(std::vector<KDL::Frame> &Pos_chain, KDL::Vector &Object_position, double influence );
 		Eigen::Matrix<double,6,1> GetFIRAS(double &min_distance, Eigen::Vector3d &distance_der_partial , double &influence);
 		std::vector<double> GetMinDistance(std::vector<double> distance_local_obj,  double influence );
@@ -229,7 +229,8 @@ namespace desperate_housewife
 		
 	};
 
-	Eigen::Quaterniond RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point);
+	// Eigen::Quaterniond RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point);
+	Eigen::Matrix<double,4,4>  FromKdlToEigen(KDL::Frame &T_v_o);
 	  
 
 

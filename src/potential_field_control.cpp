@@ -460,20 +460,22 @@ namespace desperate_housewife
       ForceAndIndex.second = 0;  
       std::vector<double> DistanceAndIndex;
       std::vector<double> distance_local_obj;
-      std::vector<KDL::Vector> vec_distance;
+      // Eigen::Vector3d distance_der_partial;
 
       for(unsigned int k=0; k < point_.size();k++)
       {
         distance_local_obj.push_back( (diff(Object_pos.p, point_[k])).Norm());
-        vec_distance.push_back(diff(Object_pos.p, point_[k]));
+        // vec_distance.push_back(diff(Object_pos.p, point_[k]));
+        // distance_der_partial.push_back(GetPartialDerivate(Object_pos,point_[k], radius, height));
       }
 
       DistanceAndIndex = GetMinDistance(distance_local_obj, influence);
      
       if(DistanceAndIndex[0] == 1 )
       {
+          Eigen::Vector3d distance_der_partial = GetPartialDerivate(Object_pos, point_[DistanceAndIndex[2]], radius, height);
           // Eigen::Vector3d distance_der_partial = GetPartialDerivate(Object_position[inde_obj].p, Object_radius[inde_obj], Object_height[inde_obj]);
-          Eigen::Vector3d distance_der_partial = GetPartialDerivate(vec_distance[DistanceAndIndex[2]], radius, height);
+          // Eigen::Vector3d distance_der_partial = GetPartialDerivate(vec_distance[DistanceAndIndex[2]], radius, height);
           ForceAndIndex.first = GetFIRAS(DistanceAndIndex[1], distance_der_partial, influence);
           ForceAndIndex.second = DistanceAndIndex[2];              
       }
@@ -498,16 +500,41 @@ namespace desperate_housewife
   }
 
 
-  Eigen::Vector3d PotentialFieldControl::GetPartialDerivate(KDL::Vector &ObjPointDistnce, double &radius, double &height)
+  Eigen::Vector3d PotentialFieldControl::GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double &radius, double &height)
   {
-      
-      Eigen::Vector3d distance_der_partial(0,0,0);
-      // distance_der_partial = x^2/radius + y^2 / radius + 2*(z^2n) /l 
-      distance_der_partial[0] = (ObjPointDistnce.x()*2 / radius );
-      distance_der_partial[1] = (ObjPointDistnce.y()*2 / radius );
-      distance_der_partial[2] = (ObjPointDistnce.z()*4 / height ); //n=1
+      Eigen::Matrix<double,4,4>  Tvo_eigen; 
+      Tvo_eigen = FromKdlToEigen(T_v_o);
+      Eigen::Vector4d Point_v_eigen(Point_v.x(),Point_v.y(),Point_v.z(),1);
 
-      return distance_der_partial;
+      Eigen::Vector4d Point_o;
+      Point_o = Tvo_eigen.inverse() * Point_v_eigen;
+
+      Eigen::Vector4d distance_der_partial(0,0,0,0);
+      // distance_der_partial = x^2/radius + y^2 / radius + 2*(z^2n) /l 
+      distance_der_partial[0] = (Point_o[0]*2) / radius ;
+      distance_der_partial[1] = (Point_o[1]*2) / radius ;
+      // distance_der_partial[2] = (std::pow(Point_o[2],7)*16 / height ); //n=4
+      distance_der_partial[2] = (Point_o[2]*4) / height ; //n=4
+      distance_der_partial[3] = 0; //n=1
+
+      Eigen::Vector3d Der_v;
+      Eigen::Vector4d partial_temp;
+      partial_temp = Tvo_eigen*distance_der_partial;
+      Der_v[0] = partial_temp[0];
+      Der_v[1] = partial_temp[1];
+      Der_v[2] = partial_temp[2];
+
+      return Der_v;
+  }
+
+  Eigen::Matrix<double,4,4>  FromKdlToEigen(KDL::Frame &T_v_o)
+  {
+    Eigen::Matrix<double,4,4>  Tvo_eigen;
+    Tvo_eigen.row(0) << T_v_o.M.data[0], T_v_o.M.data[1],T_v_o.M.data[2], T_v_o.p.x();
+    Tvo_eigen.row(1) << T_v_o.M.data[3], T_v_o.M.data[4],T_v_o.M.data[5], T_v_o.p.y();
+    Tvo_eigen.row(2) << T_v_o.M.data[6], T_v_o.M.data[7],T_v_o.M.data[8], T_v_o.p.z();
+    Tvo_eigen.row(3) << 0,0,0,1;
+    return Tvo_eigen;
   }
 
   std::pair<Eigen::Matrix<double,6,1>, double> PotentialFieldControl::RepulsiveWithTable(std::vector<double> distance_local_obj)

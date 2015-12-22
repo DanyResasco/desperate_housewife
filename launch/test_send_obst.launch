@@ -1,0 +1,9 @@
+<launch>
+
+  <arg name="spin_rate" default="50" />
+  
+	<node name="test_send_obst" pkg="desperate_housewife" type="test_send_obst" output="screen" >
+    <param name="spin_rate" value="$(arg spin_rate)" />
+  </node>
+
+</launch>

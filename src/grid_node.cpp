@@ -99,7 +99,7 @@ void grid::DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point
     marker.color.r = ((gridspace_Force.Norm()-Fmin)/(Fmax-Fmin));
     marker.color.g = 1 - marker.color.r ;
     marker.color.b = 0.0f;
-    marker.color.a = 1.0;
+    marker.color.a = 0.5;
     marker.lifetime = ros::Duration(100);
 
     vect_marker.markers.push_back(marker);
@@ -135,26 +135,35 @@ std::pair<double,double> grid::GetMinAndMax(std::vector<double> &field)
 
 Eigen::Quaterniond grid::RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point)
 {
-  Eigen::Vector3d  x(1,0,0);
-  Eigen::Vector3d Force_eigen(ris_Force.x(),ris_Force.y(),ris_Force.z());
-  // double pi = 3.14159264;
-  double angle = std::acos( (x.dot(Force_eigen))/(x.norm()*Force_eigen.norm()));
-  // std::cout<<"angle: "<<angle<<std::endl;
-  Eigen::Matrix3d transformation_ = Eigen::Matrix3d::Identity();
-  // Eigen::Quaterniond quat_eigen_hand(transformation_);
-  // if(angle != 0)
-  // {
+    // KDL::Vector x(1,0,0);
+    // double pi = 3.14159264;
+    // double angle = std::acos( (x.dot(ris_Force))/(x.Norm()*ris_Force.Norm()))*180/pi;
+    // KDL::Vector axis(0,0,0);
+    // axis = (x * ris_Force) / (x *ris_Force).Norm();
+
+
+    Eigen::Vector3d  x(1,0,0);
+    Eigen::Vector3d Force_eigen(ris_Force.x(),ris_Force.y(),ris_Force.z());
+    double pi = 3.14159264;
+    double angle = std::acos( (x.dot(Force_eigen))/(x.norm()*Force_eigen.norm()));
+    // std::cout<<"angle: "<<angle<<std::endl;
+    Eigen::Matrix3d transformation_ = Eigen::Matrix3d::Identity();
+    // Eigen::Quaterniond quat_eigen_hand(transformation_);
+    // if(angle != 0)
+    // {
     Eigen::Vector3d axis(0,0,0);
     axis = (x.cross(Force_eigen)) / (x.cross(Force_eigen)).norm();
+    transformation_ = Eigen::AngleAxisd(angle, axis);
+
     // std::cout<<"axis: "<<axis[0]<<'\t'<<axis[1]<<'\t'<<axis[2]<<std::endl;
-    // Eigen::Matrix3d transformation_ = Eigen::Matrix3d::Identity();
-    Eigen::Vector3d row0(axis[0]*axis[0]*(1-cos(angle))+cos(angle), axis[0]*axis[1]*(1-cos(angle))-axis[2]*sin(angle), axis[0]*axis[2]*(1-cos(angle))+axis[1]*sin(angle));
-    Eigen::Vector3d row1(axis[0]*axis[1]*(1-cos(angle))+axis[2]*sin(angle), axis[1]*axis[1]*(1-cos(angle))+cos(angle), axis[1]*axis[2]*(1-cos(angle))-axis[0]*sin(angle));
-    Eigen::Vector3d row2(axis[0]*axis[2]*(1-cos(angle))-axis[1]*sin(angle), axis[1]*axis[2]*(1-cos(angle))+axis[0]*sin(angle),axis[2]*axis[2]*(1-cos(angle))+cos(angle));
+    // // Eigen::Matrix3d transformation_ = Eigen::Matrix3d::Identity();
+    // Eigen::Vector3d row0(axis[0]*axis[0]*(1-cos(angle))+cos(angle), axis[0]*axis[1]*(1-cos(angle))-axis[2]*sin(angle), axis[0]*axis[2]*(1-cos(angle))+axis[1]*sin(angle));
+    // Eigen::Vector3d row1(axis[0]*axis[1]*(1-cos(angle))+axis[2]*sin(angle), axis[1]*axis[1]*(1-cos(angle))+cos(angle), axis[1]*axis[2]*(1-cos(angle))-axis[0]*sin(angle));
+    // Eigen::Vector3d row2(axis[0]*axis[2]*(1-cos(angle))-axis[1]*sin(angle), axis[1]*axis[2]*(1-cos(angle))+axis[0]*sin(angle),axis[2]*axis[2]*(1-cos(angle))+cos(angle));
     
-    transformation_.row(0) << row0.transpose();
-    transformation_.row(1) << row1.transpose();
-    transformation_.row(2) << row2.transpose();
+    // transformation_.row(0) << row0.transpose();
+    // transformation_.row(1) << row1.transpose();
+    // transformation_.row(2) << row2.transpose();
     Eigen::Quaterniond quat_eigen_hand(transformation_);
     // std::cout<<"quat_eigen_hand: "<<quat_eigen_hand.x()<<'\t'<<quat_eigen_hand.y()<<'\t'<<quat_eigen_hand.z()<<'\t'<<quat_eigen_hand.w()<<std::endl;
   // }
@@ -197,7 +206,6 @@ void grid::GetForceAndDraw(KDL::Vector &point_pos, int num)
       Force_tot_grid = f + ForceAndIndex_table.first;
       // std::cout<<"ForceAndIndex_table.first: "<<ForceAndIndex_table.first<<std::endl;
       // std::cout<<"f: "<<f<<std::endl;
-
 
       // std::cout<<"Force: "<< Force_tot_grid(0) <<'\t'<<Force_tot_grid(1)<<'\t'<<Force_tot_grid(2)<<std::endl;
       KDL::Vector force_vect(Force_tot_grid(0), Force_tot_grid(1),Force_tot_grid(2));
