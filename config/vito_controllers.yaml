@@ -24,7 +24,6 @@ left_arm:
     set_gains_topic: set_gains_left
     time_interp_desired: 5
     percentage: 0.5
-    point: point_f
 
   one_task_inverse_dynamics_jl:
     type: lwr_controllers/OneTaskInverseDynamicsJL
@@ -47,7 +46,6 @@ right_arm:
     set_gains_topic: set_gains_right
     time_interp_desired: 5
     percentage: 0.5
-    point: point_f
 
   joint_trajectory_controller:
     type: position_controllers/JointTrajectoryController

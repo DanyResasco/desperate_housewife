@@ -340,6 +340,28 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
             tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(),"ObstacleReject_new_pose") ); 
          break;
       }
+      // case 2:
+
+      //       trajectory_msgs::JointTrajectory msg_jointT_hand;
+      //       msg_jointT_hand.joint_names.resize(1);
+      //       desperate_housewife::handPoseSingle New_Hand_Position;
+      //       desperate_housewife::handPoseSingle New_Hand_Position_right;
+      //        New_Hand_Position.pose = error_msg->pose_hand;
+      //       //hand msg
+      //       msg_jointT_hand.points.resize(1);
+      //       msg_jointT_hand.points[0].positions.resize(1);
+      //       msg_jointT_hand.points[0].positions[0] = 0.0;
+      //       msg_jointT_hand.points[0].time_from_start = ros::Duration(1); // 1s;
+      //       New_Hand_Position.pose.position.z = New_Hand_Position.pose.position.z + 0.20;
+      //       msg_jointT_hand.joint_names[0] = left_hand_synergy_joint.c_str();
+      //       hand_publisher_left.publish(msg_jointT_hand);
+      //       desired_hand_publisher_left.publish( New_Hand_Position );
+      //       New_Hand_Position_right.pose.position.z = New_Hand_Position_right.pose.position.z + 0.20;
+      //       msg_jointT_hand.joint_names[0] = right_hand_synergy_joint.c_str();
+      //       hand_publisher_right.publish(msg_jointT_hand);
+      //       desired_hand_publisher_right.publish( New_Hand_Position_right );
+
+      // break;
       
     }
   }

@@ -113,14 +113,14 @@ namespace desperate_housewife
 		// bool GetInfoObject(desperate_housewife::potential_field_control::Request &req, desperate_housewife::potential_field_control::Response &res);
 
 
-		Eigen::Vector3d GetPartialDerivate(KDL::Vector &Object_pos, double &radius, double &height);
+		Eigen::Vector3d GetPartialDerivate(KDL::Vector &ObjPointDistnce, double &radius, double &height);
 		// std::vector<double> GetMinDistance(std::vector<KDL::Frame> &Pos_chain, KDL::Vector &Object_position, double influence );
 		Eigen::Matrix<double,6,1> GetFIRAS(double &min_distance, Eigen::Vector3d &distance_der_partial , double &influence);
 		std::vector<double> GetMinDistance(std::vector<double> distance_local_obj,  double influence );
-		std::pair<Eigen::Matrix<double,6,1>, double>  GetRepulsiveForce(std::vector<double> distance_local_obj, double influence, int inde_obj);
+		// std::pair<Eigen::Matrix<double,6,1>, double>  GetRepulsiveForce(std::vector<double> distance_local_obj, double influence, int inde_obj);
 		// void GetForce(const std_msgs::Float64MultiArray::ConstPtr &msg );
 		// void DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point );
-
+		std::pair<Eigen::Matrix<double,6,1>, double> GetRepulsiveForce(std::vector<KDL::Vector> &point_, double influence, KDL::Frame &Object_pos, double radius, double height);
 		
 		
 	private:

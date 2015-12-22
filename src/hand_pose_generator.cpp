@@ -67,11 +67,11 @@ void HandPoseGenerator::Start_left(const desperate_housewife::Start::ConstPtr& m
 void HandPoseGenerator::Start_right(const desperate_housewife::Start::ConstPtr& msg)
 {
    std::cout<<"start right"<<std::endl;
-  
-  start_controller_right = msg->start_right;
-  // only for use one arm
-  start_controller_left = msg->start_left;  
-  stop = msg->stop;
+    
+    start_controller_right = msg->start_right;
+    // only for use one arm
+    start_controller_left = msg->start_left;  
+    stop = msg->stop;
 }
 
 

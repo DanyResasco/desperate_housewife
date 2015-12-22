@@ -369,4 +369,13 @@ void HandPoseGenerator::Overturn()
   tf::poseMsgToTF( DesiredHandPose_right.pose, tfHandTrasform2);
   tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str()," right ribalto") ); 
   ROS_INFO("BUTTO TUTTO");
+
+  //send
+  // desired_hand_publisher_left.publish(DesiredHandPose_left);
+  // Obj_info.data = 2; //flag to grasp object in the desperate_mind code
+  // objects_info_left_pub.publish(Obj_info);
+  // stop = 1; // flag to stop this procedur
+  // desired_hand_publisher_right.publish(DesiredHandPose_right);
+  // Obj_info.data = 2;
+  // objects_info_right_pub.publish(Obj_info);
 }

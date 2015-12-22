@@ -33,7 +33,6 @@ namespace desperate_housewife
       n.getParam("obstacle_avoidance", obstacle_avoidance);
       n.getParam("tip_name", tip_name);
       n.getParam("set_gains_topic", set_gains_);
-      n.getParam("point", point_);
       n.param<double>("time_interp_desired", T_des, 1);
       n.param<double>("percentage",percentage,0.5);
       
@@ -254,18 +253,27 @@ namespace desperate_housewife
           {
             std::vector<Eigen::Matrix<double,7,1>> vect_rep;
             
-            for(unsigned int i=0; i < Object_position.size();i++)
-            {
-                std::vector<double> DistanceAndIndex;
-                double influence = Object_radius[i] +  treshold_influence;
-                std::vector<double> distance_local_obj;
+             std::vector<KDL::Vector> point_of_interesting;
 
                 for(unsigned int j=0; j< list_of_link.size(); j++)
                 {
-                    distance_local_obj.push_back( (diff(Object_position[i].p, x_chain[list_of_link[j]].p)).Norm() );
+                  point_of_interesting.push_back(x_chain[list_of_link[j]].p );
                 }
+
+            for(unsigned int i=0; i < Object_position.size();i++)
+            {
+                // std::vector<double> DistanceAndIndex;
+                double influence = Object_radius[i] +  treshold_influence;
+                // std::vector<double> distance_local_obj;
+
+                // for(unsigned int j=0; j< list_of_link.size(); j++)
+                // {
+                //     distance_local_obj.push_back( (diff(Object_position[i].p, x_chain[list_of_link[j]].p)).Norm() );
+                // }
+
                 std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
-                ForceAndIndex = GetRepulsiveForce(distance_local_obj, influence, i);
+                // ForceAndIndex = GetRepulsiveForce(point_of_interesting, influence, i);
+                ForceAndIndex = GetRepulsiveForce(point_of_interesting, influence, Object_position[i], Object_radius[i], Object_height[i] );
                 vect_rep.push_back (JAC_repulsive[list_of_link[ForceAndIndex.second]].data.transpose()* lambda_ * ForceAndIndex.first);
                 //Force_repulsive =  JAC_repulsive[ForceAndIndex.second].data.transpose()* lambda_ * ForceAndIndex.first;
             }
@@ -352,7 +360,7 @@ namespace desperate_housewife
 
   void PotentialFieldControl::command_start(const std_msgs::Bool::ConstPtr& msg)
   { 
-     start_flag = true;
+      start_flag = true;
   }
 
   void PotentialFieldControl::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
@@ -375,7 +383,6 @@ namespace desperate_housewife
 
   }
 
-  // 
 
   void PotentialFieldControl::PoseDesiredInterpolation(KDL::Frame frame_des_)
   {
@@ -426,8 +433,6 @@ namespace desperate_housewife
     return -sum;
   }
 
-
-  // std::vector<double> PotentialFieldControl::GetMinDistance(std::vector<KDL::Frame> &Pos_chain, KDL::Vector &Object_position, double influence )
   std::vector<double> PotentialFieldControl::GetMinDistance(std::vector<double> distance_local_obj,  double influence )
   {
       std::vector<double> DistanceAndIndex;
@@ -438,9 +443,8 @@ namespace desperate_housewife
       {
           DistanceAndIndex.push_back(1);
           DistanceAndIndex.push_back( distance_local_obj[index_dist] );
-          // DistanceAndIndex.push_back( list_of_link[index_dist] );
           DistanceAndIndex.push_back( index_dist);
-          std::cout<<"distance_local_obj: "<< distance_local_obj[index_dist]<<std::endl;
+          // std::cout<<"distance_local_obj: "<< distance_local_obj[index_dist]<<std::endl;
       }
       else
         DistanceAndIndex.push_back(0);
@@ -448,20 +452,29 @@ namespace desperate_housewife
       return DistanceAndIndex;
   }
 
-  std::pair<Eigen::Matrix<double,6,1>, double> PotentialFieldControl::GetRepulsiveForce(std::vector<double> distance_local_obj, double influence, int inde_obj)
+  std::pair<Eigen::Matrix<double,6,1>, double> PotentialFieldControl::GetRepulsiveForce(std::vector<KDL::Vector> &point_, double influence, KDL::Frame &Object_pos, double radius, double height)
+  // std::pair<Eigen::Matrix<double,6,1>, double> PotentialFieldControl::GetRepulsiveForce(std::vector<double> distance_local_obj, double influence, int inde_obj)
   {
       std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
       ForceAndIndex.first =  Eigen::Matrix<double,6,1>::Zero();
       ForceAndIndex.second = 0;  
       std::vector<double> DistanceAndIndex;
+      std::vector<double> distance_local_obj;
+      std::vector<KDL::Vector> vec_distance;
+
+      for(unsigned int k=0; k < point_.size();k++)
+      {
+        distance_local_obj.push_back( (diff(Object_pos.p, point_[k])).Norm());
+        vec_distance.push_back(diff(Object_pos.p, point_[k]));
+      }
+
       DistanceAndIndex = GetMinDistance(distance_local_obj, influence);
-      std::cout<<"fuori da GetMinDistance"<<std::endl;
+     
       if(DistanceAndIndex[0] == 1 )
       {
-          std::cout<<"dentro"<<std::endl;
-          Eigen::Vector3d distance_der_partial = GetPartialDerivate(Object_position[inde_obj].p, Object_radius[inde_obj], Object_height[inde_obj]);
+          // Eigen::Vector3d distance_der_partial = GetPartialDerivate(Object_position[inde_obj].p, Object_radius[inde_obj], Object_height[inde_obj]);
+          Eigen::Vector3d distance_der_partial = GetPartialDerivate(vec_distance[DistanceAndIndex[2]], radius, height);
           ForceAndIndex.first = GetFIRAS(DistanceAndIndex[1], distance_der_partial, influence);
-          std::cout<<"ForceAndIndex.first: "<<ForceAndIndex.first<<std::endl;
           ForceAndIndex.second = DistanceAndIndex[2];              
       }
    
@@ -471,7 +484,6 @@ namespace desperate_housewife
 
   Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double &min_distance, Eigen::Vector3d &distance_der_partial , double &influence)
   {
-      // std::cout<<"dentro GetFIRAS"<<std::endl;
       double Ni_ = 1.0;
       Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
                  
@@ -483,34 +495,28 @@ namespace desperate_housewife
       Force(5) = 0;
 
       return Force;
-
   }
 
 
-
-
-
-  Eigen::Vector3d PotentialFieldControl::GetPartialDerivate(KDL::Vector &Object_pos, double &radius, double &height)
+  Eigen::Vector3d PotentialFieldControl::GetPartialDerivate(KDL::Vector &ObjPointDistnce, double &radius, double &height)
   {
       
       Eigen::Vector3d distance_der_partial(0,0,0);
       // distance_der_partial = x^2/radius + y^2 / radius + 2*(z^2n) /l 
-      distance_der_partial[0] = (Object_pos.x()*2 / radius );
-      distance_der_partial[1] = (Object_pos.y()*2 / radius );
-      distance_der_partial[2] = (Object_pos.z()*4 / height ); //n=1
+      distance_der_partial[0] = (ObjPointDistnce.x()*2 / radius );
+      distance_der_partial[1] = (ObjPointDistnce.y()*2 / radius );
+      distance_der_partial[2] = (ObjPointDistnce.z()*4 / height ); //n=1
 
       return distance_der_partial;
   }
 
-
-
-  
   std::pair<Eigen::Matrix<double,6,1>, double> PotentialFieldControl::RepulsiveWithTable(std::vector<double> distance_local_obj)
   {
     
       double Rep_inf_table = 0.10;
       std::vector<double> DistanceAndIndex;
       DistanceAndIndex = GetMinDistance(distance_local_obj, Rep_inf_table );
+
       std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
       ForceAndIndex.first = Eigen::Matrix<double,6,1>::Zero();
       
@@ -521,15 +527,10 @@ namespace desperate_housewife
           ForceAndIndex.second = DistanceAndIndex[2];
       }
 
-      std::cout<<"table: "<<ForceAndIndex.first<<std::endl;
+      // std::cout<<"table: "<<ForceAndIndex.first<<std::endl;
 
-      return ForceAndIndex; 
-     
+      return ForceAndIndex;     
   }
-
-
-
-
 
 
   void PotentialFieldControl::set_gains(const std_msgs::Float64MultiArray::ConstPtr &msg)
@@ -549,140 +550,6 @@ namespace desperate_housewife
 
 
   }
-
-
-  // void PotentialFieldControl::GetForce(const std_msgs::Float64MultiArray::ConstPtr &msg )
-  // {
-  //     KDL::Vector point_pos(msg->data[0],msg->data[1],msg->data[2]);
-  //     std::cout<<"qui"<<std::endl;
-  //     std::vector<Eigen::Matrix<double,6,1> > F_rep;
-  //     std::vector<double> distance_local_obj;
-  //     for(unsigned int i=0; i< Object_position.size(); i++)
-  //     {  
-  //       std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
-  //       distance_local_obj.push_back( (diff(Object_position[i].p, point_pos)).Norm() );
-
-  //       double influence = Object_radius[i] + 0.2;
-
-  //       ForceAndIndex = GetRepulsiveForce(distance_local_obj, influence, i);
-
-  //       F_rep.push_back(ForceAndIndex.first);
-  //     }
-      
-  //     Eigen::Matrix<double,6,1> f = Eigen::Matrix<double,6,1>::Zero(); 
-      
-  //     for(unsigned int k=0; k < F_rep.size();k++)
-  //     {
-  //       f = f + F_rep[k];
-  //     }
-
-  //     //repulsive with table
-  //     std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex_table;
-  //     KDL::Vector Table_position(0,0,0.15);  
-  //     std::vector<double> dist;
-  //     dist.push_back(- Table_position.z() + point_pos.z() );
-  //     ForceAndIndex_table = RepulsiveWithTable(dist);
-
-  //     Eigen::Matrix<double,6,1> Force_tot_grid;
-  //     Force_tot_grid = f + ForceAndIndex_table.first;
-  //     KDL::Vector force_vect(Force_tot_grid(0), Force_tot_grid(1),Force_tot_grid(2));
-  //     KDL::Vector null(0,0,0);
-  //     if(!Equal(force_vect,null,0.05))
-  //     {
-  //       DrawArrow(force_vect, point_pos); 
-  //     }
-  //     else
-  //       std::cout<<"F ris nulla"<<std::endl;
-
-  // }
-
-  // std::pair<std::vector<KDL::Frame>, std::vector< Eigen::Matrix<double,1,2>>> 
-  // bool PotentialFieldControl::GetInfoObject(desperate_housewife::potential_field_control::Request &req, desperate_housewife::potential_field_control::Response &res) 
-  // {
-  //   std::pair<std::vector<KDL::Frame>, std::vector< Eigen::Matrix<double,1,2>>> Info;
-  //   std::cout<<"Object_position.size(): "<<Object_position.size()<<std::endl;
-
-  //   req.pos = Object_position;
-  //   req.radius = Object_radius;
-  //   req.height = Object_height;
-
-  //   return true;
-
-
-  //   // for(unsigned int k=0; k < Object_position.size(); k++)
-  //   // {
-  //   //   Eigen::Matrix<double,1,2> vect_ = Eigen::Matrix<double,1,2>::Zero() ;
-  //   //   vect_<< Object_radius[k], Object_radius[k];
-  //   //   //vect_.[0,1] << Object_height[k]; 
-  //   //   Info.first.push_back(Object_position[k]);
-  //   //   Info.second.push_back(vect_);
-  //   // }
-
-  //   // return Info;
-  // }
-
-  // void PotentialFieldControl::DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point )
-  // {
-  //   uint32_t shape = visualization_msgs::Marker::ARROW;
-  //   visualization_msgs::Marker marker;
-  //   // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-  //   marker.header.frame_id = "vito_anchor";
-  //   marker.header.stamp = ros::Time::now();
-  //   marker.ns = "basic_shapes";
-  //   marker.id = 0;
-  //   marker.type = shape;
-  //   marker.action = visualization_msgs::Marker::ADD;
-  //   marker.pose.position.x = gridspace_point.x();
-  //   marker.pose.position.y = gridspace_point.y();
-  //   marker.pose.position.z = gridspace_point.z();
-
-  //   Eigen::Quaterniond quat;
-  //   quat =  RotationMarker(gridspace_Force, gridspace_point);
-    
-  //   marker.pose.orientation.x = quat.x();
-  //   marker.pose.orientation.y = quat.y();
-  //   marker.pose.orientation.z = quat.z();
-  //   marker.pose.orientation.w = quat.w();
-    
-  //   marker.scale.x = 1;
-  //   marker.scale.y = 1;
-  //   marker.scale.z = 1;
-  //   marker.color.r = 0.0f;
-  //   marker.color.g = 1.0f;
-  //   marker.color.b = 0.0f;
-  //   marker.color.a = 1.0;
-  //   marker.lifetime = ros::Duration(25.0);
-  //   vis_pub.publish( marker ); 
-     
-
-  // }
-
-  // Eigen::Quaterniond RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point)
-  // {
-  //   Eigen::Vector3d  x(1,0,0);
-  //   Eigen::Vector3d Force_eigen(ris_Force.x(),ris_Force.y(),ris_Force.z());
-  //   double angle = std::acos((x.dot(Force_eigen))/(x.norm()*Force_eigen.norm()) );
-  //   Eigen::Vector3d axis(0,0,0);
-  //   axis = (x.cross(Force_eigen)) / (x.cross(Force_eigen)).norm();
-  //   Eigen::Matrix3d transformation_ = Eigen::Matrix3d::Identity();
-  //   Eigen::Vector3d row0(axis[0]*axis[0]*(1-cos(angle))+cos(angle), axis[0]*axis[1]*(1-cos(angle))-axis[2]*sin(angle), axis[0]*axis[2]*(1-cos(angle))+axis[1]*sin(angle));
-  //   Eigen::Vector3d row1(axis[0]*axis[1]*(1-cos(angle))-axis[2]*sin(angle), axis[1]*axis[1]*(1-cos(angle))+cos(angle), axis[1]*axis[2]*(1-cos(angle))-axis[0]*sin(angle));
-  //   Eigen::Vector3d row2(axis[0]*axis[2]*(1-cos(angle))-axis[1]*sin(angle), axis[1]*axis[2]*(1-cos(angle))+axis[0]*sin(angle),axis[2]*axis[2]*(1-cos(angle))+cos(angle));
-  //   transformation_.row(0) << row0.transpose();
-  //   transformation_.row(1) << row1.transpose();
-  //   transformation_.row(2) << row2.transpose();
-  //   Eigen::Quaterniond quat_eigen_hand(transformation_);
-
-  //  return quat_eigen_hand.normalized();
-
-  // }
-
-
-
-
-
-
-
 
 
 }

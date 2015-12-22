@@ -13,7 +13,7 @@
 #include <kdl/frames_io.hpp>
 #include <desperate_housewife/fittedGeometriesArray.h>
 #include <visualization_msgs/Marker.h>
-// #include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/MarkerArray.h>
 //Tf
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
@@ -27,24 +27,30 @@ class grid
 public:
   ros::NodeHandle nh;
   void gridspace(const std_msgs::Float64MultiArray::ConstPtr &msg);
-  void  DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point, int K );  
+  void  DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point, int K, double Fmin, double Fmax );  
   Eigen::Quaterniond RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point);
   void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
   grid();
   ~grid(){};
   void GetForceAndDraw(KDL::Vector &point_pos, int num);
+  void generateMarkerMessages( std::vector<KDL::Frame> &Obj_pose );
+   std::pair<double,double>  GetMinAndMax(std::vector<double> &field);
+
 private:
   ros::Subscriber sub_grid_,obstacles_subscribe_;
   std::vector<double> Object_radius;
   std::vector<double> Object_height;
-  ros::Publisher marker_pub;
+  ros::Publisher marker_pub,marker_publisher_ ;
   std::string obstacle_avoidance;
   desperate_housewife::PotentialFieldControl pfc;
   std::vector<KDL::Frame> Object_position;
   ros::Publisher vis_pub;
-  ros::ServiceClient client;
-  std::vector<KDL::Vector> Force;
+ 
+  std::vector<double> Force_norm;
+  std::vector<KDL::Vector> Force,Total_point;
   KDL::Vector vect_pos;
+ visualization_msgs::MarkerArray vect_marker;
+  // tf::TransformBroadcaster tf_geometriesTransformations_;
 
 
 };

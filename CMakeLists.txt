@@ -127,6 +127,10 @@ add_executable(desperate_mind src/desperate_mind.cpp src/home_robot)
 add_dependencies(desperate_mind ${PROJECT_NAME}_gencpp)
 target_link_libraries(desperate_mind ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
+add_executable(test_send_obst src/test_send_obst.cpp )
+add_dependencies(test_send_obst ${PROJECT_NAME}_gencpp)
+target_link_libraries(test_send_obst ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
