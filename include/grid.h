@@ -34,7 +34,7 @@ public:
   ~grid(){};
   void GetForceAndDraw(KDL::Vector &point_pos, int num);
   void generateMarkerMessages( std::vector<KDL::Frame> &Obj_pose );
-   std::pair<double,double>  GetMinAndMax(std::vector<double> &field);
+  std::pair<double,double>  GetMinAndMax(std::vector<double> &field);
 
 private:
   ros::Subscriber sub_grid_,obstacles_subscribe_;
@@ -49,7 +49,7 @@ private:
   std::vector<double> Force_norm;
   std::vector<KDL::Vector> Force,Total_point;
   KDL::Vector vect_pos;
- visualization_msgs::MarkerArray vect_marker;
+  visualization_msgs::MarkerArray vect_marker;
   // tf::TransformBroadcaster tf_geometriesTransformations_;
 
 

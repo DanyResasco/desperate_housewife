@@ -119,6 +119,11 @@ add_library(${PROJECT_NAME} src/potential_field_control.cpp)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
+add_library(ball_test src/test_ball.cpp)
+add_dependencies(ball_test ball_test_gencpp)
+target_link_libraries(ball_test ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+
+
 add_executable(grid src/grid_main.cpp src/grid_node.cpp)
 add_dependencies(grid grid_gencpp ${PROJECT_NAME})
 target_link_libraries(grid ${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
