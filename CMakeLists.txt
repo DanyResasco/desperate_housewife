@@ -119,7 +119,7 @@ add_library(${PROJECT_NAME} src/potential_field_control.cpp)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
-add_library(ball_test src/test_ball.cpp)
+add_executable(ball_test src/ball_main src/ball_node.cpp)
 add_dependencies(ball_test ball_test_gencpp)
 target_link_libraries(ball_test ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 

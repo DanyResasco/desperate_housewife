@@ -1,12 +1,12 @@
-#include <grid.h>
+#include <test_ball.h>
 
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "desperate_grid_node");
-  grid node;
-
-  ROS_INFO("[grid] Node is ready");
+  ros::init(argc, argv, "desperate_ball_node");
+  ball node;
+ 
+  ROS_INFO("[ball] Node is ready");
 
   double spin_rate = 10;
   ros::param::get("~spin_rate",spin_rate);

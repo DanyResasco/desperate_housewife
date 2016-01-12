@@ -1,7 +1,7 @@
 #include <test_ball.h>
 // #include <grid.hpp>
-#include <utils/pseudo_inversion.h>
-#include <utils/skew_symmetric.h>
+// #include <utils/pseudo_inversion.h>
+// #include <utils/skew_symmetric.h>
 #include <ros/node_handle.h>
 #include <ros/ros.h>
 
@@ -54,23 +54,29 @@
 
   void ball::Update()
   {   
-      F_repulsive = GetFieldRep(ball_pos);
-      double Kp,Kd;
-      Kp = 200;
-      Kd = 100;
-      
-      x_err_ = pos_des - ball_pos;
+      //if ball is not arrived, update the position and velocity 
+      if( (ball_pos(0) != pos_des(0)) && (ball_pos(1) != pos_des(1)) && (ball_pos(2) != pos_des(2)) )
+      {
+        F_repulsive = GetFieldRep(ball_pos);
+        double Kp,Kd;
+        Kp = 200;
+        Kd = 100;
+        
+        x_err_ = pos_des - ball_pos;
 
-      for(int i = 0; i < Force_attractive.size(); i++)
-      {   
-          Force_attractive(i) =  (-Kd * (x_dot(i)) + Kp * x_err_(i)) / mass;
+        for(int i = 0; i < Force_attractive.size(); i++)
+        {   
+            Force_attractive(i) =  (-Kd * (x_dot(i)) + Kp * x_err_(i)) / mass;
+        }
+
+        Eigen::Matrix<double,6,1> Force_tot = Force_attractive + F_repulsive;
+        double delta = 0.1;
+        GetVelocityAndPosition(Force_tot,delta); // Force is just divide by mass
+        ros::spinOnce();
       }
-
-      Eigen::Matrix<double,6,1> Force_tot = Force_attractive + F_repulsive;
-      double delta = 0.1;
-      GetVelocityAndPosition(Force_tot,delta); // Force is just divide by mass
-
-      ros::spinOnce();
+      else
+        ROS_INFO("ball arrived");
+        
   }
 
   

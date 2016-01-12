@@ -1,7 +1,0 @@
-<launch>
-  
-        <!-- spawn only desired controllers in current namespace -->
-        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="test_ball "/>
-
-        <node name="controller_stopper" pkg="controller_manager" type="spawner" args="--stopped test_ball" />
-  </launch>
