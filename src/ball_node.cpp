@@ -8,12 +8,16 @@
       //ball   
       sub_grid_ = nh.subscribe("SphereInfo", 1, &ball::ballInfo, this);
       vis_pub = nh.advertise<visualization_msgs::Marker>( "visualization_marker", 1 );
-      nh.param<std::string>("obstacle_list" , obstacle_avoidance, "obstacle_pose");
+      marker_publisher_ = nh.advertise<visualization_msgs::Marker>( "visualization_cylinder", 1 );
+       nh.param<std::string>("PotentialFieldControl/obstacle_list" , obstacle_avoidance, "/right_arm/PotentialFieldControl/obstacle_pose_right");
       obstacles_subscribe_ = nh.subscribe(obstacle_avoidance.c_str(), 1, &ball::InfoGeometry, this); 
       Force_attractive = Eigen::Matrix<double,6,1>::Zero();
       F_repulsive = Eigen::Matrix<double,6,1>::Zero();
       x_dot = Eigen::Matrix<double,6,1>::Zero();
-      // pos = Eigen::Matrix<double,6,1>::Zero();   
+      check_sms = false;
+      count = 0;
+      pub_Fa_ = nh.advertise<std_msgs::Float64MultiArray>("Factrative_commad", 1000);
+      pub_Fr_ = nh.advertise<std_msgs::Float64MultiArray>("Frepulsive_commad", 1000);
   }
 
   void ball::ballInfo(const std_msgs::Float64MultiArray::ConstPtr &msg)
@@ -35,17 +39,36 @@
 
       SeeMarker(pos_des, "pose_desired");
       SeeMarker(ball_pos, "pose_init");
-
-      Update();
+      check_sms = true;
   }
 
-  void ball::Update()
+  bool ball::Update(double delta)
   {   
       //if ball is not arrived, update the position and velocity 
       std::cout<<"dentro update"<<std::endl;
-      if( (ball_pos(0) != pos_des(0)) && (ball_pos(1) != pos_des(1)) && (ball_pos(2) != pos_des(2)) )
+      if( (pos_des - ball_pos).isMuchSmallerThan(0.05) )
       {
+        // std::cout<<"pos_des: "<<pos_des(0)<<'\t'<<pos_des(1)<<'\t'<<pos_des(2)<<std::endl;
+        // std::cout<<"ball_pos: "<<ball_pos(0)<<'\t'<<ball_pos(1)<<'\t'<<ball_pos(2)<<std::endl;
+        ROS_INFO("Ball arrived");
+        return true;
+
+      }
+      else
+      {
+        // std::cout<<"ball_pos: "<<ball_pos(0)<<'\t'<<ball_pos(1)<<'\t'<<ball_pos(2)<<std::endl;
+        // std::cout<<"dentro else"<<std::endl;
+        std_msgs::Float64MultiArray Fa_msg;
+        std_msgs::Float64MultiArray Fr_msg;
+
         F_repulsive = GetFieldRep(ball_pos);
+        //publish repulsive force
+        for(int i = 0; i < F_repulsive.size(); i++)
+        {
+          Fr_msg.data.push_back(F_repulsive(i));
+        }
+        pub_Fr_.publish(Fr_msg);
+
         double Kp,Kd;
         Kp = 200;
         Kd = 100;
@@ -55,15 +78,19 @@
         for(int i = 0; i < Force_attractive.size(); i++)
         {   
             Force_attractive(i) =  (-Kd * (x_dot(i)) + Kp * x_err_(i)) / mass;
+            Fa_msg.data.push_back(Force_attractive(i));
         }
+        pub_Fa_.publish(Fa_msg);
 
         Eigen::Matrix<double,6,1> Force_tot = Force_attractive + F_repulsive;
-        double delta = 0.1;
+
+        std::cout<<"delta: "<<delta<<std::endl;
+        // double delta = 0.01;
+        SeeMarker(pos_des, "pose_desired");
+        SeeMarker(ball_pos, "pose_init");
         GetVelocityAndPosition(Force_tot,delta); // Force is just divide by mass
-       
-      }
-      else
-        ROS_INFO("ball arrived");     
+       return false;
+      }   
   }
 
   
@@ -74,9 +101,12 @@
     Eigen::Matrix<double,6,1> pos_last = ball_pos;
    
     x_dot = velocity_last + delta * Force;
+    // std::cout<<"x_dot: "<<x_dot(0)<<'\t'<<x_dot(1)<<'\t'<<x_dot(2)<<std::endl;
     ball_pos = 0.5 * Force * delta * delta + velocity_last * delta + pos_last;
-
+    // std::cout<<"ball_pos update: "<<ball_pos(0)<<'\t'<<ball_pos(1)<<'\t'<<ball_pos(2)<<std::endl;
+ 
     DrawSphere( ball_pos );
+    count = count + 1;
   }
 
   
@@ -174,7 +204,7 @@
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
     marker.header.frame_id = "vito_anchor";
     marker.header.stamp = ros::Time::now();
-
+    marker.id = count;
     marker.type = marker.SPHERE;
     marker.action = marker.ADD;
     marker.scale.x = 0.2;
@@ -231,21 +261,5 @@
   //   return Force_kdl;
   // }
 
-  // void ball::set_gains(const std_msgs::Float64MultiArray::ConstPtr &msg)
-  // {
-  //     if(msg->data.size() == 2*joint_handles_.size())
-  //     {
-  //       for(unsigned int i = 0; i < joint_handles_.size(); i++)
-  //       {
-  //         Kp_(i) = msg->data[i];
-  //         Kd_(i) = msg->data[i + joint_handles_.size()];
-  //       }
-  //     }
-  //     else
-  //       ROS_INFO("Number of Joint handles = %lu", joint_handles_.size());
-
-  //     ROS_INFO("Num of Joint handles = %lu, dimension of message = %lu", joint_handles_.size(), msg->data.size());
-
-
-  // }
+  
 

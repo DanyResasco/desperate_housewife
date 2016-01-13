@@ -31,9 +31,11 @@
       void SeeMarker(Eigen::Matrix<double,6,1> &Pos, std::string obst_name);
       //integration
       void GetVelocityAndPosition(Eigen::Matrix<double,6,1> &Force,  double delta);
-      void Update();
+      bool Update(double delta);
       void ballInfo(const std_msgs::Float64MultiArray::ConstPtr &msg);
       void DrawCylinder();
+
+      bool check_sms;
 
     private:
       ros::Subscriber sub_grid_,obstacles_subscribe_;
@@ -55,6 +57,10 @@
       Eigen::Matrix<double,6,1> x_err_;
       // Eigen::Matrix<double,6,1> velocity,pos; 
       tf::TransformBroadcaster tf_geometriesTransformations_;
+      int count;
+      ros::Publisher pub_Fa_, pub_Fr_;
+      // bool arrived = false;
+
 
     };
 
