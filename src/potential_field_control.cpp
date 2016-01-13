@@ -311,13 +311,14 @@ namespace desperate_housewife
           J_last_ = J_;
           phi_last_ = phi_;
 
-          for (unsigned int j = 0; j < joint_handles_.size(); j++)
-          {
+          //CONTROLLA SE SERVE ANCORA
+          // for (unsigned int j = 0; j < joint_handles_.size(); j++)
+          // {
               
-              tau_(j) = filters::exponentialSmoothing(tau_(j), tau_prev_(j), 0.2);
-              tau_prev_(j) = tau_(j);
+          //     tau_(j) = filters::exponentialSmoothing(tau_(j), tau_prev_(j), 0.2);
+          //     tau_prev_(j) = tau_(j);
               
-          }
+          // }
         
           //CREA PROBLEMI IN SIMULAZIONE --> PROVARE SE È QUESTO CHE MI DA FASTIDIO IN REALE --> percentage 0.3 non va bene 
           tau_(0) = (std::abs(tau_(0)) >= 176*percentage ? std::copysign(176*percentage,tau_(0)) : tau_(0));

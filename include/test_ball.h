@@ -25,7 +25,7 @@
      
       void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
       ball();
-      ~ball();
+      ~ball(){};
       Eigen::Matrix<double,6,1> GetFieldRep(Eigen::Matrix<double,6,1> &point_pos);
       //to visualize in rviz
       void SeeMarker(Eigen::Matrix<double,6,1> &Pos, std::string obst_name);

@@ -1,18 +1,4 @@
 #include <test_ball.h>
-// #include <grid.hpp>
-// #include <utils/pseudo_inversion.h>
-// #include <utils/skew_symmetric.h>
-#include <ros/node_handle.h>
-#include <ros/ros.h>
-
-// #include <pluginlib/class_list_macros.h>
-#include <kdl_parser/kdl_parser.hpp>
-#include <Eigen/LU>
-#include <kdl/frames.hpp>
-#include <kdl/frames_io.hpp>
-// #include <trajectory_msgs/JointTrajectory.h>
-
-#include <math.h>
 
 #define  treshold_influence  0.20
 
@@ -32,6 +18,7 @@
 
   void ball::ballInfo(const std_msgs::Float64MultiArray::ConstPtr &msg)
   {
+      std::cout<<"ricevuto sms info palla"<<std::endl;
       ball_pos = Eigen::Matrix<double,6,1>::Zero();
       pos_des = Eigen::Matrix<double,6,1>::Zero();
 
@@ -55,6 +42,7 @@
   void ball::Update()
   {   
       //if ball is not arrived, update the position and velocity 
+      std::cout<<"dentro update"<<std::endl;
       if( (ball_pos(0) != pos_des(0)) && (ball_pos(1) != pos_des(1)) && (ball_pos(2) != pos_des(2)) )
       {
         F_repulsive = GetFieldRep(ball_pos);
@@ -72,11 +60,10 @@
         Eigen::Matrix<double,6,1> Force_tot = Force_attractive + F_repulsive;
         double delta = 0.1;
         GetVelocityAndPosition(Force_tot,delta); // Force is just divide by mass
-        ros::spinOnce();
+       
       }
       else
-        ROS_INFO("ball arrived");
-        
+        ROS_INFO("ball arrived");     
   }
 
   
@@ -87,7 +74,7 @@
     Eigen::Matrix<double,6,1> pos_last = ball_pos;
    
     x_dot = velocity_last + delta * Force;
-    ball_pos = 0.5 * Force * delta * delta + x_dot * delta + pos_last;
+    ball_pos = 0.5 * Force * delta * delta + velocity_last * delta + pos_last;
 
     DrawSphere( ball_pos );
   }
@@ -114,6 +101,7 @@
 
   void ball::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
   {
+      std::cout<<"ricevuto sms info palla"<<std::endl;
       Object_radius.clear();
       Object_height.clear();
       Object_position.clear();
@@ -211,7 +199,10 @@
       {  
           double influence = Object_radius[i] + 0.2;
           std::vector<KDL::Vector> pos;
-          KDL::Vector ball_pos_kdl(point_pos(0),point_pos(1),point_pos(2));
+          KDL::Vector ball_pos_kdl;
+          ball_pos_kdl.data[0] = point_pos(0); 
+          ball_pos_kdl.data[1] = point_pos(1);
+          ball_pos_kdl.data[2] = point_pos(2);
           pos.push_back(ball_pos_kdl);
           std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
           ForceAndIndex = pfc.GetRepulsiveForce(pos, influence, Object_position[i], Object_radius[i], Object_height[i]);

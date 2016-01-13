@@ -37,6 +37,9 @@ void grid::gridspace(const std_msgs::Float64MultiArray::ConstPtr &msg)
 {
     std::cout<<"sms ricevuto"<<std::endl;
     int count = 0;
+    vect_pos.data[0] = 0;
+    vect_pos.data[1] = 0;
+    vect_pos.data[2] = 0;
       
     for( double i = msg->data[0]; i <= msg->data[1]; i = i + msg->data[2] )
     {
@@ -57,7 +60,6 @@ void grid::gridspace(const std_msgs::Float64MultiArray::ConstPtr &msg)
     MinAndMAx = GetMinAndMax(Force_norm);
     for(unsigned int i=0; i< Force.size(); i++)
     {
-
       DrawArrow( Force[i], Total_point[i], i, MinAndMAx.first, MinAndMAx.second  );
     }
 

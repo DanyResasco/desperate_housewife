@@ -2,7 +2,7 @@
 
   <arg name="spin_rate" default="50" />
 
-	<node name="ball_main" pkg="desperate_housewife" type="ball" output="screen" >
+	<node name="ball_main" pkg="desperate_housewife" type="ball_test" output="screen" >
     <param name="spin_rate" value="$(arg spin_rate)" />
   </node>
 
