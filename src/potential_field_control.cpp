@@ -228,16 +228,24 @@ namespace desperate_housewife
             Fa_msg.data.push_back(Force_attractive(i));
           }
           //jerk trajectory
-          if(switch_trajectory == true)
-          {
-            Time_traj = interpolatormb(time_inter, 2);
-            Force_attractive = Force_attractive_last + (Force_attractive - Force_attractive_last) *(10*pow(Time_traj,3) - 15*pow(Time_traj,4) + 6*pow(Time_traj,5));
+          // if(switch_trajectory == true)
+          // {
+          //   Time_traj = interpolatormb(time_inter, 2);
+          //   Force_attractive = Force_attractive_last + (Force_attractive - Force_attractive_last) *(10*pow(Time_traj,3) - 15*pow(Time_traj,4) + 6*pow(Time_traj,5));
 
-            if(Time_traj == 1)
+          //   if(Time_traj == 1)
+          //   {
+          //     switch_trajectory = false;
+          //   }
+          // }
+
+          //DEVI CANCELLARLO LHAI MESSO SOLO PER VISUALIZZARE
+           for(unsigned int j=0; j< list_of_link.size(); j++)
             {
-              switch_trajectory = false;
+                  // point_of_interesting.push_back(x_chain[list_of_link[j]].p );
+                  std::string obst_name = "link_" + std::to_string(j);
+                  SeeMarker(x_chain[list_of_link[j]], obst_name);
             }
-          }
 
           // pub_Fa_.publish(Fa_msg);
           // computing b = J*M^-1*(c+g) - J_dot*q_dot
@@ -255,6 +263,7 @@ namespace desperate_housewife
             
              std::vector<KDL::Vector> point_of_interesting;
 
+                //desired link
                 for(unsigned int j=0; j< list_of_link.size(); j++)
                 {
                   point_of_interesting.push_back(x_chain[list_of_link[j]].p );
@@ -264,16 +273,10 @@ namespace desperate_housewife
             {
                 // std::vector<double> DistanceAndIndex;
                 double influence = Object_radius[i] +  treshold_influence;
-                // std::vector<double> distance_local_obj;
-
-                // for(unsigned int j=0; j< list_of_link.size(); j++)
-                // {
-                //     distance_local_obj.push_back( (diff(Object_position[i].p, x_chain[list_of_link[j]].p)).Norm() );
-                // }
-
+          
                 std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
-                // ForceAndIndex = GetRepulsiveForce(point_of_interesting, influence, i);
                 ForceAndIndex = GetRepulsiveForce(point_of_interesting, influence, Object_position[i], Object_radius[i], Object_height[i] );
+                
                 vect_rep.push_back (JAC_repulsive[list_of_link[ForceAndIndex.second]].data.transpose()* lambda_ * ForceAndIndex.first);
                 //Force_repulsive =  JAC_repulsive[ForceAndIndex.second].data.transpose()* lambda_ * ForceAndIndex.first;
             }
@@ -291,12 +294,14 @@ namespace desperate_housewife
           std::vector<double> distance_local_obj;
           for(unsigned int j=0; j< list_of_link.size(); j++)
           {
-            distance_local_obj.push_back( -Table_position.z() + x_chain[list_of_link[j]].p.z());
+            distance_local_obj.push_back( -Table_position.z() + x_chain[list_of_link[j]].p.z() );
+            // std::cout<<"distance: "<<distance_local_obj[j]<<std::endl;
+
           }
 
           std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex_table;
           ForceAndIndex_table = RepulsiveWithTable(distance_local_obj);   
-          F_Rep_table = JAC_repulsive[ForceAndIndex_table.second].data.transpose()* lambda_ * ForceAndIndex_table.first;
+          F_Rep_table = JAC_repulsive[list_of_link[ForceAndIndex_table.second]].data.transpose()* lambda_ * ForceAndIndex_table.first;
           
           Force_total_rep = Force_repulsive + F_Rep_table;
 
@@ -444,6 +449,8 @@ namespace desperate_housewife
       {
           DistanceAndIndex.push_back(1);
           DistanceAndIndex.push_back( distance_local_obj[index_dist] );
+          // std::cout<<"distance_local_obj[index_dist]: "<<distance_local_obj[index_dist]<<std::endl;
+          // std::cout<<"index_dist: "<<index_dist<<std::endl;
           DistanceAndIndex.push_back( index_dist);
           // std::cout<<"distance_local_obj: "<< distance_local_obj[index_dist]<<std::endl;
       }
@@ -515,7 +522,7 @@ namespace desperate_housewife
       distance_der_partial[0] = (Point_o[0]*2) / radius ;
       distance_der_partial[1] = (Point_o[1]*2) / radius ;
       // distance_der_partial[2] = (std::pow(Point_o[2],7)*16 / height ); //n=4
-      distance_der_partial[2] = (Point_o[2]*4) / height ; //n=4
+      distance_der_partial[2] = (Point_o[2]*4) / height ; //n=1
       distance_der_partial[3] = 0; //n=1
 
       Eigen::Vector3d Der_v;
@@ -541,16 +548,19 @@ namespace desperate_housewife
   std::pair<Eigen::Matrix<double,6,1>, double> PotentialFieldControl::RepulsiveWithTable(std::vector<double> distance_local_obj)
   {
     
-      double Rep_inf_table = 0.10;
+      double Rep_inf_table = 0.20;
       std::vector<double> DistanceAndIndex;
       DistanceAndIndex = GetMinDistance(distance_local_obj, Rep_inf_table );
 
       std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
       ForceAndIndex.first = Eigen::Matrix<double,6,1>::Zero();
+      ForceAndIndex.second = 0;  
       
       if(DistanceAndIndex[0] == 1 )
       {
           Eigen::Vector3d distance_der_partial(0,0,1);
+          // std::cout<<"DistanceAndIndex[1]: "<<DistanceAndIndex[1]<<std::endl;
+          
           ForceAndIndex.first = GetFIRAS(DistanceAndIndex[1], distance_der_partial, Rep_inf_table); 
           ForceAndIndex.second = DistanceAndIndex[2];
       }
@@ -577,6 +587,25 @@ namespace desperate_housewife
       ROS_INFO("Num of Joint handles = %lu, dimension of message = %lu", joint_handles_.size(), msg->data.size());
 
 
+  }
+
+
+   void PotentialFieldControl::SeeMarker(KDL::Frame &Pos, std::string obst_name)
+  {
+     // std::string obst_name= "pose_desired" ;
+      tf::Transform tfGeomTRansform;
+      geometry_msgs::Pose p;
+      p.position.x = Pos.p.x();
+      p.position.y = Pos.p.y();
+      p.position.z = Pos.p.z();
+      Pos.M.GetQuaternion(p.orientation.x, p.orientation.y ,p.orientation.z ,p.orientation.w);
+      // p.orientation.x = 0;
+      // p.orientation.y = 0;
+      // p.orientation.z = 0;
+      // p.orientation.w = 1; 
+      tf::poseMsgToTF( p, tfGeomTRansform );
+      // tf::poseMsgToKDL(p, frames); 
+      tf_geometriesTransformations_.sendTransform( tf::StampedTransform( tfGeomTRansform, ros::Time::now(), "vito_anchor", obst_name.c_str()) );
   }
 
 

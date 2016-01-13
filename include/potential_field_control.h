@@ -121,7 +121,7 @@ namespace desperate_housewife
 		// void GetForce(const std_msgs::Float64MultiArray::ConstPtr &msg );
 		// void DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point );
 		std::pair<Eigen::Matrix<double,6,1>, double> GetRepulsiveForce(std::vector<KDL::Vector> &point_, double influence, KDL::Frame &Object_pos, double radius, double height);
-		
+		void SeeMarker(KDL::Frame &Pos, std::string obst_name);
 		
 	private:
 		ros::Subscriber sub_command_, sub_command_start;
@@ -226,6 +226,7 @@ namespace desperate_housewife
 		std::string point_;
 		ros::Subscriber sub_force_point_;
 		ros::Publisher vis_pub;
+		    tf::TransformBroadcaster tf_geometriesTransformations_;
 		
 	};
 
