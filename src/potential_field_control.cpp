@@ -78,7 +78,7 @@ namespace desperate_housewife
       pub_error_ = nh_.advertise<desperate_housewife::Error_msg>("error", 1000);
       pub_tau_ = nh_.advertise<std_msgs::Float64MultiArray>("tau_commad", 1000);
       
-      //pub_Fa_ = nh_.advertise<std_msgs::Float64MultiArray>("Factrative_commad", 1000);
+      pub_Fa_ = nh_.advertise<std_msgs::Float64MultiArray>("Factrative_commad", 1000);
 
       sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this); 
       sub_command_start = n.subscribe("start_control", 1, &PotentialFieldControl::command_start, this);
@@ -228,26 +228,26 @@ namespace desperate_housewife
             Fa_msg.data.push_back(Force_attractive(i));
           }
           //jerk trajectory
-          // if(switch_trajectory == true)
-          // {
-          //   Time_traj = interpolatormb(time_inter, 2);
-          //   Force_attractive = Force_attractive_last + (Force_attractive - Force_attractive_last) *(10*pow(Time_traj,3) - 15*pow(Time_traj,4) + 6*pow(Time_traj,5));
+          if(switch_trajectory == true)
+          {
+            Time_traj = interpolatormb(time_inter, 2);
+            Force_attractive = Force_attractive_last + (Force_attractive - Force_attractive_last) *(10*pow(Time_traj,3) - 15*pow(Time_traj,4) + 6*pow(Time_traj,5));
 
-          //   if(Time_traj == 1)
-          //   {
-          //     switch_trajectory = false;
-          //   }
-          // }
+            if(Time_traj == 1)
+            {
+              switch_trajectory = false;
+            }
+          }
 
           //DEVI CANCELLARLO LHAI MESSO SOLO PER VISUALIZZARE
-           for(unsigned int j=0; j< list_of_link.size(); j++)
-            {
-                  // point_of_interesting.push_back(x_chain[list_of_link[j]].p );
-                  std::string obst_name = "link_" + std::to_string(j);
-                  SeeMarker(x_chain[list_of_link[j]], obst_name);
-            }
+           // for(unsigned int j=0; j< list_of_link.size(); j++)
+           //  {
+           //        // point_of_interesting.push_back(x_chain[list_of_link[j]].p );
+           //        std::string obst_name = "link_" + std::to_string(j);
+           //        SeeMarker(x_chain[list_of_link[j]], obst_name);
+           //  }
 
-          // pub_Fa_.publish(Fa_msg);
+          pub_Fa_.publish(Fa_msg);
           // computing b = J*M^-1*(c+g) - J_dot*q_dot
           b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
 
@@ -296,7 +296,6 @@ namespace desperate_housewife
           {
             distance_local_obj.push_back( -Table_position.z() + x_chain[list_of_link[j]].p.z() );
             // std::cout<<"distance: "<<distance_local_obj[j]<<std::endl;
-
           }
 
           std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex_table;
@@ -548,7 +547,7 @@ namespace desperate_housewife
   std::pair<Eigen::Matrix<double,6,1>, double> PotentialFieldControl::RepulsiveWithTable(std::vector<double> distance_local_obj)
   {
     
-      double Rep_inf_table = 0.20;
+      double Rep_inf_table = 0.15;
       std::vector<double> DistanceAndIndex;
       DistanceAndIndex = GetMinDistance(distance_local_obj, Rep_inf_table );
 
