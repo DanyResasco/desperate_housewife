@@ -230,8 +230,10 @@ namespace desperate_housewife
           //jerk trajectory
           if(switch_trajectory == true)
           {
-            Time_traj = interpolatormb(time_inter, 2);
-            Force_attractive = Force_attractive_last + (Force_attractive - Force_attractive_last) *(10*pow(Time_traj,3) - 15*pow(Time_traj,4) + 6*pow(Time_traj,5));
+            // Time_traj = interpolatormb(time_inter, 2);
+
+            // Force_attractive = Force_attractive_last + (Force_attractive - Force_attractive_last) *(10*pow(Time_traj,3) - 15*pow(Time_traj,4) + 6*pow(Time_traj,5));
+            Force_attractive = Force_attractive_last + (Force_attractive - Force_attractive_last) * interpolatormb_min_jerk(time_inter, 2);
 
             if(Time_traj == 1)
             {
