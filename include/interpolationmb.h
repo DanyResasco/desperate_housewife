@@ -55,4 +55,39 @@ inline double interpolatormb_line(double t, double td)
   return t/td;
 }
 
+
+
+inline double interpolatormb_min_jerk(double t, double td)
+{
+  double coefficients[6];
+  double interpolation = 0.0;
+  coefficients[0] = 0.0;
+  coefficients[1] = 0.0;
+  coefficients[2] = 0.0;
+  coefficients[3] = 10.0;
+  coefficients[4] = -15;
+  coefficients[5] = 6;
+
+  if (t < 0.0 )
+  {
+    return 0.0;
+  }
+
+  if (t >= td)
+  {
+    return 1.0;
+  }
+
+  interpolation = coefficients[5] * std::pow(t/td,5) +
+                  coefficients[4] * std::pow(t/td,4) +
+                  coefficients[3] * std::pow(t/td,3);
+
+  if (interpolation > 1)
+    return 1.0;
+  if (interpolation < 0)
+    return 0.0;
+  
+  return interpolation;
+}
+
 #endif
