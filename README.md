@@ -8,16 +8,20 @@ To use this repo execute the following steps:
 	- move to trash the pkg ros_control
 	- 'cd ..'
 	- 'cd kuka_hw '
-	- 'git checkout manueld_devel '
+	- 'git checkout manuelb_devel '
 
 Compile doing 'catkin_make --only_pkg-with-deps desperate_housewife' in your workspace
 The command to launch the robot in simulation is : roslaunch desperate_housewife desperate_robot.launch
 
 
 TEST FILE
-To test field: 
+To test potential field: 
+
 	-roslaunch test_send_obst.launch
-		** For this code sends a ros message  rostopic pub  -1 /send_obst std_msgs/Float64MultiArray " data: [Pos_ost_1_x, Pos_ost_1_y, Ps_ost_1_z, radius_1, height_1, Pos_ost_2_x, Pos_ost_2_y, Pos_ost_2_z, radius_2, height_2] "
+	
+	This code sends a ros message  to 
+
+	-rostopic pub  -1 /send_obst std_msgs/Float64MultiArray " data: [Pos_ost_1_x, Pos_ost_1_y, Ps_ost_1_z, radius_1, height_1, Pos_ost_2_x, Pos_ost_2_y, Pos_ost_2_z, radius_2, height_2] "
 
 	-roslaunch desperate_housewife grid.launch
 		** This code draws the repulsive fields like an arrow around he obstacle. For this code sends a ros message rostopic pub -1 /gridspace std_msgs/Float64MultiArray 'data: [x_min, x_max, x_resolution, y_min, y_max, y_resolution, z_min, z_max, z_resolution]'
