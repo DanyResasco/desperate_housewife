@@ -176,6 +176,7 @@ desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( despera
     hand_pose_local.whichArm = whichArm( geometry.pose );
   }
 
+  hand_pose_local.whichArm  = 0; //TEST
   
   return hand_pose_local;
 }
