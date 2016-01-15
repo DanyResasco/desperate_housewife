@@ -115,8 +115,8 @@ namespace desperate_housewife
       // Kd_(0) = 1; Kd_(1) = 1; Kd_(2) = 1;
       // Kd_(3) = 1; Kd_(4) = 1; Kd_(5) = 1;
 
-      Kp_(0) = 1000;  Kp_(1) = 1000; Kp_(2) = 1000;
-      Kp_(3) = 1000;  Kp_(4) = 1000; Kp_(5) = 1000;
+      Kp_(0) = 800;  Kp_(1) = 800; Kp_(2) = 800;
+      Kp_(3) = 800;  Kp_(4) = 800; Kp_(5) = 800;
       Kd_(0) = 200; Kd_(1) = 200; Kd_(2) = 200;
       Kd_(3) = 200; Kd_(4) = 200; Kd_(5) = 200;
 
@@ -221,23 +221,26 @@ namespace desperate_housewife
 
           pub_error_.publish(error_pose_trajectory);
           std_msgs::Float64MultiArray Fa_msg;
+
+          //calculate the attractive filed like PID control
           for(int i = 0; i < Force_attractive.size(); i++)
           {
             // Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + V_max_kuka*Kp_(i)*x_err_(i);
             Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + Kp_(i)*x_err_(i);
             Fa_msg.data.push_back(Force_attractive(i));
           }
-          //jerk trajectory
-          if(switch_trajectory == true)
-          {
-            Time_traj = interpolatormb(time_inter, 2); 
-            Force_attractive = Force_attractive_last + (Force_attractive - Force_attractive_last) *(10*pow(Time_traj,3) - 15*pow(Time_traj,4) + 6*pow(Time_traj,5));
 
-            if(Time_traj == 1)
-            {
-              switch_trajectory = false;
-            }
-          }
+          //jerk trajectory
+          // if(switch_trajectory == true)
+          // {
+          //   Time_traj = interpolatormb(time_inter, T_des); 
+          //   Force_attractive = Force_attractive_last + (Force_attractive - Force_attractive_last) * (10*pow(Time_traj,3) - 15*pow(Time_traj,4) + 6*pow(Time_traj,5));
+
+          //   if(Time_traj == 1)
+          //   {
+          //     switch_trajectory = false;
+          //   }
+          // }
 
           //DEVI CANCELLARLO LHAI MESSO SOLO PER VISUALIZZARE
            // for(unsigned int j=0; j< list_of_link.size(); j++)
@@ -248,47 +251,48 @@ namespace desperate_housewife
            //  }
 
           pub_Fa_.publish(Fa_msg);
+
           // computing b = J*M^-1*(c+g) - J_dot*q_dot
           b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
 
           // computing omega = J*M^-1*N^T*J
           omega_ = J_.data*M_inv_*N_trans_*J_.data.transpose();
+
           JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
           // computing lambda = omega^-1
           pseudo_inverse(omega_,lambda_,sing_vals_2);
           
           if(Object_position.size() > 0)
           {
-            std::vector<Eigen::Matrix<double,7,1>> vect_rep;
-            
-             std::vector<KDL::Vector> point_of_interesting;
+              std::vector<Eigen::Matrix<double,7,1>> vect_rep;
+              std::vector<KDL::Vector> point_of_interesting;
 
-                //desired link
-                for(unsigned int j=0; j< list_of_link.size(); j++)
-                {
+              //desired link
+              for(unsigned int j=0; j< list_of_link.size(); j++)
+              {
                   point_of_interesting.push_back(x_chain[list_of_link[j]].p );
-                }
+              }
 
-            for(unsigned int i=0; i < Object_position.size();i++)
-            {
-                // std::vector<double> DistanceAndIndex;
-                double influence = Object_radius[i] +  treshold_influence;
-          
-                std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
-                ForceAndIndex = GetRepulsiveForce(point_of_interesting, influence, Object_position[i], Object_radius[i], Object_height[i] );
-                
-                vect_rep.push_back (JAC_repulsive[list_of_link[ForceAndIndex.second]].data.transpose()* lambda_ * ForceAndIndex.first);
-                //Force_repulsive =  JAC_repulsive[ForceAndIndex.second].data.transpose()* lambda_ * ForceAndIndex.first;
-            }
+              for(unsigned int i=0; i < Object_position.size();i++)
+              {
+                  // std::vector<double> DistanceAndIndex;
+                  double influence = Object_radius[i] +  treshold_influence;
             
-            Force_repulsive = Eigen::Matrix<double,7,1>::Zero();
-            
-            for(unsigned int j = 0; j<vect_rep.size(); j++)
-            {
-              Force_repulsive += vect_rep[j];
-            }
-
+                  std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
+                  ForceAndIndex = GetRepulsiveForce(point_of_interesting, influence, Object_position[i], Object_radius[i], Object_height[i] );
+                  
+                  vect_rep.push_back (JAC_repulsive[list_of_link[ForceAndIndex.second]].data.transpose()* lambda_ * ForceAndIndex.first);
+                  //Force_repulsive =  JAC_repulsive[ForceAndIndex.second].data.transpose()* lambda_ * ForceAndIndex.first;
+              }
+              
+              Force_repulsive = Eigen::Matrix<double,7,1>::Zero();
+              
+              for(unsigned int j = 0; j<vect_rep.size(); j++)
+              {
+                Force_repulsive += vect_rep[j];
+              }
           }
+
           //repulsive with table
           KDL::Vector Table_position(0,0,0.15);           
           std::vector<double> distance_local_obj;

@@ -265,7 +265,7 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
       case 0: //object to grasp
       {     
             ROS_DEBUG("Case 0: graspable object");
-            std::cout<<"case 0"<<std::endl;   
+            // std::cout<<"case 0"<<std::endl;   
             trajectory_msgs::JointTrajectory msg_jointT_hand;
             msg_jointT_hand.joint_names.resize(1);
             desperate_housewife::handPoseSingle new_obj_pos_remove; //new hand position
@@ -305,7 +305,7 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
       case 1: //obstacle to remove
       {     
             ROS_DEBUG("Case 1: remove object");
-            std::cout<<"case 1"<<std::endl;     
+            // std::cout<<"case 1"<<std::endl;     
             desperate_housewife::handPoseSingle New_Hand_Position;
             New_Hand_Position.pose = error_msg->pose_hand;
 
