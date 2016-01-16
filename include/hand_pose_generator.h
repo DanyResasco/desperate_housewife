@@ -142,6 +142,9 @@ public:
   */
   void Overturn();
 
+  void CheckRealTimeObstacleMovements(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
+
+
 
 
 };

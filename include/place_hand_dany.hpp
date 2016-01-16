@@ -16,7 +16,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   tf::StampedTransform T_K_vito_ancor;
   Eigen::Vector4d local;
   Eigen::Matrix4d T_w_h, T_vito_c;
-  double max_radius=0.1;
+  double max_radius = 0.1;
 
   Eigen::Affine3d mtemp;
  
@@ -64,7 +64,6 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       Point_desired(2) = height *0.5 + 0.05;	
       Point_desired(3) = 1;
       ROS_DEBUG("cyl upright and empty");
-
       
       if (whichArm == 1) //left arm
       {
@@ -77,16 +76,14 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
         Point_desired(0) = radius;
         M_desired_local.col(3) << Point_desired;
         T_w_h = T_vito_c * M_desired_local;
-      }
-
-      
+      }      
     }
 
   else if(((isLying == 0) && (isFull != 0)) && (radius< max_radius))
     {
       Point_desired(0) = 0;
       Point_desired(1) = 0;
-      Point_desired(2) = height *0.5+ 0.05; 
+      Point_desired(2) = height *0.5 + 0.05; 
       Point_desired(3) = 1;
       ROS_DEBUG("cyl upright and full");
       
@@ -99,9 +96,10 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
        }
       else
       {
-         T_w_h = T_vito_c * M_desired_local;
+        M_desired_local.col(0) << z.cross(-projection), 0;  //da vedere non va bene al ritorno!!
+        T_w_h = T_vito_c * M_desired_local;
       }
-  // std::cout<<"M_desired_local: "<<M_desired_local<<std::endl;
+  std::cout<<"M_desired_local: "<<M_desired_local<<std::endl;
     }
 
   else if ((isLying != 0) && (radius < max_radius))
@@ -211,7 +209,7 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose )
 	// double dist_to_left_hand  = 0;
 	// double dist_to_right_hand = 0;
 
-	if(dist_to_left_hand <= dist_to_right_hand)
+	if(dist_to_left_hand < dist_to_right_hand)
 	{
 	 
 	  ROS_DEBUG("Vito uses a: left arm");

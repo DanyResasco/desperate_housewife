@@ -347,7 +347,7 @@ void  HandPoseGenerator::DesperateDemo2(const desperate_housewife::fittedGeometr
     }
 }
 
-void CheckRealTimeObstacleMovements(onst desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
+void HandPoseGenerator::CheckRealTimeObstacleMovements(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
 {
   desperate_housewife::handPoseSingle InfoPose;
   desperate_housewife::fittedGeometriesSingle New_obstacle;
@@ -371,9 +371,6 @@ void CheckRealTimeObstacleMovements(onst desperate_housewife::fittedGeometriesAr
   }
   obstacles_publisher_left.publish(obstaclesMsg);
   obstacles_publisher_right.publish(obstaclesMsg);
-
-
-
 }
 
 // }
