@@ -2,6 +2,7 @@
 
 #include <place_hand_dany.hpp>
 
+
 HandPoseGenerator::HandPoseGenerator()
 {
   nh.param<int>("/demo", demo, 0);
@@ -43,18 +44,18 @@ HandPoseGenerator::HandPoseGenerator()
   nh.param<std::string>("/left_arm/PotentialFieldControl/desired_hand_left_pose", desired_hand_pose_left_topic_, "/left_arm/PotentialFieldControl/desired_hand_left_pose");
   desired_hand_publisher_left = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_pose_left_topic_.c_str(),1);
 
+  nh.param<std::string>("/left_arm/PotentialFieldControl/desired_hand_left_pose", desired_hand_pose_left_topic_, "/left_arm/PotentialFieldControl/desired_hand_left_pose");
+  desired_hand_publisher_left = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_pose_left_topic_.c_str(),1);
 
-
-  // nh.param<std::string>("/PotentialFieldControl/desired_hand_pose_left_filter", desired_hand_pose_left_topic_, "/PotentialFieldControl/desired_hand_left_filter");
-  // desired_hand_publisher_left = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_pose_left_topic_.c_str(),1);
-
-  // nh.param<std::string>("/PotentialFieldControl/desired_hand_pose_right_filter", desired_hand_pose_right_topic_, "/PotentialFieldControl/desired_hand_right_filter");
-  // desired_hand_publisher_right = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_pose_right_topic_.c_str(),1);
   //reads the flag to start the control
   nh.param<std::string>("PotentialFieldControl/start_controller" , start_topic_left, "/left_arm/PotentialFieldControl/start_controller");
   left_start_controller_sub = nh.subscribe(start_topic_left, 1, &HandPoseGenerator::Start_left, this);
   nh.param<std::string>("PotentialFieldControl/start_controller" , start_topic_right, "/right_arm/PotentialFieldControl/start_controller");
   right_start_controller_sub =  nh.subscribe(start_topic_right, 1, &HandPoseGenerator::Start_right, this);
+
+
+  //TEST
+   // vis_pub = nh.advertise<visualization_msgs::Marker>( "visualization_marker", 10 );
 }
 
 void HandPoseGenerator::Start_left(const desperate_housewife::Start::ConstPtr& msg)
@@ -167,7 +168,6 @@ desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( despera
   if ( isGeometryGraspable ( geometry ))
   {
     hand_pose_local.whichArm = whichArm( geometry.pose );
-    // hand_pose_local.whichArm  = 0; //TEST for use the right arm
     hand_pose_local.pose = placeHand( geometry, hand_pose_local.whichArm );
     hand_pose_local.isGraspable = true;
   }
@@ -178,8 +178,6 @@ desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( despera
     hand_pose_local.whichArm = whichArm( geometry.pose );
   }
 
-  
-  
   return hand_pose_local;
 }
 

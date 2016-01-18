@@ -23,6 +23,9 @@
 #include <trajectory_msgs/JointTrajectory.h>
 #include <desperate_housewife/Start.h>
 #include <std_msgs/UInt16.h>
+#include <visualization_msgs/Marker.h>
+
+
 
 class HandPoseGenerator{
 
@@ -57,7 +60,11 @@ public:
   tf::TransformListener listener_info;
   ros::Publisher objects_info_right_pub, objects_info_left_pub;
   std::string obj_info_topic_r, obj_info_topic_l;
+   ros::Publisher vis_pub;
  
+
+
+  tf::TransformListener listener_object;
 
   HandPoseGenerator();
   ~HandPoseGenerator(){};
@@ -145,7 +152,7 @@ public:
   void CheckRealTimeObstacleMovements(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
 
 
-
+void DrawStraingLIne( Eigen::Vector3d &rett_pos );
 
 };
 
