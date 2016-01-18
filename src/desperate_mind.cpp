@@ -270,7 +270,9 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
             msg_jointT_hand.joint_names.resize(1);
             desperate_housewife::handPoseSingle new_obj_pos_remove; //new hand position
             //hand msg
-            new_obj_pos_remove.pose = error_msg->pose_hand;
+            geometry_msgs::Pose pose_temp;
+            pose_temp = error_msg->pose_hand;
+            // new_obj_pos_remove.pose = error_msg->pose_hand;
             msg_jointT_hand.points.resize(1);
             msg_jointT_hand.points[0].positions.resize(1);
             msg_jointT_hand.points[0].positions[0] = 1.0;
@@ -278,7 +280,8 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
 
             if(whichArm == 1)
             {
-                new_obj_pos_remove.pose.position.y = new_obj_pos_remove.pose.position.y - 0.4;
+                new_obj_pos_remove.pose = TrashObjectPOsition(1, pose_temp.orientation);
+                // new_obj_pos_remove.pose.position.y = new_obj_pos_remove.pose.position.y - 0.4;
                 msg_jointT_hand.joint_names[0] = left_hand_synergy_joint.c_str();
                 hand_publisher_left.publish(msg_jointT_hand);
                 // ros::Duration(1.2).sleep();
@@ -287,7 +290,8 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
             }
             else
             {
-                new_obj_pos_remove.pose.position.y = new_obj_pos_remove.pose.position.y + 0.4;
+                new_obj_pos_remove.pose = TrashObjectPOsition(0, pose_temp.orientation);
+                // new_obj_pos_remove.pose.position.y = new_obj_pos_remove.pose.position.y + 0.4;
                 msg_jointT_hand.joint_names[0] = right_hand_synergy_joint.c_str();
                 hand_publisher_right.publish(msg_jointT_hand);
                  // ros::Duration(1.2).sleep();

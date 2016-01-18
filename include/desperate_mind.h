@@ -148,7 +148,8 @@ class DesperateDecisionMaker
     *Description:Function that calulates if hand is arrived.  
     */
     bool IsEqual(KDL::Twist E_pf, KDL::Twist E_t);
+
+    geometry_msgs::Pose TrashObjectPOsition(int Arm_, geometry_msgs::Quaternion &Quat_hand);
+
 };
-
-
 #endif

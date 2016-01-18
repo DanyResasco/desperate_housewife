@@ -2,3 +2,15 @@ PotentialFieldControl/home_desperate_left: /left_arm/PotentialFieldControl/home_
 PotentialFieldControl/home_desperate_right: /right_arm/PotentialFieldControl/home_right
 PotentialFieldControl/stop_pub_right:  /right_arm/PotentialFieldControl/stop_pub_filter_right
 PotentialFieldControl/stop_pub_left:  /left_arm/PotentialFieldControl/stop_pub_filter_left
+trash_left_arm_position_x: -0.75022
+trash_left_arm_position_y: -0.47078
+trash_left_arm_position_z: 0.54494
+trash_left_arm_A: -0.12690
+trash_left_arm_B: -0.06571
+trash_left_arm_C: 0.11774
+trash_right_arm_position_x: -0.55022
+trash_right_arm_position_y: 0.77078
+trash_right_arm_position_z: 0.54494
+trash_right_arm_A: -1.0472
+trash_right_arm_B: -0.08650
+trash_right_arm_C: -0.051
