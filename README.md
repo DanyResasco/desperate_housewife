@@ -12,6 +12,7 @@ To use this repo execute the following steps:
 	- 'git checkout ros-i-specs'
 	- 'cd ../..'
 	- 'git clone https://github.com/manuelbonilla/desperate_housewife.git'
+	- 'cd desperate_housewife'
 	- 'git checkout danydevel '
 	- 'cd ..'
 
