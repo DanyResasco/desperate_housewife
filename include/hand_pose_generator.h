@@ -73,7 +73,7 @@ public:
   */
   void HandPoseGeneratorCallback(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
 
-  desperate_housewife::handPoseSingle generateHandPose( desperate_housewife::fittedGeometriesSingle geometry );
+  desperate_housewife::handPoseSingle generateHandPose( desperate_housewife::fittedGeometriesSingle geometry, int cyl_nbr );
   /** Function: isGeometryGraspable
   *input: cylinder
   *output: bool
@@ -96,7 +96,7 @@ public:
   *output: integrer 1 left arm 0 right arm
   *Description:Function that calulates whichArm use. It's calculate looking the shortes distance between the object and the arm.  
   */
-  int whichArm( geometry_msgs::Pose object_pose );
+  int whichArm( geometry_msgs::Pose object_pose, int cyl_nbr );
    /** Function: fromEigenToPose
   *input: eigen matrix, geoemtry_pose to save the hand pose 
   *output: void

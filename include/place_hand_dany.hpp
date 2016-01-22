@@ -49,7 +49,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
   // std::cout<<"retta_hand_obj: "<<retta_hand_obj<<std::endl;
   // retta_hand_obj.normalize();
-  std::cout<<"retta_hand_obj normalize: "<< retta_hand_obj <<std::endl;
+  // std::cout<<"retta_hand_obj normalize: "<< retta_hand_obj <<std::endl;
   // retta_hand_obj.normalize();
   Eigen::Vector3d projection(retta_hand_obj[0], retta_hand_obj[1],0);
   // projection.normalize();
@@ -210,7 +210,7 @@ Eigen::Matrix4d HandPoseGenerator::FromMsgtoEigen(geometry_msgs::Pose &object)
 }
 
 
-int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose )
+int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
 {
   //We use vito frame for chose which arm use, while we use cylinder frame for calculates the straight line between hand frame and objects frame.
   int return_value;
@@ -223,11 +223,11 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose )
 	listener_info.lookupTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time(0), hand_rigth);
 
   //Ancora da vedere come fare la trasformazione della posa della mano al cilindro considerato 
-  listener_info.waitForTransform("object_0", right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
-  listener_info.lookupTransform("object_0", right_hand_frame_.c_str(), ros::Time(0), hand_r_object);
+  listener_info.waitForTransform("object_"+ std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
+  listener_info.lookupTransform("object_"+std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time(0), hand_r_object);
 
-  listener_info.waitForTransform("object_0", left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
-  listener_info.lookupTransform("object_0", left_hand_frame_.c_str(), ros::Time(0), hand_l_object);
+  listener_info.waitForTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
+  listener_info.lookupTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time(0), hand_l_object);
 
 
 	Eigen::Vector3d object_position(object_pose.position.x, object_pose.position.y, object_pose.position.z);
