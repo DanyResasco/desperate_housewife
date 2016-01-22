@@ -6,9 +6,15 @@ To use this repo execute the following steps:
 	- 'git clone --recursive https://github.com/CentroEPiaggio/vito-robot.git
 	- 'cd vito-robot'
 	- move to trash the pkg ros_control
+	- move to trash the pkg kuka-lwr
+	- 'git clone https://github.com/manuelbonilla/kuka-lwr.git'
+	- cd kuka-lwr
+	- 'git checkout ros-i-specs'
+	- 'cd ../..'
+	- 'git clone https://github.com/manuelbonilla/desperate_housewife.git'
+	- 'cd desperate_housewife'
+	- 'git checkout danydevel '
 	- 'cd ..'
-	- 'cd kuka_hw '
-	- 'git checkout manuelb_devel '
 
 Compile doing 'catkin_make --only_pkg-with-deps desperate_housewife' in your workspace
 The command to launch the robot in simulation is : roslaunch desperate_housewife desperate_robot.launch
