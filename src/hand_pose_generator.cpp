@@ -81,7 +81,7 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
   
   if((start_controller_left != 0) && (start_controller_right != 0))
   {
-    CheckRealTimeObstacleMovements(msg);
+    // CheckRealTimeObstacleMovements(msg);
     if(stop == 0)
     {
       std::cout<<"start controller"<<std::endl;
@@ -132,7 +132,7 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
 
       }
 
-      else if (msg->geometries.size() >=  Number_obj )
+      else if (msg->geometries.size() >= (uint) Number_obj )
       {
         Overturn();
       }

@@ -60,10 +60,8 @@ public:
   tf::TransformListener listener_info;
   ros::Publisher objects_info_right_pub, objects_info_left_pub;
   std::string obj_info_topic_r, obj_info_topic_l;
-   ros::Publisher vis_pub;
+  ros::Publisher vis_pub;
  
-
-
   tf::TransformListener listener_object;
 
   HandPoseGenerator();
@@ -149,10 +147,15 @@ public:
   */
   void Overturn();
 
+   /** Function: CheckRealTimeObstacleMovements
+  *input: cylinder
+  *output: void
+  *Description:Send a obstacles at real time 
+  */
   void CheckRealTimeObstacleMovements(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
 
 
-void DrawStraingLIne( Eigen::Vector3d &rett_pos );
+// void DrawStraingLIne( Eigen::Vector3d &rett_pos );
 
 };
 
