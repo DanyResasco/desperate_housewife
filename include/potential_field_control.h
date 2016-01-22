@@ -143,9 +143,9 @@ namespace desperate_housewife
 		KDL::Frame x_des_int;	//desired pose
 		KDL::Frame x_now_int; //position robot for interpolate
 
-		KDL::Twist x_err_;	//error
+		KDL::Twist x_err_,x_err_last;	//error
 
-		KDL::JntArray Kp_,Kd_;	//gains
+		KDL::JntArray Kp_,Kd_,Ki_;	//gains
 
 		KDL::JntArray tau_;	//tau
 
@@ -201,7 +201,8 @@ namespace desperate_housewife
 		int erro_arr, err_obj, err_home ;
 		double time_inter; //time to interpolate
 		double T_des; //time desired to interpolate
-		// int Int = 0; 
+		// int Int = 0;
+		double time_inter_jerk; 
 
 		struct quaternion_
 		{
@@ -217,6 +218,7 @@ namespace desperate_housewife
 		ros::Publisher pub_Freptavolo_, pub_Fa_, pub_diff,pub_xdot,pub_sing_val;
 		std::vector<KDL::Frame> test_pos_jerk;
 		Eigen::Matrix<double,6,1> Force_attractive_last;
+		Eigen::Matrix<double,7,1> Force_total_rep_last;
 		bool switch_trajectory;
 		double Time_traj, Time_traj_rep;
 		KDL::JntArray tau_prev_;
@@ -225,9 +227,9 @@ namespace desperate_housewife
 		// ros::ServiceServer service;
 		std::string point_;
 		ros::Subscriber sub_force_point_;
-		ros::Publisher vis_pub;
+		ros::Publisher vis_pub,pub_Fr_,pub_velocity_,pub_error_int_;
 		    tf::TransformBroadcaster tf_geometriesTransformations_;
-		
+		KDL::Twist x_err_integral;
 	};
 
 	// Eigen::Quaterniond RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point);

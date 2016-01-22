@@ -4,14 +4,11 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Global Options1
         - /Status1
-        - /Grid1
-        - /PointCloud21
         - /Marker1
         - /Marker1/Namespaces1
         - /TF1/Frames1
-        - /PointCloud23
+        - /Marker2
       Splitter Ratio: 0.683794
     Tree Height: 463
   - Class: rviz/Selection
@@ -92,19 +89,473 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Class: rviz/TF
-      Enabled: false
+      Enabled: true
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        Moveobj_:
+          Value: true
+        camera_depth_frame:
+          Value: false
+        camera_depth_optical_frame:
+          Value: false
+        camera_link:
+          Value: false
+        camera_rgb_frame:
+          Value: false
+        camera_rgb_optical_frame:
+          Value: false
+        desired_hand_pose:
+          Value: true
+        head_asus/camera_depth_frame:
+          Value: false
+        head_asus/camera_depth_optical_frame:
+          Value: false
+        head_asus/camera_link:
+          Value: false
+        head_asus/camera_rgb_frame:
+          Value: false
+        head_asus/camera_rgb_optical_frame:
+          Value: false
+        head_asus_link:
+          Value: false
+        head_left_eye_calib_frame:
+          Value: false
+        head_left_eye_link:
+          Value: false
+        head_right_eye_calib_frame:
+          Value: false
+        head_right_eye_link:
+          Value: false
+        home_robot_right:
+          Value: true
+        left_arm_1_link:
+          Value: false
+        left_arm_1_link_dummy:
+          Value: false
+        left_arm_2_link:
+          Value: false
+        left_arm_2_link_dummy:
+          Value: false
+        left_arm_3_link:
+          Value: false
+        left_arm_3_link_dummy:
+          Value: false
+        left_arm_4_link:
+          Value: false
+        left_arm_4_link_dummy:
+          Value: false
+        left_arm_5_link:
+          Value: false
+        left_arm_5_link_dummy:
+          Value: false
+        left_arm_6_link:
+          Value: false
+        left_arm_6_link_dummy:
+          Value: false
+        left_arm_7_link:
+          Value: false
+        left_arm_7_link_dummy:
+          Value: false
+        left_arm_base_link:
+          Value: false
+        left_hand_clamp:
+          Value: false
+        left_hand_index_distal_link:
+          Value: false
+        left_hand_index_fake_link1:
+          Value: false
+        left_hand_index_fake_link2:
+          Value: false
+        left_hand_index_fake_link3:
+          Value: false
+        left_hand_index_knuckle_link:
+          Value: false
+        left_hand_index_middle_link:
+          Value: false
+        left_hand_index_proximal_link:
+          Value: false
+        left_hand_invisible_wire_link:
+          Value: false
+        left_hand_kuka_coupler:
+          Value: false
+        left_hand_kuka_coupler_bottom:
+          Value: false
+        left_hand_little_distal_link:
+          Value: false
+        left_hand_little_fake_link1:
+          Value: false
+        left_hand_little_fake_link2:
+          Value: false
+        left_hand_little_fake_link3:
+          Value: false
+        left_hand_little_knuckle_link:
+          Value: false
+        left_hand_little_middle_link:
+          Value: false
+        left_hand_little_proximal_link:
+          Value: false
+        left_hand_middle_distal_link:
+          Value: false
+        left_hand_middle_fake_link1:
+          Value: false
+        left_hand_middle_fake_link2:
+          Value: false
+        left_hand_middle_fake_link3:
+          Value: false
+        left_hand_middle_knuckle_link:
+          Value: false
+        left_hand_middle_middle_link:
+          Value: false
+        left_hand_middle_proximal_link:
+          Value: false
+        left_hand_palm_link:
+          Value: false
+        left_hand_palm_ref_link:
+          Value: false
+        left_hand_ring_distal_link:
+          Value: false
+        left_hand_ring_fake_link1:
+          Value: false
+        left_hand_ring_fake_link2:
+          Value: false
+        left_hand_ring_fake_link3:
+          Value: false
+        left_hand_ring_knuckle_link:
+          Value: false
+        left_hand_ring_middle_link:
+          Value: false
+        left_hand_ring_proximal_link:
+          Value: false
+        left_hand_softhand_base:
+          Value: false
+        left_hand_thumb_distal_link:
+          Value: false
+        left_hand_thumb_fake_link1:
+          Value: false
+        left_hand_thumb_fake_link3:
+          Value: false
+        left_hand_thumb_knuckle_link:
+          Value: false
+        left_hand_thumb_proximal_link:
+          Value: false
+        object_0:
+          Value: true
+        right_arm_1_link:
+          Value: false
+        right_arm_1_link_dummy:
+          Value: false
+        right_arm_2_link:
+          Value: false
+        right_arm_2_link_dummy:
+          Value: false
+        right_arm_3_link:
+          Value: false
+        right_arm_3_link_dummy:
+          Value: false
+        right_arm_4_link:
+          Value: false
+        right_arm_4_link_dummy:
+          Value: false
+        right_arm_5_link:
+          Value: false
+        right_arm_5_link_dummy:
+          Value: false
+        right_arm_6_link:
+          Value: false
+        right_arm_6_link_dummy:
+          Value: false
+        right_arm_7_link:
+          Value: false
+        right_arm_7_link_dummy:
+          Value: false
+        right_arm_base_link:
+          Value: false
+        right_hand_clamp:
+          Value: false
+        right_hand_index_distal_link:
+          Value: false
+        right_hand_index_fake_link1:
+          Value: false
+        right_hand_index_fake_link2:
+          Value: false
+        right_hand_index_fake_link3:
+          Value: false
+        right_hand_index_knuckle_link:
+          Value: false
+        right_hand_index_middle_link:
+          Value: false
+        right_hand_index_proximal_link:
+          Value: false
+        right_hand_invisible_wire_link:
+          Value: false
+        right_hand_kuka_coupler:
+          Value: false
+        right_hand_kuka_coupler_bottom:
+          Value: false
+        right_hand_little_distal_link:
+          Value: false
+        right_hand_little_fake_link1:
+          Value: false
+        right_hand_little_fake_link2:
+          Value: false
+        right_hand_little_fake_link3:
+          Value: false
+        right_hand_little_knuckle_link:
+          Value: false
+        right_hand_little_middle_link:
+          Value: false
+        right_hand_little_proximal_link:
+          Value: false
+        right_hand_middle_distal_link:
+          Value: false
+        right_hand_middle_fake_link1:
+          Value: false
+        right_hand_middle_fake_link2:
+          Value: false
+        right_hand_middle_fake_link3:
+          Value: false
+        right_hand_middle_knuckle_link:
+          Value: false
+        right_hand_middle_middle_link:
+          Value: false
+        right_hand_middle_proximal_link:
+          Value: false
+        right_hand_palm_link:
+          Value: false
+        right_hand_palm_ref_link:
+          Value: false
+        right_hand_ring_distal_link:
+          Value: false
+        right_hand_ring_fake_link1:
+          Value: false
+        right_hand_ring_fake_link2:
+          Value: false
+        right_hand_ring_fake_link3:
+          Value: false
+        right_hand_ring_knuckle_link:
+          Value: false
+        right_hand_ring_middle_link:
+          Value: false
+        right_hand_ring_proximal_link:
+          Value: false
+        right_hand_softhand_base:
+          Value: false
+        right_hand_thumb_distal_link:
+          Value: false
+        right_hand_thumb_fake_link1:
+          Value: false
+        right_hand_thumb_fake_link3:
+          Value: false
+        right_hand_thumb_knuckle_link:
+          Value: false
+        right_hand_thumb_proximal_link:
+          Value: false
+        table_leg_0_link:
+          Value: false
+        table_leg_1_link:
+          Value: false
+        table_leg_2_link:
+          Value: false
+        table_leg_3_link:
+          Value: false
+        table_plate_link:
+          Value: false
+        torso_link:
+          Value: false
+        vito_anchor:
+          Value: false
+        workbench_leg_0_link:
+          Value: false
+        workbench_leg_1_link:
+          Value: false
+        workbench_leg_2_link:
+          Value: false
+        workbench_leg_3_link:
+          Value: false
+        workbench_plate_link:
+          Value: false
       Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        camera_link:
+          camera_depth_frame:
+            camera_depth_optical_frame:
+              {}
+          camera_rgb_frame:
+            camera_rgb_optical_frame:
+              vito_anchor:
+                Moveobj_:
+                  {}
+                desired_hand_pose:
+                  {}
+                home_robot_right:
+                  {}
+                left_arm_base_link:
+                  left_arm_1_link:
+                    left_arm_2_link:
+                      left_arm_3_link:
+                        left_arm_4_link:
+                          left_arm_5_link:
+                            left_arm_6_link:
+                              left_arm_7_link:
+                                left_hand_kuka_coupler_bottom:
+                                  left_hand_kuka_coupler:
+                                    left_hand_clamp:
+                                      left_hand_softhand_base:
+                                        left_hand_palm_link:
+                                          left_hand_index_knuckle_link:
+                                            left_hand_index_fake_link1:
+                                              left_hand_index_proximal_link:
+                                                left_hand_index_fake_link2:
+                                                  left_hand_index_middle_link:
+                                                    left_hand_index_fake_link3:
+                                                      left_hand_index_distal_link:
+                                                        {}
+                                          left_hand_invisible_wire_link:
+                                            {}
+                                          left_hand_little_knuckle_link:
+                                            left_hand_little_fake_link1:
+                                              left_hand_little_proximal_link:
+                                                left_hand_little_fake_link2:
+                                                  left_hand_little_middle_link:
+                                                    left_hand_little_fake_link3:
+                                                      left_hand_little_distal_link:
+                                                        {}
+                                          left_hand_middle_knuckle_link:
+                                            left_hand_middle_fake_link1:
+                                              left_hand_middle_proximal_link:
+                                                left_hand_middle_fake_link2:
+                                                  left_hand_middle_middle_link:
+                                                    left_hand_middle_fake_link3:
+                                                      left_hand_middle_distal_link:
+                                                        {}
+                                          left_hand_palm_ref_link:
+                                            {}
+                                          left_hand_ring_knuckle_link:
+                                            left_hand_ring_fake_link1:
+                                              left_hand_ring_proximal_link:
+                                                left_hand_ring_fake_link2:
+                                                  left_hand_ring_middle_link:
+                                                    left_hand_ring_fake_link3:
+                                                      left_hand_ring_distal_link:
+                                                        {}
+                                          left_hand_thumb_knuckle_link:
+                                            left_hand_thumb_fake_link1:
+                                              left_hand_thumb_proximal_link:
+                                                left_hand_thumb_fake_link3:
+                                                  left_hand_thumb_distal_link:
+                                                    {}
+                              left_arm_7_link_dummy:
+                                {}
+                            left_arm_6_link_dummy:
+                              {}
+                          left_arm_5_link_dummy:
+                            {}
+                        left_arm_4_link_dummy:
+                          {}
+                      left_arm_3_link_dummy:
+                        {}
+                    left_arm_2_link_dummy:
+                      {}
+                  left_arm_1_link_dummy:
+                    {}
+                object_0:
+                  {}
+                right_arm_base_link:
+                  right_arm_1_link:
+                    right_arm_2_link:
+                      right_arm_3_link:
+                        right_arm_4_link:
+                          right_arm_5_link:
+                            right_arm_6_link:
+                              right_arm_7_link:
+                                right_hand_kuka_coupler_bottom:
+                                  right_hand_kuka_coupler:
+                                    right_hand_clamp:
+                                      right_hand_softhand_base:
+                                        right_hand_palm_link:
+                                          right_hand_index_knuckle_link:
+                                            right_hand_index_fake_link1:
+                                              right_hand_index_proximal_link:
+                                                right_hand_index_fake_link2:
+                                                  right_hand_index_middle_link:
+                                                    right_hand_index_fake_link3:
+                                                      right_hand_index_distal_link:
+                                                        {}
+                                          right_hand_invisible_wire_link:
+                                            {}
+                                          right_hand_little_knuckle_link:
+                                            right_hand_little_fake_link1:
+                                              right_hand_little_proximal_link:
+                                                right_hand_little_fake_link2:
+                                                  right_hand_little_middle_link:
+                                                    right_hand_little_fake_link3:
+                                                      right_hand_little_distal_link:
+                                                        {}
+                                          right_hand_middle_knuckle_link:
+                                            right_hand_middle_fake_link1:
+                                              right_hand_middle_proximal_link:
+                                                right_hand_middle_fake_link2:
+                                                  right_hand_middle_middle_link:
+                                                    right_hand_middle_fake_link3:
+                                                      right_hand_middle_distal_link:
+                                                        {}
+                                          right_hand_palm_ref_link:
+                                            {}
+                                          right_hand_ring_knuckle_link:
+                                            right_hand_ring_fake_link1:
+                                              right_hand_ring_proximal_link:
+                                                right_hand_ring_fake_link2:
+                                                  right_hand_ring_middle_link:
+                                                    right_hand_ring_fake_link3:
+                                                      right_hand_ring_distal_link:
+                                                        {}
+                                          right_hand_thumb_knuckle_link:
+                                            right_hand_thumb_fake_link1:
+                                              right_hand_thumb_proximal_link:
+                                                right_hand_thumb_fake_link3:
+                                                  right_hand_thumb_distal_link:
+                                                    {}
+                              right_arm_7_link_dummy:
+                                {}
+                            right_arm_6_link_dummy:
+                              {}
+                          right_arm_5_link_dummy:
+                            {}
+                        right_arm_4_link_dummy:
+                          {}
+                      right_arm_3_link_dummy:
+                        {}
+                    right_arm_2_link_dummy:
+                      {}
+                  right_arm_1_link_dummy:
+                    {}
+                table_plate_link:
+                  table_leg_0_link:
+                    {}
+                  table_leg_1_link:
+                    {}
+                  table_leg_2_link:
+                    {}
+                  table_leg_3_link:
+                    {}
+                torso_link:
+                  {}
+                workbench_plate_link:
+                  workbench_leg_0_link:
+                    {}
+                  workbench_leg_1_link:
+                    {}
+                  workbench_leg_2_link:
+                    {}
+                  workbench_leg_3_link:
+                    {}
       Update Interval: 0
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -740,6 +1191,14 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: visualization_marker
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -776,10 +1235,10 @@ Visualization Manager:
         Z: 0
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.165203
+      Pitch: 0.0352031
       Target Frame: vito_anchor
       Value: XYOrbit (rviz)
-      Yaw: 2.74358
+      Yaw: 2.89358
     Saved: ~
 Window Geometry:
   Displays:

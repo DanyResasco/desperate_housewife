@@ -46,12 +46,18 @@ class DesperateDecisionMaker
   int home_l = 1;
  
   //error threshold
-  double x = 0.02;
-  double y = 0.005;
-  double z = 0.04;
-  double rot_x = 0.03;
-  double rot_y = 0.005;
-  double rot_z = 0.005;
+  double x;
+  double y;
+  double z;
+  double rot_x;
+  double rot_y;
+  double rot_z;
+
+    struct quaternion_
+    {
+      KDL::Vector v;
+      double a;
+    } quat_now, quat_des_;
 
   
   std::string start_topic_left, start_topic_right;
@@ -149,6 +155,11 @@ class DesperateDecisionMaker
     */
     bool IsEqual(KDL::Twist E_pf, KDL::Twist E_t);
 
+    /** Function: TrashObjectPOsition
+    *input: int and hand pose quanternion
+    *output: geometry pose
+    *Description:Function that calulates the trash position. This position is static and it's write in config param  
+    */
     geometry_msgs::Pose TrashObjectPOsition(int Arm_, geometry_msgs::Quaternion &Quat_hand);
 
 };

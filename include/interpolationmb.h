@@ -7,14 +7,14 @@ inline double interpolatormb(double t, double td)
 {
   double coefficients[6];
   double interpolation = 0.0;
-  coefficients[0] = 0.00000309;
+  coefficients[0] = 0.0;//0.00000309;
   coefficients[1] = 0.00519100;
   coefficients[2] = -0.5098000;
   coefficients[3] = 11.9900000;
   coefficients[4] = -17.470000;
   coefficients[5] = 6.98900000;
 
-  if (t < 0.0 )
+  if (t <= 0.0 )
   {
     return 0.0;
   }

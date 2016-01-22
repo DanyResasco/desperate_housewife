@@ -65,8 +65,6 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   M_desired_local.col(1) << y_l, 0; //y_porojection
   M_desired_local.col(2) << z_l, 0; //z_cylinder
 
-// M_desired_local = M_desired_local;
-
   // std::cout << "Det M_desired_local : " << M_desired_local.determinant() << std::endl;
   // std::cout<<"M_desired_local: "<<M_desired_local<<std::endl;
   if((isLying == 0) && (isFull == 0)) 
@@ -136,7 +134,6 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
           T_w_h.col(0) << x_l,0;
           T_w_h.col(1) << y_l,0;
           T_w_h.col(2) << z_l,0;
-
           T_w_h.col(3) << Point_desired;
           // T_w_h = T_w_h*Rot_z;
          std::cout<<"Lying, left Arm"<< std::endl;
@@ -151,13 +148,13 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
           T_w_h.col(0) << x_l,0;
           T_w_h.col(1) << y_l,0;
           T_w_h.col(2) << z_l,0;
-
           T_w_h.col(3) << Point_desired;
           T_w_h = T_w_h*Rot_z;
           std::cout<<"Lying, right Arm"<< std::endl;
           // std::cout<<"T_w_h det: "<<T_w_h.determinant()<< std::endl;
 
       }
+
       // std::cout<<"M_desired_local: "<<M_desired_local<<std::endl;
 
     }
@@ -265,6 +262,7 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose )
   	return_value = 0;
   }
 
+  // std::cout<<"amr: "<<return_value<<std::endl;
   return return_value; 
 }
 

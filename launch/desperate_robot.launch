@@ -96,7 +96,10 @@
     <!-- load moveit configuration -->
 
    <group ns="left_arm">
+        <rosparam file="$(find desperate_housewife)/config/desperate_robot_sim_gains.yaml" command="load"/>
         <group if="$(arg left_arm_enabled)">
+            <param name="use_real" value="true"/>
+            <rosparam file="$(find desperate_housewife)/config/desperate_robot_real_gains.yaml" command="load"/>
             <!--add a copy of the robot description within the name space -->
             <param name="robot_description" command="$(find xacro)/xacro.py $(find desperate_housewife)/robot/$(arg robot_name).urdf.xacro"/>
 
@@ -109,7 +112,7 @@
                 <arg name="name" value="left_arm"/>
             </include>
         </group>
-
+        
         <!-- spawn only desired controllers in current namespace -->
         <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller joint_trajectory_controller "/>
 
@@ -144,7 +147,10 @@
 
     <!-- real robot and controllers -->
     <group ns="right_arm">
+        <rosparam file="$(find desperate_housewife)/config/desperate_robot_sim_gains.yaml" command="load"/>
         <group if="$(arg right_arm_enabled)">
+            <param name="use_real" value="true"/>
+            <rosparam file="$(find desperate_housewife)/config/desperate_robot_real_gains.yaml" command="load"/>
             <!--add a copy of the robot description within the name space -->
             <param name="robot_description" command="$(find xacro)/xacro.py $(find desperate_housewife)/robot/$(arg robot_name).urdf.xacro"/>
 
@@ -158,8 +164,9 @@
             </include>
         </group>
 
+        
         <!-- spawn only desired controllers in current namespace -->
-        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller joint_trajectory_controller"/>
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller  joint_trajectory_controller"/>
         <node name="controller_stopper" pkg="controller_manager" type="spawner" args="--stopped PotentialFieldControl one_task_inverse_dynamics_jl" />
 
     </group>
