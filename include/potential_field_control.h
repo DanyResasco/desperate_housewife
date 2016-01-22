@@ -122,6 +122,8 @@ namespace desperate_housewife
 		// void DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point );
 		std::pair<Eigen::Matrix<double,6,1>, double> GetRepulsiveForce(std::vector<KDL::Vector> &point_, double influence, KDL::Frame &Object_pos, double radius, double height);
 		void SeeMarker(KDL::Frame &Pos, std::string obst_name);
+
+		double VelocityLimit(KDL::Vector &x_dot_d);
 		
 	private:
 		ros::Subscriber sub_command_, sub_command_start;
@@ -217,7 +219,7 @@ namespace desperate_housewife
 		bool start_flag;
 		ros::Publisher pub_Freptavolo_, pub_Fa_, pub_diff,pub_xdot,pub_sing_val;
 		std::vector<KDL::Frame> test_pos_jerk;
-		Eigen::Matrix<double,6,1> Force_attractive_last;
+		Eigen::Matrix<double,6,1> Force_attractive_last,  Force_repulsive_last;
 		Eigen::Matrix<double,7,1> Force_total_rep_last;
 		bool switch_trajectory;
 		double Time_traj, Time_traj_rep;
@@ -230,6 +232,10 @@ namespace desperate_housewife
 		ros::Publisher vis_pub,pub_Fr_,pub_velocity_,pub_error_int_;
 		    tf::TransformBroadcaster tf_geometriesTransformations_;
 		KDL::Twist x_err_integral;
+
+		double Time_log;
+
+
 	};
 
 	// Eigen::Quaterniond RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point);
