@@ -3,12 +3,19 @@ PotentialFieldControl/desired_hand_pose_left: /left_arm/PotentialFieldControl/de
 home_left_arm_position_x: -0.75022
 home_left_arm_position_y: -0.47078
 home_left_arm_position_z: 0.54494
-home_left_arm_A: -0.12690
-home_left_arm_B: -0.06571
-home_left_arm_C: 0.11774
-home_right_arm_position_x: -0.55022
-home_right_arm_position_y: 0.77078
-home_right_arm_position_z: 0.54494
-home_right_arm_A: -1.0472
-home_right_arm_B: -0.08650
-home_right_arm_C: -0.051
+home_left_arm_A_yaw: -0.12690
+home_left_arm_B_pitch: -0.06571
+home_left_arm_C_roll: 0.11774
+# home_right_arm_position_x: -0.701
+# home_right_arm_position_y: 0.091
+# home_right_arm_position_z: 0.390
+# home_right_arm_A_yaw: 0.531
+# home_right_arm_B_pitch: 0.025
+# home_right_arm_C_roll: -3.097
+
+home_right_arm_position_x: -1.0
+home_right_arm_position_y: 0.764
+home_right_arm_position_z: 0.513
+home_right_arm_A_yaw: -1.520
+home_right_arm_B_pitch: 0.140
+home_right_arm_C_roll: 2.914

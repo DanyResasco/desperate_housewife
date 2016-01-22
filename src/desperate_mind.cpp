@@ -74,7 +74,16 @@ DesperateDecisionMaker::DesperateDecisionMaker()
   nh.param<std::string>("/PotentialFieldControl/desired_hand_pose_left", desired_hand_left_pose_topic_, "/left_arm/PotentialFieldControl/desired_hand_left_pose");
   desired_hand_left_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_left_pose_topic_.c_str(),1);
 
+  //treshold error
+  nh.param<double>("/desperate_mind_node/x_treshold",x,0.01);
+  nh.param<double>("/desperate_mind_node/y_treshold",y,0.01);
+  nh.param<double>("/desperate_mind_node/z_treshold",z,0.01);
+  nh.param<double>("/desperate_mind_node/rot_x_treshold",rot_x,0.01);
+  nh.param<double>("/desperate_mind_node/rot_y_treshold",rot_y,0.01);
+  nh.param<double>("/desperate_mind_node/rot_z_treshold",rot_z,0.01);
 
+  // std::cout<<"x: "<<x<<'\t'<<"y: "<<y<<'\t'<<"z: "<<z<<std::endl;
+  // std::cout<<"rotx: "<<rot_x<<'\t'<<"rot_y: "<<rot_y<<'\t'<<"rot_z: "<<rot_z<<std::endl;
   //stop the filter publisher
   // nh.param<std::string>("/PotentialFieldControl/stop_pub_right", stop_pub_filter_topic_r, "/PotentialFieldControl/stop_pub_filter_right");
   // stop_publisher_r = nh.advertise<std_msgs::UInt16 > (stop_pub_filter_topic_r.c_str(),1);
@@ -143,7 +152,7 @@ void DesperateDecisionMaker::Error_info_left(const desperate_housewife::Error_ms
     
     if(IsEqual(e_,error_treshold))
     {
-      ROS_DEBUG("Arrived in position"); 
+      ROS_INFO("Arrived in position"); 
       if(stop_home == 1)
       { 
         //send flag to start hand_pose_generator
@@ -189,7 +198,10 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
     ObjOrObst = 0;
     home_r = 0;
   }
-    
+  //just for setting the gains
+   // double temp =  error_msg->arrived;
+   // temp = 0;
+   // if(temp == 1)
   if(error_msg->arrived == 1)
   {
     
@@ -242,12 +254,25 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
   E_pf_abs.rot.data[1] = std::abs(E_pf.rot.data[1] );
   E_pf_abs.rot.data[2] = std::abs(E_pf.rot.data[2] );
 
-  if(Equal(E_pf_abs, E_t,0.05))
+  // std::cout<<"error treshold linear x: "<<E_t.vel.data[0]<<'\t'<<"y: "<<'\t'<<E_t.vel.data[1]<<'\t'<<"z: "<<E_t.vel.data[2]<<std::endl;
+  // std::cout<<"error treshold angular x: "<<E_t.rot.data[0]<<'\t'<<"y: "<<'\t'<<E_t.rot.data[1]<<'\t'<<"z: "<<E_t.rot.data[2]<<std::endl;
+  // std::cout<<"error linear x: "<<E_pf_abs.vel.data[0]<<'\t'<<"y: "<<'\t'<<E_pf_abs.vel.data[1]<<'\t'<<"z: "<<E_pf_abs.vel.data[1]<<std::endl;
+  // std::cout<<"error  angular x: "<<E_pf_abs.rot.data[0]<<'\t'<<"y: "<<'\t'<<E_pf_abs.rot.data[1]<<'\t'<<"z: "<<E_pf_abs.rot.data[2]<<std::endl;
+
+  if (  (E_pf_abs.vel.data[0] < E_t.vel.data[0]) &&
+        (E_pf_abs.vel.data[1] < E_t.vel.data[1]) &&
+        (E_pf_abs.vel.data[2] < E_t.vel.data[2]) &&
+        (E_pf_abs.rot.data[0] < E_t.rot.data[0]) &&
+        (E_pf_abs.rot.data[1] < E_t.rot.data[1]) &&
+        (E_pf_abs.rot.data[2] < E_t.rot.data[2]) )
+  // if(Equal(E_pf_abs, E_t,0.05))
   {
+    std::cout<<"+++++++++++++++++++is equal+++++++++++"<<std::endl;
   return true;
   }
   else
   {
+    std::cout<<"is not equal"<<std::endl;
     return false;
   }
 }

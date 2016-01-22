@@ -22,12 +22,12 @@ void DesperateDecisionMaker::SendHomeRobot_left()
     home_robot_left.obj = 0;
 
     double roll,pitch,yaw;
-    nh.param<double>("/home_left_arm_position_x", home_robot_left.pose.position.x, -0.75022);
-    nh.param<double>("/home_left_arm_position_y",  home_robot_left.pose.position.y,  -0.47078);
-    nh.param<double>("/home_left_arm_position_z", home_robot_left.pose.position.z, 0.74494);
-    nh.param<double>("/home_left_arm_A", yaw,  -0.12690);
-    nh.param<double>("/home_left_arm_B", pitch, -0.06571);
-    nh.param<double>("/home_left_arm_C", roll, -0.11774);
+    nh.param<double>("/desperate_mind_node/home_left_arm_position_x", home_robot_left.pose.position.x, -0.75022);
+    nh.param<double>("/desperate_mind_node/home_left_arm_position_y",  home_robot_left.pose.position.y,  -0.47078);
+    nh.param<double>("/desperate_mind_node/home_left_arm_position_z", home_robot_left.pose.position.z, 0.74494);
+    nh.param<double>("/desperate_mind_node/home_left_arm_A_yaw", yaw,  -0.12690);
+    nh.param<double>("/desperate_mind_node/home_left_arm_B_pitch", pitch, -0.06571);
+    nh.param<double>("/desperate_mind_node/home_left_arm_C_roll", roll, -0.11774);
 
     Eigen::Matrix3d Tmatrix;
     Tmatrix = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitZ())
@@ -83,31 +83,41 @@ void DesperateDecisionMaker::SendHomeRobot_right()
     nh.param<double>("/desperate_mind_node/home_right_arm_position_x", home_robot_right.pose.position.x, -0.75022);
     nh.param<double>("/desperate_mind_node/home_right_arm_position_y",  home_robot_right.pose.position.y,  0.47078);
     nh.param<double>("/desperate_mind_node/home_right_arm_position_z", home_robot_right.pose.position.z, 0.74494);
-    nh.param<double>("/desperate_mind_node/home_right_arm_A", yaw_r,  0.334);
-    nh.param<double>("/desperate_mind_node/home_right_arm_B", pitch_r, -0.08650);
-    nh.param<double>("/desperate_mind_node/home_right_arm_C", roll_r, -0.5108);
+    nh.param<double>("/desperate_mind_node/home_right_arm_A_yaw", yaw_r,  0.334);
+    nh.param<double>("/desperate_mind_node/home_right_arm_B_pitch", pitch_r, -0.08650);
+    nh.param<double>("/desperate_mind_node/home_right_arm_C_roll", roll_r, -0.5108);
 
-    std::cout << "Home Posirion hhome_right_arm_A = " << yaw_r << std::endl;
+    // std::cout << "Home Posirion hhome_right_arm_A = " << yaw_r << std::endl;
    
-    Eigen::Matrix3d Tmatrix_right;
-    Tmatrix_right = Eigen::AngleAxisd(roll_r, Eigen::Vector3d::UnitZ())
-      * Eigen::AngleAxisd(pitch_r, Eigen::Vector3d::UnitY())
-      * Eigen::AngleAxisd(yaw_r, Eigen::Vector3d::UnitZ());
+    KDL::Rotation Rot_matrix_r = KDL::Rotation::RPY(roll_r,pitch_r,yaw_r);
+
+    Rot_matrix_r.GetQuaternion(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
+
+    home_robot_right.pose.orientation.x = quat_des_.v(0);
+    home_robot_right.pose.orientation.y = quat_des_.v(1);
+    home_robot_right.pose.orientation.z = quat_des_.v(2);
+    home_robot_right.pose.orientation.w = quat_des_.a;
+
+
+    // Eigen::Matrix3d Tmatrix_right;
+    // Tmatrix_right = Eigen::AngleAxisd(roll_r, Eigen::Vector3d::UnitZ())
+    //   * Eigen::AngleAxisd(pitch_r, Eigen::Vector3d::UnitY())
+    //   * Eigen::AngleAxisd(yaw_r, Eigen::Vector3d::UnitZ());
 
    
-    Eigen::Matrix4d Vito_home_base_right = Eigen::Matrix4d::Identity(4,4);
-    Vito_home_base_right.block<3,3>(0,0) = Tmatrix_right;
-    Vito_home_base_right(0,3) = home_robot_right.pose.position.x;
-    Vito_home_base_right(1,3) = home_robot_right.pose.position.y;
-    Vito_home_base_right(2,3) = home_robot_right.pose.position.z;
+    // Eigen::Matrix4d Vito_home_base_right = Eigen::Matrix4d::Identity(4,4);
+    // Vito_home_base_right.block<3,3>(0,0) = Rot_matrix_r;
+    // Vito_home_base_right(0,3) = home_robot_right.pose.position.x;
+    // Vito_home_base_right(1,3) = home_robot_right.pose.position.y;
+    // Vito_home_base_right(2,3) = home_robot_right.pose.position.z;
 
-    Eigen::Matrix4d Vito_home_base_right_rot = Vito_home_base_right*ROT_y*Rot_z;
+    // Eigen::Matrix4d Vito_home_base_right_rot = Vito_home_base_right;//*ROT_y*Rot_z;
 
-    Eigen::Quaterniond quat_eigen_hand_right(Vito_home_base_right_rot.block<3,3>(0,0));
-    home_robot_right.pose.orientation.x = quat_eigen_hand_right.x();
-    home_robot_right.pose.orientation.y = quat_eigen_hand_right.y();
-    home_robot_right.pose.orientation.z = quat_eigen_hand_right.z();
-    home_robot_right.pose.orientation.w = quat_eigen_hand_right.w();
+    // Eigen::Quaterniond quat_eigen_hand_right(Vito_home_base_right_rot.block<3,3>(0,0));
+    // home_robot_right.pose.orientation.x = quat_eigen_hand_right.x();
+    // home_robot_right.pose.orientation.y = quat_eigen_hand_right.y();
+    // home_robot_right.pose.orientation.z = quat_eigen_hand_right.z();
+    // home_robot_right.pose.orientation.w = quat_eigen_hand_right.w();
 
     // tf::StampedTransform  hand_rigth;
     // listener_info.waitForTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
@@ -123,24 +133,29 @@ void DesperateDecisionMaker::SendHomeRobot_right()
 
 geometry_msgs::Pose DesperateDecisionMaker::TrashObjectPOsition(int Arm_, geometry_msgs::Quaternion &Quat_hand)
 {
-    // double roll,pitch,yaw;
+    double roll,pitch,yaw;
     geometry_msgs::Pose trash_robot_pose;
     // tf::Transform tfHandTrasform1; 
+    // Eigen::Matrix4d ROT_y;
+    // ROT_y.row(0)<< -1,0,0,0;
+    // ROT_y.row(1)<< 0,1,0,0;
+    // ROT_y.row(2)<< 0,0,-1,0;
+    // ROT_y.row(3)<< 0,0,0,1;
 
-    //same orientation
-    trash_robot_pose.orientation.x = Quat_hand.x;
-    trash_robot_pose.orientation.y = Quat_hand.y;
-    trash_robot_pose.orientation.z = Quat_hand.z;
-    trash_robot_pose.orientation.w = Quat_hand.w;
+    // Eigen::Matrix4d Rot_z;
+    // Rot_z.row(0)<< -1,0,0,0;
+    // Rot_z.row(1)<< 0,-1,0,0;
+    // Rot_z.row(2)<< 0,0,1,0;
+    // Rot_z.row(3)<< 0,0,0,1;
 
     if(Arm_ == 1)//left arm
     {
         nh.param<double>("/desperate_mind_node/trash_left_arm_position_x", trash_robot_pose.position.x, -0.75022);
         nh.param<double>("/desperate_mind_node/trash_left_arm_position_y",  trash_robot_pose.position.y,  -0.47078);
         nh.param<double>("/desperate_mind_node/trash_left_arm_position_z", trash_robot_pose.position.z, 0.74494);
-        // nh.param<double>("/trash_left_arm_A", yaw,  -0.12690);
-        // nh.param<double>("/trash_left_arm_B", pitch, -0.06571);
-        // nh.param<double>("/trash_left_arm_C", roll, -0.11774);
+        nh.param<double>("/desperate_mind_node//trash_left_arm_A_yaw", yaw,  -0.12690);
+        nh.param<double>("/desperate_mind_node//trash_left_arm_B_pitch", pitch, -0.06571);
+        nh.param<double>("/desperate_mind_node//trash_left_arm_C_roll", roll, -0.11774);
         // desired_hand_left_pose_publisher_.publish( trash_robot_pose );
         // tf::poseMsgToTF( home_robot_left.pose, tfHandTrasform1); 
     }
@@ -149,13 +164,44 @@ geometry_msgs::Pose DesperateDecisionMaker::TrashObjectPOsition(int Arm_, geomet
         nh.param<double>("/desperate_mind_node/trash_right_arm_position_x", trash_robot_pose.position.x, -0.75022);
         nh.param<double>("/desperate_mind_node/trash_right_arm_position_y",  trash_robot_pose.position.y,  -0.47078);
         nh.param<double>("/desperate_mind_node/trash_right_arm_position_z", trash_robot_pose.position.z, 0.74494);
-        // nh.param<double>("/trash_right_arm_A", yaw,  -0.12690);
-        // nh.param<double>("/trash_right_arm_B", pitch, -0.06571);
-        // nh.param<double>("/trash_right_arm_C", roll, -0.11774);
+        nh.param<double>("/desperate_mind_node//trash_right_arm_A_yaw", yaw,  -0.12690);
+        nh.param<double>("/desperate_mind_node//trash_right_arm_B_pitch", pitch, -0.06571);
+        nh.param<double>("/desperate_mind_node//trash_right_arm_C_roll", roll, -0.11774);
         // desired_hand_right_pose_publisher_.publish( trash_robot_pose );
         // tf::poseMsgToTF( home_robot_right.pose, tfHandTrasform1); 
     }
-      
+
+
+    KDL::Rotation Rot_matrix_r = KDL::Rotation::RPY(roll, pitch ,yaw);
+
+    Rot_matrix_r.GetQuaternion(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
+
+    trash_robot_pose.orientation.x = quat_des_.v(0);
+    trash_robot_pose.orientation.y = quat_des_.v(1);
+    trash_robot_pose.orientation.z = quat_des_.v(2);
+    trash_robot_pose.orientation.w = quat_des_.a;
+
+
+    // Eigen::Matrix3d Tmatrix_right;
+    // Tmatrix_right = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitZ())
+    //   * Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY())
+    //   * Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
+
+   
+    // Eigen::Matrix4d Vito_home_base_right = Eigen::Matrix4d::Identity(4,4);
+    // Vito_home_base_right.block<3,3>(0,0) = Tmatrix_right;
+    // Vito_home_base_right(0,3) = trash_robot_pose.position.x;
+    // Vito_home_base_right(1,3) = trash_robot_pose.position.y;
+    // Vito_home_base_right(2,3) = trash_robot_pose.position.z;
+
+    // Eigen::Matrix4d Vito_home_base_right_rot = Vito_home_base_right*ROT_y*Rot_z;
+
+    // Eigen::Quaterniond quat_eigen_hand_right(Vito_home_base_right_rot.block<3,3>(0,0));
+    // trash_robot_pose.orientation.x = quat_eigen_hand_right.x();
+    // trash_robot_pose.orientation.y = quat_eigen_hand_right.y();
+    // trash_robot_pose.orientation.z = quat_eigen_hand_right.z();
+    // trash_robot_pose.orientation.w = quat_eigen_hand_right.w();
+
     // tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform1, ros::Time::now(), base_frame_.c_str(),"trash_position") );  
     return trash_robot_pose;
 }
