@@ -69,6 +69,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   // std::cout<<"M_desired_local: "<<M_desired_local<<std::endl;
   if((isLying == 0) && (isFull == 0)) 
     {
+      Point_desired(0) = 0;
       Point_desired(1) = 0;
       Point_desired(2) = height *0.5 + 0.05;	
       Point_desired(3) = 1;
@@ -76,14 +77,14 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       
       if (whichArm == 1) //left arm
       {
-        Point_desired(0) = -radius;
+        Point_desired(1) = - radius;
         M_desired_local.col(3) << Point_desired;
-        T_w_h = T_vito_c * M_desired_local;
+        T_w_h = T_vito_c * M_desired_local* Rot_z;;
         std::cout<<"Not Lying, Empty, left Arm, "<< std::endl;
       }
       else
       {
-        Point_desired(0) = radius;
+        Point_desired(0) = - radius;
         M_desired_local.col(3) << Point_desired;
         T_w_h = T_vito_c * M_desired_local* Rot_z;
         std::cout<<"Not Lying, Empty, right Arm, "<< std::endl;
@@ -103,7 +104,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
       if (whichArm == 1) //left arm
       {
-         T_w_h = T_vito_c * M_desired_local;
+         T_w_h = T_vito_c * M_desired_local* Rot_z;
          std::cout<<"Not Lying, full, left Arm"<< std::endl;
       }
 

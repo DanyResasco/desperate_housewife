@@ -1,11 +1,11 @@
 PotentialFieldControl/desired_hand_pose_right: /right_arm/PotentialFieldControl/desired_hand_right_pose
 PotentialFieldControl/desired_hand_pose_left: /left_arm/PotentialFieldControl/desired_hand_left_pose
-home_left_arm_position_x: -0.75022
-home_left_arm_position_y: -0.47078
-home_left_arm_position_z: 0.54494
-home_left_arm_A_yaw: -0.12690
-home_left_arm_B_pitch: -0.06571
-home_left_arm_C_roll: 0.11774
+home_left_arm_position_x: -1.0
+home_left_arm_position_y: -0.764
+home_left_arm_position_z: 0.513
+home_left_arm_A_yaw: -1.273
+home_left_arm_B_pitch: 0.323
+home_left_arm_C_roll: 2.759
 # home_right_arm_position_x: -0.701
 # home_right_arm_position_y: 0.091
 # home_right_arm_position_z: 0.390
