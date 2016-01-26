@@ -4,4 +4,4 @@
 translation: [0.0170399, 0.575983, 0.00608662]
 rotation: [0.580671, 0.576822, -0.395716, 0.416541]
 frame_id: camera_rgb_optical_frame
-child_frame_id: vito_anchor
+child_frame_id: world

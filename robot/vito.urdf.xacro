@@ -9,9 +9,19 @@
   <xacro:include filename="$(find lwr_description)/model/kuka_lwr.urdf.xacro"/>
   <xacro:include filename="$(find soft_hand_description)/model/soft_hand.urdf.xacro"/>
   <xacro:include filename="$(find kit_head_description)/model/kit_head.urdf.xacro"/>
+
+
     
   <link name="vito_anchor" />
-  
+
+   <link name="world"/>
+
+  <joint name="fixed" type="fixed">
+    <parent link="world"/>
+    <child link="vito_anchor"/>
+  </joint>
+
+
   <!-- BODY -->
   <xacro:model_table name="table" 
                     parent="vito_anchor"
@@ -85,4 +95,10 @@
     <child link="right_hand_palm_ref_link" />
   </joint>
 
+    <gazebo reference=" ">
+      <!-- <gravity>0</gravity> -->
+      <turnGravityOff>true</turnGravityOff>
+      <!-- <material>Gazebo/Grey</material> -->
+    </gazebo>
+  
 </robot>

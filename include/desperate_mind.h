@@ -22,6 +22,7 @@
 #include <desperate_housewife/Start.h>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <std_msgs/UInt16.h>
+#include <desperate_housewife/fittedGeometriesArray.h>
 
 
 
@@ -77,6 +78,7 @@ class DesperateDecisionMaker
   int restart = 0;
   int stop_home = 1;
   int stop_home_r = 1;
+  bool use_both_arm;
  
   geometry_msgs::Pose pose_removed;
 
@@ -86,6 +88,8 @@ class DesperateDecisionMaker
   ros::Publisher stop_publisher_r, stop_publisher_l;
   std::string stop_pub_filter_topic_r, stop_pub_filter_topic_l;
 
+  std::string obstacles_topic_left, obstacles_topic_right;
+  ros::Publisher obstacles_publisher_left, obstacles_publisher_right;
 
   //home
   ros::Publisher desired_hand_right_pose_publisher_, desired_hand_left_pose_publisher_;

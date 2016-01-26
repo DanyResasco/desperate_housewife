@@ -35,9 +35,6 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   Rot_x.row(3)<< 0,0,0,1;
 
 
-  //Rot_z = Rot_z*Rot_x;
-
-
   double  radius = geometry.info[0];
   double  height = geometry.info[1];
   double  isLying = geometry.info[2];
@@ -47,14 +44,10 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   ROS_DEBUG ("isLying = %g", isLying);
   ROS_DEBUG ("isFull = %g", isFull);
 
-  // std::cout<<"retta_hand_obj: "<<retta_hand_obj<<std::endl;
-  // retta_hand_obj.normalize();
-  // std::cout<<"retta_hand_obj normalize: "<< retta_hand_obj <<std::endl;
-  // retta_hand_obj.normalize();
+  
   Eigen::Vector3d projection(retta_hand_obj[0], retta_hand_obj[1],0);
-  // projection.normalize();
+
   Eigen::Vector3d Liyng_projection(retta_hand_obj[0], 0, retta_hand_obj[2]);
-  // Liyng_projection.normalize();
   
   Eigen::Vector3d y_l = projection.normalized();
   Eigen::Vector3d z_l = -z ;
@@ -65,8 +58,6 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   M_desired_local.col(1) << y_l, 0; //y_porojection
   M_desired_local.col(2) << z_l, 0; //z_cylinder
 
-  // std::cout << "Det M_desired_local : " << M_desired_local.determinant() << std::endl;
-  // std::cout<<"M_desired_local: "<<M_desired_local<<std::endl;
   if((isLying == 0) && (isFull == 0)) 
     {
       Point_desired(0) = 0;
@@ -136,10 +127,9 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
           T_w_h.col(1) << y_l,0;
           T_w_h.col(2) << z_l,0;
           T_w_h.col(3) << Point_desired;
-          // T_w_h = T_w_h*Rot_z;
-         std::cout<<"Lying, left Arm"<< std::endl;
-      
-      }
+          std::cout<<"Lying, left Arm"<< std::endl;
+     }
+
       else //right
       { 
           z_l = -z;
@@ -152,19 +142,13 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
           T_w_h.col(3) << Point_desired;
           T_w_h = T_w_h*Rot_z;
           std::cout<<"Lying, right Arm"<< std::endl;
-          // std::cout<<"T_w_h det: "<<T_w_h.determinant()<< std::endl;
-
       }
-
-      // std::cout<<"M_desired_local: "<<M_desired_local<<std::endl;
-
     }
+
   else
     {
       ROS_DEBUG("case not covered");
     }
-
-    // std::cout<<"M_desired_local: "<<M_desired_local<<std::endl;
 
   ROS_DEBUG("Set hand final position");
   geometry_msgs::Pose local_sh_pose;
@@ -267,45 +251,6 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
   return return_value; 
 }
 
-// void HandPoseGenerator::DrawStraingLIne( Eigen::Vector3d &rett_pos )
-//   {
-//     // std::cout<<"disegno"<<std::endl;
-    
-//     visualization_msgs::Marker marker;
-
-//     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-//     marker.header.frame_id = "vito_anchor";
-//     marker.header.stamp = ros::Time::now();
-//     marker.id = 10;
-//     marker.type = marker.LINE_STRIP;
-//     marker.action = marker.ADD;
-//     marker.scale.x = .2;
-//     marker.color.a = 1; 
-//     marker.color.r = 1.0;
-//     marker.color.g = 0.0;
-//     marker.color.b = 0.0;
-//     marker.pose.orientation.w = 1.0;
-
-//     geometry_msgs::Point p;
-//     p.x = rett_pos(0);
-//     p.y = rett_pos(1);
-//     p.z = rett_pos(2);
-
-//     marker.points.push_back(p);
-
-//     marker.lifetime = ros::Duration(1000);
-
-//     vis_pub.publish(marker);
-//     // ros::spinOnce();
-//     std::cout << "Publishing line" << std::endl;
-
-//   }
-
-
-
-
-
-
 
 
 //Function for clear the table when the only object is obstacle
@@ -318,68 +263,64 @@ geometry_msgs::Pose HandPoseGenerator::ObstacleReject( desperate_housewife::fitt
   Eigen::Vector3d x(1,0,0);
   Eigen::Vector3d y(0,1,0), z(0,0,1);
 
-  Eigen::Matrix4d Rot_z;
-  Rot_z.row(0)<< -1,0,0,0;
-  Rot_z.row(1)<< 0,-1,0,0;
-  Rot_z.row(2)<< 0,0,1,0;
-  Rot_z.row(3)<< 0,0,0,1;
-
-  Eigen::Matrix4d ROT_y;
-  ROT_y.row(0)<< 0,0,1,0;
-  ROT_y.row(1)<< 0,1,0,0;
-  ROT_y.row(2)<< -1,0,0,0;
-  ROT_y.row(3)<< 0,0,0,1;
-
-
-  Eigen::Matrix4d ROT_x;
-  ROT_x.row(0)<< 1,0,0,0;
-  ROT_x.row(1)<< 0,0,-1,0;
-  ROT_x.row(2)<< 0,1,0,0;
-  ROT_x.row(3)<< 0,0,0,1;
+  //sends msgs to close hand
+  trajectory_msgs::JointTrajectory msg_jointT_hand;
+  msg_jointT_hand.joint_names.resize(1);
+  msg_jointT_hand.points.resize(1);
+  msg_jointT_hand.points[0].positions.resize(1);
+  msg_jointT_hand.points[0].positions[0] = 0.0;
+  msg_jointT_hand.points[0].time_from_start = ros::Duration(1); // 1s;
 
   T_vito_c = FromMsgtoEigen( Pose_rej_obs.pose );
 
-  Point_desired(0) = 0;
-  Point_desired(1) = Pose_rej_obs.info[0] + 0.05;
-  Point_desired(2) = 0;  
+  Point_desired(0) = T_vito_c(0,3) + Pose_rej_obs.info[0] + 0.16;
+  Point_desired(1) = T_vito_c(1,3) ;
+  Point_desired(2) = T_vito_c(2,3) +0.05; 
   Point_desired(3) = 1;
-  ROS_DEBUG("obstacle to move");
-      
-  // M_desired_local.col(0) << -y.cross(z), 0; 
-  // M_desired_local.col(1) << -y,0;
-  // M_desired_local.col(2) << z , 0;
-  
-  M_desired_local.col(3) << Point_desired;
+
+  M_desired_local = Eigen::Matrix4d::Identity();
 
   if(arm_ == 1) //left
   { 
-     M_desired_local.col(0) << -y.cross(z), 0; 
-    M_desired_local.col(1) << -y,0;
-    M_desired_local.col(2) << z , 0;
-     // T_w_ob = T_vito_c * M_desired_local*ROT_y*ROT_x;
+      T_w_ob.col(0) << -z, 0;  
+      T_w_ob.col(1) << y, 0;
+      T_w_ob.col(2) << y.cross(z) , 0;
+
+      msg_jointT_hand.joint_names[0] = left_hand_synergy_joint.c_str();
+      hand_publisher_left.publish(msg_jointT_hand);
   }
-  else
+
+  else  //right
   {
-    M_desired_local.col(0) << y.cross(z), 0; 
-    M_desired_local.col(1) << y,0;
-    M_desired_local.col(2) << z, 0;
-    // T_w_ob = T_vito_c * M_desired_local*ROT_y*ROT_x;
-    // *ROT_y*ROT_x;
+    T_w_ob.col(0) << z, 0; 
+    T_w_ob.col(1) << -y,0;
+    T_w_ob.col(2) << y.cross(z), 0;
+
+    msg_jointT_hand.joint_names[0] = right_hand_synergy_joint.c_str();
+    hand_publisher_right.publish(msg_jointT_hand);
   }
+
+  T_w_ob.col(3) << Point_desired;
   
-  T_w_ob = T_vito_c * M_desired_local*ROT_y*ROT_x;
+
   fromEigenToPose (T_w_ob, pose_obj_hand);
 
-  // tf::Transform tfHandTrasform;
-  // tf::poseMsgToTF( pose_obj_hand, tfHandTrasform);
-  
-  // tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(),"ObstacleReject") );
+  ROS_DEBUG("obstacle to move");
+      
+  tf::Transform tfHandTrasform;
+  tf::poseMsgToTF( pose_obj_hand, tfHandTrasform);
+  tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(),"ObstacleReject") );
 
-  // std::cout<<"pose_obj_hand: "<<pose_obj_hand<<std::endl;
+
+
+
+
+
+
+
 
 
   return pose_obj_hand;
-
 }
 
 void HandPoseGenerator::Overturn()
@@ -454,3 +395,38 @@ void HandPoseGenerator::Overturn()
   // Obj_info.data = 2;
   // objects_info_right_pub.publish(Obj_info);
 }
+
+// void HandPoseGenerator::DrawStraingLIne( Eigen::Vector3d &rett_pos )
+//   {
+//     // std::cout<<"disegno"<<std::endl;
+    
+//     visualization_msgs::Marker marker;
+
+//     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
+//     marker.header.frame_id = "vito_anchor";
+//     marker.header.stamp = ros::Time::now();
+//     marker.id = 10;
+//     marker.type = marker.LINE_STRIP;
+//     marker.action = marker.ADD;
+//     marker.scale.x = .2;
+//     marker.color.a = 1; 
+//     marker.color.r = 1.0;
+//     marker.color.g = 0.0;
+//     marker.color.b = 0.0;
+//     marker.pose.orientation.w = 1.0;
+
+//     geometry_msgs::Point p;
+//     p.x = rett_pos(0);
+//     p.y = rett_pos(1);
+//     p.z = rett_pos(2);
+
+//     marker.points.push_back(p);
+
+//     marker.lifetime = ros::Duration(1000);
+
+//     vis_pub.publish(marker);
+//     // ros::spinOnce();
+//     std::cout << "Publishing line" << std::endl;
+
+//   }
+

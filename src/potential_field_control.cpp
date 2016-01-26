@@ -14,7 +14,7 @@
 
 #include <math.h>
 
-#define  treshold_influence  0.20
+#define  treshold_influence  0.15
 
 namespace desperate_housewife 
 {
@@ -26,8 +26,7 @@ namespace desperate_housewife
       KinematicChainControllerBase<hardware_interface::EffortJointInterface>::init(robot, n);
       ROS_INFO("Starting controller");
       ROS_WARN("Number of segments: %d", kdl_chain_.getNrOfSegments());
-      ROS_WARN("Number of joints: %d", kdl_chain_.getNrOfJoints());
-      // ROS_WARN("Number of joints: %d", kdl_chain_.getNrOfJoints());
+      
       // for swicht the hand_desired
       n.getParam("desired_reference_topic", desired_reference_topic);
       n.getParam("obstacle_remove_topic", obstacle_remove_topic);
@@ -38,30 +37,7 @@ namespace desperate_housewife
       n.param<double>("time_interp_desired", T_des, 1);
       n.param<double>("percentage",percentage,0.5);
 
-      // std::cout<<"T_des: "<<T_des<<std::endl;
-      
-
-      jnt_to_jac_solver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
-      id_solver_.reset(new KDL::ChainDynParam(kdl_chain_,gravity_));
-      fk_pos_solver_.reset(new KDL::ChainFkSolverPos_recursive(kdl_chain_));
-          
-      qdot_last_.resize(kdl_chain_.getNrOfJoints());
-      tau_.resize(kdl_chain_.getNrOfJoints());
-      J_.resize(kdl_chain_.getNrOfJoints());
-      J_dot_.resize(kdl_chain_.getNrOfJoints());
-      J_star_.resize(kdl_chain_.getNrOfJoints());
-      Kp_.resize(kdl_chain_.getNrOfJoints());
-      Kd_.resize(kdl_chain_.getNrOfJoints());
-      Ki_.resize(kdl_chain_.getNrOfJoints());
-      M_.resize(kdl_chain_.getNrOfJoints());
-      C_.resize(kdl_chain_.getNrOfJoints());
-      G_.resize(kdl_chain_.getNrOfJoints());
-      tau_prev_.resize(kdl_chain_.getNrOfJoints());
-
-      J_last_.resize(kdl_chain_.getNrOfJoints());
-
-
-
+      //set the gains
       n.param<double>("Kp_0",Kp_(0),50);
       n.param<double>("Kp_1",Kp_(1),50);
       n.param<double>("Kp_2",Kp_(2),50);
@@ -83,15 +59,37 @@ namespace desperate_housewife
       n.param<double>("Ki_4",Ki_(4),0.01);
       n.param<double>("Ki_5",Ki_(5),0.01);
 
-      std::cout<<"gains Kp0: "<<Kp_(0)<<'\t'<<"Kp_1: "<<Kp_(1)<<'\t'<<"Kp_2: "<<Kp_(2)<<std::endl;
-      std::cout<<"gains Kd0: "<<Kd_(0)<<'\t'<<"Kd_1: "<<Kd_(1)<<'\t'<<"Kd_2: "<<Kd_(2)<<std::endl;
-      std::cout<<"gains Ki0: "<<Ki_(0)<<'\t'<<"Ki_1: "<<Ki_(1)<<'\t'<<"Ki_2: "<<Ki_(2)<<std::endl;
+      // std::cout<<"gains Kp0: "<<Kp_(0)<<'\t'<<"Kp_1: "<<Kp_(1)<<'\t'<<"Kp_2: "<<Kp_(2)<<std::endl;
+      // std::cout<<"gains Kd0: "<<Kd_(0)<<'\t'<<"Kd_1: "<<Kd_(1)<<'\t'<<"Kd_2: "<<Kd_(2)<<std::endl;
+      // std::cout<<"gains Ki0: "<<Ki_(0)<<'\t'<<"Ki_1: "<<Ki_(1)<<'\t'<<"Ki_2: "<<Ki_(2)<<std::endl;
+      
+      ROS_DEBUG("Proportional gains:  Kp_(0) %d", Kp_(0), "Kp_(1) %d", Kp_(1), "Kp_(2) %d", Kp_(2));
+      ROS_DEBUG("Derivative gains:  Kd_(0) %d", Kd_(0), "Kd_(1) %d", Kd_(1), "Kd_(2) %d", Kd_(2));
+      ROS_DEBUG("Integration gains:  Ki_(0) %d", Ki_(0), "Ki_(1) %d", Ki_(1), "Ki_(2) %d", Ki_(2));
+
       bool use_real;
       n.param<bool>("use_real",use_real, false);
-      // std::cout << "use_real: " << use_real ? "true" : "false" << std::endl;
-      std::cout << "use_real: " << std::boolalpha << use_real << std::endl;
-      //Set the number of link that we used
 
+      //resize the vector that we use for calculates the dynamic      
+      jnt_to_jac_solver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
+      id_solver_.reset(new KDL::ChainDynParam(kdl_chain_,gravity_));
+      fk_pos_solver_.reset(new KDL::ChainFkSolverPos_recursive(kdl_chain_));
+          
+      qdot_last_.resize(kdl_chain_.getNrOfJoints());
+      tau_.resize(kdl_chain_.getNrOfJoints());
+      J_.resize(kdl_chain_.getNrOfJoints());
+      J_dot_.resize(kdl_chain_.getNrOfJoints());
+      J_star_.resize(kdl_chain_.getNrOfJoints());
+      Kp_.resize(kdl_chain_.getNrOfJoints());
+      Kd_.resize(kdl_chain_.getNrOfJoints());
+      Ki_.resize(kdl_chain_.getNrOfJoints());
+      M_.resize(kdl_chain_.getNrOfJoints());
+      C_.resize(kdl_chain_.getNrOfJoints());
+      G_.resize(kdl_chain_.getNrOfJoints());
+      tau_prev_.resize(kdl_chain_.getNrOfJoints());
+      J_last_.resize(kdl_chain_.getNrOfJoints());
+     
+      //Set the number of link that we used. 14 is the soft-hand
       list_of_link.push_back(4);
       list_of_link.push_back(5);
       list_of_link.push_back(6);
@@ -105,14 +103,13 @@ namespace desperate_housewife
 
       obstacles_subscribe_ = n.subscribe(obstacle_avoidance.c_str(), 1, &PotentialFieldControl::InfoGeometry, this);
 
-      //Hand_pose for graspable objects
+      //callcback for setting the gains at real time
       sub_gains_ = nh_.subscribe(set_gains_.c_str(), 1, &PotentialFieldControl::set_gains, this);
 
       // sub_force_point_ = nh_.subscribe(point_.c_str(), 1, &PotentialFieldControl::GetForce, this);
 
       pub_error_ = nh_.advertise<desperate_housewife::Error_msg>("error", 1000);
       pub_tau_ = nh_.advertise<std_msgs::Float64MultiArray>("tau_commad", 1000);
-      
       pub_Fa_ = nh_.advertise<std_msgs::Float64MultiArray>("Factrative_commad", 1000);
       pub_Fr_ = nh_.advertise<std_msgs::Float64MultiArray>("Frepulsive_commad", 1000);
       pub_velocity_ = nh_.advertise<std_msgs::Float64MultiArray>("velocity", 1000);
@@ -121,8 +118,7 @@ namespace desperate_housewife
       sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this); 
       sub_command_start = n.subscribe("start_control", 1, &PotentialFieldControl::command_start, this);
       // vis_pub = n.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
-      // service = n.advertiseService("grid", GetInfoObject);
-      
+ 
       //flag for waiting the real robot      
       start_flag = true;
       if(use_real == true)
@@ -157,23 +153,12 @@ namespace desperate_housewife
       Force_repulsive_last = Eigen::Matrix<double,6,1>::Zero();
 
       fk_pos_solver_->JntToCart(joint_msr_states_.q,x_des_);
-      //gains in cartesian space
-      // Kp_(0) = 50;  Kp_(1) = 50; Kp_(2) = 50;
-      // Kp_(3) = 5;  Kp_(4) = 5; Kp_(5) = 5;
-      // Kd_(0) = .5; Kd_(1) = .5; Kd_(2) = .5;
-      // Kd_(3) = .5; Kd_(4) = .5; Kd_(5) = .5;
-
-      // Kp_(0) = 800;  Kp_(1) = 800; Kp_(2) = 800;
-      // Kp_(3) = 800;  Kp_(4) = 800; Kp_(5) = 800;
-      // Kd_(0) = 200; Kd_(1) = 200; Kd_(2) = 200;
-      // Kd_(3) = 200; Kd_(4) = 200; Kd_(5) = 200;
 
       first_step_ = 1;
       error_pose_trajectory.arrived = 0;  
-      switch_trajectory = false;
+      // switch_trajectory = false;
       SetToZero(tau_prev_);
       SetToZero(x_err_integral);
-      ROS_WARN("Controller Started");
  }
 
   void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& period)
@@ -181,6 +166,7 @@ namespace desperate_housewife
       std_msgs::Float64MultiArray tau_msg;
       std_msgs::Float64MultiArray qdot_msg;
       std_msgs::Float64MultiArray vel_msg;
+      
       // get joint positions
       for(unsigned int i=0; i < joint_handles_.size(); i++) 
       {
@@ -191,12 +177,11 @@ namespace desperate_housewife
         pub_velocity_.publish(vel_msg);
         N_trans_ = I_;  
         SetToZero(tau_);
-
            
         //flag to use this code with real robot
         if (start_flag)
         {
-        // computing Inertia, Coriolis and Gravity matrices
+          // computing Inertia, Coriolis and Gravity matrices
           id_solver_->JntToMass(joint_msr_states_.q, M_);
           id_solver_->JntToCoriolis(joint_msr_states_.q, joint_msr_states_.qdot, C_);
           id_solver_->JntToGravity(joint_msr_states_.q, G_);
@@ -206,7 +191,6 @@ namespace desperate_housewife
           // computing the inverse of M_ now, since it will be used often
           pseudo_inverse(M_.data,M_inv_,sing_vals_,false);
          
-
           // computing Jacobian J(q)
           jnt_to_jac_solver_->JntToJac(joint_msr_states_.q,J_);
 
@@ -239,8 +223,8 @@ namespace desperate_housewife
             jnt_to_jac_solver_->JntToJac (joint_msr_states_.q,jac_repulsive , i);
             JAC_repulsive.push_back(jac_repulsive);
           } 
+      
           //interpolate the position and rotation
-          // std::cout<<"time_inter: "<<time_inter<<std::endl;
           if(error_pose_trajectory.arrived == 1)
           { 
             x_des_.p = x_now_int.p + interpolatormb(time_inter, T_des)* (x_des_int.p - x_now_int.p);
@@ -253,7 +237,7 @@ namespace desperate_housewife
             quat_tf = (tf::slerp(quat_tf_now_int,quat_tf_des_int,Time)).normalize();
             tf::quaternionTFToKDL(quat_tf,x_des_.M);
             
-            KDL::Twist x_err_int;  //error
+            KDL::Twist x_err_int;  //error total
 
             x_err_int = diff(x_, x_des_int);
             tf::twistKDLToMsg (x_err_int,  error_pose_trajectory.error_);
@@ -265,42 +249,33 @@ namespace desperate_housewife
           }
 
           x_dot_ = J_.data*joint_msr_states_.qdot.data; 
-          // x_des_ = x_des_int;
           x_err_ = diff(x_,x_des_);
-
-          // test jerk with error
-          Time_traj = interpolatormb_line(time_inter, T_des); 
-          x_err_ = x_err_last + (x_err_ - x_err_last) * (10*pow(Time_traj,3) - 15*pow(Time_traj,4) + 6*pow(Time_traj,5));
-          time_inter = time_inter + period.toSec();
-
-           tf::twistKDLToMsg (x_err_,  error_pose_trajectory.error_);
-
-
+ 
+          //just for publish the error interpolate
           std_msgs::Float64MultiArray err_msg;
 
           for(unsigned int i=0; i<6; i++)
           {
             err_msg.data.push_back(x_err_(i));
           }
-
           pub_error_int_.publish(err_msg);
 
-          //to decide the pose of the object to be removed
-          tf::poseKDLToMsg (x_, error_pose_trajectory.pose_hand);
-          // tf::twistKDLToMsg (x_err_,  error_pose_trajectory.error_);
           //msgs for desperate mind
+          //to decide the pose of the object to be removed
+          tf::poseKDLToMsg (x_, error_pose_trajectory.pose_hand);         
           pub_error_.publish(error_pose_trajectory);
-          std_msgs::Float64MultiArray Fa_msg;
 
+          std_msgs::Float64MultiArray Fa_msg; //msgs for publish the attractive force
 
+          //set the limitation of velocity
+          KDL::Vector V_err_(Kp_(0)/Kd_(0)*x_err_.vel.data[0],Kp_(1)/Kd_(1)*x_err_.vel.data[1],Kp_(2)/Kd_(2)*x_err_.vel.data[2]);
+          double v_limited = VelocityLimit(V_err_);
 
           //calculate the attractive filed like PID control
-          // VelocityLimit(x_err_.vel);
           for(int i = 0; i < Force_attractive.size(); i++)
           {
             x_err_integral(i) += x_err_(i)*period.toSec();
-            Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + V_max_kuka*Kp_(i)*x_err_(i);
-            // Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + Kp_(i)*x_err_(i) + Ki_(i)*x_err_integral(i);
+            Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + v_limited*Kp_(i)*x_err_(i) + Ki_(i)*x_err_integral(i);
             Fa_msg.data.push_back(Force_attractive(i));
           }
 
@@ -317,28 +292,19 @@ namespace desperate_housewife
           //   }
           // }
 
-          //DEVI CANCELLARLO LHAI MESSO SOLO PER VISUALIZZARE
-           // for(unsigned int j=0; j< list_of_link.size(); j++)
-           //  {
-           //        // point_of_interesting.push_back(x_chain[list_of_link[j]].p );
-           //        std::string obst_name = "link_" + std::to_string(j);
-           //        SeeMarker(x_chain[list_of_link[j]], obst_name);
-           //  }
-
           pub_Fa_.publish(Fa_msg);
 
-          // // computing b = J*M^-1*(c+g) - J_dot*q_dot
+          // computing b = J*M^-1*(c+g) - J_dot*q_dot
           b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
 
-          // // computing omega = J*M^-1*N^T*J
+          // computing omega = J*M^-1*N^T*J
           omega_ = J_.data*M_inv_*N_trans_*J_.data.transpose();
 
           JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
           // computing lambda = omega^-1
           pseudo_inverse(omega_,lambda_,sing_vals_2);
           
-          // Eigen::Matrix<double,6,1> Test_force_= Eigen::Matrix<double,6,1>::Zero() ;
-
+          //if there are obstacles in the scene, calculates the repulsive field 
           if(Object_position.size() > 0)
           {
               std::vector<Eigen::Matrix<double,7,1>> vect_rep;
@@ -353,7 +319,6 @@ namespace desperate_housewife
 
               for(unsigned int i=0; i < Object_position.size();i++)
               {
-                  // std::vector<double> DistanceAndIndex;
                   double influence = Object_radius[i] +  treshold_influence;
             
                   std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
@@ -366,11 +331,11 @@ namespace desperate_housewife
                   }
                   pub_Fr_.publish(Fr_msg);
                   vect_rep.push_back (JAC_repulsive[list_of_link[ForceAndIndex.second]].data.transpose()* lambda_ * ForceAndIndex.first);
-                  //Force_repulsive =  JAC_repulsive[ForceAndIndex.second].data.transpose()* lambda_ * ForceAndIndex.first;
               }
               
               Force_repulsive = Eigen::Matrix<double,7,1>::Zero();
-              
+             
+              // if there are more than one objects
               for(unsigned int j = 0; j<vect_rep.size(); j++)
               {
                 Force_repulsive += vect_rep[j];
@@ -383,31 +348,22 @@ namespace desperate_housewife
 
           for(unsigned int j=0; j< list_of_link.size(); j++)
           {
-            distance_local_obj.push_back( -Table_position.z() + x_chain[list_of_link[j]].p.z() );
+            distance_local_obj.push_back( -Table_position.z() + x_chain[list_of_link[j]].p.z() ); //considered only the z position
           }
 
           std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex_table;
           ForceAndIndex_table = RepulsiveWithTable(distance_local_obj);   
 
-
           F_Rep_table = JAC_repulsive[list_of_link[ForceAndIndex_table.second]].data.transpose()* lambda_ * ForceAndIndex_table.first;
           
           Force_total_rep = Force_repulsive + F_Rep_table;
 
-           
-           // for(unsigned int i=0; i< Force_total_rep.size(); i++)
-           // {
-           //    Fr_msg.data.push_back(Force_total_rep(i));
-           //  }
-           // pub_Fr_.publish(Fr_msg);
-
           // computing nullspace
           N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
 
-          // // finally, computing the torque tau
+          // finally, computing the torque tau
           tau_.data = (J_.data.transpose()*lambda_*(Force_attractive ))+ Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
-          //Fa * b??
-
+        
           // saving J_ and phi of the last iteration
           J_last_ = J_;
           phi_last_ = phi_;
@@ -420,7 +376,7 @@ namespace desperate_housewife
           //     tau_prev_(j) = tau_(j);
           // }
         
-          //CREA PROBLEMI IN SIMULAZIONE --> PROVARE SE È QUESTO CHE MI DA FASTIDIO IN REALE --> percentage 0.3 non va bene 
+          //torque saturation
           tau_(0) = (std::abs(tau_(0)) >= 176*percentage ? std::copysign(176*percentage,tau_(0)) : tau_(0));
           tau_(1) = (std::abs(tau_(1)) >= 176*percentage ? std::copysign(176*percentage,tau_(1)) : tau_(1)); 
           tau_(2) = (std::abs(tau_(2)) >= 100*percentage ? std::copysign(100*percentage,tau_(2)): tau_(2)); 
@@ -433,15 +389,13 @@ namespace desperate_housewife
       // set controls for joints
       for (unsigned int i = 0; i < joint_handles_.size(); i++)
       {
-        joint_handles_[i].setCommand(tau_(i));  
-        // std::cout<<"tau_(" << i << "): " << tau_(i)<<std::endl;      
-        tau_msg.data.push_back(tau_(i));
+          joint_handles_[i].setCommand(tau_(i));  
+          tau_msg.data.push_back(tau_(i));
       }
         
       pub_tau_.publish(tau_msg);
       x_chain.clear();
       JAC_repulsive.clear();
-      // Force_total_rep = Eigen::Matrix<double,7,1>::Zero(); 
       ros::spinOnce();
 
   }
@@ -497,8 +451,8 @@ namespace desperate_housewife
       Time = 0; //time for slerp interpolation
       time_inter = 0;
       SetToZero(x_err_last);
-      // Time_log = 0;
     }
+
     else
     {
       //new pose
@@ -512,12 +466,9 @@ namespace desperate_housewife
         //time update
         time_inter = 0;
         Time = 0;   
-        switch_trajectory = true; 
-        // Time_traj_rep = 0;
+        // switch_trajectory = true; 
         x_err_last = x_err_;
         SetToZero(x_err_integral);
-        // Time_log = 0;
-      
       }
     }
 
@@ -549,12 +500,10 @@ namespace desperate_housewife
       if(distance_local_obj[index_dist] <= influence)
       {
           DistanceAndIndex.push_back(1);
-          DistanceAndIndex.push_back( distance_local_obj[index_dist] );
-          // std::cout<<"distance_local_obj[index_dist]: "<<distance_local_obj[index_dist]<<std::endl;
-          // std::cout<<"index_dist: "<<index_dist<<std::endl;
-          DistanceAndIndex.push_back( index_dist);
-          // std::cout<<"distance_local_obj: "<< distance_local_obj[index_dist]<<std::endl;
-      }
+          DistanceAndIndex.push_back( distance_local_obj[index_dist] ); //min distance
+          DistanceAndIndex.push_back( index_dist); //jacobian index
+     }
+     
       else
         DistanceAndIndex.push_back(0);
       

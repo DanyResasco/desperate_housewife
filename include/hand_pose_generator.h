@@ -47,6 +47,8 @@ private:
   int step_grasp = 0;
   int stop;
 
+  bool use_both_arm;
+
 
 public:
 
@@ -61,7 +63,9 @@ public:
   ros::Publisher objects_info_right_pub, objects_info_left_pub;
   std::string obj_info_topic_r, obj_info_topic_l;
   ros::Publisher vis_pub;
- 
+  std::string hand_close_left, hand_close_right;
+  ros::Publisher hand_publisher_left, hand_publisher_right;
+  std::string right_hand_synergy_joint, left_hand_synergy_joint;
   tf::TransformListener listener_object;
 
   HandPoseGenerator();
@@ -158,5 +162,8 @@ public:
 // void DrawStraingLIne( Eigen::Vector3d &rett_pos );
 
 };
+
+
+  desperate_housewife::fittedGeometriesSingle SetObstacleMsg(desperate_housewife::fittedGeometriesSingle geo_obst);
 
 #endif

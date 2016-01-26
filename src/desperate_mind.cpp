@@ -29,10 +29,10 @@ DesperateDecisionMaker::DesperateDecisionMaker()
 {
   //to send vito at home
   nh.param<std::string>("PotentialFieldControl/home_desperate_left" , home_left_topic_, "/left_arm/PotentialFieldControl/home_left");
-  left_home_publisher_ = nh.advertise<std_msgs::Bool> (home_left_topic_.c_str(),1);
+  left_home_publisher_ = nh.advertise<std_msgs::Bool> (home_left_topic_.c_str(),1,true);
 
   nh.param<std::string>("PotentialFieldControl/home_desperate_right", home_right_topic_, "/right_arm/PotentialFieldControl/home_right");
-  right_home_publisher_ = nh.advertise<std_msgs::Bool> (home_right_topic_.c_str(),1);
+  right_home_publisher_ = nh.advertise<std_msgs::Bool> (home_right_topic_.c_str(),1,true);
 
   //to monitoring error
   nh.param<std::string>("/left_arm/PotentialFieldControl/error", error_topic_left, "/left_arm/PotentialFieldControl/error");
@@ -81,6 +81,14 @@ DesperateDecisionMaker::DesperateDecisionMaker()
   nh.param<double>("/desperate_mind_node/rot_x_treshold",rot_x,0.01);
   nh.param<double>("/desperate_mind_node/rot_y_treshold",rot_y,0.01);
   nh.param<double>("/desperate_mind_node/rot_z_treshold",rot_z,0.01);
+
+  nh.param<bool>("use_both_arm",use_both_arm,true);
+
+  nh.param<std::string>("/PotentialFieldControl/obstacle_list_left", obstacles_topic_left, "/PotentialFieldControl/obstacle_pose_left");
+  obstacles_publisher_left = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_left.c_str(),1);
+
+  nh.param<std::string>("/PotentialFieldControl/obstacle_list_right", obstacles_topic_right, "/PotentialFieldControl/obstacle_pose_right");
+  obstacles_publisher_right = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_right.c_str(),1);
 
   // std::cout<<"x: "<<x<<'\t'<<"y: "<<y<<'\t'<<"z: "<<z<<std::endl;
   // std::cout<<"rotx: "<<rot_x<<'\t'<<"rot_y: "<<rot_y<<'\t'<<"rot_z: "<<rot_z<<std::endl;
@@ -157,6 +165,13 @@ void DesperateDecisionMaker::Error_info_left(const desperate_housewife::Error_ms
       { 
         //send flag to start hand_pose_generator
         start_controller.start_left = 1;
+
+        if(use_both_arm == false)
+        {
+          //to test only the left arm
+          start_controller.start_right = 1;
+        }
+
         start_controller.stop = 0;
         left_start_controller_pub.publish(start_controller);
         stop_home = 0;
@@ -219,7 +234,13 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
       {
         //send flag to start hand_pose_generator
         start_controller.start_right = 1;
-         start_controller.start_left = 1;
+
+        if(use_both_arm == false)
+        {
+          //to test only the right arm
+          start_controller.start_left = 1;
+        }
+
         start_controller.stop = 0;
         right_start_controller_pub.publish(start_controller);
         stop_home_r = 0;
@@ -254,10 +275,6 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
   E_pf_abs.rot.data[1] = std::abs(E_pf.rot.data[1] );
   E_pf_abs.rot.data[2] = std::abs(E_pf.rot.data[2] );
 
-  // std::cout<<"error treshold linear x: "<<E_t.vel.data[0]<<'\t'<<"y: "<<'\t'<<E_t.vel.data[1]<<'\t'<<"z: "<<E_t.vel.data[2]<<std::endl;
-  // std::cout<<"error treshold angular x: "<<E_t.rot.data[0]<<'\t'<<"y: "<<'\t'<<E_t.rot.data[1]<<'\t'<<"z: "<<E_t.rot.data[2]<<std::endl;
-  // std::cout<<"error linear x: "<<E_pf_abs.vel.data[0]<<'\t'<<"y: "<<'\t'<<E_pf_abs.vel.data[1]<<'\t'<<"z: "<<E_pf_abs.vel.data[1]<<std::endl;
-  // std::cout<<"error  angular x: "<<E_pf_abs.rot.data[0]<<'\t'<<"y: "<<'\t'<<E_pf_abs.rot.data[1]<<'\t'<<"z: "<<E_pf_abs.rot.data[2]<<std::endl;
 
   if (  (E_pf_abs.vel.data[0] < E_t.vel.data[0]) &&
         (E_pf_abs.vel.data[1] < E_t.vel.data[1]) &&
@@ -273,6 +290,7 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
   else
   {
     std::cout<<"is not equal"<<std::endl;
+    std::cout<<"error: "<<E_pf_abs<<std::endl;
     return false;
   }
 }
@@ -346,9 +364,14 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
             msg_jointT_hand.points[0].positions[0] = 0.0;
             msg_jointT_hand.points[0].time_from_start = ros::Duration(1); // 1s;
 
+            desperate_housewife::fittedGeometriesArray obstaclesMsg;
+
+
             if(whichArm == 1)
             {
-                New_Hand_Position.pose.position.y = New_Hand_Position.pose.position.y - 0.10;
+                obstacles_publisher_left.publish(obstaclesMsg);
+
+                New_Hand_Position.pose.position.x = New_Hand_Position.pose.position.x - 0.20;
                 msg_jointT_hand.joint_names[0] = left_hand_synergy_joint.c_str();
                 hand_publisher_left.publish(msg_jointT_hand);
                 desired_hand_publisher_left.publish( New_Hand_Position );
@@ -356,10 +379,11 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
             }
             else
             {
-                New_Hand_Position.pose.position.y = New_Hand_Position.pose.position.y + 0.15;
+                New_Hand_Position.pose.position.x = New_Hand_Position.pose.position.x - 0.20;
                 msg_jointT_hand.joint_names[0] = right_hand_synergy_joint.c_str();
                 hand_publisher_right.publish(msg_jointT_hand);
                 desired_hand_publisher_right.publish( New_Hand_Position );
+                obstacles_publisher_right.publish(obstaclesMsg);
                
             }
             restart = 1;

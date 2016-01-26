@@ -5,7 +5,7 @@
     <arg name="use_rviz" default="false"/>
     <arg name="use_joint_state_publisher" default="true"/>
     <arg name="load_moveit" default="false"/>
-    <arg name="use_calibration_package" default="true"/>
+    <arg name="use_calibration_package" default="false"/>
     <arg name="use_grasp_estimator" default="true"/>
 
     <!-- configure whether the real hardware is enabled or not -->
@@ -115,9 +115,15 @@
     <!-- load the controllers in current namespace -->
     <node ns="head" name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="joint_state_controller joint_trajectory_controller"/>
 
+    <param name="use_both_arm" value="false"/>
+
+
     <group ns="left_arm">
+        <rosparam file="$(find desperate_housewife)/config/desperate_robot_sim_gains.yaml" command="load"/>
         <group if="$(arg left_arm_enabled)">
-            <!--add a copy of the robot description within the name space -->
+            <param name="use_real" value="true"/>
+            <rosparam file="$(find desperate_housewife)/config/desperate_robot_real_gains.yaml" command="load"/>
+              <!--add a copy of the robot description within the name space -->
             <param name="robot_description" command="$(find xacro)/xacro.py $(find desperate_housewife)/robot/$(arg robot_name).urdf.xacro use_mimic_tag:=true"/>
 
             <rosparam command="load" file="$(find desperate_housewife)/config/left_arm_names.yaml" />
@@ -158,7 +164,10 @@
     </group>
 
     <group ns="right_arm">
+        <rosparam file="$(find desperate_housewife)/config/desperate_robot_sim_gains.yaml" command="load"/>
         <group if="$(arg right_arm_enabled)">
+        <param name="use_real" value="true"/>
+            <rosparam file="$(find desperate_housewife)/config/desperate_robot_real_gains.yaml" command="load"/>
             <!--add a copy of the robot description within the name space -->
             <param name="robot_description" command="$(find xacro)/xacro.py $(find desperate_housewife)/robot/$(arg robot_name).urdf.xacro use_mimic_tag:=true"/>
 
