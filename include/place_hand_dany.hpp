@@ -8,9 +8,9 @@
 geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGeometriesSingle geometry, int whichArm )
 {
 
-  Eigen::Matrix4d M_desired_local; // in cyl frame
-  Eigen::Vector4d Point_desired, Pos_ori_hand; //in cyl frame
-  Eigen::Vector4d translation; //in cyl frame
+  Eigen::Matrix4d M_desired_local; /*in cyl frame*/
+  Eigen::Vector4d Point_desired, Pos_ori_hand; /*in cyl frame*/
+  Eigen::Vector4d translation; /*in cyl frame*/
   Eigen::Vector3d x(1,0,0);
   Eigen::Vector3d y(0,1,0), z(0,0,1);
   Eigen::Matrix4d T_K_H;
@@ -55,34 +55,38 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
   M_desired_local = Eigen::Matrix4d::Identity();
   M_desired_local.col(0) << x_l, 0; 
-  M_desired_local.col(1) << y_l, 0; //y_porojection
-  M_desired_local.col(2) << z_l, 0; //z_cylinder
+  M_desired_local.col(1) << y_l, 0; /*y_porojection*/
+  M_desired_local.col(2) << z_l, 0; /*z_cylinder*/
 
+  /*takes the object on the top moved on the board*/
   if((isLying == 0) && (isFull == 0)) 
     {
       Point_desired(0) = 0;
       Point_desired(1) = 0;
-      Point_desired(2) = height *0.5 + 0.05;	
+      Point_desired(2) = height * 0.5 + 0.05;	
       Point_desired(3) = 1;
       ROS_DEBUG("cyl upright and empty");
       
-      if (whichArm == 1) //left arm
+      if (whichArm == 1) /*left arm*/
       {
-        Point_desired(1) = - radius;
+        Point_desired(1) = - radius;  /*along the y axis*/
         M_desired_local.col(3) << Point_desired;
         T_w_h = T_vito_c * M_desired_local* Rot_z;;
         std::cout<<"Not Lying, Empty, left Arm, "<< std::endl;
       }
+
       else
       {
-        Point_desired(0) = - radius;
+        Point_desired(0) = - radius;  /*along the x axis*/
         M_desired_local.col(3) << Point_desired;
+
         T_w_h = T_vito_c * M_desired_local* Rot_z;
         std::cout<<"Not Lying, Empty, right Arm, "<< std::endl;
       }   
 
     }
 
+  /*takes the object on the top if the object's radius is minus than treshold*/
   else if(((isLying == 0) && (isFull != 0)) && (radius< max_radius))
     {
       Point_desired(0) = 0;
@@ -93,21 +97,23 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       
       M_desired_local.col(3) << Point_desired;
 
-      if (whichArm == 1) //left arm
-      {
-         T_w_h = T_vito_c * M_desired_local* Rot_z;
-         std::cout<<"Not Lying, full, left Arm"<< std::endl;
-      }
+      // if (whichArm == 1) //left arm
+      // {
+      //    T_w_h = T_vito_c * M_desired_local* Rot_z;
+      //    std::cout<<"Not Lying, full, left Arm"<< std::endl;
+      // }
 
-      else
-      {
-        T_w_h = T_vito_c * M_desired_local* Rot_z;
-        std::cout<<"Not Lying, full, rigth Arm"<< std::endl;
-      }
+      // else
+      // {
+      //   T_w_h = T_vito_c * M_desired_local* Rot_z;
+      //   std::cout<<"Not Lying, full, rigth Arm"<< std::endl;
+      // }
+       T_w_h = T_vito_c * M_desired_local* Rot_z;
+       std::cout<<"Not Lying, full"<< std::endl;
      
     }
 
-  //if cilynder is lying, the pose is calculates in vito frame
+  /*if cilynder is lying, the pose is calculates in vito frame and we take it on the middle*/
   else if ((isLying != 0) && (radius < max_radius))
     {
       Point_desired(0) = T_vito_c(0,3);
@@ -117,7 +123,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
       ROS_DEBUG("cyl is lying");
 
-      if(whichArm == 1) //left to check
+      if(whichArm == 1) /*left to check*/
       {
           z_l = -z;
           x_l << T_vito_c(0,2), T_vito_c(1,2), T_vito_c(2,2) ;
@@ -130,7 +136,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
           std::cout<<"Lying, left Arm"<< std::endl;
      }
 
-      else //right
+      else /*right*/
       { 
           z_l = -z;
           x_l << T_vito_c(0,2), T_vito_c(1,2), T_vito_c(2,2) ;
@@ -140,6 +146,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
           T_w_h.col(1) << y_l,0;
           T_w_h.col(2) << z_l,0;
           T_w_h.col(3) << Point_desired;
+
           T_w_h = T_w_h*Rot_z;
           std::cout<<"Lying, right Arm"<< std::endl;
       }
@@ -162,7 +169,7 @@ void HandPoseGenerator::fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry
   Eigen::Matrix<double,3,3> Tmatrix;
   Tmatrix = tranfs_matrix.block<3,3>(0,0) ;
   Eigen::Quaterniond quat_eigen_hand(Tmatrix);
-  // quat_eigen_hand.normalized();
+
   Hand_pose.orientation.x = (quat_eigen_hand.normalized()).x();
   Hand_pose.orientation.y = (quat_eigen_hand.normalized()).y();
   Hand_pose.orientation.z = (quat_eigen_hand.normalized()).z();
@@ -184,8 +191,6 @@ Eigen::Matrix4d HandPoseGenerator::FromMsgtoEigen(geometry_msgs::Pose &object)
 
   Eigen::Matrix4d Matrix_transf;
 
-
-
   Matrix_transf.row(0) << rotation.row(0), translation[0];
   Matrix_transf.row(1) << rotation.row(1), translation[1];
   Matrix_transf.row(2) << rotation.row(2), translation[2];
@@ -197,7 +202,7 @@ Eigen::Matrix4d HandPoseGenerator::FromMsgtoEigen(geometry_msgs::Pose &object)
 
 int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
 {
-  //We use vito frame for chose which arm use, while we use cylinder frame for calculates the straight line between hand frame and objects frame.
+  /*We use vito frame for chose which arm use, while we use cylinder frame for calculates the straight line between hand frame and objects frame.*/
   int return_value;
 	tf::StampedTransform hand_left, hand_rigth, hand_r_object,hand_l_object;
 
@@ -207,18 +212,18 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
 	listener_info.waitForTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
 	listener_info.lookupTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time(0), hand_rigth);
 
-  //Ancora da vedere come fare la trasformazione della posa della mano al cilindro considerato 
+  /*Get information about the distance between the cylinder and soft-hand*/
   listener_info.waitForTransform("object_"+ std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
   listener_info.lookupTransform("object_"+std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time(0), hand_r_object);
 
   listener_info.waitForTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
   listener_info.lookupTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time(0), hand_l_object);
 
-
 	Eigen::Vector3d object_position(object_pose.position.x, object_pose.position.y, object_pose.position.z);
 	Eigen::Vector3d hand_left_position(hand_left.getOrigin().x(),hand_left.getOrigin().y(),hand_left.getOrigin().z());
 	Eigen::Vector3d hand_right_position(hand_rigth.getOrigin().x(),hand_rigth.getOrigin().y(),hand_rigth.getOrigin().z());
 
+  /*distance from each arm to cylinder. it use for decide wich arm to use*/
 	double dist_to_left_hand = std::sqrt((object_position[0] - hand_left_position[0]) * (object_position[0] - hand_left_position[0]) +
 				   (object_position[1] - hand_left_position[1]) * (object_position[1] - hand_left_position[1]) +
 				   (object_position[2] - hand_left_position[2]) * (object_position[2] - hand_left_position[2]) );
@@ -227,7 +232,7 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
 				   (object_position[1] - hand_right_position[1]) * (object_position[1] - hand_right_position[1]) +
 				   (object_position[2] - hand_right_position[2]) * (object_position[2] - hand_right_position[2]) );
 
-  //the straight line is calculates in cilynder frame
+  /*the straight line is calculates in cilynder frame*/
 	if(dist_to_left_hand < dist_to_right_hand)
 	{
 	  ROS_INFO("Vito uses a: left arm because of distance");
@@ -247,32 +252,32 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
   	return_value = 0;
   }
 
-  // std::cout<<"amr: "<<return_value<<std::endl;
   return return_value; 
 }
 
 
 
-//Function for clear the table when the only object is obstacle
+/*Function for clear the table when the only object is obstacle*/
 geometry_msgs::Pose HandPoseGenerator::ObstacleReject( desperate_housewife::fittedGeometriesSingle Pose_rej_obs, int arm_)
 {
   Eigen::Matrix4d T_vito_c, T_w_ob;
-  Eigen::Matrix4d M_desired_local; // in cyl frame
+  Eigen::Matrix4d M_desired_local; /* in cyl frame*/
   Eigen::Vector4d Point_desired;
   geometry_msgs::Pose pose_obj_hand;
   Eigen::Vector3d x(1,0,0);
   Eigen::Vector3d y(0,1,0), z(0,0,1);
 
-  //sends msgs to close hand
+  /*sends msgs to close hand*/
   trajectory_msgs::JointTrajectory msg_jointT_hand;
   msg_jointT_hand.joint_names.resize(1);
   msg_jointT_hand.points.resize(1);
   msg_jointT_hand.points[0].positions.resize(1);
-  msg_jointT_hand.points[0].positions[0] = 0.0;
+  msg_jointT_hand.points[0].positions[0] = 1.0;
   msg_jointT_hand.points[0].time_from_start = ros::Duration(1); // 1s;
 
   T_vito_c = FromMsgtoEigen( Pose_rej_obs.pose );
 
+  /*to remove object we decide to put with the back of the hand in the middle of the obstacles */
   Point_desired(0) = T_vito_c(0,3) + Pose_rej_obs.info[0] + 0.16;
   Point_desired(1) = T_vito_c(1,3) ;
   Point_desired(2) = T_vito_c(2,3) +0.05; 
@@ -280,7 +285,7 @@ geometry_msgs::Pose HandPoseGenerator::ObstacleReject( desperate_housewife::fitt
 
   M_desired_local = Eigen::Matrix4d::Identity();
 
-  if(arm_ == 1) //left
+  if(arm_ == 1) /*left*/
   { 
       T_w_ob.col(0) << -z, 0;  
       T_w_ob.col(1) << y, 0;
@@ -290,7 +295,7 @@ geometry_msgs::Pose HandPoseGenerator::ObstacleReject( desperate_housewife::fitt
       hand_publisher_left.publish(msg_jointT_hand);
   }
 
-  else  //right
+  else  /*right*/
   {
     T_w_ob.col(0) << z, 0; 
     T_w_ob.col(1) << -y,0;
@@ -300,8 +305,7 @@ geometry_msgs::Pose HandPoseGenerator::ObstacleReject( desperate_housewife::fitt
     hand_publisher_right.publish(msg_jointT_hand);
   }
 
-  T_w_ob.col(3) << Point_desired;
-  
+  T_w_ob.col(3) << Point_desired;  
 
   fromEigenToPose (T_w_ob, pose_obj_hand);
 
@@ -311,21 +315,12 @@ geometry_msgs::Pose HandPoseGenerator::ObstacleReject( desperate_housewife::fitt
   tf::poseMsgToTF( pose_obj_hand, tfHandTrasform);
   tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(),"ObstacleReject") );
 
-
-
-
-
-
-
-
-
-
   return pose_obj_hand;
 }
 
 void HandPoseGenerator::Overturn()
 {
-  // std::cout<<"overturn"<<std::endl;
+  /* std::cout<<"overturn"<<std::endl;*/
   Eigen::Matrix3d rot_left;
   Eigen::Matrix3d rot_right;
 
@@ -334,16 +329,16 @@ void HandPoseGenerator::Overturn()
   Eigen::Vector3d x(1,0,0);
   Eigen::Vector3d y(0,1,0), z(0,0,1);
   
-  Eigen::Matrix4d Rot_z;
-  Rot_z.row(0)<< -1,0,0,0;
-  Rot_z.row(1)<< 0,-1,0,0;
-  Rot_z.row(2)<< 0,0,1,0;
-  Rot_z.row(3)<< 0,0,0,1;
+  // Eigen::Matrix4d Rot_z;
+  // Rot_z.row(0)<< -1,0,0,0;
+  // Rot_z.row(1)<< 0,-1,0,0;
+  // Rot_z.row(2)<< 0,0,1,0;
+  // Rot_z.row(3)<< 0,0,0,1;
 
-  Eigen::Matrix3d ROT_y;
-  ROT_y.row(0)<< 0,0,1;
-  ROT_y.row(1)<< 0,1,0;
-  ROT_y.row(2)<< -1,0,0;
+  // Eigen::Matrix3d ROT_y;
+  // ROT_y.row(0)<< 0,0,1;
+  // ROT_y.row(1)<< 0,1,0;
+  // ROT_y.row(2)<< -1,0,0;
   // ROT_y.row(3)<< 0,0,0,1;
 
   rot_left.col(0) << x;

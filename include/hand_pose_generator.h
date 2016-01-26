@@ -77,7 +77,12 @@ public:
   */
   void HandPoseGeneratorCallback(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
 
+ /** Callback: generateHandPose
+  * input: cylinder, index of cylinder
+  * Description: function that call the function for generate the hand pose
+  */
   desperate_housewife::handPoseSingle generateHandPose( desperate_housewife::fittedGeometriesSingle geometry, int cyl_nbr );
+  
   /** Function: isGeometryGraspable
   *input: cylinder
   *output: bool
@@ -132,13 +137,15 @@ public:
   */
   void Start_left(const desperate_housewife::Start::ConstPtr& msg);
   void Start_right(const desperate_housewife::Start::ConstPtr& msg);
+  
   /** FUnction: DesperateDemo2
   *input: cylinder
   *output: void
   *Description:Second Demo. grasp object without obstacles avoidance. if item isn't graspable will be removed 
   */
   void  DesperateDemo2(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
-   /** FUnction: DesperateDemo1
+  
+  /** FUnction: DesperateDemo1
   *input: cylinder
   *output: void
   *Description:First Demo. grasp object with obstacles avoidance. 
@@ -156,14 +163,18 @@ public:
   *output: void
   *Description:Send a obstacles at real time 
   */
-  void CheckRealTimeObstacleMovements(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
+  // void CheckRealTimeObstacleMovements(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
 
 
 // void DrawStraingLIne( Eigen::Vector3d &rett_pos );
 
 };
 
-
-  desperate_housewife::fittedGeometriesSingle SetObstacleMsg(desperate_housewife::fittedGeometriesSingle geo_obst);
+    /** Function: SetObstacleMsg
+  *input: obstacle
+  *output: obstacle in
+  *Description:Send a obstacles at real time 
+  */
+  // desperate_housewife::fittedGeometriesSingle SetObstacleMsg(desperate_housewife::fittedGeometriesSingle geo_obst);
 
 #endif

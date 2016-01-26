@@ -13,7 +13,7 @@
 #include <sstream>
 #include <iostream>
 
-//Tf
+/*!Tf*/
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
@@ -117,9 +117,15 @@ namespace desperate_housewife
 		/** Function: GetFIRAS
 		* input: min distance, object derivate, influence of repulsive field
 		* output: repulsive forces
-		* Description: calculates the repulsive forces  like article 
+		* Description: calculates the repulsive forces  like article O.Khatib 
 		*/
 		Eigen::Matrix<double,6,1> GetFIRAS(double &min_distance, Eigen::Vector3d &distance_der_partial , double &influence);
+
+		/** Function: GetMinDistance
+		* input: vecotr of distance, influence of repulsive field
+		* output: vector with data[0] information if there is a link with distance minor tha influnce, data[1] the minor distance, data[2] index of vector
+		* Description: return the minor distance from a input vector
+		*/
 		std::vector<double> GetMinDistance(std::vector<double> distance_local_obj,  double influence );
 		
 		/** Function: GetRepulsiveForce
@@ -148,35 +154,35 @@ namespace desperate_housewife
         
 		KDL::JntArray qdot_last_;
 
-		KDL::Frame x_;	//current e-e pose
+		KDL::Frame x_;	/*!current e-e pose*/
 
 		
-		Eigen::Matrix<double,6,1> x_dot_;	//current e-e velocity
+		Eigen::Matrix<double,6,1> x_dot_;	/*!current e-e velocity*/
 
-		KDL::Frame x_des_;	//desired pose interpolate
-		KDL::Frame x_des_int;	//desired pose
-		KDL::Frame x_now_int; //position robot for interpolate
+		KDL::Frame x_des_;	/*!desired pose interpolate*/
+		KDL::Frame x_des_int;	/*!desired pose*/
+		KDL::Frame x_now_int; /*!position robot for interpolate*/
 
-		KDL::Twist x_err_,x_err_last;	//error
+		KDL::Twist x_err_,x_err_last;	/*!error*/
 
-		KDL::JntArray Kp_,Kd_,Ki_;	//gains
+		KDL::JntArray Kp_,Kd_,Ki_;	/*!gains*/
 
-		KDL::JntArray tau_;	//tau
+		KDL::JntArray tau_;	/*!tau*/
 
-		KDL::JntSpaceInertiaMatrix M_;	// intertia matrix
-		KDL::JntArray C_;	// coriolis
-		KDL::JntArray G_;	// gravity
+		KDL::JntSpaceInertiaMatrix M_;	/*! intertia matrix*/
+		KDL::JntArray C_;	/*! coriolis*/
+		KDL::JntArray G_;	/*! gravity*/
 
-		KDL::Jacobian J_;	//Jacobian J(q)
-		KDL::Jacobian J_last_;	//Jacobian of the last step
-		KDL::Jacobian J_dot_;	//d/dt(J(q))
-		KDL::Jacobian J_star_; // it will be J_*P_
+		KDL::Jacobian J_;	/*!Jacobian J(q)*/
+		KDL::Jacobian J_last_;	/*!Jacobian of the last step*/
+		KDL::Jacobian J_dot_;	/*!d/dt(J(q))*/
+		KDL::Jacobian J_star_; /*! it will be J_*P_*/
 
 		Eigen::Matrix<double,7,7> I_;
 		Eigen::Matrix<double,7,7> N_trans_;
 		Eigen::MatrixXd M_inv_;
-		Eigen::MatrixXd omega_;	//M in operation space
-		Eigen::MatrixXd lambda_;	//omega_inv
+		Eigen::MatrixXd omega_;	/*!M in operation space*/
+		Eigen::MatrixXd lambda_;	/*!omega_inv*/
 		Eigen::Matrix<double,6,1> b_;
 
 		double phi_;	
@@ -194,14 +200,14 @@ namespace desperate_housewife
 		Eigen::Matrix<double,7,1> Force_repulsive;
 		Eigen::Matrix<double,7,1> F_Rep_table;
 		double V_max_kuka = 1.5;
-		std::vector<KDL::Frame> x_chain;	//14 is soft_hand (end_effector)
+		std::vector<KDL::Frame> x_chain;	/*!14 is soft_hand (end_effector)*/
 		
 		ros::Subscriber obstacles_subscribe_, obstacles_remove_sub, sub_gains_;
 		std::vector<double> Object_radius;
 		std::vector<double> Object_height;
 		std::vector<KDL::Frame> Object_position;
 		ros::Publisher hand_publisher_ ,pub_xdes_;
-		std::vector<KDL::Jacobian> JAC_repulsive;	//vector with all jabobian
+		std::vector<KDL::Jacobian> JAC_repulsive;	/*!vector with all jabobian*/
 		std::string obstacle_remove_topic, obstacle_avoidance;
 		desperate_housewife::Error_msg error_pose_trajectory;
 		int ObjOrObst;
@@ -209,13 +215,12 @@ namespace desperate_housewife
 		std::string error_topic;
 		ros::Publisher pub_error_right, pub_error_left,pub_qdot_;
 		std::string tau_commad;
-		// std_msgs::Float64MultiArray tau_msg;
-		// std_msgs::Float64MultiArray qdot_msg;
-		//information for message
+
+		/*!information for message*/
 		int erro_arr, err_obj, err_home ;
-		double time_inter; //time to interpolate
-		double T_des; //time desired to interpolate
-		// int Int = 0;
+		double time_inter; /*!time to interpolate*/
+		double T_des; /*!time desired to interpolate*/
+		/*! int Int = 0;*/
 		double time_inter_jerk; 
 
 		struct quaternion_
@@ -238,11 +243,11 @@ namespace desperate_housewife
 		KDL::JntArray tau_prev_;
 		ros::Subscriber sub_grid_;
 		std::vector<int> list_of_link;
-		// ros::ServiceServer service;
+
 		std::string point_;
 		ros::Subscriber sub_force_point_;
 		ros::Publisher vis_pub,pub_Fr_,pub_velocity_,pub_error_int_;
-		    tf::TransformBroadcaster tf_geometriesTransformations_;
+		tf::TransformBroadcaster tf_geometriesTransformations_;
 		KDL::Twist x_err_integral;
 
 		double Time_log;
@@ -250,7 +255,11 @@ namespace desperate_housewife
 
 	};
 
-	// Eigen::Quaterniond RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point);
+	/** Function: FromKdlToEigen
+		* input: kdl frame
+		* output: eigen matrix
+		* Description: functions tha transform kdl frame into eigen matrix
+	*/
 	Eigen::Matrix<double,4,4>  FromKdlToEigen(KDL::Frame &T_v_o);
 	  
 

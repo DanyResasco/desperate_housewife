@@ -37,28 +37,6 @@ namespace desperate_housewife
       n.param<double>("time_interp_desired", T_des, 1);
       n.param<double>("percentage",percentage,0.5);
 
-      //set the gains
-      n.param<double>("Kp_0",Kp_(0),50);
-      n.param<double>("Kp_1",Kp_(1),50);
-      n.param<double>("Kp_2",Kp_(2),50);
-      n.param<double>("Kp_3",Kp_(3),5);
-      n.param<double>("Kp_4",Kp_(4),5);
-      n.param<double>("Kp_5",Kp_(5),5);
-      
-      n.param<double>("Kd_0",Kd_(0),0.5);
-      n.param<double>("Kd_1",Kd_(1),0.5);
-      n.param<double>("Kd_2",Kd_(2),0.5);
-      n.param<double>("Kd_3",Kd_(3),0.5);
-      n.param<double>("Kd_4",Kd_(4),0.5);
-      n.param<double>("Kd_5",Kd_(5),0.5);
-
-      n.param<double>("Ki_0",Ki_(0),0.01);
-      n.param<double>("Ki_1",Ki_(1),0.01);
-      n.param<double>("Ki_2",Ki_(2),0.01);
-      n.param<double>("Ki_3",Ki_(3),0.01);
-      n.param<double>("Ki_4",Ki_(4),0.01);
-      n.param<double>("Ki_5",Ki_(5),0.01);
-
       // std::cout<<"gains Kp0: "<<Kp_(0)<<'\t'<<"Kp_1: "<<Kp_(1)<<'\t'<<"Kp_2: "<<Kp_(2)<<std::endl;
       // std::cout<<"gains Kd0: "<<Kd_(0)<<'\t'<<"Kd_1: "<<Kd_(1)<<'\t'<<"Kd_2: "<<Kd_(2)<<std::endl;
       // std::cout<<"gains Ki0: "<<Ki_(0)<<'\t'<<"Ki_1: "<<Ki_(1)<<'\t'<<"Ki_2: "<<Ki_(2)<<std::endl;
@@ -95,6 +73,28 @@ namespace desperate_housewife
       list_of_link.push_back(6);
       list_of_link.push_back(7);
       list_of_link.push_back(14);
+
+       //set the gains
+      n.param<double>("Kp_0",Kp_(0),50);
+      n.param<double>("Kp_1",Kp_(1),50);
+      n.param<double>("Kp_2",Kp_(2),50);
+      n.param<double>("Kp_3",Kp_(3),5);
+      n.param<double>("Kp_4",Kp_(4),5);
+      n.param<double>("Kp_5",Kp_(5),5);
+      
+      n.param<double>("Kd_0",Kd_(0),0.5);
+      n.param<double>("Kd_1",Kd_(1),0.5);
+      n.param<double>("Kd_2",Kd_(2),0.5);
+      n.param<double>("Kd_3",Kd_(3),0.5);
+      n.param<double>("Kd_4",Kd_(4),0.5);
+      n.param<double>("Kd_5",Kd_(5),0.5);
+
+      n.param<double>("Ki_0",Ki_(0),0.01);
+      n.param<double>("Ki_1",Ki_(1),0.01);
+      n.param<double>("Ki_2",Ki_(2),0.01);
+      n.param<double>("Ki_3",Ki_(3),0.01);
+      n.param<double>("Ki_4",Ki_(4),0.01);
+      n.param<double>("Ki_5",Ki_(5),0.01);
 
 
       ROS_DEBUG("Subscribed for desired_hand_topic to: %s", desired_reference_topic.c_str());
