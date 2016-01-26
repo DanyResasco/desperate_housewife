@@ -26,6 +26,8 @@ namespace desperate_housewife
       KinematicChainControllerBase<hardware_interface::EffortJointInterface>::init(robot, n);
       ROS_INFO("Starting controller");
       ROS_WARN("Number of segments: %d", kdl_chain_.getNrOfSegments());
+      ROS_WARN("Number of joints: %d", kdl_chain_.getNrOfJoints());
+      // ROS_WARN("Number of joints: %d", kdl_chain_.getNrOfJoints());
       // for swicht the hand_desired
       n.getParam("desired_reference_topic", desired_reference_topic);
       n.getParam("obstacle_remove_topic", obstacle_remove_topic);
@@ -171,6 +173,7 @@ namespace desperate_housewife
       switch_trajectory = false;
       SetToZero(tau_prev_);
       SetToZero(x_err_integral);
+      ROS_WARN("Controller Started");
  }
 
   void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& period)
@@ -265,12 +268,12 @@ namespace desperate_housewife
           // x_des_ = x_des_int;
           x_err_ = diff(x_,x_des_);
 
-          //test jerk with error
-          // Time_traj = interpolatormb_line(time_inter, T_des); 
-          // x_err_ = x_err_last + (x_err_ - x_err_last) * (10*pow(Time_traj,3) - 15*pow(Time_traj,4) + 6*pow(Time_traj,5));
-          // time_inter = time_inter + period.toSec();
+          // test jerk with error
+          Time_traj = interpolatormb_line(time_inter, T_des); 
+          x_err_ = x_err_last + (x_err_ - x_err_last) * (10*pow(Time_traj,3) - 15*pow(Time_traj,4) + 6*pow(Time_traj,5));
+          time_inter = time_inter + period.toSec();
 
-           // tf::twistKDLToMsg (x_err_,  error_pose_trajectory.error_);
+           tf::twistKDLToMsg (x_err_,  error_pose_trajectory.error_);
 
 
           std_msgs::Float64MultiArray err_msg;
@@ -292,12 +295,12 @@ namespace desperate_housewife
 
 
           //calculate the attractive filed like PID control
-          VelocityLimit(x_err_.vel);
+          // VelocityLimit(x_err_.vel);
           for(int i = 0; i < Force_attractive.size(); i++)
           {
             x_err_integral(i) += x_err_(i)*period.toSec();
-            // Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + V_max_kuka*Kp_(i)*x_err_(i);
-            Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + Kp_(i)*x_err_(i) + Ki_(i)*x_err_integral(i);
+            Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + V_max_kuka*Kp_(i)*x_err_(i);
+            // Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + Kp_(i)*x_err_(i) + Ki_(i)*x_err_integral(i);
             Fa_msg.data.push_back(Force_attractive(i));
           }
 
@@ -324,10 +327,10 @@ namespace desperate_housewife
 
           pub_Fa_.publish(Fa_msg);
 
-          // computing b = J*M^-1*(c+g) - J_dot*q_dot
+          // // computing b = J*M^-1*(c+g) - J_dot*q_dot
           b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
 
-          // computing omega = J*M^-1*N^T*J
+          // // computing omega = J*M^-1*N^T*J
           omega_ = J_.data*M_inv_*N_trans_*J_.data.transpose();
 
           JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
@@ -394,14 +397,14 @@ namespace desperate_housewife
            
            // for(unsigned int i=0; i< Force_total_rep.size(); i++)
            // {
-              // Fr_msg.data.push_back(Force_total_rep(i));
-            // }
+           //    Fr_msg.data.push_back(Force_total_rep(i));
+           //  }
            // pub_Fr_.publish(Fr_msg);
 
           // computing nullspace
           N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
 
-          // finally, computing the torque tau
+          // // finally, computing the torque tau
           tau_.data = (J_.data.transpose()*lambda_*(Force_attractive ))+ Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
           //Fa * b??
 

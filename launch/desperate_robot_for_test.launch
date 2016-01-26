@@ -52,7 +52,7 @@
     </group>
 
     <!-- load controller configurations -->
-    <rosparam file="$(find desperate_housewife)/config/vito_controllers.yaml" command="load"/>
+    <rosparam file="$(find vito_description)/config/vito_controllers.yaml" command="load"/>
 
     <!-- publish the environment in moveit -->
     <!-- (useful for kinematic planning, not fully completed)-->
@@ -115,8 +115,6 @@
         
         <!-- spawn only desired controllers in current namespace -->
         <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller joint_trajectory_controller "/>
-
-        <node name="controller_stopper" pkg="controller_manager" type="spawner" args="--stopped PotentialFieldControl" />
     </group>
     
     <group ns="left_hand">
@@ -133,17 +131,17 @@
         </group>
 
         <!-- load the controllers in current namespace -->
-        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="true" output="screen"  args="joint_state_controller joint_trajectory_controller"/>
+        <!-- <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="true" output="screen"  args="joint_state_controller joint_trajectory_controller"/> -->
 
         <!-- grasp estimator -->
         <rosparam command="load" file="$(find grasp_state_publisher)/config/softgrasp.yaml" />
-        <node name="grasp_state_publisher" pkg="grasp_state_publisher" type="grasp_state_publisher" respawn="true" output="screen" />
+        <!-- <node name="grasp_state_publisher" pkg="grasp_state_publisher" type="grasp_state_publisher" respawn="true" output="screen" /> -->
     </group>
 
-    <rosparam command="load" file="$(find desperate_housewife)/config/hw_interface.yaml"/>
+    <rosparam command="load" file="$(find vito_description)/config/hardware_interfaces.yaml"/>
 
     <!-- load all controller configurations to rosparam server -->
-    <rosparam command="load" file="$(find desperate_housewife)/config/vito_controllers.yaml" />
+    <rosparam command="load" file="$(find vito_description)/config/vito_controllers.yaml" />
 
     <!-- real robot and controllers -->
     <group ns="right_arm">
@@ -167,7 +165,6 @@
         
         <!-- spawn only desired controllers in current namespace -->
         <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller  joint_trajectory_controller"/>
-        <node name="controller_stopper" pkg="controller_manager" type="spawner" args="--stopped PotentialFieldControl" />
 
     </group>
 
@@ -186,27 +183,13 @@
         </group>
 
         <!-- load the controllers in current namespace -->
-        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="true" output="screen"  args="joint_state_controller joint_trajectory_controller"/>
+        <!-- <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="true" output="screen"  args="joint_state_controller joint_trajectory_controller"/> -->
 
         <!-- grasp estimator -->
         <rosparam command="load" file="$(find grasp_state_publisher)/config/softgrasp.yaml" />
-        <node name="grasp_state_publisher" pkg="grasp_state_publisher" type="grasp_state_publisher" respawn="true" output="screen" />
+        <!-- <node name="grasp_state_publisher" pkg="grasp_state_publisher" type="grasp_state_publisher" respawn="true" output="screen" /> -->
     </group>
 
-    <include file="$(find desperate_housewife)/launch/desperate_demo_asus_head_vito_broadcaster.launch">
-        <arg name="start_openni2" value="$(arg start_openni2)"/>
-    </include>
-
-        
-    <include file="$(find desperate_housewife)/launch/desperate_demo_scene_filter.launch"/>
-
-    <include file="$(find desperate_housewife)/launch/desperate_demo_fit_geometries.launch"/>
-
-    <!-- <include file="$(find desperate_housewife)/launch/Desperate_pose_filter.launch"/> -->
-    <!-- <include file="$(find desperate_housewife)/launch/desperate_Vito_home.launch"/> -->
-    <include file="$(find desperate_housewife)/launch/desperate_mind.launch"/>
-   
-    <include file="$(find desperate_housewife)/launch/desperate_demo_hand_pose_generator.launch"/>
 
     <node name="desperate_rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find desperate_housewife)/launch/rviz_config.rviz" output="screen"/>
 
