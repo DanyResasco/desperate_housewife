@@ -120,12 +120,7 @@ namespace desperate_housewife
       // vis_pub = n.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
  
       //flag for waiting the real robot      
-      start_flag = true;
-      if(use_real == true)
-      {
-        start_flag = false;
-      }
-
+      start_flag = false;
       return true;
   }
 
