@@ -104,9 +104,9 @@ geometry_msgs::Pose DesperateDecisionMaker::TrashObjectPOsition(int Arm_, geomet
     trash_robot_pose.orientation.z = quat_des_.v(2);
     trash_robot_pose.orientation.w = quat_des_.a;
 
-    tf::Transform tfHandTrasform1;    
-    tf::poseMsgToTF( trash_robot_pose, tfHandTrasform1);    
-    tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform1, ros::Time::now(), base_frame_.c_str(),"trash_robot_pos") );  
+    // tf::Transform tfHandTrasform1;    
+    // tf::poseMsgToTF( trash_robot_pose, tfHandTrasform1);    
+    // tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform1, ros::Time::now(), base_frame_.c_str(),"trash_robot_pos") );  
     
     return trash_robot_pose;
 }

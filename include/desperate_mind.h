@@ -23,6 +23,7 @@
 #include <trajectory_msgs/JointTrajectory.h>
 #include <std_msgs/UInt16.h>
 #include <desperate_housewife/fittedGeometriesArray.h>
+#include <sensor_msgs/JointState.h>
 
 
 
@@ -45,6 +46,10 @@ class DesperateDecisionMaker
   ros::Subscriber pose_sub_left, pose_sub_right;
   int home_r = 1;
   int home_l = 1;
+
+  std::string hand_joint_position_r;
+  ros::Subscriber hand_info_right;
+  double info_hand, Info_closed_hand;
  
   //error threshold
   double x;
@@ -97,6 +102,8 @@ class DesperateDecisionMaker
   tf::TransformBroadcaster tf_desired_hand_pose;
   std::string left_hand_frame_, right_hand_frame_;    
   tf::TransformListener listener_info; 
+
+  int block_info_hand;
 
   DesperateDecisionMaker();
     ~DesperateDecisionMaker(){};
@@ -166,5 +173,16 @@ class DesperateDecisionMaker
     */
     geometry_msgs::Pose TrashObjectPOsition(int Arm_, geometry_msgs::Quaternion &Quat_hand);
 
+    void HandInforRight(const sensor_msgs::JointState::ConstPtr &msg);
+
+    double GetInfoHand();
+
 };
+
+
+
+
+
+
+
 #endif

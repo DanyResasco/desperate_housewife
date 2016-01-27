@@ -20,3 +20,4 @@ z_treshold: 0.05
 rot_x_treshold: 0.1
 rot_y_treshold: 0.1
 rot_z_treshold: 0.1
+Info_closed_hand: 0.8

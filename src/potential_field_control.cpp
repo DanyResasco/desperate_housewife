@@ -359,7 +359,7 @@ namespace desperate_housewife
           N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
 
           // finally, computing the torque tau
-          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive ))+ Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
+          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive ))+ 0.0*Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
         
           // saving J_ and phi of the last iteration
           J_last_ = J_;

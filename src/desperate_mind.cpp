@@ -3,6 +3,7 @@
 #include <desperate_mind.h>
 
 
+
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "desperate_mind_node");
@@ -83,12 +84,26 @@ DesperateDecisionMaker::DesperateDecisionMaker()
   nh.param<double>("/desperate_mind_node/rot_z_treshold",rot_z,0.01);
 
   nh.param<bool>("use_both_arm",use_both_arm,true);
+  
+  nh.param<double>("/desperate_mind_node/Info_closed_hand", Info_closed_hand, 0.6);
+  std::cout<<"***** Info_closed_hand: ****"<<Info_closed_hand<<std::endl;
 
   nh.param<std::string>("/PotentialFieldControl/obstacle_list_left", obstacles_topic_left, "/PotentialFieldControl/obstacle_pose_left");
   obstacles_publisher_left = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_left.c_str(),1);
 
   nh.param<std::string>("/PotentialFieldControl/obstacle_list_right", obstacles_topic_right, "/PotentialFieldControl/obstacle_pose_right");
   obstacles_publisher_right = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_right.c_str(),1);
+
+  nh.param<std::string>("/right_hand/joint_states", hand_joint_position_r, "/right_hand/joint_states");
+  hand_info_right = nh.subscribe(hand_joint_position_r.c_str(),1, &DesperateDecisionMaker::HandInforRight,this);
+
+  block_info_hand = 0;
+}
+
+void DesperateDecisionMaker::HandInforRight(const sensor_msgs::JointState::ConstPtr &msg)
+{
+  info_hand = msg->position[0];
+  // std::cout<<"info_hand: "<<info_hand<<std::endl;
 }
 
 
@@ -227,33 +242,38 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
       }
       else if(arrived_r == 1)
       {
-         if(restart != 1)
+          if(restart != 1)
           {
             ControllerStartAndNewPOse(error_msg);
           }
           else
           {
-            /*unlock hand_pose_generator*/
-            start_controller.stop = 0;
-            right_start_controller_pub.publish(start_controller);
-            
-             /*open the softhand*/
-            trajectory_msgs::JointTrajectory msg_jointT_hand;
-            msg_jointT_hand.points.resize(1);
-            msg_jointT_hand.joint_names.resize(1);
-            msg_jointT_hand.points[0].positions.resize(1);
-            msg_jointT_hand.points[0].positions[0] = 0.0;
-            msg_jointT_hand.points[0].time_from_start = ros::Duration(1.0); // 1s;
-            msg_jointT_hand.joint_names[0] = "right_hand_synergy_joint";
-            hand_publisher_right.publish(msg_jointT_hand);
+            if(block_info_hand == 1)
+            {
+              /*unlock hand_pose_generator*/
+              start_controller.stop = 0;
+              right_start_controller_pub.publish(start_controller);
+              
+               /*open the softhand*/
+              trajectory_msgs::JointTrajectory msg_jointT_hand;
+              msg_jointT_hand.points.resize(1);
+              msg_jointT_hand.joint_names.resize(1);
+              msg_jointT_hand.points[0].positions.resize(1);
+              msg_jointT_hand.points[0].positions[0] = 0.0;
+              msg_jointT_hand.points[0].time_from_start = ros::Duration(1.0); // 1s;
+              msg_jointT_hand.joint_names[0] = "right_hand_synergy_joint";
+              hand_publisher_right.publish(msg_jointT_hand);
+              block_info_hand = 0;
+            }
           }
       }
-
     }
+    
   }
  
 }
- bool  DesperateDecisionMaker::IsEqual(KDL::Twist E_pf, KDL::Twist E_t)
+
+bool  DesperateDecisionMaker::IsEqual(KDL::Twist E_pf, KDL::Twist E_t)
 {
   KDL::Twist E_pf_abs;
 
@@ -271,16 +291,15 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
         (E_pf_abs.rot.data[0] < E_t.rot.data[0]) &&
         (E_pf_abs.rot.data[1] < E_t.rot.data[1]) &&
         (E_pf_abs.rot.data[2] < E_t.rot.data[2]) )
-  // if(Equal(E_pf_abs, E_t,0.05))
   {
-    // ROS_DEBUG("is equal");
+     ROS_DEBUG("is equal");
     return true;
   }
   else
   {
-    // ROS_DEBUG("is not equal");
-    // ROS_DEBUG("error linear: E_pf_abs.vel.data[0] %g E_pf_abs.vel.data[1] %g  E_pf_abs.vel.data[2]: %g",  E_pf_abs.vel.data[0],E_pf_abs.vel.data[1], E_pf_abs.vel.data[2]);
-    // ROS_DEBUG("error agular: E_pf_abs.rot.data[0] %g E_pf_abs.rot.data[1] %g E_pf_abs.rot.data[2] %g", E_pf_abs.rot.data[0], E_pf_abs.rot.data[1], E_pf_abs.rot.data[2]);
+    ROS_DEBUG("is not equal");
+    ROS_DEBUG("error linear: E_pf_abs.vel.data[0] %g E_pf_abs.vel.data[1] %g  E_pf_abs.vel.data[2]: %g",  E_pf_abs.vel.data[0],E_pf_abs.vel.data[1], E_pf_abs.vel.data[2]);
+    ROS_DEBUG("error agular: E_pf_abs.rot.data[0] %g E_pf_abs.rot.data[1] %g E_pf_abs.rot.data[2] %g", E_pf_abs.rot.data[0], E_pf_abs.rot.data[1], E_pf_abs.rot.data[2]);
     return false;
   }
 }
@@ -315,7 +334,13 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
                 new_obj_pos_remove.pose = TrashObjectPOsition(1, pose_temp.orientation);
                 msg_jointT_hand.joint_names[0] = "left_hand_synergy_joint";
                 hand_publisher_left.publish(msg_jointT_hand);
+                
+                // while(info_hand <= Info_closed_hand )
+                // {
+                //   ROS_INFO("waiting");
+                // }
                 // ros::Duration(1.2).sleep();
+
                 desired_hand_publisher_left.publish( new_obj_pos_remove );
                 
             }
@@ -325,15 +350,23 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
                 msg_jointT_hand.joint_names[0] = "right_hand_synergy_joint";
                 hand_publisher_right.publish(msg_jointT_hand);
                  // ros::Duration(1.0).sleep();
+                while(info_hand <= Info_closed_hand )
+                {
+                  // ROS_INFO("waiting");
+                  // std::cout<<"info_hand: "<<info<<std::endl;
+                  ros::spinOnce(); 
+
+                  block_info_hand = 1;
+                }
+
                 desired_hand_publisher_right.publish( new_obj_pos_remove );
                
             }
-            
             restart = 1;  /*for unlock the code */
 
             tf::Transform tfHandTrasform2;
             tf::poseMsgToTF( new_obj_pos_remove.pose, tfHandTrasform2);  
-            tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"Moveobj_") );
+            tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"trash_robot_pos") );
           break;
       }
       case 1: /*obstacle to remove*/
@@ -348,28 +381,34 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
             /*hand msg*/
             msg_jointT_hand.points.resize(1);
             msg_jointT_hand.points[0].positions.resize(1);
-            msg_jointT_hand.points[0].positions[0] = 0.0;
-            msg_jointT_hand.points[0].time_from_start = ros::Duration(1); // 1s;
-
-            desperate_housewife::fittedGeometriesArray obstaclesMsg;
-
+            msg_jointT_hand.points[0].positions[0] = 1.0;
+            msg_jointT_hand.points[0].time_from_start = ros::Duration(1.0); // 1s;
 
             if(whichArm == 1)
             {
-                obstacles_publisher_left.publish(obstaclesMsg);
+                // obstacles_publisher_left.publish(obstaclesMsg);
                 New_Hand_Position.pose.position.x = New_Hand_Position.pose.position.x - 0.20; /*move along the x axis for push down from the table*/
                 msg_jointT_hand.joint_names[0] = left_hand_synergy_joint.c_str();
                 hand_publisher_left.publish(msg_jointT_hand);
-                desired_hand_publisher_left.publish( New_Hand_Position );
-              
+                desired_hand_publisher_left.publish( New_Hand_Position );              
             }
             else
             {
                 New_Hand_Position.pose.position.x = New_Hand_Position.pose.position.x - 0.20; /*move along the x axis for push down from the table*/
-                msg_jointT_hand.joint_names[0] = right_hand_synergy_joint.c_str();
+                msg_jointT_hand.joint_names[0] = "right_hand_synergy_joint";
                 hand_publisher_right.publish(msg_jointT_hand);
+
+                while(info_hand <= Info_closed_hand )
+                {
+                  // ROS_INFO("waiting");
+                  // std::cout<<"info_hand: "<<info<<std::endl;
+                  ros::spinOnce(); 
+
+                  block_info_hand = 1;
+                }
+
                 desired_hand_publisher_right.publish( New_Hand_Position );
-                obstacles_publisher_right.publish(obstaclesMsg);
+                // obstacles_publisher_right.publish(obstaclesMsg);
                
             }
 
@@ -384,4 +423,8 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
     }
   }
 
+}
+double DesperateDecisionMaker::GetInfoHand()
+{
+  return info_hand;
 }

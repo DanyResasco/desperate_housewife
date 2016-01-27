@@ -22,7 +22,6 @@ find_package(catkin REQUIRED
   message_generation 
   std_msgs
   geometry_msgs 
-  sensor_msgs
   lwr_controllers
   calibration
 )

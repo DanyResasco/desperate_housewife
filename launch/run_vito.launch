@@ -187,7 +187,7 @@
             <!--add a copy of the robot description within the name space -->
             <param name="robot_description" command="$(find xacro)/xacro.py $(find desperate_housewife)/robot/$(arg robot_name).urdf.xacro use_mimic_tag:=true"/>
 
-            <rosparam command="load" file="$(find desperate_housewife)/config/right_hand_names.yaml" />
+            <rosparam command="load" file="$(find vito_description)/config/right_hand_names.yaml" />
 
             <include file="$(find soft_hand_ros_control)/launch/soft_hand_hw.launch">
                 <arg name="use_deafult_joint_names" value="false"/>
@@ -200,8 +200,10 @@
 
         <!-- grasp estimator -->
         <rosparam command="load" file="$(find grasp_state_publisher)/config/softgrasp.yaml" />
-        <node name="grasp_state_publisher" pkg="grasp_state_publisher" type="grasp_state_publisher" respawn="false" output="screen" />
+        <node name="grasp_state_publisher" pkg="grasp_state_publisher" type="grasp_state_publisher" respawn="true" output="screen" />
     </group>
+
+
 
     <include file="$(find desperate_housewife)/launch/desperate_demo_asus_head_vito_broadcaster.launch">
         <arg name="start_openni2" value="$(arg start_openni2)"/>
