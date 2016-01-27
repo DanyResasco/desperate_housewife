@@ -41,9 +41,7 @@ namespace desperate_housewife
       // std::cout<<"gains Kd0: "<<Kd_(0)<<'\t'<<"Kd_1: "<<Kd_(1)<<'\t'<<"Kd_2: "<<Kd_(2)<<std::endl;
       // std::cout<<"gains Ki0: "<<Ki_(0)<<'\t'<<"Ki_1: "<<Ki_(1)<<'\t'<<"Ki_2: "<<Ki_(2)<<std::endl;
       
-      ROS_DEBUG("Proportional gains:  Kp_(0) %d", Kp_(0), "Kp_(1) %d", Kp_(1), "Kp_(2) %d", Kp_(2));
-      ROS_DEBUG("Derivative gains:  Kd_(0) %d", Kd_(0), "Kd_(1) %d", Kd_(1), "Kd_(2) %d", Kd_(2));
-      ROS_DEBUG("Integration gains:  Ki_(0) %d", Ki_(0), "Ki_(1) %d", Ki_(1), "Ki_(2) %d", Ki_(2));
+      
 
       bool use_real;
       n.param<bool>("use_real",use_real, false);
@@ -95,6 +93,10 @@ namespace desperate_housewife
       n.param<double>("Ki_3",Ki_(3),0.01);
       n.param<double>("Ki_4",Ki_(4),0.01);
       n.param<double>("Ki_5",Ki_(5),0.01);
+
+      // ROS_DEBUG("Proportional gains:  Kp_(0) %d", Kp_(0), "Kp_(1) %d", Kp_(1), "Kp_(2) %d", Kp_(2));
+      // ROS_DEBUG("Derivative gains:  Kd_(0) %d", Kd_(0), "Kd_(1) %d", Kd_(1), "Kd_(2) %d", Kd_(2));
+      // ROS_DEBUG("Integration gains:  Ki_(0) %d", Ki_(0), "Ki_(1) %d", Ki_(1), "Ki_(2) %d", Ki_(2));
 
 
       ROS_DEBUG("Subscribed for desired_hand_topic to: %s", desired_reference_topic.c_str());

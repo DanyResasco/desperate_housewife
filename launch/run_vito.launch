@@ -203,10 +203,10 @@
         <node name="grasp_state_publisher" pkg="grasp_state_publisher" type="grasp_state_publisher" respawn="false" output="screen" />
     </group>
 
-<!--     <include file="$(find desperate_housewife)/launch/desperate_demo_asus_head_vito_broadcaster.launch">
+    <include file="$(find desperate_housewife)/launch/desperate_demo_asus_head_vito_broadcaster.launch">
         <arg name="start_openni2" value="$(arg start_openni2)"/>
     </include>
- -->
+
         
     <include file="$(find desperate_housewife)/launch/desperate_demo_scene_filter.launch"/>
 

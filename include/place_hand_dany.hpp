@@ -1,8 +1,7 @@
 #include <hand_pose_generator.h>
 #include <visualization_msgs/Marker.h>
 
-/*** Code used to decide the desired pose. The hand pose is calculated respect the cylinder frame and after converted to base_fram (vito_anchor).
-  * 
+/*** Code used to decide the desired pose. 
 */
 
 geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGeometriesSingle geometry, int whichArm )
