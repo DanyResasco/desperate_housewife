@@ -70,7 +70,7 @@ namespace desperate_housewife
       list_of_link.push_back(5);
       list_of_link.push_back(6);
       list_of_link.push_back(7);
-      list_of_link.push_back(14);
+      list_of_link.push_back(kdl_chain_.getNrOfSegments());
 
        //set the gains
       n.param<double>("Kp_0",Kp_(0),50);
