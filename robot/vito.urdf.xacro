@@ -68,9 +68,9 @@
   </xacro:soft_hand>
 
   <!-- HEAD -->
-<!--   <xacro:kit_head name="head" parent="vito_anchor">
+  <xacro:kit_head name="head" parent="vito_anchor">
     <origin xyz="0.0 0.0 ${0.55 + 0.1}" rpy="0.0 0.0 3.141592"/>
-  </xacro:kit_head> -->
+  </xacro:kit_head>
 
 
   <link name="left_hand_palm_ref_link">
@@ -102,4 +102,5 @@
     <gravity>true</gravity>
   </gazebo>
   
+
 </robot>
