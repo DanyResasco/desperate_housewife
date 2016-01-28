@@ -73,26 +73,33 @@
   </xacro:kit_head> -->
 
 
-    <link name="left_hand_palm_ref_link">
+  <link name="left_hand_palm_ref_link">
       <inertial>
         <insert_block name="negligible_inertia"/>
       </inertial>
   </link>
-  <joint name="$left_hand_palm_ref_joint" type="fixed">
-    <origin xyz="0 0 0.07" rpy="${3.141592/2} 0 ${3.141592/2}"/>
-    <parent link="left_hand_palm_link" />
+  <joint name="left_hand_palm_ref_joint" type="fixed">
+    <origin xyz="0.002 0.007 0.161" rpy="${3.141592/2} 0 ${3.141592/2}"/>
+    <parent link="left_arm_7_link" />
     <child link="left_hand_palm_ref_link" />
   </joint>
+  <gazebo reference="left_hand_palm_ref_link">
+    <gravity>true</gravity>
+  </gazebo>
 
-    <link name="right_hand_palm_ref_link">
+
+  <link name="right_hand_palm_ref_link">
       <inertial>
         <insert_block name="negligible_inertia"/>
       </inertial>
   </link>
-  <joint name="$right_hand_palm_ref_joint" type="fixed">
-    <origin xyz="0 0 0.07" rpy="${3.141592/2} 0 ${3.141592/2}"/>
-    <parent link="right_hand_palm_link" />
+  <joint name="right_hand_palm_ref_joint" type="fixed">
+    <origin xyz="0.002 -0.007 0.161" rpy="${3.141592/2} 0 ${3.141592/2}"/>
+    <parent link="right_arm_7_link" />
     <child link="right_hand_palm_ref_link" />
   </joint>
+  <gazebo reference="right_hand_palm_ref_link">
+    <gravity>true</gravity>
+  </gazebo>
   
 </robot>
