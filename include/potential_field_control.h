@@ -133,8 +133,12 @@ namespace desperate_housewife
 		* output: repulsive force and the index for the jacobian
 		* Description: functions tha call the funciont for calculates the repulsive forces 
 		*/
-		std::pair<Eigen::Matrix<double,6,1>, double> GetRepulsiveForce(std::vector<KDL::Vector> &point_, double influence, KDL::Frame &Object_pos, double radius, double height);
-		void SeeMarker(KDL::Frame &Pos, std::string obst_name);
+		// std::pair<Eigen::Matrix<double,6,1>, double> GetRepulsiveForce(std::vector<KDL::Vector> &point_, double influence, KDL::Frame &Object_pos, double radius, double height);
+		
+		Eigen::Matrix<double,6,1> GetRepulsiveForce(KDL::Vector &point_, double influence, KDL::Frame &Object_pos, double radius, double height);
+
+
+		// void SeeMarker(KDL::Frame &Pos, std::string obst_name);
 
 		/** Function: VelocityLimit
 		* input: vector with the interested point, object position, influence of repulsive field, object radius and height
@@ -197,7 +201,7 @@ namespace desperate_housewife
 		Eigen::Matrix<double,6,1> Force_attractive;
 		Eigen::Matrix<double,7,1> Force_total_rep;
 		Eigen::Matrix<double,7,1> Force_repulsive_prev;
-		Eigen::Matrix<double,7,1> Force_repulsive;
+		Eigen::Matrix<double,7,1> tau_repulsive;
 		Eigen::Matrix<double,7,1> F_Rep_table;
 		double V_max_kuka = 1.5;
 		std::vector<KDL::Frame> x_chain;	/*!14 is soft_hand (end_effector)*/
@@ -251,7 +255,7 @@ namespace desperate_housewife
 		KDL::Twist x_err_integral;
 
 		double Time_log;
-		double Ni_, treshold_influence;
+		double Ni_, treshold_influence, Repulsive_table;
 
 	};
 

@@ -25,6 +25,7 @@ left_arm:
     percentage: 0.5
     repulsive_gains: 0.1
     repulsive_treshold: 1
+    Repulsive_table: 0.15
 
 left_hand:
   joint_state_controller:
@@ -60,8 +61,9 @@ right_arm:
     set_gains_topic: set_gains_right
     time_interp_desired: 5
     percentage: 0.5
-    repulsive_gains: 0.05
-    repulsive_treshold: 5
+    repulsive_gains: 0.01
+    repulsive_treshold: 1000
+    Repulsive_table: 0.15
 
 right_hand:
   joint_state_controller:
