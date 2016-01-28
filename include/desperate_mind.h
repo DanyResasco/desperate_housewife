@@ -50,6 +50,7 @@ class DesperateDecisionMaker
   std::string hand_joint_position_r;
   ros::Subscriber hand_info_right;
   double info_hand, Info_closed_hand;
+  int reject_, overturn1_, overturn_check ;
  
   //error threshold
   double x;

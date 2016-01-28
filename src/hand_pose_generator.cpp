@@ -122,10 +122,8 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
             tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"ObstacleReject") );
 
             /*send the geometry like obstacle for not touch the obstacle   */
-            // obstaclesMsg.geometries.push_back( SetObstacleMsg(msg->geometries[0]) );
             obstaclesMsg.geometries.push_back( msg->geometries[0]);  
           }
-
 
           else
           {
@@ -154,10 +152,15 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
           tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform);
           tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), desired_hand_frame_.c_str()) );
       }
+
       /*if there are more than a user defined number of object */
       else if (msg->geometries.size() >= (uint) Number_obj )
       {
-        Overturn();
+        Overturn(); //da finire
+        // Obj_info.data = 2;
+        // objects_info_left_pub.publish(Obj_info);
+        // objects_info_right_pub.publish(Obj_info);
+        // stop = 1;
       }
       else
       {      

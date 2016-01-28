@@ -86,7 +86,7 @@ DesperateDecisionMaker::DesperateDecisionMaker()
   nh.param<bool>("use_both_arm",use_both_arm,true);
   
   nh.param<double>("/desperate_mind_node/Info_closed_hand", Info_closed_hand, 0.6);
-  std::cout<<"***** Info_closed_hand: ****"<<Info_closed_hand<<std::endl;
+  // std::cout<<"***** Info_closed_hand: ****"<<Info_closed_hand<<std::endl;
 
   nh.param<std::string>("/PotentialFieldControl/obstacle_list_left", obstacles_topic_left, "/PotentialFieldControl/obstacle_pose_left");
   obstacles_publisher_left = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_left.c_str(),1);
@@ -98,6 +98,9 @@ DesperateDecisionMaker::DesperateDecisionMaker()
   hand_info_right = nh.subscribe(hand_joint_position_r.c_str(),1, &DesperateDecisionMaker::HandInforRight,this);
 
   block_info_hand = 0;
+  reject_ = 0;
+  overturn_check = 1;
+  overturn1_ = 0;
 }
 
 void DesperateDecisionMaker::HandInforRight(const sensor_msgs::JointState::ConstPtr &msg)
@@ -206,7 +209,7 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
  
  if(home_r == 1)
   {
-    SendHomeRobot_right();  /*send left arm at home position */
+    SendHomeRobot_right();  /*send rigtt arm at home position */
     ObjOrObst = 0;
     home_r = 0;
   }
@@ -248,22 +251,32 @@ void DesperateDecisionMaker::Error_info_right(const desperate_housewife::Error_m
           }
           else
           {
-            if(block_info_hand == 1)
+            if(block_info_hand == 1)  /*after waiting closing hand sends the next move*/
             {
-              /*unlock hand_pose_generator*/
-              start_controller.stop = 0;
-              right_start_controller_pub.publish(start_controller);
-              
-               /*open the softhand*/
-              trajectory_msgs::JointTrajectory msg_jointT_hand;
-              msg_jointT_hand.points.resize(1);
-              msg_jointT_hand.joint_names.resize(1);
-              msg_jointT_hand.points[0].positions.resize(1);
-              msg_jointT_hand.points[0].positions[0] = 0.0;
-              msg_jointT_hand.points[0].time_from_start = ros::Duration(1.0); // 1s;
-              msg_jointT_hand.joint_names[0] = "right_hand_synergy_joint";
-              hand_publisher_right.publish(msg_jointT_hand);
-              block_info_hand = 0;
+              if(reject_ == 1)  /*after removing objects, robot came back to home*/
+              {
+                SendHomeRobot_right();  /*send rigtt arm at home position */
+                ObjOrObst = 0;
+                reject_ = 0;
+              }
+              else
+              {
+                /*unlock hand_pose_generator*/
+                start_controller.stop = 0;
+                right_start_controller_pub.publish(start_controller);
+                
+                 /*open the softhand*/
+                trajectory_msgs::JointTrajectory msg_jointT_hand;
+                msg_jointT_hand.points.resize(1);
+                msg_jointT_hand.joint_names.resize(1);
+                msg_jointT_hand.points[0].positions.resize(1);
+                msg_jointT_hand.points[0].positions[0] = 0.0;
+                msg_jointT_hand.points[0].time_from_start = ros::Duration(1.0); // 1s;
+                msg_jointT_hand.joint_names[0] = "right_hand_synergy_joint";
+                hand_publisher_right.publish(msg_jointT_hand);
+                block_info_hand = 0;
+              }
+
             }
           }
       }
@@ -314,112 +327,210 @@ void DesperateDecisionMaker::ControllerStartAndNewPOse(const desperate_housewife
     switch(ObjOrObst)
     {
       
-      case 0: /*object to grasp*/
-      {     
-            ROS_DEBUG("Case 0: graspable object");
-            // std::cout<<"case 0"<<std::endl;   
-            trajectory_msgs::JointTrajectory msg_jointT_hand;
-            msg_jointT_hand.joint_names.resize(1);
-            desperate_housewife::handPoseSingle new_obj_pos_remove; /*new hand position*/
-            /*hand msg*/
-            geometry_msgs::Pose pose_temp;
-            pose_temp = error_msg->pose_hand;
-            msg_jointT_hand.points.resize(1);
-            msg_jointT_hand.points[0].positions.resize(1);
-            msg_jointT_hand.points[0].positions[0] = 1.0;
-            msg_jointT_hand.points[0].time_from_start = ros::Duration(1.0); // 1s;
+        case 0: /*object to grasp*/
+        {     
+              ROS_DEBUG("Case 0: graspable object");
+              // std::cout<<"case 0"<<std::endl;   
+              trajectory_msgs::JointTrajectory msg_jointT_hand;
+              msg_jointT_hand.joint_names.resize(1);
+              desperate_housewife::handPoseSingle new_obj_pos_remove; /*new hand position*/
+              /*hand msg*/
+              geometry_msgs::Pose pose_temp;
+              pose_temp = error_msg->pose_hand;
+              msg_jointT_hand.points.resize(1);
+              msg_jointT_hand.points[0].positions.resize(1);
+              msg_jointT_hand.points[0].positions[0] = 1.0;
+              msg_jointT_hand.points[0].time_from_start = ros::Duration(1.0); // 1s;
 
-            if(whichArm == 1)
-            {
-                new_obj_pos_remove.pose = TrashObjectPOsition(1, pose_temp.orientation);
-                msg_jointT_hand.joint_names[0] = "left_hand_synergy_joint";
-                hand_publisher_left.publish(msg_jointT_hand);
-                
-                // while(info_hand <= Info_closed_hand )
-                // {
-                //   ROS_INFO("waiting");
-                // }
-                // ros::Duration(1.2).sleep();
+              if(whichArm == 1)
+              {
+                  new_obj_pos_remove.pose = TrashObjectPOsition(1, pose_temp.orientation);
+                  msg_jointT_hand.joint_names[0] = "left_hand_synergy_joint";
+                  hand_publisher_left.publish(msg_jointT_hand);
+                  
+                    while(info_hand <= Info_closed_hand )
+                  {
+                    // ROS_INFO("waiting");
+                    // std::cout<<"info_hand: "<<info<<std::endl;
+                    ros::spinOnce(); 
 
-                desired_hand_publisher_left.publish( new_obj_pos_remove );
-                
-            }
-            else
-            {
-                new_obj_pos_remove.pose = TrashObjectPOsition(0, pose_temp.orientation);
-                msg_jointT_hand.joint_names[0] = "right_hand_synergy_joint";
-                hand_publisher_right.publish(msg_jointT_hand);
-                 // ros::Duration(1.0).sleep();
-                while(info_hand <= Info_closed_hand )
-                {
-                  // ROS_INFO("waiting");
-                  // std::cout<<"info_hand: "<<info<<std::endl;
-                  ros::spinOnce(); 
+                    block_info_hand = 1;
+                  }
+                  desired_hand_publisher_left.publish( new_obj_pos_remove );
+                  
+              }
+              else
+              {
+                  new_obj_pos_remove.pose = TrashObjectPOsition(0, pose_temp.orientation);
+                  msg_jointT_hand.joint_names[0] = "right_hand_synergy_joint";
+                  hand_publisher_right.publish(msg_jointT_hand);
+                   // ros::Duration(1.0).sleep();
+                  while(info_hand <= Info_closed_hand )
+                  {
+                    ROS_DEBUG("waiting");
+                    ros::spinOnce(); /*To updating info_hand*/
+                    block_info_hand = 1;
+                  }
 
-                  block_info_hand = 1;
-                }
+                  desired_hand_publisher_right.publish( new_obj_pos_remove );
+                 
+              }
+              restart = 1;  /*for unlock the code */
 
-                desired_hand_publisher_right.publish( new_obj_pos_remove );
-               
-            }
-            restart = 1;  /*for unlock the code */
-
-            tf::Transform tfHandTrasform2;
-            tf::poseMsgToTF( new_obj_pos_remove.pose, tfHandTrasform2);  
-            tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"trash_robot_pos") );
-          break;
-      }
-      case 1: /*obstacle to remove*/
-      {     
-            ROS_DEBUG("Case 1: remove object");
-    
-            desperate_housewife::handPoseSingle New_Hand_Position;
-            New_Hand_Position.pose = error_msg->pose_hand;
-
-            trajectory_msgs::JointTrajectory msg_jointT_hand;
-            msg_jointT_hand.joint_names.resize(1);
-            /*hand msg*/
-            msg_jointT_hand.points.resize(1);
-            msg_jointT_hand.points[0].positions.resize(1);
-            msg_jointT_hand.points[0].positions[0] = 1.0;
-            msg_jointT_hand.points[0].time_from_start = ros::Duration(1.0); // 1s;
-
-            if(whichArm == 1)
-            {
-                // obstacles_publisher_left.publish(obstaclesMsg);
-                New_Hand_Position.pose.position.x = New_Hand_Position.pose.position.x - 0.20; /*move along the x axis for push down from the table*/
-                msg_jointT_hand.joint_names[0] = left_hand_synergy_joint.c_str();
-                hand_publisher_left.publish(msg_jointT_hand);
-                desired_hand_publisher_left.publish( New_Hand_Position );              
-            }
-            else
-            {
-                New_Hand_Position.pose.position.x = New_Hand_Position.pose.position.x - 0.20; /*move along the x axis for push down from the table*/
-                msg_jointT_hand.joint_names[0] = "right_hand_synergy_joint";
-                hand_publisher_right.publish(msg_jointT_hand);
-
-                while(info_hand <= Info_closed_hand )
-                {
-                  // ROS_INFO("waiting");
-                  // std::cout<<"info_hand: "<<info<<std::endl;
-                  ros::spinOnce(); 
-
-                  block_info_hand = 1;
-                }
-
-                desired_hand_publisher_right.publish( New_Hand_Position );
-                // obstacles_publisher_right.publish(obstaclesMsg);
-               
-            }
-
-            restart = 1;  /*for unlock the code */
-
-            tf::Transform tfHandTrasform;
-            tf::poseMsgToTF( New_Hand_Position.pose, tfHandTrasform);  
-            tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(),"ObstacleReject_new_pose") ); 
-         break;
-      }
+              tf::Transform tfHandTrasform2;
+              tf::poseMsgToTF( new_obj_pos_remove.pose, tfHandTrasform2);  
+              tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"trash_robot_pos") );
+            break;
+        }
+        case 1: /*obstacle to remove*/
+        {     
+              ROS_DEBUG("Case 1: remove object");
       
+              desperate_housewife::handPoseSingle New_Hand_Position;
+              New_Hand_Position.pose = error_msg->pose_hand;
+
+              // trajectory_msgs::JointTrajectory msg_jointT_hand;
+              // msg_jointT_hand.joint_names.resize(1);
+              // /*hand msg*/
+              // msg_jointT_hand.points.resize(1);
+              // msg_jointT_hand.points[0].positions.resize(1);
+              // msg_jointT_hand.points[0].positions[0] = 0.0;
+              // msg_jointT_hand.points[0].time_from_start = ros::Duration(1.0); // 1s;
+
+              if(whichArm == 1)
+              {
+                  // obstacles_publisher_left.publish(obstaclesMsg);
+                  New_Hand_Position.pose.position.x = New_Hand_Position.pose.position.x - 0.20; /*move along the x axis for push down from the table*/
+                  // msg_jointT_hand.joint_names[0] = "left_hand_synergy_joint";
+                  // hand_publisher_left.publish(msg_jointT_hand);
+                  //   while(info_hand <= Info_closed_hand )
+                  // {
+                  //   // ROS_INFO("waiting");
+                  //   // std::cout<<"info_hand: "<<info<<std::endl;
+                  //   ros::spinOnce(); 
+
+                    block_info_hand = 1;
+                  // }
+
+                  desired_hand_publisher_left.publish( New_Hand_Position );              
+              }
+              else
+              {
+                  New_Hand_Position.pose.position.x = New_Hand_Position.pose.position.x - 0.20; /*move along the x axis for push down from the table*/
+                  // msg_jointT_hand.joint_names[0] = "right_hand_synergy_joint";
+                  // hand_publisher_right.publish(msg_jointT_hand);
+
+                  // while(info_hand <= Info_closed_hand )
+                  // {
+                  //   // ROS_INFO("waiting");
+                  //   // std::cout<<"info_hand: "<<info<<std::endl;
+                  //   ros::spinOnce(); 
+
+                    block_info_hand = 1;
+                  // }
+
+                  desired_hand_publisher_right.publish( New_Hand_Position );
+                  // obstacles_publisher_right.publish(obstaclesMsg);
+                 
+              }
+
+              restart = 1;  /*for unlock the code */
+              reject_ = 1;  /*for sends vito at home position */
+
+              tf::Transform tfHandTrasform;
+              tf::poseMsgToTF( New_Hand_Position.pose, tfHandTrasform);  
+              tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(),"ObstacleReject_new_pose") ); 
+           break;
+        } 
+        // case 2:
+        // {
+        //     ROS_DEBUG("Case 2: Overtune");
+        //     desperate_housewife::handPoseSingle New_Hand_Position;
+        //     New_Hand_Position.pose = error_msg->pose_hand;
+        //     trajectory_msgs::JointTrajectory msg_jointT_hand;
+        //     msg_jointT_hand.joint_names.resize(1);
+        //     desperate_housewife::handPoseSingle new_obj_pos_remove; /*new hand position*/
+        //       /*hand msg*/
+        //     geometry_msgs::Pose pose_temp;
+        //     pose_temp = error_msg->pose_hand;
+        //     msg_jointT_hand.points.resize(1);
+        //     msg_jointT_hand.points[0].positions.resize(1);
+        //     msg_jointT_hand.points[0].positions[0] = 0.0;
+        //     msg_jointT_hand.points[0].time_from_start = ros::Duration(1.0); // 1s;
+
+        //     if(overturn_check == 0) /*overtune*/
+        //     {  
+        //       if(whichArm == 1)
+        //       {
+        //           New_Hand_Position.pose.position.z = New_Hand_Position.pose.position.z + 0.20;
+        //           New_Hand_Position.pose.position.x = New_Hand_Position.pose.position.x - 0.20; /*move along the x axis for push down from the table*/
+        //           desired_hand_publisher_left.publish( New_Hand_Position );              
+        //       }
+        //       else
+        //       {
+        //           New_Hand_Position.pose.position.z = New_Hand_Position.pose.position.z + 0.20;
+        //           New_Hand_Position.pose.position.x = New_Hand_Position.pose.position.x - 0.20; /*move along the x axis for push down from the table*/
+        //       }
+
+        //        desired_hand_publisher_right.publish( New_Hand_Position );
+        //     }
+
+        //     else /*put down the table*/
+        //     {
+        //       if(whichArm == 1)
+        //       {
+        //           New_Hand_Position.pose.position.z = New_Hand_Position.pose.position.z - 0.20;
+        //           New_Hand_Position.pose.position.x = New_Hand_Position.pose.position.x + 0.20; /*move along the x axis for push down from the table*/
+        //           desired_hand_publisher_left.publish( New_Hand_Position );              
+        //       }
+        //       else
+        //       {
+        //           New_Hand_Position.pose.position.z = New_Hand_Position.pose.position.z - 0.20;
+        //           New_Hand_Position.pose.position.x = New_Hand_Position.pose.position.x + 0.20; /*move along the x axis for push down from the table*/
+        //       }
+        //       overtun_2 = 1;           
+        //     }
+
+        //     if(overturn1_ == 1)
+        //     {
+        //        if(whichArm == 1)
+        //       {
+        //           msg_jointT_hand.joint_names[0] = "left_hand_synergy_joint";
+        //           hand_publisher_left.publish(msg_jointT_hand);
+                  
+        //             while(info_hand <= 0.3 )
+        //           {
+        //             // ROS_INFO("waiting");
+        //             // std::cout<<"info_hand: "<<info<<std::endl;
+        //             ros::spinOnce(); 
+
+        //             block_info_hand = 1;
+        //           }
+        //       }
+        //       else
+        //       {
+        //           msg_jointT_hand.joint_names[0] = "right_hand_synergy_joint";
+        //           hand_publisher_right.publish(msg_jointT_hand);
+        //            // ros::Duration(1.0).sleep();
+        //           while(info_hand <= 0.3 )
+        //           {
+        //             ROS_DEBUG("waiting");
+        //             ros::spinOnce(); /*To updating info_hand*/
+        //             block_info_hand = 1;
+        //           }
+        //       }
+        //       overturn1_ = 0;
+        //       restart = 1; 
+        //       reject_ = 1;  /*for sends vito at home position */ 
+        //     }
+          
+        //   overturn_check = 0; 
+        //   if(onvertune_2 == 1)
+        //   {
+        //     overturn1_ = 1;
+        //   }                     
+        // }
+         
     }
   }
 

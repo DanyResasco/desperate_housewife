@@ -84,7 +84,7 @@
 
     
     <!-- calibration transformations -->
-    <group unless="$(arg use_robot_sim)">
+    <!-- <group unless="$(arg use_robot_sim)"> -->
         <group if="$(arg use_calibration_package)">
             <!-- it takes the last calibration performed, you can call calibrate and it will overwrite the yaml file -->
         <include file="$(find desperate_housewife)/launch/desperate_demo_asus_head_vito_broadcaster.launch">
@@ -92,7 +92,7 @@
         </include>
             <!-- for the fake eyes, which are not still included here -->
         </group>
-    </group>
+    <!-- </group> -->
 
     <!-- load moveit configuration -->
     <group if="$(arg load_moveit)">

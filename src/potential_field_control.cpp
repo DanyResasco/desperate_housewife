@@ -14,7 +14,7 @@
 
 #include <math.h>
 
-#define  treshold_influence  0.15
+// #define  treshold_influence  1
 
 namespace desperate_housewife 
 {
@@ -93,6 +93,10 @@ namespace desperate_housewife
       n.param<double>("Ki_3",Ki_(3),0.01);
       n.param<double>("Ki_4",Ki_(4),0.01);
       n.param<double>("Ki_5",Ki_(5),0.01);
+
+      n.param<double>("repulsive_gains",Ni_ ,1);
+      n.param<double>("repulsive_treshold", treshold_influence ,1);
+      
 
       // ROS_DEBUG("Proportional gains:  Kp_(0) %d", Kp_(0), "Kp_(1) %d", Kp_(1), "Kp_(2) %d", Kp_(2));
       // ROS_DEBUG("Derivative gains:  Kd_(0) %d", Kd_(0), "Kd_(1) %d", Kd_(1), "Kd_(2) %d", Kd_(2));
@@ -359,7 +363,7 @@ namespace desperate_housewife
           N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
 
           // finally, computing the torque tau
-          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive ))+ 0.0*Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
+          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive ))+ Force_total_rep + N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
         
           // saving J_ and phi of the last iteration
           J_last_ = J_;
@@ -535,7 +539,7 @@ namespace desperate_housewife
 
   Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double &min_distance, Eigen::Vector3d &distance_der_partial , double &influence)
   {
-      double Ni_ = 0.8;
+      
       Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
                  
       Force(0) = (Ni_/pow(min_distance,2)) * (1.0/min_distance - 1.0/influence) * distance_der_partial[0];

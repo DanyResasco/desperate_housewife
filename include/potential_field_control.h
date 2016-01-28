@@ -251,7 +251,7 @@ namespace desperate_housewife
 		KDL::Twist x_err_integral;
 
 		double Time_log;
-
+		double Ni_, treshold_influence;
 
 	};
 
