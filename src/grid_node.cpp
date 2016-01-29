@@ -58,6 +58,7 @@ void grid::gridspace(const std_msgs::Float64MultiArray::ConstPtr &msg)
     }
     std::pair<double,double> MinAndMAx;
     MinAndMAx = GetMinAndMax(Force_norm);
+    // std::cout<<"Force.size(): "<<Force.size()<<std::endl;
     for(unsigned int i=0; i< Force.size(); i++)
     {
       DrawArrow( Force[i], Total_point[i], i, MinAndMAx.first, MinAndMAx.second  );
@@ -65,7 +66,7 @@ void grid::gridspace(const std_msgs::Float64MultiArray::ConstPtr &msg)
 
     
     vis_pub.publish( vect_marker );
-    // std::cout<<"finito"<<std::endl;
+    std::cout<<"finito"<<std::endl;
 }
 
 void grid::DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point, int K, double Fmin, double Fmax )
@@ -101,7 +102,7 @@ void grid::DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point
     marker.color.r = ((gridspace_Force.Norm()-Fmin)/(Fmax-Fmin));
     marker.color.g = 1 - marker.color.r ;
     marker.color.b = 0.0f;
-    marker.color.a = 0.5;
+    marker.color.a = 1;
     marker.lifetime = ros::Duration(100);
 
     vect_marker.markers.push_back(marker);
@@ -119,11 +120,6 @@ double Scale(double Fmin, double Fmax, double Force_field_norm )
 std::pair<double,double> grid::GetMinAndMax(std::vector<double> &field)
 {
       std::pair<double,double> MinAndMAx;
-      // std::vector<double>::iterator result = std::min_element(std::begin(field), std::end(field));
-      // int index_min = std::distance(std::begin(field), result);
-
-      // std::vector<double>::iterator max = std::max_element(std::begin(field), std::end(field));
-      // int index_max = std::distance(std::begin(field), max); 
 
       MinAndMAx.first = *std::min_element(std::begin(field), std::end(field));
       MinAndMAx.second = *std::max_element(std::begin(field), std::end(field));
@@ -137,12 +133,6 @@ std::pair<double,double> grid::GetMinAndMax(std::vector<double> &field)
 
 Eigen::Quaterniond grid::RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point)
 {
-    // KDL::Vector x(1,0,0);
-    // double pi = 3.14159264;
-    // double angle = std::acos( (x.dot(ris_Force))/(x.Norm()*ris_Force.Norm()))*180/pi;
-    // KDL::Vector axis(0,0,0);
-    // axis = (x * ris_Force) / (x *ris_Force).Norm();
-
 
     Eigen::Vector3d  x(1,0,0);
     Eigen::Vector3d Force_eigen(ris_Force.x(),ris_Force.y(),ris_Force.z());
@@ -150,27 +140,13 @@ Eigen::Quaterniond grid::RotationMarker(KDL::Vector &ris_Force, KDL::Vector &poi
     double angle = std::acos( (x.dot(Force_eigen))/(x.norm()*Force_eigen.norm()));
     // std::cout<<"angle: "<<angle<<std::endl;
     Eigen::Matrix3d transformation_ = Eigen::Matrix3d::Identity();
-    // Eigen::Quaterniond quat_eigen_hand(transformation_);
-    // if(angle != 0)
-    // {
     Eigen::Vector3d axis(0,0,0);
     axis = (x.cross(Force_eigen)) / (x.cross(Force_eigen)).norm();
     transformation_ = Eigen::AngleAxisd(angle, axis);
 
-    // std::cout<<"axis: "<<axis[0]<<'\t'<<axis[1]<<'\t'<<axis[2]<<std::endl;
-    // // Eigen::Matrix3d transformation_ = Eigen::Matrix3d::Identity();
-    // Eigen::Vector3d row0(axis[0]*axis[0]*(1-cos(angle))+cos(angle), axis[0]*axis[1]*(1-cos(angle))-axis[2]*sin(angle), axis[0]*axis[2]*(1-cos(angle))+axis[1]*sin(angle));
-    // Eigen::Vector3d row1(axis[0]*axis[1]*(1-cos(angle))+axis[2]*sin(angle), axis[1]*axis[1]*(1-cos(angle))+cos(angle), axis[1]*axis[2]*(1-cos(angle))-axis[0]*sin(angle));
-    // Eigen::Vector3d row2(axis[0]*axis[2]*(1-cos(angle))-axis[1]*sin(angle), axis[1]*axis[2]*(1-cos(angle))+axis[0]*sin(angle),axis[2]*axis[2]*(1-cos(angle))+cos(angle));
-    
-    // transformation_.row(0) << row0.transpose();
-    // transformation_.row(1) << row1.transpose();
-    // transformation_.row(2) << row2.transpose();
     Eigen::Quaterniond quat_eigen_hand(transformation_);
-    // std::cout<<"quat_eigen_hand: "<<quat_eigen_hand.x()<<'\t'<<quat_eigen_hand.y()<<'\t'<<quat_eigen_hand.z()<<'\t'<<quat_eigen_hand.w()<<std::endl;
-  // }
   
- return quat_eigen_hand.normalized();
+  return quat_eigen_hand.normalized();
 
 }
 
@@ -184,9 +160,14 @@ void grid::GetForceAndDraw(KDL::Vector &point_pos, int num)
           double influence = Object_radius[i] + 0.2;
           std::vector<KDL::Vector> pos;
           pos.push_back(point_pos);
-          std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
-          ForceAndIndex = pfc.GetRepulsiveForce(pos, influence, Object_position[i], Object_radius[i], Object_height[i]);
-          F_rep.push_back(ForceAndIndex.first);  
+          // std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
+         
+          Eigen::Matrix<double,6,1> ForceAndIndex;
+          pfc.setTreshold(influence);
+          pfc.setNi(1.0);
+
+          ForceAndIndex = pfc.GetRepulsiveForce(point_pos, influence, Object_position[i], Object_radius[i], Object_height[i] );
+          F_rep.push_back(ForceAndIndex);  
       }
   
       Eigen::Matrix<double,6,1> f = Eigen::Matrix<double,6,1>::Zero(); 
@@ -197,15 +178,25 @@ void grid::GetForceAndDraw(KDL::Vector &point_pos, int num)
       }
     
       //repulsive with table
-      std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex_table;
+      Eigen::Matrix<double,6,1> ForceAndIndex_table;
       KDL::Vector Table_position(0,0,0.15);  
-      std::vector<double> dist;
-      dist.push_back(- Table_position.z() + point_pos.z() );
+      // std::vector<double> dist;
+      // dist.push_back(- Table_position.z() + point_pos.z() );
 
-      ForceAndIndex_table = pfc.RepulsiveWithTable(dist);
+      double distance_ = ( -Table_position.z() + point_pos.z() ); //considered only the z position
+      double Influence_table = 0.15;
+      if(distance_ <= Influence_table )
+      {
+          Eigen::Vector3d distance_der_partial(0,0,1);  
+          ForceAndIndex_table = pfc.GetFIRAS(distance_, distance_der_partial, Influence_table);
+      }
+      
+
+
+      // ForceAndIndex_table = pfc.RepulsiveWithTable(dist);
       
       Eigen::Matrix<double,6,1> Force_tot_grid;
-      Force_tot_grid = f + ForceAndIndex_table.first;
+      Force_tot_grid = f + ForceAndIndex_table;
       // std::cout<<"ForceAndIndex_table.first: "<<ForceAndIndex_table.first<<std::endl;
       // std::cout<<"f: "<<f<<std::endl;
 

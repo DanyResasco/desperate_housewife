@@ -68,8 +68,8 @@ namespace desperate_housewife
       //Set the number of link that we used. 14 is the soft-hand
       list_of_link.push_back(4);
       list_of_link.push_back(5);
-      list_of_link.push_back(6);
-      list_of_link.push_back(7);
+      // list_of_link.push_back(6);
+      // list_of_link.push_back(7);
       list_of_link.push_back(kdl_chain_.getNrOfSegments());
 
        //set the gains
@@ -96,7 +96,6 @@ namespace desperate_housewife
 
       n.param<double>("repulsive_gains",Ni_ ,1);
       n.param<double>("repulsive_treshold", treshold_influence ,1);
-      n.param<double>("Repulsive_table", Repulsive_table ,1);
       
 
       // ROS_DEBUG("Proportional gains:  Kp_(0) %d", Kp_(0), "Kp_(1) %d", Kp_(1), "Kp_(2) %d", Kp_(2));
@@ -145,7 +144,7 @@ namespace desperate_housewife
 
       I_ = Eigen::Matrix<double,7,7>::Identity(7,7);
       Force_attractive = Eigen::Matrix<double,6,1>::Zero();
-      tau_repulsive = Eigen::Matrix<double,7,1>::Zero();
+      Force_repulsive = Eigen::Matrix<double,7,1>::Zero();
       F_Rep_table = Eigen::Matrix<double,7,1>::Zero();
       Force_total_rep = Eigen::Matrix<double,7,1>::Zero();
       Force_repulsive_prev = Eigen::Matrix<double,7,1>::Zero();
@@ -309,53 +308,56 @@ namespace desperate_housewife
           //if there are obstacles in the scene, calculates the repulsive field 
           if(Object_position.size() > 0)
           {
-            tau_repulsive = Eigen::Matrix<double,7,1>::Zero();
-            tau_repulsive =  GetRepulsiveWithObstacle();
-              // std::vector<Eigen::Matrix<double,7,1>> vect_rep;
-              // std::vector<KDL::Vector> point_of_interesting;
-              // std_msgs::Float64MultiArray Fr_msg;
-              // std::vector<Eigen::Matrix<double,6,1>> vect_force;
+              std::vector<Eigen::Matrix<double,7,1>> vect_rep;
+              std::vector<KDL::Vector> point_of_interesting;
+              std_msgs::Float64MultiArray Fr_msg;
 
-              // for(unsigned int i=0; i < Object_position.size();i++)
-              // {
-              //     double influence = Object_radius[i] +  treshold_influence;
+              //desired link
+              for(unsigned int j=0; j< list_of_link.size(); j++)
+              {
+                  point_of_interesting.push_back(x_chain[list_of_link[j]].p );
+              }
+
+              for(unsigned int i=0; i < Object_position.size();i++)
+              {
+                  double influence = Object_radius[i] +  treshold_influence;
             
-              //     Eigen::Matrix<double,6,1> ForceAndIndex;
-                  
-
-              //     for(unsigned int k=0 ; k < list_of_link.size(); k++)
-              //     {
-              //       ForceAndIndex = GetRepulsiveForce(x_chain[list_of_link[k]].p, influence, Object_position[i], Object_radius[i], Object_height[i] );
-              //       vect_rep.push_back (JAC_repulsive[list_of_link[k]].data.transpose()* lambda_ * ForceAndIndex);
-              //       vect_force.push_back(ForceAndIndex);
-                    
-              //     }
-              //     // vect_rep.push_back (JAC_repulsive[list_of_link[ForceAndIndex.second]].data.transpose()* lambda_ * ForceAndIndex.first);
-              // }
-              
-              // tau_repulsive = Eigen::Matrix<double,7,1>::Zero();
-              // Eigen::Matrix<double,6,1> Force_repulsive_pub = Eigen::Matrix<double,6,1>::Zero();
-             
-              // // if there are more than one objects
-              // for(unsigned int j = 0; j<vect_rep.size(); j++)
-              // {
-              //   tau_repulsive += vect_rep[j];
-              //   Force_repulsive_pub += vect_force[j];
+                  std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
+                  ForceAndIndex = GetRepulsiveForce(point_of_interesting, influence, Object_position[i], Object_radius[i], Object_height[i] );
                 
-              // }
-
-              // for(unsigned int t=0; t < Force_repulsive_pub.size(); t++ )
-              // {
-              //     Fr_msg.data.push_back(Force_repulsive_pub(t));
-              // }
-
-              // pub_Fr_.publish(Fr_msg);
+                  //to plot the f repulsive
+                  for(unsigned int i=0; i< ForceAndIndex.first.size(); i++)
+                  {
+                    Fr_msg.data.push_back( (ForceAndIndex.first)(i));
+                  }
+                  pub_Fr_.publish(Fr_msg);
+                  vect_rep.push_back (JAC_repulsive[list_of_link[ForceAndIndex.second]].data.transpose()* lambda_ * ForceAndIndex.first);
+              }
+              
+              Force_repulsive = Eigen::Matrix<double,7,1>::Zero();
+             
+              // if there are more than one objects
+              for(unsigned int j = 0; j<vect_rep.size(); j++)
+              {
+                Force_repulsive += vect_rep[j];
+              }
           }
 
-          Eigen::Matrix<double,7,1> tau_repulsive_table = Eigen::Matrix<double,7,1>::Zero();
-          tau_repulsive_table = RepulsiveWithTable();
+          // //repulsive with table
+          KDL::Vector Table_position(0,0,0.15);  //table position         
+          std::vector<double> distance_local_obj;
+
+          for(unsigned int j=0; j< list_of_link.size(); j++)
+          {
+            distance_local_obj.push_back( -Table_position.z() + x_chain[list_of_link[j]].p.z() ); //considered only the z position
+          }
+
+          std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex_table;
+          ForceAndIndex_table = RepulsiveWithTable(distance_local_obj);   
+
+          F_Rep_table = JAC_repulsive[list_of_link[ForceAndIndex_table.second]].data.transpose()* lambda_ * ForceAndIndex_table.first;
           
-          Force_total_rep = tau_repulsive + tau_repulsive_table;
+          Force_total_rep = Force_repulsive + F_Rep_table;
 
           // computing nullspace
           N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
@@ -398,47 +400,6 @@ namespace desperate_housewife
       ros::spinOnce();
 
   }
-
-
-  Eigen::Matrix<double,7,1>  PotentialFieldControl::GetRepulsiveWithObstacle()
-  {
-      std::vector<Eigen::Matrix<double,7,1>> vect_rep;
-      std::vector<KDL::Vector> point_of_interesting;
-      std_msgs::Float64MultiArray Fr_msg;
-      std::vector<Eigen::Matrix<double,6,1>> vect_force;
-
-      for(unsigned int i=0; i < Object_position.size();i++)
-      {
-            double influence = Object_radius[i] +  treshold_influence;        
-            Eigen::Matrix<double,6,1> ForceAndIndex;
-            
-            for(unsigned int k=0 ; k < list_of_link.size(); k++)
-            {
-                  ForceAndIndex = GetRepulsiveForce(x_chain[list_of_link[k]].p, influence, Object_position[i], Object_radius[i], Object_height[i] );
-                  vect_rep.push_back (JAC_repulsive[list_of_link[k]].data.transpose()* lambda_ * ForceAndIndex);
-                  vect_force.push_back(ForceAndIndex);
-            }          
-      } 
-
-      Eigen::Matrix<double,7,1> tau_repulsive = Eigen::Matrix<double,7,1>::Zero();
-      Eigen::Matrix<double,6,1> Force_repulsive_pub = Eigen::Matrix<double,6,1>::Zero();      
-      // if there are more than one objects
-      for(unsigned int j = 0; j<vect_rep.size(); j++)
-      {
-            tau_repulsive += vect_rep[j];
-            Force_repulsive_pub += vect_force[j];
-      }
-
-      for(unsigned int t=0; t < Force_repulsive_pub.size(); t++ )
-      {
-            Fr_msg.data.push_back(Force_repulsive_pub(t));
-      }
-
-      pub_Fr_.publish(Fr_msg);
-
-      return tau_repulsive;
-  }
-  
 
 
   void PotentialFieldControl::command(const desperate_housewife::handPoseSingle::ConstPtr& msg)
@@ -531,28 +492,87 @@ namespace desperate_housewife
     return -sum;
   }
 
- 
-  Eigen::Matrix<double,6,1> PotentialFieldControl::GetRepulsiveForce(KDL::Vector &point_, double influence, KDL::Frame &Object_pos, double radius, double height)
+  std::vector<double> PotentialFieldControl::GetMinDistance(std::vector<double> distance_local_obj,  double influence )
   {
-      Eigen::Matrix<double,6,1> ForceAndIndex;
-      ForceAndIndex =  Eigen::Matrix<double,6,1>::Zero();
-      // ForceAndIndex.second = 0;  
-      // std::vector<double> DistanceAndIndex;
-      // std::vector<double> distance_local_obj;
-      double distance;
-     
-      distance = diff(Object_pos.p, point_).Norm();
-      
-      if( distance <= influence)
+      std::vector<double> DistanceAndIndex;
+      std::vector<double>::iterator result = std::min_element(std::begin(distance_local_obj), std::end(distance_local_obj));
+      int index_dist = std::distance(std::begin(distance_local_obj), result); 
+    
+      if(distance_local_obj[index_dist] <= influence)
       {
-          Eigen::Vector3d distance_der_partial = GetPartialDerivate(Object_pos, point_, radius, height);
-          ForceAndIndex = GetFIRAS(distance, distance_der_partial, influence);
-          // ForceAndIndex.second = point_[k];   
-      }
+          DistanceAndIndex.push_back(1);
+          DistanceAndIndex.push_back( distance_local_obj[index_dist] ); //min distance
+          DistanceAndIndex.push_back( index_dist); //jacobian index
+     }
+     
+      else
+        DistanceAndIndex.push_back(0);
       
+      return DistanceAndIndex;
+  }
 
+
+  std::pair<Eigen::Matrix<double,6,1>, double> PotentialFieldControl::GetRepulsiveForce(std::vector<KDL::Vector> &point_, double influence, KDL::Frame &Object_pos, double radius, double height)
+  {
+      std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
+      ForceAndIndex.first =  Eigen::Matrix<double,6,1>::Zero();
+      ForceAndIndex.second = 0;  
+      std::vector<double> DistanceAndIndex;
+      std::vector<double> distance_local_obj;
+      
+      std::cout<<"influence: "<<influence<<std::endl; 
+      for(unsigned int k=0; k < point_.size();k++)
+      {
+        distance_local_obj.push_back( (diff(Object_pos.p, point_[k])).Norm());
+      }
+
+      DistanceAndIndex = GetMinDistance(distance_local_obj, influence);
+     
+      if(DistanceAndIndex[0] == 1 )
+      {
+        std::cout<<"dentro"<<std::endl;
+          Eigen::Vector3d distance_der_partial = GetPartialDerivate(Object_pos, point_[DistanceAndIndex[2]], radius, height);
+          ForceAndIndex.first = GetFIRAS(DistanceAndIndex[1], distance_der_partial, influence);
+          ForceAndIndex.second = DistanceAndIndex[2];              
+      }
+   
       return ForceAndIndex; 
   }
+
+
+
+  // std::pair<Eigen::Matrix<double,6,1>, double> PotentialFieldControl::GetRepulsiveForce(std::vector<KDL::Vector> &point_, double influence, KDL::Frame &Object_pos, double radius, double height)
+  // {
+  //     std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
+  //     ForceAndIndex.first =  Eigen::Matrix<double,6,1>::Zero();
+  //     ForceAndIndex.second = 0;  
+  //     std::vector<double> DistanceAndIndex;
+  //     std::vector<double> distance_local_obj;
+  //     double distance;
+     
+  //     // for(unsigned int k=0; k < point_.size();k++)
+  //     // {
+  //     //   distance = diff(Object_pos.p, point_[k])).Norm();
+
+  //     //   if( distance <= influence)
+  //     //   {
+  //     //     Eigen::Vector3d distance_der_partial = GetPartialDerivate(Object_pos, point_[k], radius, height);
+  //     //     ForceAndIndex.first = GetFIRAS(distance, distance_der_partial, influence);
+  //     //     ForceAndIndex.second = point_[k];   
+  //     //   }
+  //     // }
+
+  //     DistanceAndIndex = GetMinDistance(distance_local_obj, influence);
+     
+  //     if(DistanceAndIndex[0] == 1 )
+  //     {
+  //         Eigen::Vector3d distance_der_partial = GetPartialDerivate(Object_pos, point_[DistanceAndIndex[2]], radius, height);
+  //         ForceAndIndex.first = GetFIRAS(DistanceAndIndex[1], distance_der_partial, influence);
+  //         ForceAndIndex.second = DistanceAndIndex[2];              
+  //     }
+   
+  //     return ForceAndIndex; 
+  // }
 
 
 
@@ -560,7 +580,8 @@ namespace desperate_housewife
   {
       
       Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
-                 
+      // Ni_ = 1; 
+                 std::cout<<"Ni_: "<<Ni_<<std::endl; 
       Force(0) = (Ni_/pow(min_distance,2)) * (1.0/min_distance - 1.0/influence) * distance_der_partial[0];
       Force(1) = (Ni_/pow(min_distance,2)) * (1.0/min_distance - 1.0/influence) * distance_der_partial[1];
       Force(2) = (Ni_/pow(min_distance,2)) * (1.0/min_distance - 1.0/influence) * distance_der_partial[2];
@@ -609,35 +630,29 @@ namespace desperate_housewife
     return Tvo_eigen;
   }
 
-  Eigen::Matrix<double,7,1> PotentialFieldControl::RepulsiveWithTable()
+  std::pair<Eigen::Matrix<double,6,1>, double> PotentialFieldControl::RepulsiveWithTable(std::vector<double> distance_local_obj)
   {
     
-       // //repulsive with table
-          KDL::Vector Table_position(0,0,0.15);  //table position         
-          std::vector<double> distance_local_obj;
-          double distance_;
-          Eigen::Matrix<double,6,1> ForceAndIndex_2;
-          std::vector<Eigen::Matrix<double,7,1>> vect_rep_table;
-          Eigen::Matrix<double,7,1> tau_repulsive_table = Eigen::Matrix<double,7,1>::Zero(); 
+      double Rep_inf_table = 0.15;
+      std::vector<double> DistanceAndIndex;
+      DistanceAndIndex = GetMinDistance(distance_local_obj, Rep_inf_table );
 
-          for(unsigned int j=0; j< list_of_link.size(); j++)
-          {
-            distance_ = ( -Table_position.z() + x_chain[list_of_link[j]].p.z() ); //considered only the z position
-            
-            if(distance_ <= Repulsive_table )
-            {
-                Eigen::Vector3d distance_der_partial(0,0,1);  
-                ForceAndIndex_2 = GetFIRAS(distance_, distance_der_partial, Repulsive_table);
-                vect_rep_table.push_back(JAC_repulsive[list_of_link[j]].data.transpose()* lambda_ * ForceAndIndex_2); 
-            }
-          }
+      std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
+      ForceAndIndex.first = Eigen::Matrix<double,6,1>::Zero();
+      ForceAndIndex.second = 0;  
+      
+      if(DistanceAndIndex[0] == 1 )
+      {
+          Eigen::Vector3d distance_der_partial(0,0,1);
+          // std::cout<<"DistanceAndIndex[1]: "<<DistanceAndIndex[1]<<std::endl;
+          
+          ForceAndIndex.first = GetFIRAS(DistanceAndIndex[1], distance_der_partial, Rep_inf_table); 
+          ForceAndIndex.second = DistanceAndIndex[2];
+      }
 
-          for(unsigned int j = 0; j<vect_rep_table.size(); j++)
-          {
-              tau_repulsive_table += vect_rep_table[j];
-          }
+      // std::cout<<"table: "<<ForceAndIndex.first<<std::endl;
 
-      return tau_repulsive_table;     
+      return ForceAndIndex;     
   }
 
 

@@ -51,6 +51,8 @@ namespace desperate_housewife
 		void starting(const ros::Time& time);
 		void update(const ros::Time& time, const ros::Duration& period);
 		void command(const desperate_housewife::handPoseSingle::ConstPtr& msg);
+		void setTreshold(double tresholdin){treshold_influence=tresholdin;}
+		void setNi(double Niin){Ni_=Niin;}
 		
 		/** Function: task_objective_function
 		* input: position 
@@ -78,8 +80,10 @@ namespace desperate_housewife
 		* output: force repulsive 
 		* Description: this function calculates the repulsive force between robot arm and table
 		*/
-		// Eigen::Matrix<double,7,1> RepulsiveWithTable(std::vector<KDL::Frame> &Pos_arm);
-		std::pair<Eigen::Matrix<double,6,1>,double> RepulsiveWithTable(std::vector<double> distance_local_obj);
+		 // std::pair<Eigen::Matrix<double,6,1>, double> RepulsiveWithTable(std::vector<double> distance_local_obj);
+	  Eigen::Matrix<double,7,1> RepulsiveWithTable();
+
+	   Eigen::Matrix<double,7,1>  GetRepulsiveWithObstacle();
 		
 		
 		/** Caalback: InfoOBj
@@ -203,6 +207,7 @@ namespace desperate_housewife
 		Eigen::Matrix<double,7,1> Force_repulsive_prev;
 		Eigen::Matrix<double,7,1> tau_repulsive;
 		Eigen::Matrix<double,7,1> F_Rep_table;
+		Eigen::Matrix<double,7,1> Force_repulsive;
 		double V_max_kuka = 1.5;
 		std::vector<KDL::Frame> x_chain;	/*!14 is soft_hand (end_effector)*/
 		

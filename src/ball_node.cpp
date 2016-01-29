@@ -30,6 +30,8 @@
       ball_pos(0) = msg->data[0];
       ball_pos(1) = msg->data[1];
       ball_pos(2) = msg->data[2];
+
+      // std::cout<<"ball_pos: "<<ball_pos<<std::endl;
       radius = msg->data[3];
       mass = msg->data[4];
       //desired ball position 
@@ -40,12 +42,13 @@
       SeeMarker(pos_des, "pose_desired");
       SeeMarker(ball_pos, "pose_init");
       check_sms = true;
+      // DrawSphere( ball_pos );
   }
 
   bool ball::Update(double delta)
   {   
       //if ball is not arrived, update the position and velocity 
-      std::cout<<"dentro update"<<std::endl;
+      // std::cout<<"dentro update"<<std::endl;
       if( (pos_des - ball_pos).isMuchSmallerThan(0.05) )
       {
         // std::cout<<"pos_des: "<<pos_des(0)<<'\t'<<pos_des(1)<<'\t'<<pos_des(2)<<std::endl;
@@ -62,6 +65,7 @@
         std_msgs::Float64MultiArray Fr_msg;
 
         F_repulsive = GetFieldRep(ball_pos);
+        std::cout<<"F_repulsive: "<<F_repulsive<<std::endl;
         //publish repulsive force
         for(int i = 0; i < F_repulsive.size(); i++)
         {
@@ -84,13 +88,17 @@
 
         Eigen::Matrix<double,6,1> Force_tot = Force_attractive + F_repulsive;
 
-        std::cout<<"delta: "<<delta<<std::endl;
-        // double delta = 0.01;
+      //   std::cout<<"delta: "<<delta<<std::endl;
+        double delta = 0.01;
+        GetVelocityAndPosition(Force_tot,delta); // Force is just divide by mass
+      
         SeeMarker(pos_des, "pose_desired");
         SeeMarker(ball_pos, "pose_init");
-        GetVelocityAndPosition(Force_tot,delta); // Force is just divide by mass
+        
+       
        return false;
-      }   
+      }
+         
   }
 
   
@@ -103,7 +111,6 @@
     x_dot = velocity_last + delta * Force;
     // std::cout<<"x_dot: "<<x_dot(0)<<'\t'<<x_dot(1)<<'\t'<<x_dot(2)<<std::endl;
     ball_pos = 0.5 * Force * delta * delta + velocity_last * delta + pos_last;
-    // std::cout<<"ball_pos update: "<<ball_pos(0)<<'\t'<<ball_pos(1)<<'\t'<<ball_pos(2)<<std::endl;
  
     DrawSphere( ball_pos );
     count = count + 1;
@@ -131,7 +138,7 @@
 
   void ball::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
   {
-      std::cout<<"ricevuto sms info palla"<<std::endl;
+      std::cout<<"ricevuto sms info obj"<<std::endl;
       Object_radius.clear();
       Object_height.clear();
       Object_position.clear();
@@ -210,7 +217,7 @@
     marker.scale.x = 0.2;
     marker.scale.y = 0.2;
     marker.scale.z = 0.2;
-    marker.color.a = 0.01; 
+    marker.color.a = 1; 
     marker.color.r = 0.1;
     marker.color.g = 0.0;
     marker.color.b = 0.0;
@@ -230,16 +237,22 @@
       //repulsive with obj
       for(unsigned int i=0; i < Object_position.size(); i++)
       {  
-          double influence = Object_radius[i] + 0.2;
+          double influence = Object_radius[i] + 0.6;
           std::vector<KDL::Vector> pos;
           KDL::Vector ball_pos_kdl;
           ball_pos_kdl.data[0] = point_pos(0); 
           ball_pos_kdl.data[1] = point_pos(1);
           ball_pos_kdl.data[2] = point_pos(2);
           pos.push_back(ball_pos_kdl);
-          std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
-          ForceAndIndex = pfc.GetRepulsiveForce(pos, influence, Object_position[i], Object_radius[i], Object_height[i]);
-          F_rep.push_back(ForceAndIndex.first);  
+          // std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
+          Eigen::Matrix<double,6,1> ForceAndIndex;
+          pfc.setTreshold(influence);
+          pfc.setNi(1.0);
+
+          ForceAndIndex = pfc.GetRepulsiveForce(ball_pos_kdl, influence, Object_position[i], Object_radius[i], Object_height[i] );
+          F_rep.push_back(ForceAndIndex);  
+          // ForceAndIndex = pfc.GetRepulsiveForce(pos, influence, Object_position[i], Object_radius[i], Object_height[i]);
+          // F_rep.push_back(ForceAndIndex.first);  
       }
     
       Eigen::Matrix<double,6,1> f = Eigen::Matrix<double,6,1>::Zero(); 
@@ -248,6 +261,8 @@
       {
           f = f + F_rep[k]/mass;
       }
+
+
 
       return f;
   }
