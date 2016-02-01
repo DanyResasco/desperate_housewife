@@ -150,6 +150,9 @@ namespace desperate_housewife
 		* Description: functions tha call the funciont for calculates the repulsive forces 
 		*/
 		double VelocityLimit(KDL::Vector &x_dot_d);
+
+		Eigen::Matrix<double,6,6> getAdjointT( KDL::Frame Frame_in);
+		Eigen::Matrix<double,3,3> getVectorHat(Eigen::Matrix<double,3,1> vector_in);
 		
 	private:
 		ros::Subscriber sub_command_, sub_command_start;
@@ -203,6 +206,7 @@ namespace desperate_housewife
 		
 
 		Eigen::Matrix<double,6,1> Force_attractive;
+
 		Eigen::Matrix<double,7,1> Force_total_rep;
 		Eigen::Matrix<double,7,1> Force_repulsive_prev;
 		Eigen::Matrix<double,7,1> tau_repulsive;
@@ -261,6 +265,10 @@ namespace desperate_housewife
 
 		double Time_log;
 		double Ni_, treshold_influence, Repulsive_table;
+
+		std::vector<std::string> list_of_links_pf;
+		std::vector<KDL::Chain> list_of_chains_pf;
+		std::vector<KDL::ChainFkSolverPos_recursive> list_of_fk_pf;
 
 	};
 

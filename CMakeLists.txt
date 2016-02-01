@@ -114,7 +114,11 @@ add_executable(hand_pose_generator src/hand_pose_generator_node.cpp src/hand_pos
 add_dependencies(hand_pose_generator ${PROJECT_NAME}_gencpp)
 target_link_libraries(hand_pose_generator ${catkin_LIBRARIES}  ${PCL_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES} )
 
-add_library(${PROJECT_NAME} src/potential_field_control.cpp)
+# add_library(${PROJECT_NAME} src/potential_field_control.cpp)
+# add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
+# target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+
+add_library(${PROJECT_NAME} src/potential_field_control_mb.cpp)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
