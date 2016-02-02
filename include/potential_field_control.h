@@ -153,6 +153,7 @@ namespace desperate_housewife
 
 		Eigen::Matrix<double,6,6> getAdjointT( KDL::Frame Frame_in);
 		Eigen::Matrix<double,3,3> getVectorHat(Eigen::Matrix<double,3,1> vector_in);
+		Eigen::Matrix<double,6,1> GetRepulsiveForceTable(KDL::Vector &point_, double influence);
 		
 	private:
 		ros::Subscriber sub_command_, sub_command_start;

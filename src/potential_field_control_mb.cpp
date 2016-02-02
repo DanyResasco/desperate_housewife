@@ -36,6 +36,10 @@ namespace desperate_housewife
       n.getParam("set_gains_topic", set_gains_);
       n.param<double>("time_interp_desired", T_des, 1);
       n.param<double>("percentage",percentage,0.5);
+      std::string root_name, tip_name;
+      nh_.getParam("root_name", root_name);
+      nh_.getParam("tip_name", tip_name);
+
 
       // std::cout<<"gains Kp0: "<<Kp_(0)<<'\t'<<"Kp_1: "<<Kp_(1)<<'\t'<<"Kp_2: "<<Kp_(2)<<std::endl;
       // std::cout<<"gains Kd0: "<<Kd_(0)<<'\t'<<"Kd_1: "<<Kd_(1)<<'\t'<<"Kd_2: "<<Kd_(2)<<std::endl;
@@ -67,29 +71,39 @@ namespace desperate_housewife
      
       //Set the number of link that we used. 14 is the soft-hand
 
+      XmlRpc::XmlRpcValue my_list;
+      n.getParam("links_with_potential_field", my_list);
+      ROS_ASSERT(my_list.getType() == XmlRpc::XmlRpcValue::TypeArray);
+
+      for ( int i = 0; i < my_list.size(); ++i) 
+      {
+        ROS_ASSERT(my_list[i].getType() == XmlRpc::XmlRpcValue::TypeString);
+        list_of_links_pf.push_back(static_cast<std::string>(my_list[i]).c_str());
+        // sum += static_cast<string>(my_list[i]);
+      }
+
 
       // ChainFkSolverPos_recursive fk_solver_pos = new KDL::ChainFkSolverPos_recursive(m_chain);
 
 
-      list_of_links_pf.push_back(std::string("right_arm_4_link"));
-      list_of_links_pf.push_back(std::string("right_arm_5_link"));
-      list_of_links_pf.push_back(std::string("right_arm_6_link"));
-      list_of_links_pf.push_back(std::string("right_arm_7_link"));
+      // list_of_links_pf.push_back(std::string("right_arm_4_link"));
+      // list_of_links_pf.push_back(std::string("right_arm_5_link"));
+      // list_of_links_pf.push_back(std::string("right_arm_6_link"));
+      // list_of_links_pf.push_back(std::string("right_arm_7_link"));
 
       for (unsigned int i = 0; i < list_of_links_pf.size(); ++i)
       {
         KDL::Chain chain_tmp;
 
-        if(!kdl_tree_.getChain("world", list_of_links_pf[i].c_str(), chain_tmp))
+        if(!kdl_tree_.getChain(root_name.c_str(), list_of_links_pf[i].c_str(), chain_tmp))
         {
-          ROS_ERROR("Error processing chain from %s to %s ", "world", list_of_links_pf[i].c_str());
+          ROS_ERROR("Error processing chain from %s to %s ", root_name.c_str(), list_of_links_pf[i].c_str());
         }
         else
         {
           list_of_chains_pf.push_back(chain_tmp);
           list_of_fk_pf.push_back(KDL::ChainFkSolverPos_recursive(chain_tmp));
-          ROS_INFO("Chain from %s to %s correctly set", "world", list_of_links_pf[i].c_str());
-          // ROS_INFO("******%d joints in chain******", chain_tmp.getNrOfJoints());
+          ROS_DEBUG("Chain from %s to %s correctly initialized", root_name.c_str(), list_of_links_pf[i].c_str());
         }
       }
 
@@ -322,9 +336,9 @@ namespace desperate_housewife
           // }
 
           /**************************************/
-          Eigen::Matrix<double, 6,1> F_base = Eigen::Matrix<double, 6, 1>::Zero();
-
-
+          Eigen::Matrix<double, 6,1> F_obj_base = Eigen::Matrix<double, 6, 1>::Zero();
+          Eigen::Matrix<double, 6,1> F_table_base = Eigen::Matrix<double, 6, 1>::Zero();
+          Eigen::Matrix<double, 6,1> F_table = Eigen::Matrix<double, 6, 1>::Zero();
 
           for (unsigned int i = 0; i < list_of_links_pf.size(); ++i)
           {
@@ -340,22 +354,23 @@ namespace desperate_housewife
             Eigen::Matrix<double,6,6> Adjoint;
             // std::cout << fk_chain << std::endl;
             Adjoint = getAdjointT( fk_chain );
-            Eigen::Matrix<double, 6,1> F_inj = Eigen::Matrix<double, 6, 1>::Zero();
+            Eigen::Matrix<double, 6,1> F_obj = Eigen::Matrix<double, 6, 1>::Zero();
+
             for (unsigned int k = 0; k < Object_position.size(); ++k)
             {
               double influence_local = Object_radius[i] +  treshold_influence;
-              F_inj +=  GetRepulsiveForce(fk_chain.p, influence_local, Object_position[k], Object_radius[k], Object_height[k] );
-              
+              F_obj +=  GetRepulsiveForce(fk_chain.p, influence_local, Object_position[k], Object_radius[k], Object_height[k] );
             }
 
-            F_base += Adjoint*F_inj;
+            F_obj_base += Adjoint*F_obj;
+            F_table += GetRepulsiveForceTable(fk_chain.p, Repulsive_table );
+            F_table_base += Adjoint*F_table;
 
           }
 
 
-          Eigen::Matrix<double, 6,1> F_repulsive_end_efector = getAdjointT( x_.Inverse() ) * F_base;
+          Eigen::Matrix<double, 6,1> F_repulsive_end_efector = getAdjointT( x_.Inverse() ) * (F_obj_base + F_table_base);
 
-          std::cout << F_repulsive_end_efector << std::endl << std::endl;
           /*********************************************/
           pub_Fa_.publish(Fa_msg);
 
@@ -424,7 +439,7 @@ namespace desperate_housewife
           N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
 
           // finally, computing the torque tau
-          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive ))+ 0.0*Force_total_rep + 0.0*N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
+          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + F_repulsive_end_efector))+ 0.0*Force_total_rep + 0.0*N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
         
           // saving J_ and phi of the last iteration
           J_last_ = J_;
@@ -728,6 +743,22 @@ Eigen::Matrix<double,3,3> PotentialFieldControl::getVectorHat(Eigen::Matrix<doub
           }
 
       return tau_repulsive_table;     
+  }
+
+
+  Eigen::Matrix<double,6,1> PotentialFieldControl::GetRepulsiveForceTable(KDL::Vector &point_, double influence)
+  {
+    Eigen::Matrix<double,6,1> force_local = Eigen::Matrix<double,6,1>::Zero();
+    KDL::Vector Table_position(0,0,0.15);
+    
+    double distance_local = ( -Table_position.z() + point_.z());
+    Eigen::Vector3d distance_der_partial(0,0,1);
+    if (distance_local <= influence )
+    {
+      force_local = GetFIRAS(distance_local, distance_der_partial, influence);
+    }
+
+    return force_local;
   }
 
 
