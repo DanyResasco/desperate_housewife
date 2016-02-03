@@ -40,6 +40,10 @@ namespace desperate_housewife
       nh_.getParam("root_name", root_name);
       nh_.getParam("tip_name", tip_name);
 
+      bool use_real;
+      n.param<bool>("use_real",use_real, false);
+
+
 
       // std::cout<<"gains Kp0: "<<Kp_(0)<<'\t'<<"Kp_1: "<<Kp_(1)<<'\t'<<"Kp_2: "<<Kp_(2)<<std::endl;
       // std::cout<<"gains Kd0: "<<Kd_(0)<<'\t'<<"Kd_1: "<<Kd_(1)<<'\t'<<"Kd_2: "<<Kd_(2)<<std::endl;
@@ -47,8 +51,6 @@ namespace desperate_housewife
       
       
 
-      bool use_real;
-      n.param<bool>("use_real",use_real, false);
 
       //resize the vector that we use for calculates the dynamic      
       jnt_to_jac_solver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
@@ -331,12 +333,28 @@ namespace desperate_housewife
           // }
 
           /**************************************/
-          Eigen::Matrix<double, 6,1> F_obj_base = Eigen::Matrix<double, 6, 1>::Zero();
-          Eigen::Matrix<double, 6,1> F_table_base = Eigen::Matrix<double, 6, 1>::Zero();
-          Eigen::Matrix<double, 6,1> F_table = Eigen::Matrix<double, 6, 1>::Zero();
+          
+          // ROS_INFO("Number of list_of_links_pf: %lu, number of objects: %lu", list_of_links_pf.size(), Object_position.size());
 
-          for (unsigned int i = 0; i < list_of_links_pf.size(); ++i)
+
+          Eigen::Matrix<double, 6,1> F_total = Eigen::Matrix<double, 6, 1>::Zero();
+          F_total = Force_attractive;
+
+          bool enable_obstacle_avoidance;
+          nh_.param<bool>("enable_obstacle_avoidance",enable_obstacle_avoidance ,false);
+
+          Eigen::Matrix<double, 6,1> F_repulsive_end_efector = Eigen::Matrix<double, 6, 1>::Zero();
+          
+          if (enable_obstacle_avoidance)
           {
+            ROS_DEBUG("Obstacle avoidance enabled");
+            Eigen::Matrix<double, 6,1> F_obj_base = Eigen::Matrix<double, 6, 1>::Zero();
+            Eigen::Matrix<double, 6,1> F_table_base = Eigen::Matrix<double, 6, 1>::Zero();
+            Eigen::Matrix<double, 6,1> F_table = Eigen::Matrix<double, 6, 1>::Zero();
+
+
+            for (unsigned int i = 0; i < list_of_links_pf.size(); ++i)
+            {
             // ROS_INFO("number of links of chain %d are: %d", i, list_of_chains_pf[i].getNrOfJoints());
             // ROS_INFO("******%d joints in chain******", chain_tmp.getNrOfJoints());
             KDL::JntArray joint_states_chain(list_of_chains_pf[i].getNrOfJoints());
@@ -363,20 +381,22 @@ namespace desperate_housewife
             F_table += GetRepulsiveForceTable(fk_chain.p, Repulsive_table );
             F_table_base += (1.0/list_of_links_pf.size())*Adjoint*F_table;
 
+            }
+            // Eigen::Matrix<double, 6,1> F_repulsive_end_efector = getAdjointT( x_.Inverse() ) * (F_obj_base + F_table_base);
+            F_repulsive_end_efector = getAdjointT( x_.Inverse() ) * (F_table_base);
+            F_total += F_repulsive_end_efector;
           }
 
 
-          ROS_INFO("Number of list_of_links_pf: %lu, number of objects: %lu", list_of_links_pf.size(), Object_position.size());
-
-          Eigen::Matrix<double, 6,1> F_repulsive_end_efector = getAdjointT( x_.Inverse() ) * (F_obj_base + F_table_base);
+          
           // Eigen::Matrix<double, 6,1> F_repulsive_end_efector = getAdjointT( x_.Inverse() ) * (0.0*F_obj_base + (1.0/list_of_links_pf.size())*F_table_base);
 
           /*********************************************/
-          for(unsigned int t=0; t < F_repulsive_end_efector.size(); t++ )
+          for(unsigned int t=0; t < F_total.size(); t++ )
           {
               Fr_msg.data.push_back(F_repulsive_end_efector(t));
               Fa_msg.data.push_back(Force_attractive(t));
-              Ft_msg.data.push_back(Force_attractive(t) + F_repulsive_end_efector(t));
+              Ft_msg.data.push_back(F_total(t));
           }
 
           pub_Fr_.publish(Fr_msg);
@@ -400,7 +420,21 @@ namespace desperate_housewife
           // finally, computing the torque tau
           // tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + F_repulsive_end_efector))+ 0.0*Force_total_rep + 0.0*N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
 
-          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + F_repulsive_end_efector));
+          tau_.data += (J_.data.transpose()*lambda_*(F_total));
+          bool enable_null_space;
+          nh_.param<bool>("enable_null_space", enable_null_space ,false);
+
+          if (enable_null_space)
+          {
+            ROS_DEBUG("Null Space enabled");
+            // tau_.data += N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
+            tau_.data += test_joint_limits_mb( joint_msr_states_.q ).data;
+            // tau_.data += (Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
+            std::cout << test_joint_limits_mb( joint_msr_states_.q ).data << std::endl << std::endl;
+          }
+          
+
+
         
           // saving J_ and phi of the last iteration
           J_last_ = J_;
@@ -508,6 +542,8 @@ Eigen::Matrix<double,3,3> PotentialFieldControl::getVectorHat(Eigen::Matrix<doub
     PoseDesiredInterpolation(frame_des_);
 
     error_pose_trajectory.arrived = 1;
+
+    ROS_INFO("New reference for controller");
   
   }
 
@@ -534,6 +570,8 @@ Eigen::Matrix<double,3,3> PotentialFieldControl::getVectorHat(Eigen::Matrix<doub
         tf::poseMsgToKDL(msg->geometries[i].pose, frame_obj);
         Object_position.push_back(frame_obj); 
       }
+
+      ROS_INFO("New environment: No of Obstacles %lu", msg->geometries.size());
 
   }
 
@@ -584,9 +622,34 @@ Eigen::Matrix<double,3,3> PotentialFieldControl::getVectorHat(Eigen::Matrix<doub
       sum += temp*temp;
     }
 
-    sum /= 2*N;
+    sum /= N;
 
     return -sum;
+  }
+
+  KDL::JntArray PotentialFieldControl::test_joint_limits_mb(KDL::JntArray q)
+  {
+ 
+    KDL::JntArray tau_limit_avoidance(q.data.size());
+    double k=.01;
+    for (unsigned int i = 0; i < q.data.size(); i++)
+    {
+
+      double sigma = std::fabs(joint_limits_.max(i)) - (10.0*M_PI/180.0);
+      if ( std::fabs(q.data[i]) > sigma )
+      {
+        ROS_INFO("Joint limit %d", i);
+        double potential = (std::fabs(q.data[i]) - sigma) * (std::fabs(q.data[i]) - sigma);
+        tau_limit_avoidance.data[i] = - KDL::sign(q.data[i]) * k * potential;  
+      }
+
+
+      tau_limit_avoidance(i) = 0.0;
+    }
+
+    // sum /= N;
+
+    return tau_limit_avoidance;
   }
 
  

@@ -69,8 +69,8 @@ sendObj::sendObj()
 {
 	sub_grid_ = nh.subscribe("send_obst", 1, &sendObj::obst, this);
 	nh.param<std::string>("/PotentialFieldControl/obstacle_list_right", obstacles_topic_right, "/right_arm/PotentialFieldControl/obstacle_pose_right");
-  	geometries_publisher_ = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_right.c_str(),1);
-  	 marker_publisher_ = nh.advertise<visualization_msgs::Marker >( "frame_obst", 1 );
+  geometries_publisher_ = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_right.c_str(),1);
+  marker_publisher_ = nh.advertise<visualization_msgs::Marker >( "frame_obst", 1 );
 }
 	
 
@@ -93,9 +93,9 @@ void sendObj::obst(const std_msgs::Float64MultiArray::ConstPtr &msg)
 		fittedGeometriesSingleMsg.pose.position.z = msg->data[2+p];
 		Eigen::Matrix3d transformation_ = Eigen::Matrix3d::Identity();
 		transformation_.row(0) << 1,0,0;
-	    transformation_.row(1) << 0,1,0;
-	    transformation_.row(2) << 0,0,1;
-	    Eigen::Quaterniond quat_eigen_hand(transformation_);
+    transformation_.row(1) << 0,1,0;
+    transformation_.row(2) << 0,0,1;
+    Eigen::Quaterniond quat_eigen_hand(transformation_);
 		fittedGeometriesSingleMsg.pose.orientation.x = quat_eigen_hand.x();
 		fittedGeometriesSingleMsg.pose.orientation.y = quat_eigen_hand.y();
 		fittedGeometriesSingleMsg.pose.orientation.z = quat_eigen_hand.z();
@@ -107,8 +107,8 @@ void sendObj::obst(const std_msgs::Float64MultiArray::ConstPtr &msg)
 		geom_height.push_back(msg->data[4+p]);
 		for(unsigned int j=0; j< geom_info.size();j++)
 		{
-	    	fittedGeometriesSingleMsg.info.push_back(geom_info[j]);
-	    }
+	    fittedGeometriesSingleMsg.info.push_back(geom_info[j]);
+    }
 
 		fittedGeometriesArrayMsg.geometries.push_back( fittedGeometriesSingleMsg );
 		p += 5;

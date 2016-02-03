@@ -69,11 +69,10 @@ add_message_files(
   home.msg
 )
 
-# add_service_files(
-#   FILES
-# ObstacleInfo.srv
-# ObstacleInfoArray.srv
-# )
+add_service_files(
+  FILES
+goPose.srv
+)
 
 
 generate_messages(
@@ -140,6 +139,9 @@ add_executable(test_send_obst src/test_send_obst.cpp )
 add_dependencies(test_send_obst ${PROJECT_NAME}_gencpp)
 target_link_libraries(test_send_obst ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
+add_executable(simulated_references src/simulated_references.cpp )
+add_dependencies(simulated_references ${PROJECT_NAME}_gencpp)
+target_link_libraries(simulated_references ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
