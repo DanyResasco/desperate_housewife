@@ -68,7 +68,7 @@
             <arg name="paused" value="false"/>
             <!-- when using the real/sim scenario in parallel, set "use_enabled_time" to false -->
             <arg name="use_sim_time" value="true"/>
-            <arg name="gui" value="true"/>
+            <arg name="gui" value="$(arg gazebo_gui)"/>
             <arg name="headless" value="true"/>
             <arg name="debug" value="false"/>
         </include>
@@ -92,7 +92,6 @@
         </include>
             <!-- for the fake eyes, which are not still included here -->
         </group>
-    <!-- </group> -->
 
     <!-- load moveit configuration -->
     <group if="$(arg load_moveit)">

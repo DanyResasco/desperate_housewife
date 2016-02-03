@@ -248,7 +248,7 @@ namespace desperate_housewife
 		tfScalar Time;
 		int a ;
 		bool start_flag;
-		ros::Publisher pub_Freptavolo_, pub_Fa_, pub_diff,pub_xdot,pub_sing_val;
+		ros::Publisher pub_Freptavolo_, pub_Fa_, pub_f_total_, pub_diff,pub_xdot,pub_sing_val;
 		std::vector<KDL::Frame> test_pos_jerk;
 		Eigen::Matrix<double,6,1> Force_attractive_last,  Force_repulsive_last;
 		Eigen::Matrix<double,7,1> Force_total_rep_last;

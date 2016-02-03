@@ -83,14 +83,6 @@ namespace desperate_housewife
       }
 
 
-      // ChainFkSolverPos_recursive fk_solver_pos = new KDL::ChainFkSolverPos_recursive(m_chain);
-
-
-      // list_of_links_pf.push_back(std::string("right_arm_4_link"));
-      // list_of_links_pf.push_back(std::string("right_arm_5_link"));
-      // list_of_links_pf.push_back(std::string("right_arm_6_link"));
-      // list_of_links_pf.push_back(std::string("right_arm_7_link"));
-
       for (unsigned int i = 0; i < list_of_links_pf.size(); ++i)
       {
         KDL::Chain chain_tmp;
@@ -160,6 +152,7 @@ namespace desperate_housewife
       pub_tau_ = nh_.advertise<std_msgs::Float64MultiArray>("tau_commad", 1000);
       pub_Fa_ = nh_.advertise<std_msgs::Float64MultiArray>("Factrative_commad", 1000);
       pub_Fr_ = nh_.advertise<std_msgs::Float64MultiArray>("Frepulsive_commad", 1000);
+      pub_f_total_ = nh_.advertise<std_msgs::Float64MultiArray>("Ftotal_commad", 1000);
       pub_velocity_ = nh_.advertise<std_msgs::Float64MultiArray>("velocity", 1000);
       pub_error_int_ = nh_.advertise<std_msgs::Float64MultiArray>("error_interpolate", 1000);
 
@@ -209,7 +202,10 @@ namespace desperate_housewife
       std_msgs::Float64MultiArray tau_msg;
       std_msgs::Float64MultiArray qdot_msg;
       std_msgs::Float64MultiArray vel_msg;
-      
+      std_msgs::Float64MultiArray Fr_msg;
+      std_msgs::Float64MultiArray Fa_msg;
+      std_msgs::Float64MultiArray err_msg;
+      std_msgs::Float64MultiArray Ft_msg;
       // get joint positions
       for(unsigned int i=0; i < joint_handles_.size(); i++) 
       {
@@ -295,7 +291,7 @@ namespace desperate_housewife
           x_err_ = diff(x_,x_des_);
  
           //just for publish the error interpolate
-          std_msgs::Float64MultiArray err_msg;
+          
 
           for(unsigned int i=0; i<6; i++)
           {
@@ -308,7 +304,7 @@ namespace desperate_housewife
           tf::poseKDLToMsg (x_, error_pose_trajectory.pose_hand);         
           pub_error_.publish(error_pose_trajectory);
 
-          std_msgs::Float64MultiArray Fa_msg; //msgs for publish the attractive force
+          // std_msgs::Float64MultiArray Fa_msg; //msgs for publish the attractive force
 
           //set the limitation of velocity
           KDL::Vector V_err_(Kp_(0)/Kd_(0)*x_err_.vel.data[0],Kp_(1)/Kd_(1)*x_err_.vel.data[1],Kp_(2)/Kd_(2)*x_err_.vel.data[2]);
@@ -319,7 +315,6 @@ namespace desperate_housewife
           {
             x_err_integral(i) += x_err_(i)*period.toSec();
             Force_attractive(i) =  -Kd_(i)*(x_dot_(i)) + v_limited*Kp_(i)*x_err_(i) + Ki_(i)*x_err_integral(i);
-            Fa_msg.data.push_back(Force_attractive(i));
           }
 
           //jerk trajectory
@@ -358,21 +353,35 @@ namespace desperate_housewife
 
             for (unsigned int k = 0; k < Object_position.size(); ++k)
             {
+
               double influence_local = Object_radius[i] +  treshold_influence;
-              F_obj +=  GetRepulsiveForce(fk_chain.p, influence_local, Object_position[k], Object_radius[k], Object_height[k] );
+              F_obj +=  (1.0/(list_of_links_pf.size()*Object_position.size()))*GetRepulsiveForce(fk_chain.p, influence_local, Object_position[k], Object_radius[k], Object_height[k] );
+              
             }
 
             F_obj_base += Adjoint*F_obj;
             F_table += GetRepulsiveForceTable(fk_chain.p, Repulsive_table );
-            F_table_base += Adjoint*F_table;
+            F_table_base += (1.0/list_of_links_pf.size())*Adjoint*F_table;
 
           }
 
 
+          ROS_INFO("Number of list_of_links_pf: %lu, number of objects: %lu", list_of_links_pf.size(), Object_position.size());
+
           Eigen::Matrix<double, 6,1> F_repulsive_end_efector = getAdjointT( x_.Inverse() ) * (F_obj_base + F_table_base);
+          // Eigen::Matrix<double, 6,1> F_repulsive_end_efector = getAdjointT( x_.Inverse() ) * (0.0*F_obj_base + (1.0/list_of_links_pf.size())*F_table_base);
 
           /*********************************************/
+          for(unsigned int t=0; t < F_repulsive_end_efector.size(); t++ )
+          {
+              Fr_msg.data.push_back(F_repulsive_end_efector(t));
+              Fa_msg.data.push_back(Force_attractive(t));
+              Ft_msg.data.push_back(Force_attractive(t) + F_repulsive_end_efector(t));
+          }
+
+          pub_Fr_.publish(Fr_msg);
           pub_Fa_.publish(Fa_msg);
+          pub_f_total_.publish(Ft_msg);
 
           // computing b = J*M^-1*(c+g) - J_dot*q_dot
           b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
@@ -383,76 +392,20 @@ namespace desperate_housewife
           JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
           // computing lambda = omega^-1
           pseudo_inverse(omega_,lambda_,sing_vals_2);
-          
-          //if there are obstacles in the scene, calculates the repulsive field 
-          if(Object_position.size() > 0)
-          {
-            tau_repulsive = Eigen::Matrix<double,7,1>::Zero();
-            tau_repulsive =  GetRepulsiveWithObstacle();
-              // std::vector<Eigen::Matrix<double,7,1>> vect_rep;
-              // std::vector<KDL::Vector> point_of_interesting;
-              // std_msgs::Float64MultiArray Fr_msg;
-              // std::vector<Eigen::Matrix<double,6,1>> vect_force;
 
-              // for(unsigned int i=0; i < Object_position.size();i++)
-              // {
-              //     double influence = Object_radius[i] +  treshold_influence;
-            
-              //     Eigen::Matrix<double,6,1> ForceAndIndex;
-                  
-
-              //     for(unsigned int k=0 ; k < list_of_link.size(); k++)
-              //     {
-              //       ForceAndIndex = GetRepulsiveForce(x_chain[list_of_link[k]].p, influence, Object_position[i], Object_radius[i], Object_height[i] );
-              //       vect_rep.push_back (JAC_repulsive[list_of_link[k]].data.transpose()* lambda_ * ForceAndIndex);
-              //       vect_force.push_back(ForceAndIndex);
-                    
-              //     }
-              //     // vect_rep.push_back (JAC_repulsive[list_of_link[ForceAndIndex.second]].data.transpose()* lambda_ * ForceAndIndex.first);
-              // }
-              
-              // tau_repulsive = Eigen::Matrix<double,7,1>::Zero();
-              // Eigen::Matrix<double,6,1> Force_repulsive_pub = Eigen::Matrix<double,6,1>::Zero();
-             
-              // // if there are more than one objects
-              // for(unsigned int j = 0; j<vect_rep.size(); j++)
-              // {
-              //   tau_repulsive += vect_rep[j];
-              //   Force_repulsive_pub += vect_force[j];
-                
-              // }
-
-              // for(unsigned int t=0; t < Force_repulsive_pub.size(); t++ )
-              // {
-              //     Fr_msg.data.push_back(Force_repulsive_pub(t));
-              // }
-
-              // pub_Fr_.publish(Fr_msg);
-          }
-
-          Eigen::Matrix<double,7,1> tau_repulsive_table = Eigen::Matrix<double,7,1>::Zero();
-          tau_repulsive_table = RepulsiveWithTable();
-          
-          Force_total_rep = tau_repulsive + tau_repulsive_table;
 
           // computing nullspace
           N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
 
           // finally, computing the torque tau
-          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + F_repulsive_end_efector))+ 0.0*Force_total_rep + 0.0*N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
+          // tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + F_repulsive_end_efector))+ 0.0*Force_total_rep + 0.0*N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
+
+          tau_.data = (J_.data.transpose()*lambda_*(Force_attractive + F_repulsive_end_efector));
         
           // saving J_ and phi of the last iteration
           J_last_ = J_;
           phi_last_ = phi_;
 
-          //CONTROLLA SE SERVE ANCORA
-          // for (unsigned int j = 0; j < joint_handles_.size(); j++)
-          // {
-              
-          //     tau_(j) = filters::exponentialSmoothing(tau_(j), tau_prev_(j), 0.2);
-          //     tau_prev_(j) = tau_(j);
-          // }
-        
           //torque saturation
           tau_(0) = (std::abs(tau_(0)) >= 176*percentage ? std::copysign(176*percentage,tau_(0)) : tau_(0));
           tau_(1) = (std::abs(tau_(1)) >= 176*percentage ? std::copysign(176*percentage,tau_(1)) : tau_(1)); 
@@ -539,7 +492,7 @@ Eigen::Matrix<double,3,3> PotentialFieldControl::getVectorHat(Eigen::Matrix<doub
             Fr_msg.data.push_back(Force_repulsive_pub(t));
       }
 
-      pub_Fr_.publish(Fr_msg);
+      // pub_Fr_.publish(Fr_msg);
 
       return tau_repulsive;
   }
@@ -756,6 +709,7 @@ Eigen::Matrix<double,3,3> PotentialFieldControl::getVectorHat(Eigen::Matrix<doub
     if (distance_local <= influence )
     {
       force_local = GetFIRAS(distance_local, distance_der_partial, influence);
+      // ROS_INFO("Repulsing with table");
     }
 
     return force_local;

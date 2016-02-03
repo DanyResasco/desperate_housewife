@@ -83,6 +83,8 @@ DesperateDecisionMaker::DesperateDecisionMaker()
   nh.param<double>("/desperate_mind_node/rot_y_treshold",rot_y,0.01);
   nh.param<double>("/desperate_mind_node/rot_z_treshold",rot_z,0.01);
 
+  ROS_INFO("Treshold error parameter x: %f, y: %f, z: %f, rot_x: %f, rot_y: %f, rot_z: %f, ", x, y, x, rot_x, rot_y, rot_z);
+
   nh.param<bool>("use_both_arm",use_both_arm,true);
   
   nh.param<double>("/desperate_mind_node/Info_closed_hand", Info_closed_hand, 0.6);
@@ -105,7 +107,7 @@ DesperateDecisionMaker::DesperateDecisionMaker()
 
 void DesperateDecisionMaker::HandInforRight(const sensor_msgs::JointState::ConstPtr &msg)
 {
-  info_hand = msg->position[0];
+  info_hand = msg->position[28];
   // std::cout<<"info_hand: "<<info_hand<<std::endl;
 }
 

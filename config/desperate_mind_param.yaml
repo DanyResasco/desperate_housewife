@@ -14,10 +14,10 @@ trash_right_arm_position_z: 0.513
 trash_right_arm_A_yaw: -1.520
 trash_right_arm_B_pitch: 0.140
 trash_right_arm_C_roll: 2.914
-x_treshold: 0.05
-y_treshold: 0.05
-z_treshold: 0.05
-rot_x_treshold: 0.1
-rot_y_treshold: 0.1
-rot_z_treshold: 0.1
+x_treshold: 0.2
+y_treshold: 0.2
+z_treshold: 0.2
+rot_x_treshold: 0.2
+rot_y_treshold: 0.2
+rot_z_treshold: 0.2
 Info_closed_hand: 0.8
