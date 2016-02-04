@@ -85,7 +85,7 @@ namespace desperate_housewife
 		 // std::pair<Eigen::Matrix<double,6,1>, double> RepulsiveWithTable(std::vector<double> distance_local_obj);
 	  Eigen::Matrix<double,7,1> RepulsiveWithTable();
 
-	  Eigen::Matrix<double,7,1>  GetRepulsiveWithObstacle();
+	   Eigen::Matrix<double,7,1>  GetRepulsiveWithObstacle();
 		
 		
 		/** Caalback: InfoOBj
