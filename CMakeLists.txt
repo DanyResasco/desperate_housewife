@@ -122,9 +122,9 @@ add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
 
-add_executable(ball_test src/ball_main.cpp src/ball_node.cpp)
-add_dependencies(ball_test ball_test_gencpp ${PROJECT_NAME})
-target_link_libraries(ball_test ${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+# add_executable(ball_test src/ball_main.cpp src/ball_node.cpp)
+# add_dependencies(ball_test ball_test_gencpp ${PROJECT_NAME})
+# target_link_libraries(ball_test ${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
 
 add_executable(grid src/grid_main.cpp src/grid_node.cpp)
@@ -142,6 +142,11 @@ target_link_libraries(test_send_obst ${catkin_LIBRARIES} kdl_parser ${orocos_kdl
 add_executable(simulated_references src/simulated_references.cpp )
 add_dependencies(simulated_references ${PROJECT_NAME}_gencpp)
 target_link_libraries(simulated_references ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+
+
+add_executable(test_parse_list_yaml src/test_parse_list_yaml.cpp)
+add_dependencies(test_parse_list_yaml test_parse_list_yaml_gencpp ${PROJECT_NAME})
+target_link_libraries(test_parse_list_yaml ${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})

@@ -29,20 +29,75 @@ namespace desperate_housewife
     ROS_WARN("Number of segments: %d", kdl_chain_.getNrOfSegments());
 
 // for swicht the hand_desired
-    n.getParam("desired_reference_topic", desired_reference_topic);
-    n.getParam("obstacle_remove_topic", obstacle_remove_topic);
-    n.getParam("desired_hand_topic", desired_hand_topic);
-    n.getParam("obstacle_avoidance", obstacle_avoidance);
-    n.getParam("tip_name", tip_name);
-    n.getParam("set_gains_topic", set_gains_);
+    std::string root_name, tip_name;
+    n.param<std::string>("desired_reference_topic", desired_reference_topic, "reference");
+    n.param<std::string>("obstacle_avoidance", obstacle_avoidance, "obstacles");
+    n.param<std::string>("tip_name", tip_name, "end_effector");
+    n.param<std::string>("set_gains_topic", set_gains_, "gains");
+    n.param<std::string>("root_name", root_name, "world");
     n.param<double>("time_interp_desired", T_des, 1);
     n.param<double>("percentage",percentage,0.5);
-    std::string root_name, tip_name;
-    nh_.getParam("root_name", root_name);
-    nh_.getParam("tip_name", tip_name);
+    Kp_.resize(kdl_chain_.getNrOfJoints());
+    Kd_.resize(kdl_chain_.getNrOfJoints());
+    Ki_.resize(kdl_chain_.getNrOfJoints());
+
+    n.param<double>("Kp_0",Kp_(0),50);
+    n.param<double>("Kp_1",Kp_(1),50);
+    n.param<double>("Kp_2",Kp_(2),50);
+    n.param<double>("Kp_3",Kp_(3),5);
+    n.param<double>("Kp_4",Kp_(4),5);
+    n.param<double>("Kp_5",Kp_(5),5);
+    n.param<double>("Kd_0",Kd_(0),0.5);
+    n.param<double>("Kd_1",Kd_(1),0.5);
+    n.param<double>("Kd_2",Kd_(2),0.5);
+    n.param<double>("Kd_3",Kd_(3),0.5);
+    n.param<double>("Kd_4",Kd_(4),0.5);
+    n.param<double>("Kd_5",Kd_(5),0.5);
+    n.param<double>("Ki_0",Ki_(0),0.01);
+    n.param<double>("Ki_1",Ki_(1),0.01);
+    n.param<double>("Ki_2",Ki_(2),0.01);
+    n.param<double>("Ki_3",Ki_(3),0.01);
+    n.param<double>("Ki_4",Ki_(4),0.01);
+    n.param<double>("Ki_5",Ki_(5),0.01);
+    n.param<double>("repulsive_gains",Ni_ ,1);
+    n.param<double>("repulsive_treshold", treshold_influence ,1);
+    n.param<double>("Repulsive_table", Repulsive_table ,1);
 
     bool use_real;
     n.param<bool>("use_real",use_real, false);
+    
+    
+
+
+
+    XmlRpc::XmlRpcValue my_list;
+    n.getParam("links_with_potential_field", my_list);
+    ROS_ASSERT(my_list.getType() == XmlRpc::XmlRpcValue::TypeArray);
+
+    for ( int i = 0; i < my_list.size(); ++i) 
+    {
+      ROS_ASSERT(my_list[i].getType() == XmlRpc::XmlRpcValue::TypeString);
+      list_of_links_pf.push_back(static_cast<std::string>(my_list[i]).c_str());
+      ROS_INFO("Link %s defined as collision point", static_cast<std::string>(my_list[i]).c_str());
+    }
+
+    Eigen::Matrix<double, 6, 6> k_p = getGainMatrix(std::string("k_p"), n);
+    Eigen::Matrix<double, 6, 6> k_d = getGainMatrix(std::string("k_d"), n);
+    Eigen::Matrix<double, 6, 6> k_i = getGainMatrix(std::string("k_i"), n);
+    // std::cout << k_p << std::endl;
+    // Eigen::Matrix<double, 6, 6> k_d = Eigen::Matrix<double, 6, 6>::Zero();
+    // Eigen::Matrix<double, 6, 6> k_i = Eigen::Matrix<double, 6, 6>::Zero();
+    // // XmlRpc::XmlRpcValue my_list;
+    // k_p = getGainMatrix(std::string("k_p", n);
+    // n.getParam("k_p", my_list);
+    // ROS_ASSERT(my_list.getType() == XmlRpc::XmlRpcValue::TypeArray);
+    // for (int i = 0; i < std::max(my_list.size(), 6); ++i) 
+    // {
+    //   k_p(i,i) = static_cast<double>(my_list[i]);
+    // }
+
+
+    
 
 
 //resize the vector that we use for calculates the dynamic      
@@ -55,9 +110,7 @@ namespace desperate_housewife
     J_.resize(kdl_chain_.getNrOfJoints());
     J_dot_.resize(kdl_chain_.getNrOfJoints());
     J_star_.resize(kdl_chain_.getNrOfJoints());
-    Kp_.resize(kdl_chain_.getNrOfJoints());
-    Kd_.resize(kdl_chain_.getNrOfJoints());
-    Ki_.resize(kdl_chain_.getNrOfJoints());
+
     M_.resize(kdl_chain_.getNrOfJoints());
     C_.resize(kdl_chain_.getNrOfJoints());
     G_.resize(kdl_chain_.getNrOfJoints());
@@ -66,17 +119,9 @@ namespace desperate_housewife
 
 //Set the number of link that we used. 14 is the soft-hand
 
-    XmlRpc::XmlRpcValue my_list;
-    n.getParam("links_with_potential_field", my_list);
-    ROS_ASSERT(my_list.getType() == XmlRpc::XmlRpcValue::TypeArray);
+    ROS_INFO("asta aqui chido");
 
-    for ( int i = 0; i < my_list.size(); ++i) 
-    {
-      ROS_ASSERT(my_list[i].getType() == XmlRpc::XmlRpcValue::TypeString);
-      list_of_links_pf.push_back(static_cast<std::string>(my_list[i]).c_str());
-// sum += static_cast<string>(my_list[i]);
-    }
-
+    return true;
 
     for (unsigned int i = 0; i < list_of_links_pf.size(); ++i)
     {
@@ -94,38 +139,12 @@ namespace desperate_housewife
       }
     }
 
+
     list_of_link.push_back(4);
     list_of_link.push_back(5);
     list_of_link.push_back(6);
     list_of_link.push_back(7);
     list_of_link.push_back(kdl_chain_.getNrOfSegments());
-
-//set the gains
-    n.param<double>("Kp_0",Kp_(0),50);
-    n.param<double>("Kp_1",Kp_(1),50);
-    n.param<double>("Kp_2",Kp_(2),50);
-    n.param<double>("Kp_3",Kp_(3),5);
-    n.param<double>("Kp_4",Kp_(4),5);
-    n.param<double>("Kp_5",Kp_(5),5);
-
-    n.param<double>("Kd_0",Kd_(0),0.5);
-    n.param<double>("Kd_1",Kd_(1),0.5);
-    n.param<double>("Kd_2",Kd_(2),0.5);
-    n.param<double>("Kd_3",Kd_(3),0.5);
-    n.param<double>("Kd_4",Kd_(4),0.5);
-    n.param<double>("Kd_5",Kd_(5),0.5);
-
-    n.param<double>("Ki_0",Ki_(0),0.01);
-    n.param<double>("Ki_1",Ki_(1),0.01);
-    n.param<double>("Ki_2",Ki_(2),0.01);
-    n.param<double>("Ki_3",Ki_(3),0.01);
-    n.param<double>("Ki_4",Ki_(4),0.01);
-    n.param<double>("Ki_5",Ki_(5),0.01);
-
-    n.param<double>("repulsive_gains",Ni_ ,1);
-    n.param<double>("repulsive_treshold", treshold_influence ,1);
-    n.param<double>("Repulsive_table", Repulsive_table ,1);
-
 
     ROS_DEBUG("Subscribed for desired_hand_topic to: %s", desired_reference_topic.c_str());
 //list of obstacles
@@ -149,7 +168,7 @@ namespace desperate_housewife
     sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this); 
     sub_command_start = n.subscribe("start_control", 1, &PotentialFieldControl::command_start, this);
 
-        wrench_pub = nh_.advertise<geometry_msgs::WrenchStamped>("wrench_repulsive_table", 512);
+    wrench_pub = nh_.advertise<geometry_msgs::WrenchStamped>("wrench_repulsive_table", 512);
 
     start_flag = false;
     return true;
@@ -843,6 +862,20 @@ s = q_{l_1}-|q_i| */
 
 // std::cout<<"v_limited: "<<v_limited<<std::endl;
     return v_limited;
+  }
+
+  Eigen::MatrixXd PotentialFieldControl::getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension)
+  {
+    XmlRpc::XmlRpcValue my_list;
+    n.getParam(parameter.c_str(), my_list);
+    ROS_ASSERT(my_list.getType() == XmlRpc::XmlRpcValue::TypeArray);
+    Eigen::MatrixXd K(dimension, dimension);
+    K = Eigen::MatrixXd::Zero(dimension, dimension);
+    for (int i = 0; i < std::max(my_list.size(), dimension); ++i) 
+    {
+      K(i,i) = static_cast<double>(my_list[i]);
+    }
+    return K;
   }
 
 

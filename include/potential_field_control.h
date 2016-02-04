@@ -158,6 +158,7 @@ namespace desperate_housewife
 		Eigen::Matrix<double,3,3> getVectorHat(Eigen::Matrix<double,3,1> vector_in);
 		Eigen::Matrix<double,6,1> GetRepulsiveForceTable(KDL::Frame &T_in, double influence);
 		KDL::JntArray JointLimitAvoidance(KDL::JntArray q);
+		Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension = 6);
 		
 	private:
 		ros::Subscriber sub_command_, sub_command_start;

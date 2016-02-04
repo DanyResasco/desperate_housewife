@@ -53,7 +53,7 @@ right_arm:
 
   PotentialFieldControl:
     type: desperate_housewife/PotentialFieldControl
-    root_name: vito_anchor
+    root_name: world
     tip_name: right_hand_palm_ref_link
     desired_reference_topic: desired_hand_right_pose
     obstacle_remove_topic: Reject_obstacle_list_right
@@ -64,7 +64,11 @@ right_arm:
     repulsive_gains: 0.01
     repulsive_treshold: 100000
     Repulsive_table: 0.1
+    k_p: [110.0, 110.0, 110.0, 110.0, 110.0, 110.0]
+    k_d: [55.0, 55.0, 55.0, 55.0, 55.0, 55.0]
+    k_i: [2.0, 2.0, 2.0, 2.0, 2.0 2.0]
     links_with_potential_field: ['right_arm_4_link', 'right_arm_5_link', 'right_arm_6_link', 'right_arm_7_link', 'right_hand_palm_ref_link']
+
     # links_with_potential_field: ['right_arm_7_link']
 
 right_hand:
