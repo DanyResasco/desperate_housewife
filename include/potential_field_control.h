@@ -33,8 +33,8 @@
 #include <Eigen/LU>
 #include <Eigen/Geometry> 
 
-
 #include <control_toolbox/filters.h>
+#include <std_srvs/Empty.h>
 
 namespace desperate_housewife
 {
@@ -53,15 +53,16 @@ namespace desperate_housewife
 		void starting(const ros::Time& time);
 		void update(const ros::Time& time, const ros::Duration& period);
 		void command(const desperate_housewife::handPoseSingle::ConstPtr& msg);
-		void setTreshold(double tresholdin){treshold_influence=tresholdin;}
-		void setNi(double Niin){Ni_=Niin;}
+		// void setTreshold(double tresholdin){treshold_influence=tresholdin;}
+		// void setNi(double Niin){Ni_=Niin;}
+
 		
 		/** Function: task_objective_function
 		* input: position 
 		* output: double
 		* Description: with function calculates the position more distance than robot's limits
 		*/
-		double task_objective_function(KDL::JntArray q);
+		// double task_objective_function(KDL::JntArray q);
 
 
 		/** Function: GetRepulsiveForce
@@ -159,6 +160,9 @@ namespace desperate_housewife
 		Eigen::Matrix<double,6,1> GetRepulsiveForceTable(KDL::Frame &T_in, double influence);
 		KDL::JntArray JointLimitAvoidance(KDL::JntArray q);
 		Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension = 6);
+		void startControllerCallBack(const std_msgs::Bool::ConstPtr& msg);
+		void load_parameters(ros::NodeHandle &n);
+		bool loadParametersCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 		
 	private:
 		ros::Subscriber sub_command_, sub_command_start;
@@ -211,14 +215,14 @@ namespace desperate_housewife
 		boost::scoped_ptr<KDL::ChainFkSolverPos_recursive> fk_pos_solver_;
 		
 
-		Eigen::Matrix<double,6,1> Force_attractive;
+		// Eigen::Matrix<double,6,1> Force_attractive;
 
-		Eigen::Matrix<double,7,1> Force_total_rep;
-		Eigen::Matrix<double,7,1> Force_repulsive_prev;
-		Eigen::Matrix<double,7,1> tau_repulsive;
-		Eigen::Matrix<double,7,1> F_Rep_table;
-		Eigen::Matrix<double,7,1> Force_repulsive;
-		double V_max_kuka = 1.5;
+		// Eigen::Matrix<double,7,1> Force_total_rep;
+		// Eigen::Matrix<double,7,1> Force_repulsive_prev;
+		// Eigen::Matrix<double,7,1> tau_repulsive;
+		// Eigen::Matrix<double,7,1> F_Rep_table;
+		// Eigen::Matrix<double,7,1> Force_repulsive;
+		// double V_max_kuka = 1.5;
 		std::vector<KDL::Frame> x_chain;	/*!14 is soft_hand (end_effector)*/
 		
 		ros::Subscriber obstacles_subscribe_, obstacles_remove_sub, sub_gains_;
@@ -236,11 +240,11 @@ namespace desperate_housewife
 		std::string tau_commad;
 
 		/*!information for message*/
-		int erro_arr, err_obj, err_home ;
+		// int erro_arr, err_obj, err_home ;
 		double time_inter; /*!time to interpolate*/
-		double T_des; /*!time desired to interpolate*/
+		// double T_des; /*!time desired to interpolate*/
 		/*! int Int = 0;*/
-		double time_inter_jerk; 
+		// double time_inter_jerk; 
 
 		struct quaternion_
 		{
@@ -248,34 +252,33 @@ namespace desperate_housewife
 			double a;
 		} quat_now, quat_des_;
 
+
+
 		tf::Quaternion quat_tf;
-		double percentage;
+		// double percentage;
 		tfScalar Time;
-		int a ;
-		bool start_flag;
-		ros::Publisher pub_Freptavolo_, pub_Fa_, pub_f_total_, pub_diff,pub_xdot,pub_sing_val;
-		std::vector<KDL::Frame> test_pos_jerk;
-		Eigen::Matrix<double,6,1> Force_attractive_last,  Force_repulsive_last;
-		Eigen::Matrix<double,7,1> Force_total_rep_last;
+		// int a ;
+		// bool start_flag;
+		// ros::Publisher pub_Freptavolo_, pub_Fa_, pub_f_total_, pub_diff,pub_xdot,pub_sing_val;
+		// std::vector<KDL::Frame> test_pos_jerk;
+		// Eigen::Matrix<double,6,1> Force_attractive_last,  Force_repulsive_last;
+		// Eigen::Matrix<double,7,1> Force_total_rep_last;
 		bool switch_trajectory;
 		double Time_traj, Time_traj_rep;
-		KDL::JntArray tau_prev_;
-		ros::Subscriber sub_grid_;
-		std::vector<int> list_of_link;
+		// KDL::JntArray tau_prev_;
+		// ros::Subscriber sub_grid_;
+		// std::vector<int> list_of_link;
 
-		std::string point_;
-		ros::Subscriber sub_force_point_;
+		// std::string point_;
+		// ros::Subscriber sub_force_point_;
 		ros::Publisher vis_pub,pub_Fr_,pub_velocity_,pub_error_int_;
 		tf::TransformBroadcaster tf_geometriesTransformations_;
 		KDL::Twist x_err_integral;
 
-		double Time_log;
-		double Ni_, treshold_influence, Repulsive_table;
+		// double Time_log;
+		// double Ni_, treshold_influence, Repulsive_table;
 
-		std::vector<std::string> list_of_links_pf;
-		std::vector<KDL::Chain> list_of_chains_pf;
-		std::vector<KDL::ChainFkSolverPos_recursive> list_of_fk_pf;
-		ros::Publisher wrench_pub;
+		// ros::Publisher wrench_pub;
 
 	};
 
@@ -285,7 +288,31 @@ namespace desperate_housewife
 		* Description: functions tha transform kdl frame into eigen matrix
 	*/
 	Eigen::Matrix<double,4,4>  FromKdlToEigen(KDL::Frame &T_v_o);
-	  
+
+
+	struct parameters
+	{
+		Eigen::Matrix<double, 6, 6> k_p;
+		Eigen::Matrix<double, 6, 6> k_d;
+		Eigen::Matrix<double, 6, 6> k_i;
+		std::string root_name, tip_name;
+		double pf_dist_to_obstacles, pf_dist_to_table, pf_repulsive_gain;
+		double max_time_interpolation, max_tau_percentage;
+		std::vector<std::string> pf_list_of_links;
+		std::vector<KDL::Chain> pf_list_of_chains;
+		std::vector<KDL::ChainFkSolverPos_recursive> pf_list_of_fk;
+		bool enable_obstacle_avoidance, enable_joint_limits_avoidance;
+
+	} parameters_;
+
+	std::string  topic_obstacle_avoidance;
+	ros::Publisher pub_error, pub_tau, pub_pf_repulsive_forse, pub_pf_attractive_force, pub_pf_total_force, pub_total_wrench;
+	ros::Subscriber sub_command, sub_obstacles, sub_start_controller;
+	ros::ServiceServer srv_start_controller;
+	
+	bool start_controller;
+
+	Eigen::MatrixXd F_repulsive, F_attractive, F_total;
 
 
 }

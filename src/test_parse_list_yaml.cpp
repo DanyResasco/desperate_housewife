@@ -2,19 +2,7 @@
 #include <ros/ros.h>
 #include <Eigen/Core> 
 
-Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n)
-{
-  XmlRpc::XmlRpcValue my_list;
-  n.getParam(parameter.c_str(), my_list);
-  ROS_ASSERT(my_list.getType() == XmlRpc::XmlRpcValue::TypeArray);
-  Eigen::Matrix<double, 6, 6> KP = Eigen::Matrix<double, 6, 6>::Zero();
-  for (int i = 0; i < std::max(my_list.size(), 6); ++i) 
-  {
-    KP(i,i) = static_cast<double>(my_list[i]);
-    // ROS_INFO("%f", static_cast<double>(my_list[i]));
-  }
-  return KP;
-}
+Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension = 6);
 
 int main(int argc, char **argv)
 {
@@ -50,4 +38,18 @@ int main(int argc, char **argv)
 
 
     return 0;
+  }
+
+  Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension)
+  {
+    XmlRpc::XmlRpcValue my_list;
+    n.getParam(parameter.c_str(), my_list);
+    ROS_ASSERT(my_list.getType() == XmlRpc::XmlRpcValue::TypeArray);
+    Eigen::MatrixXd K(dimension, dimension);
+    K = Eigen::MatrixXd::Zero(dimension, dimension);
+    for (int i = 0; i < std::max(my_list.size(), dimension); ++i) 
+    {
+      K(i,i) = static_cast<double>(my_list[i]);
+    }
+    return K;
   }

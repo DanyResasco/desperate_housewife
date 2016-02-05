@@ -127,9 +127,9 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kd
 # target_link_libraries(ball_test ${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
 
-add_executable(grid src/grid_main.cpp src/grid_node.cpp)
-add_dependencies(grid grid_gencpp ${PROJECT_NAME})
-target_link_libraries(grid ${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+# add_executable(grid src/grid_main.cpp src/grid_node.cpp)
+# add_dependencies(grid grid_gencpp ${PROJECT_NAME})
+# target_link_libraries(grid ${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
 add_executable(desperate_mind src/desperate_mind.cpp src/home_robot)
 add_dependencies(desperate_mind ${PROJECT_NAME}_gencpp)

@@ -124,6 +124,8 @@ namespace desperate_housewife
       sub_command_ = n.subscribe(desired_reference_topic.c_str(), 1, &PotentialFieldControl::command, this); 
       sub_command_start = n.subscribe("start_control", 1, &PotentialFieldControl::command_start, this);
       // vis_pub = n.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
+
+      ros::Subscriber sub_load_patameters = n.subscribe("load_parameters", 1, &PotentialFieldControl::load_parameters, this);
  
       //flag for waiting the real robot      
       start_flag = false;
