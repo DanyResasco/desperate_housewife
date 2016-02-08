@@ -71,7 +71,7 @@ right_arm:
     links_with_potential_field: ['right_arm_4_link', 'right_hand_palm_ref_link']
     enable_joint_limits_avoidance: false
     enable_obstacle_avoidance: true
-    enable_attractive_field: false
+    enable_attractive_field: true
 
 right_hand:
   joint_state_controller:

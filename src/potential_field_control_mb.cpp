@@ -457,7 +457,9 @@ namespace desperate_housewife
   {
 
     Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
-    double V = parameters_.pf_repulsive_gain/(min_distance * min_distance);
+    // double V = parameters_.pf_repulsive_gain/(min_distance * min_distance); // this works
+    double V = parameters_.pf_repulsive_gain * ( (1.0 / min_distance) -
+                                                 (1.0 / influence) )  * (1.0 / (min_distance * min_distance));
     // ROS_INFO("FIRAS, distance = %f, V = %f", min_distance, V);
     Force(0) = V * distance_der_partial[0];
     Force(1) = V * distance_der_partial[1];
@@ -527,8 +529,6 @@ namespace desperate_housewife
     if (distance_local <= parameters_.pf_dist_to_table )
     {
       force_local_object = GetFIRAS(distance_local, distance_der_partial, parameters_.pf_dist_to_table);
-      // force_local_object = Eigen::Matrix<double,6,1>::Zero();
-      // force_local_object(2) = 3;
     }
 
     Eigen::Matrix<double,6,1> force_local_link = Eigen::Matrix<double,6,1>::Zero();
