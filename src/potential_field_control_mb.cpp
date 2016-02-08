@@ -99,6 +99,8 @@ namespace desperate_housewife
 
 
     fk_pos_solver_->JntToCart(joint_msr_states_.q,x_des_);
+    x_now_int = x_des_;
+    x_des_int = x_des_;
 
     first_step_ = 1;
 
@@ -182,6 +184,7 @@ namespace desperate_housewife
                 // }
 
       x_dot_ = J_.data*joint_msr_states_.qdot.data; 
+      // std::cout << x_des_ << std::endl;
       x_err_ = diff(x_,x_des_);
       // x_err_ = diff(x_,x_now_int);
 
