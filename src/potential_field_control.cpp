@@ -90,6 +90,7 @@ namespace desperate_housewife
     first_step_ = 1;
 
     SetToZero(x_err_integral);
+    SetToZero(x_err_);
     x_err_.vel.data[0] = 10000.0;
   }
 
@@ -112,6 +113,9 @@ namespace desperate_housewife
     SetToZero(tau_);
 
           //flag to use this code with real robot
+
+    KDL::Twist x_err_msg;
+    x_err_msg = x_err_;
     if (start_controller)
     {
           // computing Inertia, Coriolis and Gravity matrices
@@ -275,7 +279,7 @@ namespace desperate_housewife
 
       if (parameters_.enable_null_space)
       {
-        tau_.data += N_trans_* .01 * task_objective_function( joint_msr_states_.q );
+        tau_.data += N_trans_* .005 * task_objective_function( joint_msr_states_.q );
       }
 
           // saving J_ and phi of the last iteration
@@ -289,15 +293,20 @@ namespace desperate_housewife
       tau_(3) = (std::abs(tau_(3)) >= 100*parameters_.max_tau_percentage ? std::copysign(100*parameters_.max_tau_percentage,tau_(3)): tau_(3)); 
       tau_(4) = (std::abs(tau_(4)) >= 100*parameters_.max_tau_percentage ? std::copysign(100*parameters_.max_tau_percentage,tau_(4)): tau_(4)); 
       tau_(5) = (std::abs(tau_(5)) >= 38*parameters_.max_tau_percentage ? std::copysign(38*parameters_.max_tau_percentage,tau_(5)): tau_(5)); 
-      tau_(6) = (std::abs(tau_(6)) >= 38*parameters_.max_tau_percentage ? std::copysign(38*parameters_.max_tau_percentage,tau_(6)): tau_(6));  
+      tau_(6) = (std::abs(tau_(6)) >= 38*parameters_.max_tau_percentage ? std::copysign(38*parameters_.max_tau_percentage,tau_(6)): tau_(6)); 
+
+
+      x_err_msg = diff(x_, x_des_int);
+
     }
+
 
     for(unsigned int i=0; i < F_total.size(); i++ )
     {
       F_repulsive_msg.data.push_back(F_repulsive(i));
       F_attractive_msg.data.push_back(F_attractive(i));
       F_total_msg.data.push_back(F_total(i));
-      err_msg.data.push_back(x_err_(i));
+      err_msg.data.push_back(x_err_msg(i));
     }
 
           // set controls for joints
@@ -666,7 +675,8 @@ namespace desperate_housewife
     for (int i = 0; i < N; i++)
     {
       temp = weights(i)*((q(i) - joint_limits_.center(i))/(joint_limits_.max(i) - joint_limits_.min(i)));
-      sum += temp*temp;
+      // sum += temp*temp;
+      sum += temp;
     }
 
     sum /= 2*N;

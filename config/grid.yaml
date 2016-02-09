@@ -1,5 +1,5 @@
-PotentialFieldControl/obstacle_list: /left_arm/PotentialFieldControl/obstacle_pose_left
-PotentialFieldControl/obstacle_list: /right_arm/PotentialFieldControl/obstacle_pose_right
+PotentialFieldControl/obstacle_list: /left_arm/PotentialFieldControl/obstacle
+PotentialFieldControl/obstacle_list: /right_arm/PotentialFieldControl/obstacle
 root_name: world
 tip_name: right_hand_palm_ref_link
 topic_desired_reference: desired_reference

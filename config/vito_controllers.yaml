@@ -81,7 +81,7 @@ right_arm:
     enable_joint_limits_avoidance: true
     enable_obstacle_avoidance: true
     enable_attractive_field: true
-    enable_null_space: true
+    enable_null_space: false
 
 right_hand:
   joint_state_controller:

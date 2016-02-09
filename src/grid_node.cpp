@@ -6,7 +6,7 @@ grid::grid()
     sub_grid_ = nh.subscribe("gridspace", 1, &grid::gridspace, this);
     // vis_pub = nh.advertise<visualization_msgs::Marker>( "visualization_marker", 1 );
     vis_pub = nh.advertise<visualization_msgs::MarkerArray>( "visualization_marker", 1 );
-    nh.param<std::string>("PotentialFieldControl/obstacle_list" , obstacle_avoidance, "/right_arm/PotentialFieldControl/obstacles");
+    nh.param<std::string>("topic_obstacle" , obstacle_avoidance, "obstacles");
     obstacles_subscribe_ = nh.subscribe(obstacle_avoidance.c_str(), 1, &grid::InfoGeometry, this);
     pfc.load_parameters(nh);
 }
@@ -17,7 +17,7 @@ void grid::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstP
       Object_height.clear();
       Object_position.clear();
    
-      std::cout<<"msg->geometries.size(): "<<msg->geometries.size()<<std::endl;
+      // std::cout<<"msg->geometries.size(): "<<msg->geometries.size()<<std::endl;
       //get info for calculates objects surface
       for(unsigned int i=0; i < msg->geometries.size(); i++)
       {
@@ -28,7 +28,7 @@ void grid::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstP
         tf::poseMsgToKDL(msg->geometries[i].pose, frame_obj);
         Object_position.push_back(frame_obj); 
       }
-
+      ROS_INFO("Considering %ld Obstacles", msg->geometries.size());
 }
 
 
