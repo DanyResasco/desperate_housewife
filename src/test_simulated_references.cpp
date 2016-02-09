@@ -41,6 +41,8 @@ void SimulatedReferences::goNewPose(geometry_msgs::Pose pose)
     tf::Transform tfHandTrasform1;    
     tf::poseMsgToTF( pose, tfHandTrasform1);    
     tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform1, ros::Time::now(),  "world", "new_desired_pose"));
+    ROS_INFO("Going To Pose: [Position: x: %f, y: %f, z: %f] [Orientation x: %f, y: %f, z: %f w: %f]", pose.position.x,
+    pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
 
     return;
 }

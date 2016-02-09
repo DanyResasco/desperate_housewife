@@ -53,125 +53,20 @@ namespace desperate_housewife
 		void starting(const ros::Time& time);
 		void update(const ros::Time& time, const ros::Duration& period);
 		void command(const desperate_housewife::handPoseSingle::ConstPtr& msg);
+		void load_parameters(ros::NodeHandle &n);
+		Eigen::Matrix<double,6,1> GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial , double influence);
+		Eigen::Matrix<double,6,1> GetRepulsiveForce(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height);
 		// void setTreshold(double tresholdin){treshold_influence=tresholdin;}
 		// void setNi(double Niin){Ni_=Niin;}
-
-		
-		/** Function: task_objective_function
-		* input: position 
-		* output: double
-		* Description: with function calculates the position more distance than robot's limits
-		*/
-		double task_objective_function(KDL::JntArray q);
-
-
-		/** Function: GetRepulsiveForce
-		* input: position of all joint
-		* output: force repulsive 
-		* Description: this function calculates the repulsive force between robot arm and object
-		*/
-		// Eigen::Matrix<double,7,1> GetRepulsiveForce(std::vector<KDL::Frame> &Pos_now);
-		
-		/** Caalback: InfoGeometry
-		* input: desperate message with obstacle information
-		* Description: callback that save the obstacle position
-		*/
-		void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
-		
-		/** Function: RepulsiveWithTable
-		* input: position of all joint
-		* output: force repulsive 
-		* Description: this function calculates the repulsive force between robot arm and table
-		*/
-		 // std::pair<Eigen::Matrix<double,6,1>, double> RepulsiveWithTable(std::vector<double> distance_local_obj);
-	  Eigen::Matrix<double,7,1> RepulsiveWithTable();
-
-	  Eigen::Matrix<double,7,1>  GetRepulsiveWithObstacle();
-		
-		
-		/** Caalback: InfoOBj
-		* input: desperate message with information about obstacle to remove
-		* Description: callback that save the obstacle position
-		*/
-		// void InfoOBj( const desperate_housewife::fittedGeometriesSingle::ConstPtr& obj_rem);
-		
-		/** Caalback: set_gains
-		* input: ros message
-		* Description: callback that change inline the gains
-		*/
-		void set_gains(const std_msgs::Float64MultiArray::ConstPtr &msg);
-
-		/** Caalback: command_start
-		* input: ros message
-		* Description: callback for start the code with real robot
-		*/
-		void command_start(const std_msgs::Bool::ConstPtr& msg);
-		
-
-		/** Function: PoseDesiredInterpolation
-		* input: desired pose
-		* Description: this function save the position of endeffector, desired pose, and updaes interpolate times when msg arrived
-		*/
-		void PoseDesiredInterpolation(KDL::Frame frame_des_);
-
-		/** Function: GetPartialDerivate
-		* input: object frame, link position, object radius and height 
-		* output: object derivate
-		* Description: calculates the object derivate in cylinder frame 
-		*/
-		Eigen::Vector3d GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height);
-		
-		/** Function: GetFIRAS
-		* input: min distance, object derivate, influence of repulsive field
-		* output: repulsive forces
-		* Description: calculates the repulsive forces  like article O.Khatib 
-		*/
-		Eigen::Matrix<double,6,1> GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial , double influence);
-
-		/** Function: GetMinDistance
-		* input: vecotr of distance, influence of repulsive field
-		* output: vector with data[0] information if there is a link with distance minor tha influnce, data[1] the minor distance, data[2] index of vector
-		* Description: return the minor distance from a input vector
-		*/
-		std::vector<double> GetMinDistance(std::vector<double> distance_local_obj,  double influence );
-		
-		/** Function: GetRepulsiveForce
-		* input: vector with the interested point, object position, influence of repulsive field, object radius and height
-		* output: repulsive force and the index for the jacobian
-		* Description: functions tha call the funciont for calculates the repulsive forces 
-		*/
-		// std::pair<Eigen::Matrix<double,6,1>, double> GetRepulsiveForce(std::vector<KDL::Vector> &point_, double influence, KDL::Frame &Object_pos, double radius, double height);
-		
-		Eigen::Matrix<double,6,1> GetRepulsiveForce(KDL::Vector &point_, double influence, KDL::Frame &Object_pos, double radius, double height);
-		Eigen::Matrix<double,6,1> GetRepulsiveForce(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height);
-
-
-		// void SeeMarker(KDL::Frame &Pos, std::string obst_name);
-
-		/** Function: VelocityLimit
-		* input: vector with the interested point, object position, influence of repulsive field, object radius and height
-		* output: repulsive force and the index for the jacobian
-		* Description: functions tha call the funciont for calculates the repulsive forces 
-		*/
-		double VelocityLimit(KDL::Vector &x_dot_d);
-
-		Eigen::Matrix<double,6,6> getAdjointT( KDL::Frame Frame_in);
-		Eigen::Matrix<double,3,3> getVectorHat(Eigen::Matrix<double,3,1> vector_in);
-		Eigen::Matrix<double,6,1> GetRepulsiveForceTable(KDL::Frame &T_in, double influence);
-		KDL::JntArray JointLimitAvoidance(KDL::JntArray q);
-		Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension = 6);
-		void startControllerCallBack(const std_msgs::Bool::ConstPtr& msg);
-		void load_parameters(ros::NodeHandle &n);
-		bool loadParametersCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 		
 	private:
-		ros::Subscriber sub_command_, sub_command_start;
-		ros::Publisher pub_error_,  pub_tau_;
-		ros::Publisher pub_pose_;
-		tf::TransformBroadcaster tf_now_hand;
+		// ros::Subscriber sub_command_, sub_command_start;
+		// ros::Publisher pub_error_,  pub_tau_;
+		// ros::Publisher pub_pose_;
+		// tf::TransformBroadcaster tf_now_hand;
 
 		// std::stringstream sstr_;
-		std::string desired_reference_topic, desired_hand_name, desired_hand_topic;
+		// std::string desired_reference_topic, desired_hand_name, desired_hand_topic;
         
 		KDL::JntArray qdot_last_;
 
@@ -186,7 +81,7 @@ namespace desperate_housewife
 
 		KDL::Twist x_err_,x_err_last;	/*!error*/
 
-		KDL::JntArray Kp_,Kd_,Ki_;	/*!gains*/
+		// KDL::JntArray Kp_,Kd_,Ki_;	/*!gains*/
 
 		KDL::JntArray tau_;	/*!tau*/
 
@@ -225,19 +120,19 @@ namespace desperate_housewife
 		// double V_max_kuka = 1.5;
 		std::vector<KDL::Frame> x_chain;	/*!14 is soft_hand (end_effector)*/
 		
-		ros::Subscriber obstacles_subscribe_, obstacles_remove_sub, sub_gains_;
+		// ros::Subscriber obstacles_subscribe_, obstacles_remove_sub, sub_gains_;
 		std::vector<double> Object_radius;
 		std::vector<double> Object_height;
 		std::vector<KDL::Frame> Object_position;
-		ros::Publisher hand_publisher_ ,pub_xdes_;
-		std::vector<KDL::Jacobian> JAC_repulsive;	/*!vector with all jabobian*/
-		std::string obstacle_remove_topic, obstacle_avoidance;
-		desperate_housewife::Error_msg error_pose_trajectory;
-		int ObjOrObst;
-		std::string tip_name, object_names_,set_gains_;
-		std::string error_topic;
-		ros::Publisher pub_error_right, pub_error_left,pub_qdot_;
-		std::string tau_commad;
+		// ros::Publisher hand_publisher_ ,pub_xdes_;
+		// std::vector<KDL::Jacobian> JAC_repulsive;	!vector with all jabobian
+		// std::string obstacle_remove_topic, obstacle_avoidance;
+		// desperate_housewife::Error_msg error_pose_trajectory;
+		// int ObjOrObst;
+		// std::string tip_name, object_names_,set_gains_;
+		// std::string error_topic;
+		// ros::Publisher pub_error_right, pub_error_left,pub_qdot_;
+		// std::string tau_commad;
 
 		/*!information for message*/
 		// int erro_arr, err_obj, err_home ;
@@ -263,7 +158,7 @@ namespace desperate_housewife
 		// std::vector<KDL::Frame> test_pos_jerk;
 		// Eigen::Matrix<double,6,1> Force_attractive_last,  Force_repulsive_last;
 		// Eigen::Matrix<double,7,1> Force_total_rep_last;
-		bool switch_trajectory;
+		// bool switch_trajectory;
 		double Time_traj, Time_traj_rep;
 		// KDL::JntArray tau_prev_;
 		// ros::Subscriber sub_grid_;
@@ -271,8 +166,8 @@ namespace desperate_housewife
 
 		// std::string point_;
 		// ros::Subscriber sub_force_point_;
-		ros::Publisher vis_pub,pub_Fr_,pub_velocity_,pub_error_int_;
-		tf::TransformBroadcaster tf_geometriesTransformations_;
+		// ros::Publisher vis_pub,pub_Fr_,pub_velocity_,pub_error_int_;
+		// tf::TransformBroadcaster tf_geometriesTransformations_;
 		KDL::Twist x_err_integral;
 
 		// double Time_log;
@@ -291,7 +186,7 @@ namespace desperate_housewife
 			std::vector<std::string> pf_list_of_links;
 			std::vector<KDL::Chain> pf_list_of_chains;
 			std::vector<KDL::ChainFkSolverPos_recursive> pf_list_of_fk;
-			bool enable_obstacle_avoidance, enable_joint_limits_avoidance, enable_attractive_field;
+			bool enable_obstacle_avoidance, enable_joint_limits_avoidance, enable_attractive_field, enable_null_space;
 
 		} parameters_;
 
@@ -304,6 +199,115 @@ namespace desperate_housewife
 
 		Eigen::MatrixXd F_repulsive, F_attractive, F_total;
 
+		/** Function: task_objective_function
+		* input: position 
+		* output: double
+		* Description: with function calculates the position more distance than robot's limits
+		*/
+		// double task_objective_function(KDL::JntArray q);
+
+
+		/** Function: GetRepulsiveForce
+		* input: position of all joint
+		* output: force repulsive 
+		* Description: this function calculates the repulsive force between robot arm and object
+		*/
+		// Eigen::Matrix<double,7,1> GetRepulsiveForce(std::vector<KDL::Frame> &Pos_now);
+		
+		/** Caalback: InfoGeometry
+		* input: desperate message with obstacle information
+		* Description: callback that save the obstacle position
+		*/
+		void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
+		
+		/** Function: RepulsiveWithTable
+		* input: position of all joint
+		* output: force repulsive 
+		* Description: this function calculates the repulsive force between robot arm and table
+		*/
+		 // std::pair<Eigen::Matrix<double,6,1>, double> RepulsiveWithTable(std::vector<double> distance_local_obj);
+	  Eigen::Matrix<double,7,1> RepulsiveWithTable();
+
+	  Eigen::Matrix<double,7,1>  GetRepulsiveWithObstacle();
+		
+		
+		/** Caalback: InfoOBj
+		* input: desperate message with information about obstacle to remove
+		* Description: callback that save the obstacle position
+		*/
+		// void InfoOBj( const desperate_housewife::fittedGeometriesSingle::ConstPtr& obj_rem);
+		
+		/** Caalback: set_gains
+		* input: ros message
+		* Description: callback that change inline the gains
+		*/
+		// void set_gains(const std_msgs::Float64MultiArray::ConstPtr &msg);
+
+		/** Caalback: command_start
+		* input: ros message
+		* Description: callback for start the code with real robot
+		*/
+		// void command_start(const std_msgs::Bool::ConstPtr& msg);
+		
+
+		/** Function: PoseDesiredInterpolation
+		* input: desired pose
+		* Description: this function save the position of endeffector, desired pose, and updaes interpolate times when msg arrived
+		*/
+		void PoseDesiredInterpolation(KDL::Frame frame_des_);
+
+		/** Function: GetPartialDerivate
+		* input: object frame, link position, object radius and height 
+		* output: object derivate
+		* Description: calculates the object derivate in cylinder frame 
+		*/
+		Eigen::Vector3d GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height);
+		
+		/** Function: GetFIRAS
+		* input: min distance, object derivate, influence of repulsive field
+		* output: repulsive forces
+		* Description: calculates the repulsive forces  like article O.Khatib 
+		*/
+		// Eigen::Matrix<double,6,1> GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial , double influence);
+
+		/** Function: GetMinDistance
+		* input: vecotr of distance, influence of repulsive field
+		* output: vector with data[0] information if there is a link with distance minor tha influnce, data[1] the minor distance, data[2] index of vector
+		* Description: return the minor distance from a input vector
+		*/
+		std::vector<double> GetMinDistance(std::vector<double> distance_local_obj,  double influence );
+		
+		/** Function: GetRepulsiveForce
+		* input: vector with the interested point, object position, influence of repulsive field, object radius and height
+		* output: repulsive force and the index for the jacobian
+		* Description: functions tha call the funciont for calculates the repulsive forces 
+		*/
+		// std::pair<Eigen::Matrix<double,6,1>, double> GetRepulsiveForce(std::vector<KDL::Vector> &point_, double influence, KDL::Frame &Object_pos, double radius, double height);
+		
+		// Eigen::Matrix<double,6,1> GetRepulsiveForce(KDL::Vector &point_, double influence, KDL::Frame &Object_pos, double radius, double height);
+		
+
+
+		// void SeeMarker(KDL::Frame &Pos, std::string obst_name);
+
+		/** Function: VelocityLimit
+		* input: vector with the interested point, object position, influence of repulsive field, object radius and height
+		* output: repulsive force and the index for the jacobian
+		* Description: functions tha call the funciont for calculates the repulsive forces 
+		*/
+		double VelocityLimit(KDL::Vector &x_dot_d);
+
+		Eigen::Matrix<double,6,6> getAdjointT( KDL::Frame Frame_in);
+		Eigen::Matrix<double,3,3> getVectorHat(Eigen::Matrix<double,3,1> vector_in);
+		Eigen::Matrix<double,6,1> GetRepulsiveForceTable(KDL::Frame &T_in, double influence);
+		KDL::JntArray JointLimitAvoidance(KDL::JntArray q);
+		Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension = 6);
+		void startControllerCallBack(const std_msgs::Bool::ConstPtr& msg);
+		
+		bool loadParametersCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+
+		Eigen::Matrix<double, 7, 1> task_objective_function(KDL::JntArray q);
+
 	};
 
 	/** Function: FromKdlToEigen
@@ -312,6 +316,8 @@ namespace desperate_housewife
 		* Description: functions tha transform kdl frame into eigen matrix
 	*/
 	Eigen::Matrix<double,4,4>  FromKdlToEigen(KDL::Frame &T_v_o);
+
+
 
 
 

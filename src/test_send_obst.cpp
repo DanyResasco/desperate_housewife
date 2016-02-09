@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 sendObj::sendObj()
 {
 	sub_grid_ = nh.subscribe("send_obst", 1, &sendObj::obst, this);
-	nh.param<std::string>("/PotentialFieldControl/obstacle_list_right", obstacles_topic_right, "/right_arm/PotentialFieldControl/obstacle_pose_right");
+	nh.param<std::string>("/PotentialFieldControl/obstacle_list_right", obstacles_topic_right, "/right_arm/PotentialFieldControl/obstacles");
   geometries_publisher_ = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_right.c_str(),1);
   marker_publisher_ = nh.advertise<visualization_msgs::Marker >( "frame_obst", 1 );
 }

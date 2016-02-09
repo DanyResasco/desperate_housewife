@@ -18,6 +18,7 @@
       count = 0;
       pub_Fa_ = nh.advertise<std_msgs::Float64MultiArray>("Factrative_commad", 1000);
       pub_Fr_ = nh.advertise<std_msgs::Float64MultiArray>("Frepulsive_commad", 1000);
+      pfc.load_parameters(nh);
   }
 
   void ball::ballInfo(const std_msgs::Float64MultiArray::ConstPtr &msg)
@@ -246,10 +247,15 @@
           pos.push_back(ball_pos_kdl);
           // std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
           Eigen::Matrix<double,6,1> ForceAndIndex;
-          pfc.setTreshold(influence);
-          pfc.setNi(1.0);
+          // pfc.setTreshold(influence);
+          // pfc.setNi(1.0);
 
-          ForceAndIndex = pfc.GetRepulsiveForce(ball_pos_kdl, influence, Object_position[i], Object_radius[i], Object_height[i] );
+          KDL::Frame temp_frame;
+          temp_frame.p.data[0] = ball_pos_kdl.data[0];
+          temp_frame.p.data[1] = ball_pos_kdl.data[1];
+          temp_frame.p.data[2] = ball_pos_kdl.data[2];
+
+          ForceAndIndex = pfc.GetRepulsiveForce(temp_frame, influence, Object_position[i], Object_radius[i], Object_height[i] );
           F_rep.push_back(ForceAndIndex);  
           // ForceAndIndex = pfc.GetRepulsiveForce(pos, influence, Object_position[i], Object_radius[i], Object_height[i]);
           // F_rep.push_back(ForceAndIndex.first);  

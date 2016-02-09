@@ -6,9 +6,9 @@ grid::grid()
     sub_grid_ = nh.subscribe("gridspace", 1, &grid::gridspace, this);
     // vis_pub = nh.advertise<visualization_msgs::Marker>( "visualization_marker", 1 );
     vis_pub = nh.advertise<visualization_msgs::MarkerArray>( "visualization_marker", 1 );
-    nh.param<std::string>("PotentialFieldControl/obstacle_list" , obstacle_avoidance, "/right_arm/PotentialFieldControl/obstacle_pose_right");
+    nh.param<std::string>("PotentialFieldControl/obstacle_list" , obstacle_avoidance, "/right_arm/PotentialFieldControl/obstacles");
     obstacles_subscribe_ = nh.subscribe(obstacle_avoidance.c_str(), 1, &grid::InfoGeometry, this);
-  
+    pfc.load_parameters(nh);
 }
 
 void grid::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
@@ -163,10 +163,14 @@ void grid::GetForceAndDraw(KDL::Vector &point_pos, int num)
           // std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
          
           Eigen::Matrix<double,6,1> ForceAndIndex;
-          pfc.setTreshold(influence);
-          pfc.setNi(1.0);
+          // pfc.setTreshold(influence);
+          // pfc.setNi(1.0);
+          KDL::Frame temp_frame;
+          temp_frame.p.data[0] = point_pos.x();
+          temp_frame.p.data[1] = point_pos.y();
+          temp_frame.p.data[2] = point_pos.z();
 
-          ForceAndIndex = pfc.GetRepulsiveForce(point_pos, influence, Object_position[i], Object_radius[i], Object_height[i] );
+          ForceAndIndex = pfc.GetRepulsiveForce(temp_frame, influence, Object_position[i], Object_radius[i], Object_height[i] );
           F_rep.push_back(ForceAndIndex);  
       }
   

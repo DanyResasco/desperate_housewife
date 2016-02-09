@@ -11,7 +11,7 @@ Panels:
         - /TF1
         - /TF1/Frames1
         - /Marker2
-        - /WrenchStamped1
+        - /Marker3
       Splitter Ratio: 0.683794
     Tree Height: 463
   - Class: rviz/Selection
@@ -790,7 +790,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: visualization_marker
+      Marker Topic: /frame_obst
       Name: Marker
       Namespaces:
         {}
@@ -807,6 +807,14 @@ Visualization Manager:
       Topic: /right_arm/PotentialFieldControl/total_end_effector_wrench
       Torque Arrow Scale: 1
       Torque Color: 204; 204; 51
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /frame_obst
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
@@ -832,7 +840,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 2.60824
+      Distance: 5.1482
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
