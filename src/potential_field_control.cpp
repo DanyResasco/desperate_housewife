@@ -165,7 +165,7 @@ namespace desperate_housewife
           //error total
       KDL::Twist x_err_int;  
 
-      x_err_int = diff(x_, x_des_int);
+      // x_err_int = diff(x_, x_des_int);
       // tf::twistKDLToMsg (x_err_int,  error_pose_trajectory.error_);
       // time_inter_jerk = time_inter;
       time_inter = time_inter + period.toSec();
@@ -479,7 +479,6 @@ namespace desperate_housewife
     // double V = parameters_.pf_repulsive_gain/(min_distance * min_distance); // this works
     double V = parameters_.pf_repulsive_gain * ( (1.0 / min_distance) -
                                                  (1.0 / influence) )  * (1.0 / (min_distance * min_distance));
-    // ROS_INFO("FIRAS, distance = %f, V = %f", min_distance, V);
     Force(0) = V * distance_der_partial[0];
     Force(1) = V * distance_der_partial[1];
     Force(2) = V * distance_der_partial[2];

@@ -9,6 +9,7 @@ grid::grid()
     nh.param<std::string>("topic_obstacle" , obstacle_avoidance, "obstacles");
     obstacles_subscribe_ = nh.subscribe(obstacle_avoidance.c_str(), 1, &grid::InfoGeometry, this);
     pfc.load_parameters(nh);
+
 }
 
 void grid::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
@@ -40,6 +41,11 @@ void grid::gridspace(const std_msgs::Float64MultiArray::ConstPtr &msg)
     vect_pos.data[0] = 0;
     vect_pos.data[1] = 0;
     vect_pos.data[2] = 0;
+
+    Force_norm.clear();
+    Force.clear();
+    Total_point.clear();
+    vect_marker.markers.clear();
       
     for( double i = msg->data[0]; i <= msg->data[1]; i = i + msg->data[2] )
     {
@@ -57,16 +63,26 @@ void grid::gridspace(const std_msgs::Float64MultiArray::ConstPtr &msg)
       }
     }
     std::pair<double,double> MinAndMAx;
-    MinAndMAx = GetMinAndMax(Force_norm);
-    // std::cout<<"Force.size(): "<<Force.size()<<std::endl;
+
+      // ROS_INFO("num points tried: %d", count);
+    if (Force.size()>0)
+    {
+      // ROS_INFO("Force_norm.size(): %ld", Force_norm.size());
+      MinAndMAx = GetMinAndMax(Force_norm);
+    }
+    // ROS_INFO("Force.size(): %ld", Force.size());
     for(unsigned int i=0; i< Force.size(); i++)
     {
       DrawArrow( Force[i], Total_point[i], i, MinAndMAx.first, MinAndMAx.second  );
     }
 
-    
-    vis_pub.publish( vect_marker );
-    std::cout<<"finito"<<std::endl;
+    if (vect_marker.markers.size() > 0)
+    {
+      // ROS_INFO("vect_marker.size(): %ld", vect_marker.markers.size());
+      vis_pub.publish( vect_marker );
+    }
+    ros::spinOnce();
+    ROS_INFO("finito");
 }
 
 void grid::DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point, int K, double Fmin, double Fmax )
@@ -99,6 +115,7 @@ void grid::DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point
     marker.scale.y = 0.02;
     marker.scale.z = 0.02;
 
+    // ROS_INFO("marker %d, r = %f", K, ((gridspace_Force.Norm()-Fmin)/(Fmax-Fmin)) );
     marker.color.r = ((gridspace_Force.Norm()-Fmin)/(Fmax-Fmin));
     marker.color.g = 1 - marker.color.r ;
     marker.color.b = 0.0f;
@@ -124,8 +141,8 @@ std::pair<double,double> grid::GetMinAndMax(std::vector<double> &field)
       MinAndMAx.first = *std::min_element(std::begin(field), std::end(field));
       MinAndMAx.second = *std::max_element(std::begin(field), std::end(field));
 
-      std::cout<<"MinAndMAx.first : "<<MinAndMAx.first <<std::endl;
-      std::cout<<"MinAndMAx.second : "<<MinAndMAx.second <<std::endl;
+      ROS_INFO("MinAndMAx.first : %f",MinAndMAx.first);
+      ROS_INFO("MinAndMAx.second : %f",MinAndMAx.second);
 
       return MinAndMAx;
 }
@@ -182,17 +199,23 @@ void grid::GetForceAndDraw(KDL::Vector &point_pos, int num)
       }
     
       //repulsive with table
-      Eigen::Matrix<double,6,1> ForceAndIndex_table;
+      Eigen::Matrix<double,6,1> ForceAndIndex_table = Eigen::Matrix<double,6,1>::Zero();
       KDL::Vector Table_position(0,0,0.15);  
       // std::vector<double> dist;
       // dist.push_back(- Table_position.z() + point_pos.z() );
 
-      double distance_ = ( -Table_position.z() + point_pos.z() ); //considered only the z position
+      double distance_ = std::abs( -Table_position.z() + point_pos.z() ); //considered only the z position
       double Influence_table = 0.15;
       if(distance_ <= Influence_table )
       {
           Eigen::Vector3d distance_der_partial(0,0,1);  
-          ForceAndIndex_table = pfc.GetFIRAS(distance_, distance_der_partial, Influence_table);
+          ForceAndIndex_table = pfc.GetFIRAS( distance_, distance_der_partial, Influence_table );
+          // ROS_INFO("Point x: %f, y: %f, z: %f, Force x: %f, y: %f, z: %f", point_pos.x(), point_pos.y(), point_pos.z(),
+          //                                    ForceAndIndex_table[0], ForceAndIndex_table[1], ForceAndIndex_table[2]);
+      }
+      else
+      {
+        // ROS_INFO("Point x: %f, y: %f, z: %f out of field effect", point_pos.x(), point_pos.y(), point_pos.z());
       }
       
 
