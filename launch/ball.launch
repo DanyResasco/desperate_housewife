@@ -1,5 +1,5 @@
 <launch>
-
+    <rosparam command="load" file="$(find desperate_housewife)/config/grid.yaml" />
 	  <include file="$(find desperate_housewife)/launch/ball_main.launch">
   	 
   	

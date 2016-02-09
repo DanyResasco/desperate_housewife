@@ -22,11 +22,13 @@
       //ball   
       sub_grid_ = nh.subscribe("SphereInfo", 1, &ball::ballInfo, this);
       vis_pub = nh.advertise<visualization_msgs::Marker>( "visualization_marker", 1 );
-      nh.param<std::string>("obstacle_list" , obstacle_avoidance, "obstacle_pose");
+      nh.param<std::string>("topic_obstacle" , obstacle_avoidance, "obstacles");
       obstacles_subscribe_ = nh.subscribe(obstacle_avoidance.c_str(), 1, &ball::InfoGeometry, this); 
       Force_attractive = Eigen::Matrix<double,6,1>::Zero();
       F_repulsive = Eigen::Matrix<double,6,1>::Zero();
       x_dot = Eigen::Matrix<double,6,1>::Zero();
+      pfc.load_parameters(nh);
+      ROS_INFO("ball node started");
       // pos = Eigen::Matrix<double,6,1>::Zero();   
   }
 
@@ -121,6 +123,8 @@
         tf::poseMsgToKDL(msg->geometries[i].pose, frame_obj);
         Object_position.push_back(frame_obj); 
       }
+
+      ROS_INFO("Working with %ld cylinders", msg->geometries.size());
       
       DrawCylinder();
   }

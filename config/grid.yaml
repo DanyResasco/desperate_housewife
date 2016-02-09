@@ -6,7 +6,7 @@ topic_desired_reference: desired_reference
 topic_obstacle: obstacles
 time_interpolation: 5
 max_tau_percentage: 0.5
-pf_repulsive_gain: 0.1
+pf_repulsive_gain: 1
 pf_dist_to_obstacles: 0.15
 pf_dist_to_table: 0.15
 k_p: [110.0, 110.0, 110.0, 110.0, 110.0, 110.0]

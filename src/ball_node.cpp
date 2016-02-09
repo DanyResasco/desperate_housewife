@@ -9,7 +9,7 @@
       sub_grid_ = nh.subscribe("SphereInfo", 1, &ball::ballInfo, this);
       vis_pub = nh.advertise<visualization_msgs::Marker>( "visualization_marker", 1 );
       marker_publisher_ = nh.advertise<visualization_msgs::Marker>( "visualization_cylinder", 1 );
-       nh.param<std::string>("PotentialFieldControl/obstacle_list" , obstacle_avoidance, "/right_arm/PotentialFieldControl/obstacle_pose_right");
+       nh.param<std::string>("topic_obstacle" , obstacle_avoidance, "obstacles");
       obstacles_subscribe_ = nh.subscribe(obstacle_avoidance.c_str(), 1, &ball::InfoGeometry, this); 
       Force_attractive = Eigen::Matrix<double,6,1>::Zero();
       F_repulsive = Eigen::Matrix<double,6,1>::Zero();
@@ -155,6 +155,9 @@
       }
       
       DrawCylinder();
+      ROS_INFO("Working with %ld cylinders", msg->geometries.size());
+      
+
   }
 
   void ball::DrawCylinder()
@@ -251,9 +254,9 @@
           // pfc.setNi(1.0);
 
           KDL::Frame temp_frame;
-          temp_frame.p.data[0] = ball_pos_kdl.data[0];
-          temp_frame.p.data[1] = ball_pos_kdl.data[1];
-          temp_frame.p.data[2] = ball_pos_kdl.data[2];
+          temp_frame.p.data[0] = point_pos(0);
+          temp_frame.p.data[1] = point_pos(1);
+          temp_frame.p.data[2] = point_pos(2);
 
           ForceAndIndex = pfc.GetRepulsiveForce(temp_frame, influence, Object_position[i], Object_radius[i], Object_height[i] );
           F_rep.push_back(ForceAndIndex);  

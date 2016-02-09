@@ -469,7 +469,8 @@ namespace desperate_housewife
     Eigen::Matrix<double,6,1> force_local_link = Eigen::Matrix<double,6,1>::Zero();
     force_local_link = getAdjointT( T_in.Inverse() * Object_pos) * ForceAndIndex;
 
-    return force_local_link; 
+    // return force_local_link; 
+    return ForceAndIndex; 
   }
 
   Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial, double influence)
