@@ -90,6 +90,7 @@ namespace desperate_housewife
     first_step_ = 1;
 
     SetToZero(x_err_integral);
+    x_err_.vel.data[0] = 10000.0;
   }
 
   void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& period)
@@ -274,7 +275,7 @@ namespace desperate_housewife
 
       if (parameters_.enable_null_space)
       {
-        tau_.data += N_trans_* task_objective_function( joint_msr_states_.q );
+        tau_.data += N_trans_* .01 * task_objective_function( joint_msr_states_.q );
       }
 
           // saving J_ and phi of the last iteration
@@ -572,14 +573,14 @@ namespace desperate_housewife
     nh_.param<bool>("enable_attractive_field", parameters_.enable_attractive_field ,true);
     nh_.param<bool>("enable_null_space", parameters_.enable_null_space ,true);
               // ROS_DEBUG("topic_desired_reference: %s", desired_reference_topic.c_str());
-    ROS_INFO("topic_obstacle: %s", topic_obstacle_avoidance.c_str());
-    ROS_INFO("link_tip_name: %s", parameters_.tip_name.c_str());
-    ROS_INFO("link_root_name: %s", parameters_.root_name.c_str());
-    ROS_INFO("time_interpolation: %f", parameters_.max_time_interpolation);
-    ROS_INFO("max_tua_percentage: %f", parameters_.max_tau_percentage);
-    ROS_INFO("pf_repulsive_gain: %f", parameters_.pf_repulsive_gain);
-    ROS_INFO("pf_dist_to_obstacles: %f", parameters_.pf_dist_to_obstacles);
-    ROS_INFO("pf_dist_to_table: %f", parameters_.pf_dist_to_table);
+    ROS_DEBUG("topic_obstacle: %s", topic_obstacle_avoidance.c_str());
+    ROS_DEBUG("link_tip_name: %s", parameters_.tip_name.c_str());
+    ROS_DEBUG("link_root_name: %s", parameters_.root_name.c_str());
+    ROS_DEBUG("time_interpolation: %f", parameters_.max_time_interpolation);
+    ROS_DEBUG("max_tua_percentage: %f", parameters_.max_tau_percentage);
+    ROS_DEBUG("pf_repulsive_gain: %f", parameters_.pf_repulsive_gain);
+    ROS_DEBUG("pf_dist_to_obstacles: %f", parameters_.pf_dist_to_obstacles);
+    ROS_DEBUG("pf_dist_to_table: %f", parameters_.pf_dist_to_table);
 
     XmlRpc::XmlRpcValue my_list;
     nh_.getParam("links_with_potential_field", my_list);
@@ -593,7 +594,7 @@ namespace desperate_housewife
     {
       ROS_ASSERT(my_list[i].getType() == XmlRpc::XmlRpcValue::TypeString);
       parameters_.pf_list_of_links.push_back(static_cast<std::string>(my_list[i]).c_str());
-      ROS_INFO("Link %s defined as collision point", static_cast<std::string>(my_list[i]).c_str());
+      ROS_DEBUG("Link %s defined as collision point", static_cast<std::string>(my_list[i]).c_str());
     }
 
     for (unsigned int i = 0; i < parameters_.pf_list_of_links.size(); ++i)
@@ -608,7 +609,7 @@ namespace desperate_housewife
       {
         parameters_.pf_list_of_chains.push_back(chain_tmp);
         parameters_.pf_list_of_fk.push_back(KDL::ChainFkSolverPos_recursive(chain_tmp));
-        ROS_INFO("Chain from %s to %s correctly initialized. Num oj Joints = %d", parameters_.root_name.c_str(), parameters_.pf_list_of_links[i].c_str(),
+        ROS_DEBUG("Chain from %s to %s correctly initialized. Num oj Joints = %d", parameters_.root_name.c_str(), parameters_.pf_list_of_links[i].c_str(),
                                                                                   chain_tmp.getNrOfJoints());
       }
     }
@@ -620,7 +621,7 @@ namespace desperate_housewife
     parameters_.k_d = getGainMatrix(std::string("k_d"), n);
     parameters_.k_i = getGainMatrix(std::string("k_i"), n);
 
-    ROS_INFO("Parameters loaded");
+    ROS_DEBUG("Parameters loaded");
     return;
   }
 
@@ -652,38 +653,51 @@ namespace desperate_housewife
     return true;
   }
 
-  // double PotentialFieldControl::task_objective_function(KDL::JntArray q)
-  // {
-  //   double sum = 0;
-  //   double temp;
-  //   int N = q.data.size();
-
-  //   for (int i = 0; i < N; i++)
-  //   {
-  //     temp = ((q(i) - joint_limits_.center(i))/(joint_limits_.max(i) - joint_limits_.min(i)));
-  //     sum += temp*temp;
-  //   }
-
-  //   sum /= 2*N;
-
-  //   return -sum;
-  // }
-
-
   Eigen::Matrix<double, 7, 1> PotentialFieldControl::task_objective_function(KDL::JntArray q)
   {
-    // double sum = 0;
-    // double temp;
+    double sum = 0;
+    double temp;
     int N = q.data.size();
 
-    Eigen::Matrix<double, 7, 1> temp =  Eigen::Matrix<double, 7, 1>::Zero();
+    Eigen::Matrix<double, 7, 1> tempret =  Eigen::Matrix<double, 7, 1>::Zero();
+    Eigen::Matrix<double, 7, 1> weights =  Eigen::Matrix<double, 7, 1>::Zero();
+    weights << 1, 1, 1, 1, .1, .1, .1;
 
     for (int i = 0; i < N; i++)
     {
-      temp(i) =   1 * ( 0  - q(i));
+      temp = weights(i)*((q(i) - joint_limits_.center(i))/(joint_limits_.max(i) - joint_limits_.min(i)));
+      sum += temp*temp;
     }
-    return .01 * temp;
+
+    sum /= 2*N;
+
+    for (int i = 0; i < N; i++)
+    {
+      tempret(i) = -sum;
+    }
+
+    return tempret;
+
   }
+
+
+  // Eigen::Matrix<double, 7, 1> PotentialFieldControl::task_objective_function(KDL::JntArray q)
+  // {
+  //   double sum = 0;
+  //   // double temp;
+  //   int N = q.data.size();
+
+    // Eigen::Matrix<double, 7, 1> temp =  Eigen::Matrix<double, 7, 1>::Zero();
+    // Eigen::Matrix<double, 7, 1> weights =  Eigen::Matrix<double, 7, 1>::Zero();
+  //   weights << 1, 1, 1, 1, .1, .1, .1;
+
+  //   for (int i = 0; i < N; i++)
+  //   {
+  //     temp(i) =   weights(i) * 1 * ( 0  - q(i));
+  //   }
+
+  //   return temp/N;
+  // }
 
 }
 

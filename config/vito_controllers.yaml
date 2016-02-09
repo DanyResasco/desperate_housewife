@@ -15,17 +15,26 @@ left_arm:
 
   PotentialFieldControl:
     type: desperate_housewife/PotentialFieldControl
-    root_name: vito_anchor
+    root_name: world
     tip_name: left_hand_palm_ref_link
-    desired_reference_topic: desired_hand_left_pose
-    obstacle_remove_topic: Reject_obstacle_list_left
-    obstacle_avoidance: obstacle_pose_left
-    set_gains_topic: set_gains_left
-    time_interp_desired: 5
-    percentage: 0.5
-    repulsive_gains: 0.1
-    repulsive_treshold: 1
-    Repulsive_table: 0.15
+    topic_desired_reference: desired_reference
+    topic_obstacle: obstacles
+    time_interpolation: 5
+    max_tau_percentage: 0.5
+    pf_repulsive_gain: 0.1
+    pf_dist_to_obstacles: 0.15
+    pf_dist_to_table: 0.15
+    k_p: [110.0, 110.0, 110.0, 110.0, 110.0, 110.0]
+    # k_d: [55.0, 55.0, 55.0, 55.0, 55.0, 55.0]
+    k_d: [10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
+    # k_i: [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
+    k_i: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    # links_with_potential_field: ['left_arm_4_link', 'left_arm_5_link', 'left_arm_6_link', 'left_arm_7_link', 'left_hand_palm_ref_link']
+    links_with_potential_field: ['left_arm_4_link', 'left_hand_palm_ref_link']
+    enable_joint_limits_avoidance: true
+    enable_obstacle_avoidance: true
+    enable_attractive_field: true
+    enable_null_space: true
 
 left_hand:
   joint_state_controller:
@@ -72,7 +81,7 @@ right_arm:
     enable_joint_limits_avoidance: true
     enable_obstacle_avoidance: true
     enable_attractive_field: true
-    enable_null_space: false
+    enable_null_space: true
 
 right_hand:
   joint_state_controller:
