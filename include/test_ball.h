@@ -53,12 +53,13 @@
       Eigen::Matrix<double,6,1> Force_attractive;
       Eigen::Matrix<double,6,1> x_dot;
       Eigen::Matrix<double,6,1> F_repulsive;
+      Eigen::Matrix<double,6,1> F_total;
       // KDL::Frame frame_des,frame_init;
       Eigen::Matrix<double,6,1> x_err_;
       // Eigen::Matrix<double,6,1> velocity,pos; 
       tf::TransformBroadcaster tf_geometriesTransformations_;
       int count;
-      ros::Publisher pub_Fa_, pub_Fr_;
+      ros::Publisher pub_Fa_, pub_Fr_, pub_Ft_;
       // bool arrived = false;
 
 

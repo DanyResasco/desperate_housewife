@@ -69,6 +69,7 @@ sendObj::sendObj()
 {
 	sub_grid_ = nh.subscribe("send_obst", 1, &sendObj::obst, this);
 	nh.param<std::string>("obstacles_to_pub", obstacles_topic_right, "obstacles");
+  ROS_INFO("Publishing on %s", obstacles_topic_right.c_str());
   geometries_publisher_ = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_right.c_str(),1);
   marker_publisher_ = nh.advertise<visualization_msgs::Marker >( "frame_obst", 1 );
 }
@@ -129,7 +130,7 @@ void sendObj::generateMarkerMessages( std::vector<KDL::Frame> &Obj_pose, std::ve
   for (unsigned int i = 0; i < Obj_pose.size(); ++i)
   {
     visualization_msgs::Marker marker;
-    marker.header.frame_id = "vito_anchor";
+    marker.header.frame_id = "world";
     marker.header.stamp = ros::Time();
     marker.ns = "";
     marker.id = i;
@@ -164,7 +165,7 @@ void sendObj::generateMarkerMessages( std::vector<KDL::Frame> &Obj_pose, std::ve
     geometry_msgs::Pose p;
     tf::poseKDLToMsg (Obj_pose[i], p );
     tf::poseMsgToTF( p, tfGeomTRansform );
-    tf_geometriesTransformations_.sendTransform( tf::StampedTransform( tfGeomTRansform, ros::Time::now(), "vito_anchor", obst_name.c_str()) );
+    tf_geometriesTransformations_.sendTransform( tf::StampedTransform( tfGeomTRansform, ros::Time::now(), "world", obst_name.c_str()) );
   }
 }
 

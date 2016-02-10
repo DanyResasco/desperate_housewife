@@ -232,7 +232,7 @@ namespace desperate_housewife
           F_table_base += (1.0/parameters_.pf_list_of_links.size())*Adjoint*F_table;
 
         }
-        F_repulsive  = F_table_base;
+        F_repulsive  = F_obj_base;
         // F_repulsive  = (F_table_base + F_obj_base);
       }
 
@@ -467,10 +467,11 @@ namespace desperate_housewife
     }
 
     Eigen::Matrix<double,6,1> force_local_link = Eigen::Matrix<double,6,1>::Zero();
-    force_local_link = getAdjointT( T_in.Inverse() * Object_pos) * ForceAndIndex;
+    // force_local_link = getAdjointT( T_in.Inverse() * Object_pos) * ForceAndIndex;
+    force_local_link = getAdjointT( T_in.Inverse() ) * ForceAndIndex;
 
-    // return force_local_link; 
-    return ForceAndIndex; 
+    return force_local_link; 
+    // return ForceAndIndex; 
   }
 
   Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial, double influence)
@@ -500,14 +501,15 @@ namespace desperate_housewife
 
     Eigen::Vector4d Point_o;
     Point_o = Tvo_eigen.inverse() * Point_v_eigen;
+    double n = 2; // n as in the paper should be in 4 but considering the shortest distance to obstacles. Here this is not being considered :( TODO
 
     Eigen::Vector4d distance_der_partial(0,0,0,0);
           // distance_der_partial = x^2/radius + y^2 / radius + 2*(z^2n) /l 
     distance_der_partial[0] = (Point_o[0]*2) / radius ;
     distance_der_partial[1] = (Point_o[1]*2) / radius ;
-          // distance_der_partial[2] = (std::pow(Point_o[2],7)*16 / height ); //n=4
+    distance_der_partial[2] = (std::pow((Point_o[2] *2 / height),(2*n -1)) * (2*n) ); //n=4
             //n=1
-    distance_der_partial[2] = (Point_o[2]*4) / height ; 
+    // distance_der_partial[2] = (Point_o[2]*4) / height ; 
     distance_der_partial[3] = 0; 
 
     Eigen::Vector3d Der_v;

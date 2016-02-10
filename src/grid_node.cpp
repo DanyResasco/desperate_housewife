@@ -93,7 +93,7 @@ void grid::DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point
     visualization_msgs::Marker marker;
 
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = "vito_anchor";
+    marker.header.frame_id = "world";
     marker.header.stamp = ros::Time::now();
     marker.ns = "basic_shapes";
     marker.id = K;
@@ -169,40 +169,26 @@ Eigen::Quaterniond grid::RotationMarker(KDL::Vector &ris_Force, KDL::Vector &poi
 
 void grid::GetForceAndDraw(KDL::Vector &point_pos, int num)
 {
-      std::vector<Eigen::Matrix<double,6,1> > F_rep;
-      // std::cout<<"point: "<<point_pos[0]<<'\t'<<point_pos[1]<<'\t'<<point_pos[2]<<std::endl;
-      //repulsive with obj
+      // Eigen::Matrix<double,6,1>  F_rep = Eigen::Matrix<double,6,1>::Zero();
+
+      Eigen::Matrix<double,6,1> ForceAndIndex_obstacles= Eigen::Matrix<double,6,1>::Zero();
       for(unsigned int i=0; i < Object_position.size(); i++)
       {  
           double influence = Object_radius[i] + 0.2;
           std::vector<KDL::Vector> pos;
           pos.push_back(point_pos);
-          // std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
-         
-          Eigen::Matrix<double,6,1> ForceAndIndex;
-          // pfc.setTreshold(influence);
-          // pfc.setNi(1.0);
           KDL::Frame temp_frame;
           temp_frame.p.data[0] = point_pos.x();
           temp_frame.p.data[1] = point_pos.y();
           temp_frame.p.data[2] = point_pos.z();
 
-          ForceAndIndex = pfc.GetRepulsiveForce(temp_frame, influence, Object_position[i], Object_radius[i], Object_height[i] );
-          F_rep.push_back(ForceAndIndex);  
+          ForceAndIndex_obstacles+= pfc.GetRepulsiveForce(temp_frame, influence, Object_position[i], Object_radius[i], Object_height[i] );
+            
       }
-  
-      Eigen::Matrix<double,6,1> f = Eigen::Matrix<double,6,1>::Zero(); 
-      
-      for(unsigned int k=0; k < F_rep.size();k++)
-      {
-        f = f + F_rep[k];
-      }
-    
+
       //repulsive with table
       Eigen::Matrix<double,6,1> ForceAndIndex_table = Eigen::Matrix<double,6,1>::Zero();
-      KDL::Vector Table_position(0,0,0.15);  
-      // std::vector<double> dist;
-      // dist.push_back(- Table_position.z() + point_pos.z() );
+      KDL::Vector Table_position(0,0,0.0);  
 
       double distance_ = std::abs( -Table_position.z() + point_pos.z() ); //considered only the z position
       double Influence_table = 0.15;
@@ -223,7 +209,7 @@ void grid::GetForceAndDraw(KDL::Vector &point_pos, int num)
       // ForceAndIndex_table = pfc.RepulsiveWithTable(dist);
       
       Eigen::Matrix<double,6,1> Force_tot_grid;
-      Force_tot_grid = f + ForceAndIndex_table;
+      Force_tot_grid = ForceAndIndex_obstacles + .01*ForceAndIndex_table;
       // std::cout<<"ForceAndIndex_table.first: "<<ForceAndIndex_table.first<<std::endl;
       // std::cout<<"f: "<<f<<std::endl;
 
