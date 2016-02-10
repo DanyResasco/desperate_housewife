@@ -182,11 +182,12 @@ namespace desperate_housewife
 			Eigen::Matrix<double, 6, 6> k_i;
 			std::string root_name, tip_name;
 			double pf_dist_to_obstacles, pf_dist_to_table, pf_repulsive_gain;
-			double max_time_interpolation, max_tau_percentage;
+			double max_time_interpolation, max_tau_percentage, vel_limit_robot;
 			std::vector<std::string> pf_list_of_links;
 			std::vector<KDL::Chain> pf_list_of_chains;
 			std::vector<KDL::ChainFkSolverPos_recursive> pf_list_of_fk;
-			bool enable_obstacle_avoidance, enable_joint_limits_avoidance, enable_attractive_field, enable_null_space;
+			std::vector<KDL::ChainJntToJacSolver> pf_list_of_jac;
+			bool enable_obstacle_avoidance, enable_joint_limits_avoidance, enable_attractive_field, enable_null_space, enable_interpolation;
 
 		} parameters_;
 
@@ -229,7 +230,8 @@ namespace desperate_housewife
 	  Eigen::Matrix<double,7,1> RepulsiveWithTable();
 
 	  Eigen::Matrix<double,7,1>  GetRepulsiveWithObstacle();
-		
+	  Eigen::Matrix<double,7,1>  getTauRepulsive(Eigen::Matrix<double, 6,6> lambda, KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6,1> F);
+
 		
 		/** Caalback: InfoOBj
 		* input: desperate message with information about obstacle to remove
@@ -295,8 +297,7 @@ namespace desperate_housewife
 		* output: repulsive force and the index for the jacobian
 		* Description: functions tha call the funciont for calculates the repulsive forces 
 		*/
-		double VelocityLimit(KDL::Vector &x_dot_d);
-
+		
 		Eigen::Matrix<double,6,6> getAdjointT( KDL::Frame Frame_in);
 		Eigen::Matrix<double,3,3> getVectorHat(Eigen::Matrix<double,3,1> vector_in);
 		Eigen::Matrix<double,6,1> GetRepulsiveForceTable(KDL::Frame &T_in, double influence);
@@ -307,6 +308,7 @@ namespace desperate_housewife
 		bool loadParametersCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 
 		Eigen::Matrix<double, 7, 1> task_objective_function(KDL::JntArray q);
+		double VelocityLimit(KDL::Twist x_dot_d );
 
 	};
 

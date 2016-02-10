@@ -48,10 +48,10 @@ namespace desperate_housewife
     F_total = Eigen::Matrix<double,6,1>::Zero();
 
 
-    ROS_DEBUG("Subscribed for desired_reference to: %s", "command");
+    ROS_INFO("Subscribed for desired_reference to: %s", "command");
     sub_command = nh_.subscribe("command", 1, &PotentialFieldControl::command, this); 
           //list of obstacles
-    ROS_DEBUG("Subscribed for obstacle_avoidance_topic to : %s", topic_obstacle_avoidance.c_str());
+    ROS_INFO("Subscribed for obstacle_avoidance_topic to : %s", topic_obstacle_avoidance.c_str());
     sub_obstacles = nh_.subscribe(topic_obstacle_avoidance.c_str(), 1, &PotentialFieldControl::InfoGeometry, this);
 
     sub_start_controller = nh_.subscribe("start_controller", 1, &PotentialFieldControl::startControllerCallBack, this);
@@ -111,6 +111,9 @@ namespace desperate_housewife
     }
     N_trans_ = I_;  
     SetToZero(tau_);
+    KDL::JntArray tau_repulsive;
+    tau_repulsive.resize(7);
+    SetToZero(tau_repulsive);
 
           //flag to use this code with real robot
 
@@ -153,58 +156,83 @@ namespace desperate_housewife
       //interpolate the position and rotation
       // if(error_pose_trajectory.arrived == 1)
       // { 
-      x_des_.p = x_now_int.p + interpolatormb(time_inter, parameters_.max_time_interpolation)* (x_des_int.p - x_now_int.p);
+      if (parameters_.enable_interpolation)
+      {
+       x_des_.p = x_now_int.p + interpolatormb(time_inter, parameters_.max_time_interpolation)* (x_des_int.p - x_now_int.p);
 
-      x_des_int.M.GetQuaternion(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
-      x_now_int.M.GetQuaternion(quat_now.v(0),quat_now.v(1),quat_now.v(2),quat_now.a);
+       x_des_int.M.GetQuaternion(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
+       x_now_int.M.GetQuaternion(quat_now.v(0),quat_now.v(1),quat_now.v(2),quat_now.a);
 
-      tf::Quaternion quat_tf_des_int(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
-      tf::Quaternion quat_tf_now_int(quat_now.v(0),quat_now.v(1),quat_now.v(2),quat_now.a);
-      quat_tf = (tf::slerp(quat_tf_now_int,quat_tf_des_int,Time)).normalize();
-      tf::quaternionTFToKDL(quat_tf,x_des_.M);
-          //error total
-      KDL::Twist x_err_int;  
+       tf::Quaternion quat_tf_des_int(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
+       tf::Quaternion quat_tf_now_int(quat_now.v(0),quat_now.v(1),quat_now.v(2),quat_now.a);
+       quat_tf = (tf::slerp(quat_tf_now_int,quat_tf_des_int,Time)).normalize();
+       tf::quaternionTFToKDL(quat_tf,x_des_.M);
+            //error total
+       KDL::Twist x_err_int;  
 
-      // x_err_int = diff(x_, x_des_int);
-      // tf::twistKDLToMsg (x_err_int,  error_pose_trajectory.error_);
-      // time_inter_jerk = time_inter;
-      time_inter = time_inter + period.toSec();
+        // x_err_int = diff(x_, x_des_int);
+        // tf::twistKDLToMsg (x_err_int,  error_pose_trajectory.error_);
+        // time_inter_jerk = time_inter;
+       time_inter = time_inter + period.toSec();
 
-          // SO3 Time update
-      Time = interpolatormb(time_inter, parameters_.max_time_interpolation);
+            // SO3 Time update
+       Time = interpolatormb(time_inter, parameters_.max_time_interpolation);
+     }
+     else
+     {
+      x_des_ = x_des_int;
+    }
                 // }
 
-      x_dot_ = J_.data*joint_msr_states_.qdot.data; 
+    x_dot_ = J_.data*joint_msr_states_.qdot.data; 
       // std::cout << x_des_ << std::endl;
-      x_err_ = diff(x_,x_des_);
+    x_err_ = diff(x_,x_des_);
       // x_err_ = diff(x_,x_now_int);
 
-      // KDL::Vector V_err_(k_p(0,0)/k_d(0,0)*x_err_.vel.data[0],k_p(1,1)/k_d(1,1)*x_err_.vel.data[1],k_p(2,2)/k_d(2,2,)*x_err_.vel.data[2]);
-      // double v_limited = VelocityLimit(V_err_);
-      double v_limited = 1;
+    KDL::Twist x_dot_d;
+
+    x_dot_d.vel.data[0] = parameters_.k_p(0,0)/parameters_.k_d(0,0) * x_err_.vel.data[0];
+    x_dot_d.vel.data[1] = parameters_.k_p(1,1)/parameters_.k_d(1,1) * x_err_.vel.data[1];
+    x_dot_d.vel.data[2] = parameters_.k_p(2,2)/parameters_.k_d(2,2) * x_err_.vel.data[2];
+    x_dot_d.rot.data[0] = parameters_.k_p(3,3)/parameters_.k_d(3,3) * x_err_.rot.data[0];
+    x_dot_d.rot.data[1] = parameters_.k_p(4,4)/parameters_.k_d(4,4) * x_err_.rot.data[1];
+    x_dot_d.rot.data[2] = parameters_.k_p(5,5)/parameters_.k_d(5,5) * x_err_.rot.data[2];
+
+    double v_limited = VelocityLimit(x_dot_d);
 
           //calculate the attractive filed like PID control
       // F_attractive = Eigen::Matrix<double,6,1>::Zero();
-      x_err_integral += x_err_*period.toSec();
+    x_err_integral += x_err_*period.toSec();
 
-      if (parameters_.enable_attractive_field)
+    if (parameters_.enable_attractive_field)
+    {
+      for(int i = 0; i < F_attractive.size(); i++)
       {
-        for(int i = 0; i < F_attractive.size(); i++)
-        {
-          x_err_integral += x_err_*period.toSec();
-          F_attractive(i) =  -parameters_.k_d(i,i)*(x_dot_(i)) +
-                            v_limited*parameters_.k_p(i,i)*x_err_(i) + 
-                            parameters_.k_i(i,i)*x_err_integral(i);
+        x_err_integral += x_err_*period.toSec();
+          F_attractive(i) =  -parameters_.k_d(i,i) * ( x_dot_(i) -  v_limited * x_dot_d(i) ); //+        parameters_.k_i(i,i)*x_err_integral(i);
         }
       }
+          // computing b = J*M^-1*(c+g) - J_dot*q_dot
+      b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
+
+          // computing omega = J*M^-1*N^T*J
+      omega_ = J_.data*M_inv_*N_trans_*J_.data.transpose();
+
+      JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
+          // computing lambda = omega^-1
+      pseudo_inverse(omega_,lambda_,sing_vals_2);
+
+      N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
 
       F_total = Eigen::Matrix<double, 6, 1>::Zero();
       F_repulsive  = Eigen::Matrix<double, 6, 1>::Zero();
 
       if (parameters_.enable_obstacle_avoidance)
       {
-        Eigen::Matrix<double, 6,1> F_obj_base = Eigen::Matrix<double, 6, 1>::Zero();
-        Eigen::Matrix<double, 6,1> F_table_base = Eigen::Matrix<double, 6, 1>::Zero();
+        Eigen::Matrix<double, 6,1> F_obj_base_link = Eigen::Matrix<double, 6, 1>::Zero();
+        Eigen::Matrix<double, 6,1> F_table_base_link = Eigen::Matrix<double, 6, 1>::Zero();
+        Eigen::Matrix<double, 6,1> F_obj_base_total = Eigen::Matrix<double, 6, 1>::Zero();
+        Eigen::Matrix<double, 6,1> F_table_base_total = Eigen::Matrix<double, 6, 1>::Zero();
         Eigen::Matrix<double, 6,1> F_table = Eigen::Matrix<double, 6, 1>::Zero();
 
         for (unsigned int i = 0; i < parameters_.pf_list_of_links.size(); ++i)
@@ -226,14 +254,21 @@ namespace desperate_housewife
             F_obj +=  (1.0/(parameters_.pf_list_of_links.size()*Object_position.size()))*GetRepulsiveForce(fk_chain, influence_local, Object_position[k], Object_radius[k], Object_height[k] );
           }
 
-          F_obj_base += Adjoint*F_obj;
+          F_obj_base_link = Adjoint*F_obj;
+          F_obj_base_total += F_obj_base_link;
+          // F_obj_base_link += F_obj;
 
-          F_table += GetRepulsiveForceTable(fk_chain, parameters_.pf_dist_to_table );
-          F_table_base += (1.0/parameters_.pf_list_of_links.size())*Adjoint*F_table;
+          F_table = GetRepulsiveForceTable(fk_chain, parameters_.pf_dist_to_table );
+          F_table_base_link = (1.0/parameters_.pf_list_of_links.size())*Adjoint*F_table;
+          F_table_base_total += F_table_base_link;
+
+          tau_repulsive.data += getTauRepulsive(lambda_, J_, parameters_.pf_list_of_chains[i].getNrOfJoints(), (F_table_base_link+F_obj_base_link) );
 
         }
-        F_repulsive  = F_obj_base;
-        // F_repulsive  = (F_table_base + F_obj_base);
+        // F_repulsive  = F_table_base_link;
+
+        F_repulsive  = (F_table_base_total + F_obj_base_total);
+        tau_.data += tau_repulsive.data;
       }
 
       F_total = (F_attractive + F_repulsive);
@@ -252,24 +287,8 @@ namespace desperate_housewife
       pub_total_wrench.publish(total_repulsive_wrench_end_efector);
 
 
-          // computing b = J*M^-1*(c+g) - J_dot*q_dot
-      b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
 
-          // computing omega = J*M^-1*N^T*J
-      omega_ = J_.data*M_inv_*N_trans_*J_.data.transpose();
-
-      JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
-          // computing lambda = omega^-1
-      pseudo_inverse(omega_,lambda_,sing_vals_2);
-
-
-          // computing nullspace
-      N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
-
-          // finally, computing the torque tau
-          // tau_.data = (J_.data.transpose()*lambda_*(F_attractive + F_repulsive ))+ 0.0*Force_total_rep + 0.0*N_trans_*(Eigen::Matrix<double,7,1>::Identity(7,1)*(phi_ - phi_last_)/(period.toSec()));
-
-      tau_.data = (J_.data.transpose()*lambda_*(F_total));
+      tau_.data += (J_.data.transpose()*lambda_*(F_attractive));
 
       
       if (parameters_.enable_joint_limits_avoidance)
@@ -423,90 +442,90 @@ namespace desperate_housewife
 
   KDL::JntArray PotentialFieldControl::JointLimitAvoidance(KDL::JntArray q)
   {// This function implements joint limit avoidance usung the penalty function V = \sum\limits_{i=1}^n\frac{1}{s^2} s = q_{l_1}-|q_i|        
-    KDL::JntArray tau_limit_avoidance(q.data.size());
-    double s, potential, k = .01, treshold, q_abs;
+  KDL::JntArray tau_limit_avoidance(q.data.size());
+  double s, potential, k = .01, treshold, q_abs;
 
-    for (unsigned int i = 0; i < q.data.size(); i++)
+  for (unsigned int i = 0; i < q.data.size(); i++)
+  {
+    treshold = 5.0*M_PI/180.0;
+    q_abs = std::fabs(q.data[i]);
+    s = joint_limits_.max(i) - q_abs;
+
+
+    if (  s < treshold )
     {
-      treshold = 5.0*M_PI/180.0;
-      q_abs = std::fabs(q.data[i]);
-      s = joint_limits_.max(i) - q_abs;
-
-
-      if (  s < treshold )
-      {
-        ROS_WARN("Joint limit %d", i);
-        potential = 0.5 * std::pow((1/s -1/treshold),2);
-        tau_limit_avoidance.data[i] = - k * KDL::sign(q.data[i]) * potential;  
-      }
-      else
-      {
-        tau_limit_avoidance(i) = 0.0;
-      }
+      ROS_WARN("Joint limit %d", i);
+      potential = 0.5 * std::pow((1/s -1/treshold),2);
+      tau_limit_avoidance.data[i] = - k * KDL::sign(q.data[i]) * potential;  
     }
-
-    return tau_limit_avoidance;
+    else
+    {
+      tau_limit_avoidance(i) = 0.0;
+    }
   }
 
+  return tau_limit_avoidance;
+}
 
-  Eigen::Matrix<double,6,1> PotentialFieldControl::GetRepulsiveForce(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height)
+
+Eigen::Matrix<double,6,1> PotentialFieldControl::GetRepulsiveForce(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height)
+{
+  Eigen::Matrix<double,6,1> ForceAndIndex;
+  ForceAndIndex =  Eigen::Matrix<double,6,1>::Zero();
+
+  double distance;
+
+  distance = diff(Object_pos.p, T_in.p).Norm();
+
+  if( distance < influence)
   {
-    Eigen::Matrix<double,6,1> ForceAndIndex;
-    ForceAndIndex =  Eigen::Matrix<double,6,1>::Zero();
 
-    double distance;
+    Eigen::Vector3d distance_der_partial = GetPartialDerivate(Object_pos, T_in.p, radius, height);
+    ForceAndIndex = GetFIRAS(distance, distance_der_partial, influence);
 
-    distance = diff(Object_pos.p, T_in.p).Norm();
+  }
 
-    if( distance < influence)
-    {
-
-      Eigen::Vector3d distance_der_partial = GetPartialDerivate(Object_pos, T_in.p, radius, height);
-      ForceAndIndex = GetFIRAS(distance, distance_der_partial, influence);
-
-    }
-
-    Eigen::Matrix<double,6,1> force_local_link = Eigen::Matrix<double,6,1>::Zero();
+  Eigen::Matrix<double,6,1> force_local_link = Eigen::Matrix<double,6,1>::Zero();
     // force_local_link = getAdjointT( T_in.Inverse() * Object_pos) * ForceAndIndex;
-    force_local_link = getAdjointT( T_in.Inverse() ) * ForceAndIndex;
+  force_local_link = getAdjointT( T_in.Inverse() ) * ForceAndIndex;
 
-    return force_local_link; 
+  return force_local_link; 
     // return ForceAndIndex; 
-  }
+}
 
-  Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial, double influence)
-  {
+Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial, double influence)
+{
 
-    Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
+  Eigen::Matrix<double,6,1> Force = Eigen::Matrix<double,6,1>::Zero();
     // double V = parameters_.pf_repulsive_gain/(min_distance * min_distance); // this works
-    double V = parameters_.pf_repulsive_gain * ( (1.0 / min_distance) -
-                                                 (1.0 / influence) )  * (1.0 / (min_distance * min_distance));
-    Force(0) = V * distance_der_partial[0];
-    Force(1) = V * distance_der_partial[1];
-    Force(2) = V * distance_der_partial[2];
-    Force(3) = 0;
-    Force(4) = 0;
-    Force(5) = 0;
+  double V = parameters_.pf_repulsive_gain * ( (1.0 / min_distance) -
+   (1.0 / influence) )  * (1.0 / (min_distance * min_distance));
+  Force(0) = V * distance_der_partial[0];
+  Force(1) = V * distance_der_partial[1];
+  Force(2) = V * distance_der_partial[2];
+  Force(3) = 0;
+  Force(4) = 0;
+  Force(5) = 0;
 
 
-    return Force;
-  }
+  return Force;
+}
 
 
-  Eigen::Vector3d PotentialFieldControl::GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height)
-  {
-    Eigen::Matrix<double,4,4>  Tvo_eigen; 
-    Tvo_eigen = FromKdlToEigen(T_v_o);
-    Eigen::Vector4d Point_v_eigen(Point_v.x(),Point_v.y(),Point_v.z(),1);
+Eigen::Vector3d PotentialFieldControl::GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height)
+{
+  Eigen::Matrix<double,4,4>  Tvo_eigen; 
+  Tvo_eigen = FromKdlToEigen(T_v_o);
+  Eigen::Vector4d Point_v_eigen(Point_v.x(),Point_v.y(),Point_v.z(),1);
 
-    Eigen::Vector4d Point_o;
-    Point_o = Tvo_eigen.inverse() * Point_v_eigen;
+  Eigen::Vector4d Point_o;
+  Point_o = Tvo_eigen.inverse() * Point_v_eigen;
     double n = 2; // n as in the paper should be in 4 but considering the shortest distance to obstacles. Here this is not being considered :( TODO
 
-    Eigen::Vector4d distance_der_partial(0,0,0,0);
+      Eigen::Vector4d distance_der_partial(0,0,0,0);
           // distance_der_partial = x^2/radius + y^2 / radius + 2*(z^2n) /l 
-    distance_der_partial[0] = (Point_o[0]*2) / radius ;
-    distance_der_partial[1] = (Point_o[1]*2) / radius ;
+      distance_der_partial[0] = (Point_o[0]*2) / radius ;
+      distance_der_partial[1] = (Point_o[1]*2) / radius ;
     distance_der_partial[2] = (std::pow((Point_o[2] *2 / height),(2*n -1)) * (2*n) ); //n=4
             //n=1
     // distance_der_partial[2] = (Point_o[2]*4) / height ; 
@@ -541,7 +560,7 @@ namespace desperate_housewife
     T_table_world.p = T_in.p;
     T_table_world.p.data[2] = 0;
 
-    KDL::Vector Table_position(0,0,0.15);
+    KDL::Vector Table_position(0,0,0.0);
 
     double distance_local = std::abs( -Table_position.z() + T_in.p.z());
 
@@ -558,15 +577,15 @@ namespace desperate_housewife
     return force_local_link;
   }
 
-  // double PotentialFieldControl::VelocityLimit(KDL::Vector &x_dot_d)
-  // {
-  //   double v_limited;
-  //   Eigen::Vector3d x_dot_eigen(x_dot_d.data[0],x_dot_d.data[1],x_dot_d.data[2]);
-  //   double temp = V_max_kuka/ std::sqrt(x_dot_eigen.transpose()*x_dot_eigen);
-  //   v_limited = std::min(1.0, temp);
+  double PotentialFieldControl::VelocityLimit(KDL::Twist x_dot_d )
+  {
 
-  //   return v_limited;
-  // }
+    Eigen::Matrix<double, 3, 1> x_dot_d_local = Eigen::Matrix<double, 3, 1>::Zero();
+    x_dot_d_local << x_dot_d.vel.data[0], x_dot_d.vel.data[1], x_dot_d.vel.data[2];
+    double temp = parameters_.vel_limit_robot/ std::sqrt(x_dot_d_local.transpose()*x_dot_d_local);
+
+    return std::min(1.0, temp);
+  }
 
   void PotentialFieldControl::load_parameters(ros::NodeHandle &n)
   {
@@ -578,20 +597,29 @@ namespace desperate_housewife
     nh_.param<double>("pf_repulsive_gain", parameters_.pf_repulsive_gain ,1);
     nh_.param<double>("pf_dist_to_obstacles", parameters_.pf_dist_to_obstacles ,1);
     nh_.param<double>("pf_dist_to_table", parameters_.pf_dist_to_table ,1);
+    nh_.param<double>("vel_limit_robot", parameters_.vel_limit_robot , 0.5);
 
     nh_.param<bool>("enable_obstacle_avoidance", parameters_.enable_obstacle_avoidance ,true);
     nh_.param<bool>("enable_joint_limits_avoidance", parameters_.enable_joint_limits_avoidance ,true);
     nh_.param<bool>("enable_attractive_field", parameters_.enable_attractive_field ,true);
     nh_.param<bool>("enable_null_space", parameters_.enable_null_space ,true);
-              // ROS_DEBUG("topic_desired_reference: %s", desired_reference_topic.c_str());
-    ROS_DEBUG("topic_obstacle: %s", topic_obstacle_avoidance.c_str());
-    ROS_DEBUG("link_tip_name: %s", parameters_.tip_name.c_str());
-    ROS_DEBUG("link_root_name: %s", parameters_.root_name.c_str());
-    ROS_DEBUG("time_interpolation: %f", parameters_.max_time_interpolation);
-    ROS_DEBUG("max_tua_percentage: %f", parameters_.max_tau_percentage);
-    ROS_DEBUG("pf_repulsive_gain: %f", parameters_.pf_repulsive_gain);
-    ROS_DEBUG("pf_dist_to_obstacles: %f", parameters_.pf_dist_to_obstacles);
-    ROS_DEBUG("pf_dist_to_table: %f", parameters_.pf_dist_to_table);
+    nh_.param<bool>("enable_interpolation", parameters_.enable_interpolation ,false);
+              // ROS_INFO("topic_desired_reference: %s", desired_reference_topic.c_str());
+    ROS_INFO("topic_obstacle: %s", topic_obstacle_avoidance.c_str());
+    ROS_INFO("link_tip_name: %s", parameters_.tip_name.c_str());
+    ROS_INFO("link_root_name: %s", parameters_.root_name.c_str());
+    ROS_INFO("time_interpolation: %f", parameters_.max_time_interpolation);
+    ROS_INFO("max_tua_percentage: %f", parameters_.max_tau_percentage);
+    ROS_INFO("pf_repulsive_gain: %f", parameters_.pf_repulsive_gain);
+    ROS_INFO("pf_dist_to_obstacles: %f", parameters_.pf_dist_to_obstacles);
+    ROS_INFO("pf_dist_to_table: %f", parameters_.pf_dist_to_table);
+    ROS_INFO("vel_limit_robot: %f", parameters_.vel_limit_robot);
+
+    ROS_INFO_STREAM("Obstacle avoidance " << (parameters_.enable_obstacle_avoidance ? "Enabled" : "Disabled") );
+    ROS_INFO_STREAM("Joint Limit Avoidance: " << (parameters_.enable_joint_limits_avoidance ? "Enabled" : "Disabled") );
+    ROS_INFO_STREAM("Attractive Field: " << (parameters_.enable_attractive_field ? "Enabled" : "Disabled") );
+    ROS_INFO_STREAM("Null Space: " << (parameters_.enable_null_space ? "Enabled" : "Disabled") );
+    ROS_INFO_STREAM("Interpolation: " << (parameters_.enable_interpolation ? "Enabled" : "Disabled") );
 
     XmlRpc::XmlRpcValue my_list;
     nh_.getParam("links_with_potential_field", my_list);
@@ -605,7 +633,7 @@ namespace desperate_housewife
     {
       ROS_ASSERT(my_list[i].getType() == XmlRpc::XmlRpcValue::TypeString);
       parameters_.pf_list_of_links.push_back(static_cast<std::string>(my_list[i]).c_str());
-      ROS_DEBUG("Link %s defined as collision point", static_cast<std::string>(my_list[i]).c_str());
+      ROS_INFO("Link %s defined as collision point", static_cast<std::string>(my_list[i]).c_str());
     }
 
     for (unsigned int i = 0; i < parameters_.pf_list_of_links.size(); ++i)
@@ -620,8 +648,9 @@ namespace desperate_housewife
       {
         parameters_.pf_list_of_chains.push_back(chain_tmp);
         parameters_.pf_list_of_fk.push_back(KDL::ChainFkSolverPos_recursive(chain_tmp));
-        ROS_DEBUG("Chain from %s to %s correctly initialized. Num oj Joints = %d", parameters_.root_name.c_str(), parameters_.pf_list_of_links[i].c_str(),
-                                                                                  chain_tmp.getNrOfJoints());
+        parameters_.pf_list_of_jac.push_back(KDL::ChainJntToJacSolver(chain_tmp));
+        ROS_INFO("Chain from %s to %s correctly initialized. Num oj Joints = %d", parameters_.root_name.c_str(), parameters_.pf_list_of_links[i].c_str(),
+          chain_tmp.getNrOfJoints());
       }
     }
 
@@ -632,7 +661,11 @@ namespace desperate_housewife
     parameters_.k_d = getGainMatrix(std::string("k_d"), n);
     parameters_.k_i = getGainMatrix(std::string("k_i"), n);
 
-    ROS_DEBUG("Parameters loaded");
+    ROS_INFO_STREAM("k_p" << std::endl << parameters_.k_p);
+    ROS_INFO_STREAM("k_d" << std::endl << parameters_.k_d);
+    ROS_INFO_STREAM("k_i" << std::endl << parameters_.k_i);
+
+    ROS_INFO("Parameters loaded");
     return;
   }
 
@@ -690,6 +723,21 @@ namespace desperate_housewife
 
     return tempret;
 
+  }
+
+  Eigen::Matrix<double,7,1>  PotentialFieldControl::getTauRepulsive(Eigen::Matrix<double, 6,6> lambda, KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6,1> F)
+  {
+
+    KDL::Jacobian J_local;
+    J_local.resize(7);
+    J_local.data = J.data;
+
+    for (unsigned int i = 6; i > n_joint-1; i--)
+    {
+      J_local.setColumn(i, KDL::Twist::Zero());
+    }
+    return J_local.data.transpose()*lambda*F;
+    
   }
 
 
