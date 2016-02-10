@@ -59,6 +59,7 @@ namespace desperate_housewife
           //callcback for setting the gains at real time
 
     pub_error = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
+    pub_error_id = nh_.advertise<desperate_housewife::Error_msg>("error_id", 1000);
     pub_tau = nh_.advertise<std_msgs::Float64MultiArray>("tau_commad", 1000);
     pub_pf_attractive_force = nh_.advertise<std_msgs::Float64MultiArray>("F_attractive", 1000);
     pub_pf_repulsive_forse = nh_.advertise<std_msgs::Float64MultiArray>("F_repulsive", 1000);
@@ -69,6 +70,7 @@ namespace desperate_housewife
     srv_start_controller = nh_.advertiseService("load_parameters", &PotentialFieldControl::loadParametersCallback, this);
 
     start_controller = false;
+    error_id.id = 10000;
     return true;
   }
 
@@ -114,6 +116,8 @@ namespace desperate_housewife
     KDL::JntArray tau_repulsive;
     tau_repulsive.resize(7);
     SetToZero(tau_repulsive);
+
+    tf::twistKDLToMsg(x_err_, error_id.error_);
 
           //flag to use this code with real robot
 
@@ -317,8 +321,11 @@ namespace desperate_housewife
 
       x_err_msg = diff(x_, x_des_int);
 
+      tf::twistKDLToMsg(x_err_msg, error_id.error_);
+
     }
 
+    pub_error_id.publish( error_id );
 
     for(unsigned int i=0; i < F_total.size(); i++ )
     {
@@ -378,7 +385,7 @@ namespace desperate_housewife
 
     PoseDesiredInterpolation(frame_des_);
 
-    // error_pose_trajectory.arrived = 1;
+    error_id.id = msg->id;
 
     ROS_INFO("New reference for controller");
   }

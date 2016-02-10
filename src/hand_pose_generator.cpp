@@ -31,7 +31,7 @@ HandPoseGenerator::HandPoseGenerator()
 
   /*config parameteres*/
   nh.param<std::string>("/PotentialFieldControl/desired_hand_frame", desired_hand_frame_, "desired_hand_pose");
-  nh.param<std::string>("/PotentialFieldControl/base_frame", base_frame_, "vito_anchor");
+  nh.param<std::string>("/PotentialFieldControl/base_frame", base_frame_, "world");
   nh.param<std::string>("/PotentialFieldControl/left_hand_frame", left_hand_frame_, "left_hand_palm_ref_link");
   nh.param<std::string>("/PotentialFieldControl/right_hand_frame", right_hand_frame_, "right_hand_palm_ref_link");
    

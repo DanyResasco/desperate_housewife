@@ -3,3 +3,4 @@ geometry_msgs/Pose pose
 bool isGraspable
 uint16 home
 uint16 obj
+uint16 id

@@ -61,7 +61,7 @@ DesperateDecisionMaker::DesperateDecisionMaker()
   nh.param<std::string>("/PotentialFieldControl/desired_hand_pose_left", desired_hand_left_pose_topic_, "/PotentialFieldControl/desired_hand_left_pose");
   desired_hand_publisher_left = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_left_pose_topic_.c_str(),1);
 
-  nh.param<std::string>("/PotentialFieldControl/base_frame", base_frame_, "vito_anchor");
+  nh.param<std::string>("/PotentialFieldControl/base_frame", base_frame_, "world");
 
   /*read if object is to grasp or to remove*/
   nh.param<std::string>("/PotentialFieldControl/objects_info_r", obj_info_topic_r, "/PotentialFieldControl/objects_info_right");

@@ -195,6 +195,9 @@ namespace desperate_housewife
 		ros::Publisher pub_error, pub_tau, pub_pf_repulsive_forse, pub_pf_attractive_force, pub_pf_total_force, pub_total_wrench;
 		ros::Subscriber sub_command, sub_obstacles, sub_start_controller;
 		ros::ServiceServer srv_start_controller;
+
+		ros::Publisher pub_error_id;
+		desperate_housewife::Error_msg error_id;
 		
 		bool start_controller;
 

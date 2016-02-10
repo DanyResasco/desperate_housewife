@@ -17,8 +17,10 @@ To use this repo execute the following steps:
 	- 'cd ..'
 
 Compile doing 'catkin_make --only_pkg-with-deps desperate_housewife' in your workspace
-The command to launch the robot in simulation is : roslaunch desperate_housewife run_vito.launch
-The demo doesn't start until does not receive the message : rostopic pub -1 /right_arm/PotentialFieldControl/start_control std_msgs/Bool 'True'
+The command to launch the robot in simulation is : 
+	-roslaunch desperate_housewife run_vito.launch
+The demo doesn't start until does not receive the message :
+	- rostopic pub -1 /right_arm/PotentialFieldControl/start_control std_msgs/Bool 'True'
 If you want use this demo for one arm the command to launch is: roslaunch desperate_housewife run_vito.launch use_both_arm:=false 
 and select the arm to use with left_arm_enabled:=true or right_arm_enabled:=true
 
@@ -35,7 +37,8 @@ Lets a look of all code:
 	- Generate hand pose decide wich arm to use, if cylinder is a graspable object or it's a obstacle and decide the relative poses.
 	- Fit geometries make a cluster of scene point cloud and fittig a cylinder
 	- Scene filtering make a filter of camera point cloud, erasing the table and the environment
-
+To swicth the controller without rqt call:
+	-rosservice call /right_arm/controller_manager/switch_controller "{start_controllers: ['PotentialFieldControl'], stop_controllers: ['joint_trajectory_controller'], strictness: 2}"
 
 TEST FILE
 
@@ -56,3 +59,7 @@ To test potential field:
 	-roslaunch desperate_housewife ball.launch
 		**This code simulate the movements of a ball that moves within the field. For this code sends a ros message:
 		  rostopic pub -1 /SphereInfo std_msgs/Float64MultiArray 'data: [Pos_x_init, Pos_y_init, Pos_z_init, radius, mass, Pos_x_des, Pos_y_des, Pos_z_des]'
+
+To record a rosbag
+rosbag record -o subset  /camera/depth_registered/points /head_asus/head_asus/depth/camera_info /head_asus/head_asus/depth/image_raw /head_asus/head_asus/depth_registered/points /head_asus/head_asus/rgb/camera_info /head_asus/head_asus/rgb/image_raw /head_asus/parameter_descriptions /head_asus/parameter_updates /head_right_eye/camera_info /head_right_eye/image_raw /head_right_eye/ rameter_descriptions
+/head_right_eye/parameter_updates /joint_states /object_cloud

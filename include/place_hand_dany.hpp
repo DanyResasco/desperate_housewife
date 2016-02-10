@@ -1,4 +1,4 @@
-#include <hand_pose_generator.h>
+#include <HandPoseGenerator_state.h>
 #include <visualization_msgs/Marker.h>
 
 /*** Code used to decide the desired pose. 
@@ -62,35 +62,35 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
     {
       Point_desired(0) = 0;
       Point_desired(1) = 0;
-      Point_desired(2) = height * 0.5 + 0.05;	
+      Point_desired(2) = height * 0.5 + 0.03; //0.05;	
       Point_desired(3) = 1;
       ROS_DEBUG("cyl upright and empty");
       
-      if (whichArm == 1) /*left arm*/
-      {
-        Point_desired(1) = - radius;  /*along the y axis*/
-        M_desired_local.col(3) << Point_desired;
-        T_w_h = T_vito_c * M_desired_local* Rot_z;;
-        std::cout<<"Not Lying, Empty, left Arm, "<< std::endl;
-      }
+      // if (whichArm == 1) left arm
+      // {
+        Point_desired(1) =  radius;  /*along the y axis*/
+      //   M_desired_local.col(3) << Point_desired;
+      //   T_w_h = T_vito_c * M_desired_local* Rot_z;;
+      //   std::cout<<"Not Lying, Empty, left Arm, "<< std::endl;
+      // }
 
-      else
-      {
-        Point_desired(0) = - radius;  /*along the x axis*/
+      // else
+      // {
+      //   Point_desired(1) = - 2*radius;  /*along the y axis*/
         M_desired_local.col(3) << Point_desired;
 
         T_w_h = T_vito_c * M_desired_local* Rot_z;
         std::cout<<"Not Lying, Empty, right Arm, "<< std::endl;
-      }   
+      // }   
 
     }
 
   /*takes the object on the top if the object's radius is minus than treshold*/
   else if(((isLying == 0) && (isFull != 0)) && (radius< max_radius))
     {
-      Point_desired(0) = 0;
-      Point_desired(1) = 0;
-      Point_desired(2) = height *0.5 + 0.05; 
+      Point_desired(0) = 0.02;
+      Point_desired(1) = radius*0.5;
+      Point_desired(2) = height *0.5 + 0.03;  //0.05; 
       Point_desired(3) = 1;
       ROS_DEBUG("cyl upright and full");
       
@@ -277,9 +277,9 @@ geometry_msgs::Pose HandPoseGenerator::ObstacleReject( desperate_housewife::fitt
   T_vito_c = FromMsgtoEigen( Pose_rej_obs.pose );
 
   /*to remove object we decide to put with the back of the hand in the middle of the obstacles */
-  Point_desired(0) = T_vito_c(0,3) + Pose_rej_obs.info[0] + 0.16;
+  Point_desired(0) = T_vito_c(0,3) + Pose_rej_obs.info[0] + 0.10;
   Point_desired(1) = T_vito_c(1,3) ;
-  Point_desired(2) = T_vito_c(2,3) +0.05; 
+  Point_desired(2) = T_vito_c(2,3) - 0.02; 
   Point_desired(3) = 1;
 
   M_desired_local = Eigen::Matrix4d::Identity();

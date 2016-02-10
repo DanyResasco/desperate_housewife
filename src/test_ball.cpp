@@ -104,7 +104,7 @@
       p.orientation.w = 1; 
       tf::poseMsgToTF( p, tfGeomTRansform );
       // tf::poseMsgToKDL(p, frames); 
-      tf_geometriesTransformations_.sendTransform( tf::StampedTransform( tfGeomTRansform, ros::Time::now(), "vito_anchor", obst_name.c_str()) );
+      tf_geometriesTransformations_.sendTransform( tf::StampedTransform( tfGeomTRansform, ros::Time::now(), "world", obst_name.c_str()) );
   }
 
 
@@ -134,7 +134,7 @@
     for (unsigned int i = 0; i < Object_position.size(); ++i)
     {
       visualization_msgs::Marker marker;
-      marker.header.frame_id = "vito_anchor";
+      marker.header.frame_id = "world";
       marker.header.stamp = ros::Time();
       marker.ns = "";
       marker.id = i;
@@ -169,7 +169,7 @@
       geometry_msgs::Pose p;
       tf::poseKDLToMsg (Object_position[i], p );
       tf::poseMsgToTF( p, tfGeomTRansform );
-      tf_geometriesTransformations_.sendTransform( tf::StampedTransform( tfGeomTRansform, ros::Time::now(), "vito_anchor", obst_name.c_str()) );
+      tf_geometriesTransformations_.sendTransform( tf::StampedTransform( tfGeomTRansform, ros::Time::now(), "world", obst_name.c_str()) );
  
     
     }
@@ -182,7 +182,7 @@
     visualization_msgs::Marker marker;
 
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = "vito_anchor";
+    marker.header.frame_id = "world";
     marker.header.stamp = ros::Time::now();
 
     marker.type = marker.SPHERE;

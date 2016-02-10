@@ -109,9 +109,9 @@ add_executable(fit_geometries src/fit_geometries_node.cpp src/fit_geometries.cpp
 add_dependencies(fit_geometries ${PROJECT_NAME}_gencpp)
 target_link_libraries(fit_geometries ${catkin_LIBRARIES}  ${PCL_LIBRARIES} )
 
-add_executable(hand_pose_generator src/hand_pose_generator_node.cpp src/hand_pose_generator.cpp)
-add_dependencies(hand_pose_generator ${PROJECT_NAME}_gencpp)
-target_link_libraries(hand_pose_generator ${catkin_LIBRARIES}  ${PCL_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES} )
+# add_executable(hand_pose_generator src/hand_pose_generator_node.cpp src/hand_pose_generator.cpp)
+# add_dependencies(hand_pose_generator ${PROJECT_NAME}_gencpp)
+# target_link_libraries(hand_pose_generator ${catkin_LIBRARIES}  ${PCL_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES} )
 
 add_library(${PROJECT_NAME} src/potential_field_control.cpp)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
@@ -126,9 +126,9 @@ add_executable(grid src/grid_main.cpp src/grid_node.cpp)
 add_dependencies(grid grid_gencpp ${PROJECT_NAME})
 target_link_libraries(grid ${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
-add_executable(desperate_mind src/desperate_mind.cpp src/home_robot)
-add_dependencies(desperate_mind ${PROJECT_NAME}_gencpp)
-target_link_libraries(desperate_mind ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+# add_executable(desperate_mind src/desperate_mind.cpp src/home_robot)
+# add_dependencies(desperate_mind ${PROJECT_NAME}_gencpp)
+# target_link_libraries(desperate_mind ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
 add_executable(test_send_obst src/test_send_obst.cpp )
 add_dependencies(test_send_obst ${PROJECT_NAME}_gencpp)
@@ -142,6 +142,26 @@ target_link_libraries(test_simulated_references ${catkin_LIBRARIES} kdl_parser $
 add_executable(test_parse_list_yaml src/test_parse_list_yaml.cpp)
 add_dependencies(test_parse_list_yaml test_parse_list_yaml_gencpp ${PROJECT_NAME})
 target_link_libraries(test_parse_list_yaml ${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+
+
+
+SET( STATES_FILES
+src/Grasp_obj_state.cpp
+src/Home_State_grafo.cpp
+src/Pos_trash_state.cpp
+src/SoftHand_close_state.cpp
+src/SoftHand_open_state.cpp
+src/exit_state.cpp
+src/wait_msg_state.cpp
+src/Remove_obj_state.cpp
+src/overtune_state.cpp
+src/HandPoseGenerator_state.cpp
+)
+
+add_executable(test_grafo ${STATES_FILES} src/desperate_mind_state_machine.cpp src/main_grafo.cpp)
+add_dependencies(test_grafo test_grafo_generate_messages_cpp )
+target_link_libraries(test_grafo ${catkin_LIBRARIES}  kdl_parser ${orocos_kdl_LIBRARIES})
+
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})

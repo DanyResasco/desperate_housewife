@@ -64,7 +64,7 @@ right_arm:
     type: desperate_housewife/PotentialFieldControl
     root_name: world
     tip_name: right_hand_palm_ref_link
-    topic_desired_reference: desired_reference
+    # topic_desired_reference: desired_reference
     topic_obstacle: obstacles
     time_interpolation: 5
     max_tau_percentage: 0.5

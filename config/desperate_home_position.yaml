@@ -1,5 +1,5 @@
-PotentialFieldControl/desired_hand_pose_right: /right_arm/PotentialFieldControl/desired_hand_right_pose
-PotentialFieldControl/desired_hand_pose_left: /left_arm/PotentialFieldControl/desired_hand_left_pose
+PotentialFieldControl/desired_hand_pose_right: /right_arm/PotentialFieldControl/command
+PotentialFieldControl/desired_hand_pose_left: /left_arm/PotentialFieldControl/command
 left_arm_position_x: -1.0
 left_arm_position_y: -0.764
 left_arm_position_z: 0.513
