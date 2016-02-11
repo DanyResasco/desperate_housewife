@@ -24,7 +24,8 @@ SoftHand_close::SoftHand_close()
 void SoftHand_close::HandInforRight(const sensor_msgs::JointState::ConstPtr &msg)
 {
   // info_hand = msg->position[28];  //28 in simulazione 0 in reale
-  info_hand = msg->position;
+  info_hand = msg->position[index_sh];
+  // ROS_INFO("index hand pose %d", index_sh);
   // std::cout<<"info_hand: "<<info_hand<<std::endl;
 }
 

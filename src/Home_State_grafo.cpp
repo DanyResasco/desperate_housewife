@@ -83,7 +83,7 @@ void Home_state::Error_info_right(const desperate_housewife::Error_msg::ConstPtr
   void Home_state::command_start(const std_msgs::Bool::ConstPtr& msg)
   { 
       start_flag = true;
-      std::cout<<"ricevuto sms"<<std::endl;
+      // std::cout<<"ricevuto sms"<<std::endl;
   }
 
 
@@ -93,7 +93,7 @@ void Home_state::run()
   {
     if((id_class != id_error_msgs) && (!IsEqual(e_)))
     {
-      std::cout<<"send vito at home"<<std::endl;
+      // std::cout<<"send vito at home"<<std::endl;
   		SendHomeRobot_right(); 
   	}
     
@@ -137,12 +137,12 @@ void Home_state::SendHomeRobot_right()
     home_robot_right.obj = 0; 
     
     double roll_r,pitch_r,yaw_r;
-    nh.param<double>("/home_right_arm_position_x", home_robot_right.pose.position.x, -0.75022);
-    nh.param<double>("/home_right_arm_position_y",  home_robot_right.pose.position.y,  0.47078);
-    nh.param<double>("/home_right_arm_position_z", home_robot_right.pose.position.z, 0.74494);
-    nh.param<double>("/home_right_arm_A_yaw", yaw_r,  0.334);
-    nh.param<double>("/home_right_arm_B_pitch", pitch_r, -0.08650);
-    nh.param<double>("/home_right_arm_C_roll", roll_r, -0.5108);
+    nh.param<double>("/right_arm_position_x", home_robot_right.pose.position.x, -0.75022);
+    nh.param<double>("/right_arm_position_y",  home_robot_right.pose.position.y,  0.47078);
+    nh.param<double>("/right_arm_position_z", home_robot_right.pose.position.z, 0.74494);
+    nh.param<double>("/right_arm_A_yaw", yaw_r,  0.334);
+    nh.param<double>("/right_arm_B_pitch", pitch_r, -0.08650);
+    nh.param<double>("/right_arm_C_roll", roll_r, -0.5108);
 
   
     KDL::Rotation Rot_matrix_r = KDL::Rotation::RPY(roll_r,pitch_r,yaw_r);

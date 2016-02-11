@@ -225,7 +225,7 @@ desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( despera
   if ( isGeometryGraspable ( geometry ))
   {
     hand_pose_local.whichArm = whichArm( geometry.pose , cyl_nbr);
-    std::cout<<"^^^^^^^hand_pose_local.whichArm^^^^ : "<<hand_pose_local.whichArm <<std::endl;
+    // std::cout<<"^^^^^^^hand_pose_local.whichArm^^^^ : "<<hand_pose_local.whichArm <<std::endl;
     hand_pose_local.pose = placeHand( geometry, hand_pose_local.whichArm );
     hand_pose_local.isGraspable = true;
   }

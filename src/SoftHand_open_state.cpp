@@ -12,7 +12,7 @@ SoftHand_open::SoftHand_open()
   	nh.param<bool>("use_sh_sim",use_sh_sim,false);
   	nh.param<double>("/Info_open_hand", Info_open_hand, 0.6);
 
-    std::cout<<"use_sh_sim: "<<std::boolalpha<<use_sh_sim<<std::endl;
+    // std::cout<<"use_sh_sim: "<<std::boolalpha<<use_sh_sim<<std::endl;
    
     index_sh = use_sh_sim == false ? 0 : 28;
 
@@ -27,7 +27,7 @@ SoftHand_open::SoftHand_open()
 void SoftHand_open::HandInforRight(const sensor_msgs::JointState::ConstPtr &msg)
 {
   // info_hand = msg->position[28];  //28 in simulazione 0 in reale
-  info_hand = msg->position;
+  info_hand = msg->position[index_sh];
   // std::cout<<"index_sh: "<<index_sh<<std::endl;
 }
 
@@ -36,7 +36,7 @@ void SoftHand_open::HandInforRight(const sensor_msgs::JointState::ConstPtr &msg)
 std::map< transition, bool > SoftHand_open::getResults()
 {
 	std::map< transition, bool > results;
-  std::cout<<"finish: "<<std::boolalpha<<finish<<std::endl;
+  // std::cout<<"finish: "<<std::boolalpha<<finish<<std::endl;
 	if(finish == true)
 			results[transition::Wait_Open_Softhand] = finish;
 
@@ -58,12 +58,12 @@ void SoftHand_open::run()
     if(info_hand >= Info_open_hand )
     {
       finish = false;
-      std::cout<<"aspetto apertura mano"<<std::endl;
+      // std::cout<<"aspetto apertura mano"<<std::endl;
     }
     else
     {
       finish = true;
-       std::cout<<"apro mano"<<std::endl;
+       // std::cout<<"apro mano"<<std::endl;
 
     }
 

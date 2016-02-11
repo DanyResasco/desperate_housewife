@@ -1,6 +1,6 @@
 scene_filter/filter: true
 scene_filter/xmin: -1.4
-scene_filter/xmax: -0.0
+scene_filter/xmax: -0.75
 scene_filter/ymin: -0.1
 scene_filter/ymax: 0.4
 scene_filter/zmin: 0.1

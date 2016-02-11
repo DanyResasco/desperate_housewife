@@ -92,7 +92,7 @@ void HandPoseGenerator::Start_right(const desperate_housewife::Start::ConstPtr& 
 
 void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
 {
-  
+  ROS_INFO("HandPoseGenerator receiving");
   if((start_controller_left != 0) && (start_controller_right != 0))
   {
     // CheckRealTimeObstacleMovements(msg);

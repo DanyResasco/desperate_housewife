@@ -6,7 +6,7 @@ Pos_trash::Pos_trash()
 	this->type=type;
 
 
-    nh.param<std::string>("/PotentialFieldControl/command", desired_hand_right_pose_topic_, "/PotentialFieldControl/command");
+    nh.param<std::string>("/right_arm/PotentialFieldControl/command", desired_hand_right_pose_topic_, "/right_arm/PotentialFieldControl/command");
   	desired_hand_publisher_right = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_right_pose_topic_.c_str(),1);
 
   	nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
@@ -93,6 +93,8 @@ void Pos_trash::run()
 
       trash_robot_pose.id = id_class;
 	    desired_hand_publisher_right.publish( trash_robot_pose );
+
+      // ROS_INFO("trash published to %s", desired_hand_right_pose_topic_.c_str());
 	    // step = 0; 
       finish = false;
 	    tf::Transform tfHandTrasform1;    
@@ -102,7 +104,7 @@ void Pos_trash::run()
 
 	else if((id_class == id_error_msgs) && (IsEqual(e_)))
   { 	
-      std::cout<<"same id and error is equal"<<std::endl;
+      // std::cout<<"same id and error is equal"<<std::endl;
   	  finish = true;
   }
 

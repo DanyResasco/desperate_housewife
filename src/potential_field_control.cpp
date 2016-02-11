@@ -387,7 +387,7 @@ namespace desperate_housewife
 
     error_id.id = msg->id;
 
-    ROS_INFO("New reference for controller");
+    // ROS_INFO("New reference for controller");
   }
 
   void PotentialFieldControl::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)

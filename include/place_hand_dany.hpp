@@ -108,7 +108,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       //   std::cout<<"Not Lying, full, rigth Arm"<< std::endl;
       // }
        T_w_h = T_vito_c * M_desired_local* Rot_z;
-       std::cout<<"Not Lying, full"<< std::endl;
+       // std::cout<<"Not Lying, full"<< std::endl;
      
     }
 
@@ -234,7 +234,7 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
   /*the straight line is calculates in cilynder frame*/
 	if(dist_to_left_hand < dist_to_right_hand)
 	{
-	  ROS_INFO("Vito uses a: left arm because of distance");
+	  // ROS_INFO("Vito uses a: left arm because of distance");
     retta_hand_obj[0] =  hand_l_object.getOrigin().x();
     retta_hand_obj[1] =  hand_l_object.getOrigin().y();
     retta_hand_obj[2] =  hand_l_object.getOrigin().z();
@@ -243,7 +243,7 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
 	}
   else
   {
-	  ROS_INFO("Vito uses a: Right arm because of distance");
+	  // ROS_INFO("Vito uses a: Right arm because of distance");
     retta_hand_obj[0] =  hand_r_object.getOrigin().x();
     retta_hand_obj[1] =  hand_r_object.getOrigin().y();
     retta_hand_obj[2] =  hand_r_object.getOrigin().z();
@@ -364,7 +364,7 @@ void HandPoseGenerator::Overturn()
   tf::Transform tfHandTrasform2;
   tf::poseMsgToTF( DesiredHandPose_right.pose, tfHandTrasform2);
   tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str()," right_ribalto") ); 
-  ROS_INFO("BUTTO TUTTO");
+  // ROS_INFO("BUTTO TUTTO");
 }
 
 // void HandPoseGenerator::DrawStraingLIne( Eigen::Vector3d &rett_pos )
