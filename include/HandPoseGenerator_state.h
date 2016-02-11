@@ -184,7 +184,7 @@ public:
   * \return void
   */
   
-  void  DesperateDemo2(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
+  void  DesperateDemo2(desperate_housewife::fittedGeometriesArray msg);
   /*! 
   * \fn: DesperateDemo2(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
   * \brief Second Demo. grasp object without obstacles avoidance. if item isn't graspable will be removed 

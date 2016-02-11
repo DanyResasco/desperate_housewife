@@ -37,13 +37,8 @@ Pos_trash::Pos_trash()
     nh.param<double>("/error/rot/z",rotz,0.01);
 
 
-        double roll_r,pitch_r,yaw_r;
-    nh.param<double>("/trash/right_arm_position_x", trash_robot_pose.pose.position.x, -0.75022);
-    nh.param<double>("/trash/right_arm_position_y",  trash_robot_pose.pose.position.y,  0.47078);
-    nh.param<double>("/trash/right_arm_position_z", trash_robot_pose.pose.position.z, 0.74494);
-    nh.param<double>("/trash/right_arm_A_yaw", yaw_r,  0.334);
-    nh.param<double>("/trash/right_arm_B_pitch", pitch_r, -0.08650);
-    nh.param<double>("/trash/right_arm_C_roll", roll_r, -0.5108);
+ 
+
 
 
       KDL::Vector vel;
@@ -87,25 +82,40 @@ void Pos_trash::run()
 	// if(step == 1)
 	if((id_class != id_error_msgs) && (IsEqual(e_)))
 	{	//send robot at trash position
+      desperate_housewife::handPoseSingle home_robot_right;  
+    
+      home_robot_right.home = 1;
+      home_robot_right.obj = 0; 
+      
+      double roll_r,pitch_r,yaw_r;
+      nh.param<double>("/trash/right_arm_position_x", home_robot_right.pose.position.x, -0.75022);
+      nh.param<double>("/trash/right_arm_position_y",  home_robot_right.pose.position.y,  0.47078);
+      nh.param<double>("/trash/right_arm_position_z", home_robot_right.pose.position.z, 0.74494);
+      nh.param<double>("/trash/right_arm_A_yaw", yaw_r,  0.334);
+      nh.param<double>("/trash/right_arm_B_pitch", pitch_r, -0.08650);
+      nh.param<double>("/trash/right_arm_C_roll", roll_r, -0.5108);
 
-	    KDL::Rotation Rot_matrix_r = KDL::Rotation::RPY(roll, pitch ,yaw);
+      KDL::Rotation Rot_matrix_r = KDL::Rotation::RPY(roll_r,pitch_r,yaw_r);
 
-	    Rot_matrix_r.GetQuaternion(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
+      Rot_matrix_r.GetQuaternion(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
 
-	    trash_robot_pose.pose.orientation.x = quat_des_.v(0);
-	    trash_robot_pose.pose.orientation.y = quat_des_.v(1);
-	    trash_robot_pose.pose.orientation.z = quat_des_.v(2);
-	    trash_robot_pose.pose.orientation.w = quat_des_.a;
+      home_robot_right.pose.orientation.x = quat_des_.v(0);
+      home_robot_right.pose.orientation.y = quat_des_.v(1);
+      home_robot_right.pose.orientation.z = quat_des_.v(2);
+      home_robot_right.pose.orientation.w = quat_des_.a;
 
-      trash_robot_pose.id = id_class;
-	    desired_hand_publisher_right.publish( trash_robot_pose );
+      home_robot_right.id = id_class;
 
-      // ROS_INFO("trash published to %s", desired_hand_right_pose_topic_.c_str());
-	    // step = 0; 
+      desired_hand_publisher_right.publish( home_robot_right );
+      // ROS_INFO("Sending robot to home in topic: %s", desired_hand_right_pose_topic_.c_str() );
+
+      tf::Transform tfHandTrasform1;    
+      tf::poseMsgToTF( home_robot_right.pose, tfHandTrasform1);    
+      tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform1, ros::Time::now(), base_frame_.c_str(),"trash_robot_right") );  
+
+
       finish = false;
-	    tf::Transform tfHandTrasform1;    
-      tf::poseMsgToTF( trash_robot_pose.pose, tfHandTrasform1);    
-      tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform1, ros::Time::now(), base_frame_.c_str(),"trash_robot_pos") );  
+
 	}
 
 	else if((id_class == id_error_msgs) && (IsEqual(e_)))

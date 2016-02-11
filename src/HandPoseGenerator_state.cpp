@@ -177,10 +177,24 @@ void HandPoseGenerator::run()
 	        tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform);
 	        tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), right_hand_frame_ .c_str()) );
 	    }
+      // else if (cylinder_geometry.geometries.size() >= Number_obj)
+      // {
+      //   Overturn();
+      // }
       else
       {
-        DesperateDemo1(cylinder_geometry);
-        
+        switch(demo)
+        {
+          case 0:
+          {
+            DesperateDemo1(cylinder_geometry);
+            break;
+          }
+          case 1:
+          {
+            DesperateDemo2(cylinder_geometry);
+          } 
+        }       
       }
   	}
   	else
@@ -191,7 +205,7 @@ void HandPoseGenerator::run()
       		Obj_info.data = ObjorObst;
       		objects_info_right_pub.publish(Obj_info);
       		finish = true;
-      		// stop = 0;
+      		stop = 0;
       		
   	    }
   	}
@@ -378,7 +392,7 @@ void HandPoseGenerator::DesperateDemo1(desperate_housewife::fittedGeometriesArra
               obstacles_publisher_right.publish(obstaclesMsg);
               finish = false;
                   // objects_info_right_pub.publish(Obj_info);
-                  stop = 1;    
+              stop = 1;    
               // }
               // ROS_INFO("pubblico tf");
               // tf::Transform tfHandTrasform;
@@ -399,6 +413,90 @@ void HandPoseGenerator::DesperateDemo1(desperate_housewife::fittedGeometriesArra
     else
       finish = false;
 }
+
+void  HandPoseGenerator::DesperateDemo2(desperate_housewife::fittedGeometriesArray msg)
+{
+    ROS_INFO("***DEMO2, take first graspable without obstacles avoidance***");
+    std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec;
+    desperate_housewife::handPoseSingle DesiredHandPose;
+    desperate_housewife::fittedGeometriesSingle obstacle;
+    desperate_housewife::fittedGeometriesArray obstaclesMsg;
+    std_msgs::UInt16 Obj_info;
+    
+    for (unsigned int i=0; i< msg.geometries.size(); i++)
+    {
+        objects_vec.push_back(msg.geometries[i]);
+    }
+
+     // std::vector< desperate_housewife::fittedGeometriesSingle > vect_sort = SortCylinder();
+    
+    /*sort the cylinder by the shortes distance from softhand */
+    std::sort(objects_vec.begin(), objects_vec.end(), [](desperate_housewife::fittedGeometriesSingle first, desperate_housewife::fittedGeometriesSingle second) {
+        double distfirst = std::sqrt( first.pose.position.x*first.pose.position.x + first.pose.position.y*first.pose.position.y + first.pose.position.z*first.pose.position.z);
+        double distsecond = std::sqrt( second.pose.position.x*second.pose.position.x + second.pose.position.y*second.pose.position.y + second.pose.position.z*second.pose.position.z);
+        return (distfirst > distsecond); });
+
+    DesiredHandPose = generateHandPose( objects_vec[0], 0 );
+    
+    if (!DesiredHandPose.isGraspable )
+    {
+          ROS_DEBUG("Object to Reject");
+          DesiredHandPose.pose = ObstacleReject(objects_vec[0], DesiredHandPose.whichArm);
+          Obj_info.data = 1; 
+          tf::Transform tfHandTrasform2;
+          tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform2); 
+          tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"ObstacleReject") );
+    }
+    else
+    {
+          ROS_DEBUG("Graspable objects");
+          Obj_info.data = 0; //flag to grasp object in the desperate_mind code
+          tf::Transform tfHandTrasform;
+          tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform);
+          tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), right_hand_frame_ .c_str()) ); 
+    }
+
+      // if (DesiredHandPose.whichArm == 1) 
+      // {
+      //     desired_hand_publisher_left.publish(DesiredHandPose);
+      //     stop = 1; /* flag to stop this procedure */
+      //     objects_info_left_pub.publish(Obj_info);
+      // }
+      // else
+      // {
+    DesiredHandPose.id = id_class;
+    desired_hand_publisher_right.publish(DesiredHandPose);
+    finish = false;
+          // stop = 1;
+          // objects_info_right_pub.publish(Obj_info);
+      // }
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

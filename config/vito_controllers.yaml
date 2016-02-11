@@ -71,7 +71,7 @@ right_arm:
     time_interpolation: 5
     max_tau_percentage: 0.5
     pf_repulsive_gain: 0.3
-    pf_dist_to_obstacles: 0.3
+    pf_dist_to_obstacles: 0.1
     pf_dist_to_table: 0.15
     vel_limit_robot: 2
     k_p: [300.0, 300.0, 300.0, 300.0, 300.0, 300.0]
