@@ -1,4 +1,4 @@
-#include <home_state.h>
+#include <Home_state.h>
 // #include <check_error.hpp>
 
 Home_state::Home_state()
@@ -91,6 +91,8 @@ void Home_state::Error_info_right(const desperate_housewife::Error_msg::ConstPtr
   }
 
 
+
+
 void Home_state::run()
 {
   if(start_flag == true)
@@ -99,6 +101,7 @@ void Home_state::run()
     {
       // std::cout<<"send vito at home"<<std::endl;
   		SendHomeRobot_right(); 
+      finish = false;
   	}
     
     else  if((id_class == id_error_msgs) && (IsEqual(e_)))

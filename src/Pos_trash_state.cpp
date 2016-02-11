@@ -1,4 +1,4 @@
-#include <trash_position.h>
+#include <Trash_position.h>
 
 
 Pos_trash::Pos_trash()
@@ -37,12 +37,14 @@ Pos_trash::Pos_trash()
     nh.param<double>("/error/rot/z",rotz,0.01);
 
 
-      nh.param<double>("/trash/right_arm_position_x", trash_robot_pose.pose.position.x, -0.75022);
-      nh.param<double>("/trash/right_arm_position_y",  trash_robot_pose.pose.position.y,  -0.47078);
-      nh.param<double>("/trash/right_arm_position_z", trash_robot_pose.pose.position.z, 0.74494);
-      nh.param<double>("/trash/right_arm_A_yaw", yaw,  -0.12690);
-      nh.param<double>("/trash/right_arm_B_pitch", pitch, -0.06571);
-      nh.param<double>("/trash/right_arm_C_roll", roll, -0.11774);
+        double roll_r,pitch_r,yaw_r;
+    nh.param<double>("/trash/right_arm_position_x", trash_robot_pose.pose.position.x, -0.75022);
+    nh.param<double>("/trash/right_arm_position_y",  trash_robot_pose.pose.position.y,  0.47078);
+    nh.param<double>("/trash/right_arm_position_z", trash_robot_pose.pose.position.z, 0.74494);
+    nh.param<double>("/trash/right_arm_A_yaw", yaw_r,  0.334);
+    nh.param<double>("/trash/right_arm_B_pitch", pitch_r, -0.08650);
+    nh.param<double>("/trash/right_arm_C_roll", roll_r, -0.5108);
+
 
       KDL::Vector vel;
       KDL::Vector rot;

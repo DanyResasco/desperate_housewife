@@ -1,13 +1,13 @@
 #include <desperate_State_machine.h>
 #include <state.h>
 #include <state_machine.hpp>
-#include <home_state.h>
+#include <Home_state.h>
 #include <SoftHand_states_close.h>
 #include <SoftHand_states_open.h>
 #include <grasp_state.h>
 #include <Wait_msgs_.h>
-#include <trash_position.h>
-#include <removed_state.h>
+#include <Trash_position.h>
+#include <Removed_state.h>
 #include <Place_table_state.h>
 #include <overtune_state.h>
 #include <starting_state.h>

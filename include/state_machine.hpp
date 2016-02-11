@@ -4,10 +4,7 @@
 #include <map>
 #include <vector>
 
-// namespace dual_manipulation{
-//     namespace state_manager{
-        
-  
+
         template <class state_type, class transition_type>
         class state_machine
         {
@@ -38,6 +35,5 @@
                 state_machine(){}
         };
         
-    // }
-// }
+ 
 #endif // BASIC_STATE_MACHINE_HPP

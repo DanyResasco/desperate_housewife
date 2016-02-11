@@ -233,9 +233,9 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
 	// 			   (object_position[1] - hand_left_position[1]) * (object_position[1] - hand_left_position[1]) +
 	// 			   (object_position[2] - hand_left_position[2]) * (object_position[2] - hand_left_position[2]) );
 
-	double dist_to_right_hand = std::sqrt((object_position[0] - hand_right_position[0]) * (object_position[0] - hand_right_position[0]) +
-				   (object_position[1] - hand_right_position[1]) * (object_position[1] - hand_right_position[1]) +
-				   (object_position[2] - hand_right_position[2]) * (object_position[2] - hand_right_position[2]) );
+	// double dist_to_right_hand = std::sqrt((object_position[0] - hand_right_position[0]) * (object_position[0] - hand_right_position[0]) +
+	// 			   (object_position[1] - hand_right_position[1]) * (object_position[1] - hand_right_position[1]) +
+	// 			   (object_position[2] - hand_right_position[2]) * (object_position[2] - hand_right_position[2]) );
 
   /*the straight line is calculates in cilynder frame*/
 	// if(dist_to_left_hand < dist_to_right_hand)
@@ -290,25 +290,25 @@ geometry_msgs::Pose HandPoseGenerator::ObstacleReject( desperate_housewife::fitt
 
   M_desired_local = Eigen::Matrix4d::Identity();
 
-  if(arm_ == 1) /*left*/
-  { 
-      T_w_ob.col(0) << -z, 0;  
-      T_w_ob.col(1) << y, 0;
-      T_w_ob.col(2) << y.cross(z) , 0;
+  // if(arm_ == 1) /*left*/
+  // { 
+  //     T_w_ob.col(0) << -z, 0;  
+  //     T_w_ob.col(1) << y, 0;
+  //     T_w_ob.col(2) << y.cross(z) , 0;
 
-      msg_jointT_hand.joint_names[0] = "left_hand_synergy_joint";
-      hand_publisher_left.publish(msg_jointT_hand);
-  }
+  //     msg_jointT_hand.joint_names[0] = "left_hand_synergy_joint";
+  //     hand_publisher_left.publish(msg_jointT_hand);
+  // }
 
-  else  /*right*/
-  {
+  // else  right
+  // {
     T_w_ob.col(0) << z, 0; 
     T_w_ob.col(1) << -y,0;
     T_w_ob.col(2) << y.cross(z), 0;
 
     msg_jointT_hand.joint_names[0] = "right_hand_synergy_joint";
     hand_publisher_right.publish(msg_jointT_hand);
-  }
+  // }
 
   T_w_ob.col(3) << Point_desired;  
 

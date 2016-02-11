@@ -38,6 +38,8 @@ private:
   std::string base_frame_, desired_hand_frame_, right_hand_frame_, left_hand_frame_;
   std::string start_topic_left, start_topic_right;
   ros::Subscriber left_start_controller_sub, right_start_controller_sub;
+  ros::Publisher hand_publisher_right;
+  std::string hand_close_right;
 
   Eigen::Vector3d retta_hand_obj;
   int start_controller_left = 0;
@@ -65,8 +67,8 @@ public:
   ros::Publisher objects_info_right_pub, objects_info_left_pub;
   std::string obj_info_topic_r, obj_info_topic_l;
   ros::Publisher vis_pub;
-  std::string hand_close_left, hand_close_right;
-  ros::Publisher hand_publisher_left, hand_publisher_right;
+  // std::string hand_close_left, hand_close_right;
+  // ros::Publisher hand_publisher_left, hand_publisher_right;
   std::string right_hand_synergy_joint, left_hand_synergy_joint;
   tf::TransformListener listener_object;
 

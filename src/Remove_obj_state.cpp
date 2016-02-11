@@ -1,4 +1,4 @@
-#include "removed_state.h"
+#include "Removed_state.h"
 
 Removed_moves::Removed_moves()
 {
@@ -21,6 +21,28 @@ Removed_moves::Removed_moves()
   	nh.param<std::string>("/right_arm/PotentialFieldControl/tip_name", right_hand_frame_, "right_hand_palm_ref_link");
 
   	id_class = static_cast<int>(transition_id::Vito_Removed);
+
+
+    double x,y,z,rotx,roty,rotz;
+    /*treshold error*/
+    nh.param<double>("/error/pos/x",x,0.01);
+    nh.param<double>("/error/pos/y",y,0.01);
+    nh.param<double>("/error/pos/z",z,0.01);
+    nh.param<double>("/error/rot/x",rotx,0.01);
+    nh.param<double>("/error/rot/y",roty,0.01);
+    nh.param<double>("/error/rot/z",rotz,0.01);
+
+      KDL::Vector vel;
+      KDL::Vector rot;
+      vel.data[0] = x;
+      vel.data[1] = y;
+      vel.data[2] = z;
+      rot.data[0] = rotx;
+      rot.data[1] = roty;
+      rot.data[2] = rotz;
+      E_t.vel = vel;
+      E_t.rot = rot;
+
 }
 
 std::map< transition, bool > Removed_moves::getResults()
@@ -51,6 +73,7 @@ void Removed_moves::run()
 	
 		if((id_class != id_error_msgs) && IsEqual(e_))
 		{	
+      // std::cout<<"diversi id ed error_ uguale"<<std::endl;
 			tf::StampedTransform hand_rigth;
 			listener_info.waitForTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
 			listener_info.lookupTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time(0), hand_rigth);
@@ -79,8 +102,11 @@ void Removed_moves::run()
 
   	else if((id_class = id_error_msgs) && IsEqual(e_))
   	{
+        // std::cout<<"uguale id ed error_ uguale"<<std::endl;
   			finish = true;			
   	}
+    else if( (id_class != id_error_msgs) && (!IsEqual(e_)))
+      finish = false;
 }
 
 bool Removed_moves::isComplete()

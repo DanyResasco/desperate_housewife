@@ -57,6 +57,9 @@ HandPoseGenerator::HandPoseGenerator()
 	nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
   error_sub_right = nh.subscribe(error_topic_right, 1, &HandPoseGenerator::Error_info_right, this);
 
+  nh.param<std::string>("/right_hand/joint_trajectory_controller/command", hand_close_right, "/right_hand/joint_trajectory_controller/command");
+  hand_publisher_right = nh.advertise<trajectory_msgs::JointTrajectory>(hand_close_right.c_str(), 1000);
+
 
   	double x,y,z,rotx,roty,rotz;
   /*treshold error*/
@@ -188,7 +191,7 @@ void HandPoseGenerator::run()
       		Obj_info.data = ObjorObst;
       		objects_info_right_pub.publish(Obj_info);
       		finish = true;
-      		stop = 0;
+      		// stop = 0;
       		
   	    }
   	}
