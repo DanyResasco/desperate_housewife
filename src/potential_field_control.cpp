@@ -49,7 +49,7 @@ namespace desperate_housewife
 
 
     ROS_INFO("Subscribed for desired_reference to: %s", "command");
-    sub_command = nh_.subscribe("command", 1, &PotentialFieldControl::command, this); 
+    sub_command = nh_.subscribe(topic_desired_reference.c_str(), 1, &PotentialFieldControl::command, this); 
           //list of obstacles
     ROS_INFO("Subscribed for obstacle_avoidance_topic to : %s", topic_obstacle_avoidance.c_str());
     sub_obstacles = nh_.subscribe(topic_obstacle_avoidance.c_str(), 1, &PotentialFieldControl::InfoGeometry, this);
@@ -599,6 +599,7 @@ Eigen::Vector3d PotentialFieldControl::GetPartialDerivate(KDL::Frame &T_v_o, KDL
     nh_.param<std::string>("topic_obstacle", topic_obstacle_avoidance, "obstacles");
     nh_.param<std::string>("tip_name", parameters_.tip_name, "end_effector");
     nh_.param<std::string>("root_name", parameters_.root_name, "world");
+    nh_.param<std::string>("topic_desired_reference", topic_desired_reference, "command");
     nh_.param<double>("time_interpolation", parameters_.max_time_interpolation, 1);
     nh_.param<double>("max_tau_percentage", parameters_.max_tau_percentage,0.5);
     nh_.param<double>("pf_repulsive_gain", parameters_.pf_repulsive_gain ,1);

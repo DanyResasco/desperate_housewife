@@ -191,7 +191,7 @@ namespace desperate_housewife
 
 		} parameters_;
 
-		std::string  topic_obstacle_avoidance;
+		std::string  topic_obstacle_avoidance, topic_desired_reference;
 		ros::Publisher pub_error, pub_tau, pub_pf_repulsive_forse, pub_pf_attractive_force, pub_pf_total_force, pub_total_wrench;
 		ros::Subscriber sub_command, sub_obstacles, sub_start_controller;
 		ros::ServiceServer srv_start_controller;
