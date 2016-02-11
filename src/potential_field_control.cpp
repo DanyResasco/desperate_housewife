@@ -257,11 +257,12 @@ namespace desperate_housewife
             for (unsigned int k = 0; k < Object_position.size(); ++k)
             {
               double influence_local = Object_radius[k] +  parameters_.pf_dist_to_obstacles;
-
+              // ROS_INFO_STREAM("Checkin collision of link " << i << " with object " << k << "of radius " << Object_radius[k]);
               F_obj +=  (1.0/(parameters_.pf_list_of_links.size()*Object_position.size()))*GetRepulsiveForce(fk_chain, influence_local, Object_position[k], Object_radius[k], Object_height[k] );
             }
 
             F_obj_base_link = Adjoint*F_obj;
+            // F_obj_base_link = F_obj;
             F_obj_base_total += F_obj_base_link;
             // F_obj_base_link += F_obj;
 
@@ -269,7 +270,7 @@ namespace desperate_housewife
             F_table_base_link = (1.0/parameters_.pf_list_of_links.size())*Adjoint*F_table;
             F_table_base_total += F_table_base_link;
 
-            tau_repulsive.data += getTauRepulsive(lambda_, J_, parameters_.pf_list_of_chains[i].getNrOfJoints(), (F_table_base_link+F_obj_base_link) );
+            tau_repulsive.data += getTauRepulsive(lambda_, J_, parameters_.pf_list_of_chains[i].getNrOfJoints(), (F_table_base_link + F_obj_base_link) );
 
         }
         // F_repulsive  = F_table_base_link;
@@ -286,6 +287,7 @@ namespace desperate_housewife
       F_total = (F_attractive + F_repulsive);
 
       Eigen::Matrix<double, 6, 1> F_to_plot  = getAdjointT( x_.Inverse() ) * (F_total);
+
       geometry_msgs::WrenchStamped total_repulsive_wrench_end_efector;
       total_repulsive_wrench_end_efector.header.frame_id = parameters_.tip_name.c_str();
       total_repulsive_wrench_end_efector.header.stamp = ros::Time::now();
@@ -487,24 +489,59 @@ Eigen::Matrix<double,6,1> PotentialFieldControl::GetRepulsiveForce(KDL::Frame &T
 
   double distance;
 
-  distance = diff(Object_pos.p, T_in.p).Norm();
+  KDL::Vector distance_vector;
+  distance_vector = T_in.p - Object_pos.p;
+  distance = distance_vector.Norm();
   // std::cout<<"distance: "<<distance<<std::endl;
   // std::cout<<"influence: "<<influence<<std::endl;
 
   if( distance <= influence)
   {
+    // ROS_INFO_STREAM("There is a collision ");
+    // ROS_INFO_STREAM("Distance: " << distance << "Influence: " << influence);
     Eigen::Vector3d distance_der_partial = GetPartialDerivate(Object_pos, T_in.p, radius, height);
     ForceAndIndex = GetFIRAS(distance, distance_der_partial, influence);
-
+    // ROS_INFO_STREAM("Force: " << std::endl << ForceAndIndex);
   }
+  // else
+  // {
+    // ROS_INFO_STREAM("There is not a collision ");
+    // ROS_INFO_STREAM("Distance: " << distance << " Influence: " << influence);
+  // }
 
   Eigen::Matrix<double,6,1> force_local_link = Eigen::Matrix<double,6,1>::Zero();
-    // force_local_link = getAdjointT( T_in.Inverse() * Object_pos) * ForceAndIndex;
-  force_local_link = getAdjointT( T_in.Inverse() ) * ForceAndIndex;
+  force_local_link = getAdjointT( T_in.Inverse() * Object_pos) * ForceAndIndex;
+  // force_local_link = getAdjointT( T_in.Inverse() ) * ForceAndIndex;
 
   return force_local_link; 
     // return ForceAndIndex; 
 }
+
+  Eigen::Matrix<double,6,1> PotentialFieldControl::GetRepulsiveForceTable(KDL::Frame &T_in, double influence)
+  {
+    Eigen::Matrix<double,6,1> force_local_object = Eigen::Matrix<double,6,1>::Zero();
+
+    KDL::Frame T_table_world;
+
+    T_table_world.p = T_in.p;
+    T_table_world.p.data[2] = 0;
+
+    KDL::Vector Table_position(0,0,0.0);
+
+    double distance_local = std::abs( -Table_position.z() + T_in.p.z());
+
+    Eigen::Vector3d distance_der_partial(0,0,1);
+
+    if (distance_local <= parameters_.pf_dist_to_table )
+    {
+      force_local_object = GetFIRAS(distance_local, distance_der_partial, parameters_.pf_dist_to_table);
+    }
+
+    Eigen::Matrix<double,6,1> force_local_link = Eigen::Matrix<double,6,1>::Zero();
+    force_local_link = getAdjointT( T_in.Inverse() * T_table_world) * force_local_object;
+
+    return force_local_link;
+  }
 
 Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial, double influence)
 {
@@ -546,7 +583,8 @@ Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double min_distance, E
 
       Eigen::Vector3d Der_v;
       Eigen::Vector4d partial_temp;
-      partial_temp = Tvo_eigen*distance_der_partial;
+      // partial_temp = Tvo_eigen*distance_der_partial;
+      partial_temp = distance_der_partial;
       Der_v[0] = partial_temp[0];
       Der_v[1] = partial_temp[1];
       Der_v[2] = partial_temp[2];
@@ -562,32 +600,6 @@ Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double min_distance, E
     Tvo_eigen.row(2) << T_v_o.M.data[6], T_v_o.M.data[7],T_v_o.M.data[8], T_v_o.p.z();
     Tvo_eigen.row(3) << 0,0,0,1;
     return Tvo_eigen;
-  }
-
-  Eigen::Matrix<double,6,1> PotentialFieldControl::GetRepulsiveForceTable(KDL::Frame &T_in, double influence)
-  {
-    Eigen::Matrix<double,6,1> force_local_object = Eigen::Matrix<double,6,1>::Zero();
-
-    KDL::Frame T_table_world;
-
-    T_table_world.p = T_in.p;
-    T_table_world.p.data[2] = 0;
-
-    KDL::Vector Table_position(0,0,0.0);
-
-    double distance_local = std::abs( -Table_position.z() + T_in.p.z());
-
-    Eigen::Vector3d distance_der_partial(0,0,1);
-
-    if (distance_local <= parameters_.pf_dist_to_table )
-    {
-      force_local_object = GetFIRAS(distance_local, distance_der_partial, parameters_.pf_dist_to_table);
-    }
-
-    Eigen::Matrix<double,6,1> force_local_link = Eigen::Matrix<double,6,1>::Zero();
-    force_local_link = getAdjointT( T_in.Inverse() * T_table_world) * force_local_object;
-
-    return force_local_link;
   }
 
   double PotentialFieldControl::VelocityLimit(KDL::Twist x_dot_d )
