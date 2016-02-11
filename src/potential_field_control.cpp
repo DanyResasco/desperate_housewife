@@ -84,7 +84,6 @@ namespace desperate_housewife
       joint_des_states_.qdot(i) = joint_msr_states_.qdot(i);
     }
 
-
     fk_pos_solver_->JntToCart(joint_msr_states_.q,x_des_);
     x_now_int = x_des_;
     x_des_int = x_des_;
@@ -105,7 +104,7 @@ namespace desperate_housewife
     std_msgs::Float64MultiArray F_total_msg;
     std_msgs::Float64MultiArray err_msg;
 
-          // get joint positions
+    // get joint positions
     for(unsigned int i=0; i < joint_handles_.size(); i++) 
     {
       joint_msr_states_.q(i) = joint_handles_[i].getPosition();
@@ -123,6 +122,7 @@ namespace desperate_housewife
 
     KDL::Twist x_err_msg;
     x_err_msg = x_err_;
+
     if (start_controller)
     {
           // computing Inertia, Coriolis and Gravity matrices
@@ -184,99 +184,106 @@ namespace desperate_housewife
      }
      else
      {
-      x_des_ = x_des_int;
-    }
+        x_des_ = x_des_int;
+      }
                 // }
 
-    x_dot_ = J_.data*joint_msr_states_.qdot.data; 
-      // std::cout << x_des_ << std::endl;
-    x_err_ = diff(x_,x_des_);
-      // x_err_ = diff(x_,x_now_int);
+      x_dot_ = J_.data*joint_msr_states_.qdot.data; 
+        // std::cout << x_des_ << std::endl;
+      x_err_ = diff(x_,x_des_);
+        // x_err_ = diff(x_,x_now_int);
 
-    KDL::Twist x_dot_d;
+      KDL::Twist x_dot_d;
 
-    x_dot_d.vel.data[0] = parameters_.k_p(0,0)/parameters_.k_d(0,0) * x_err_.vel.data[0];
-    x_dot_d.vel.data[1] = parameters_.k_p(1,1)/parameters_.k_d(1,1) * x_err_.vel.data[1];
-    x_dot_d.vel.data[2] = parameters_.k_p(2,2)/parameters_.k_d(2,2) * x_err_.vel.data[2];
-    x_dot_d.rot.data[0] = parameters_.k_p(3,3)/parameters_.k_d(3,3) * x_err_.rot.data[0];
-    x_dot_d.rot.data[1] = parameters_.k_p(4,4)/parameters_.k_d(4,4) * x_err_.rot.data[1];
-    x_dot_d.rot.data[2] = parameters_.k_p(5,5)/parameters_.k_d(5,5) * x_err_.rot.data[2];
+      x_dot_d.vel.data[0] = parameters_.k_p(0,0)/parameters_.k_d(0,0) * x_err_.vel.data[0];
+      x_dot_d.vel.data[1] = parameters_.k_p(1,1)/parameters_.k_d(1,1) * x_err_.vel.data[1];
+      x_dot_d.vel.data[2] = parameters_.k_p(2,2)/parameters_.k_d(2,2) * x_err_.vel.data[2];
+      x_dot_d.rot.data[0] = parameters_.k_p(3,3)/parameters_.k_d(3,3) * x_err_.rot.data[0];
+      x_dot_d.rot.data[1] = parameters_.k_p(4,4)/parameters_.k_d(4,4) * x_err_.rot.data[1];
+      x_dot_d.rot.data[2] = parameters_.k_p(5,5)/parameters_.k_d(5,5) * x_err_.rot.data[2];
 
-    double v_limited = VelocityLimit(x_dot_d);
+      double v_limited = VelocityLimit(x_dot_d);
 
-          //calculate the attractive filed like PID control
-      // F_attractive = Eigen::Matrix<double,6,1>::Zero();
-    x_err_integral += x_err_*period.toSec();
+            //calculate the attractive filed like PID control
+        // F_attractive = Eigen::Matrix<double,6,1>::Zero();
+      x_err_integral += x_err_*period.toSec();
 
-    if (parameters_.enable_attractive_field)
-    {
-      for(int i = 0; i < F_attractive.size(); i++)
+      if (parameters_.enable_attractive_field)
       {
-        x_err_integral += x_err_*period.toSec();
-          F_attractive(i) =  -parameters_.k_d(i,i) * ( x_dot_(i) -  v_limited * x_dot_d(i) ); //+        parameters_.k_i(i,i)*x_err_integral(i);
-        }
-      }
-          // computing b = J*M^-1*(c+g) - J_dot*q_dot
-      b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
-
-          // computing omega = J*M^-1*N^T*J
-      omega_ = J_.data*M_inv_*N_trans_*J_.data.transpose();
-
-      JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
-          // computing lambda = omega^-1
-      pseudo_inverse(omega_,lambda_,sing_vals_2);
-
-      N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
-
-      F_total = Eigen::Matrix<double, 6, 1>::Zero();
-      F_repulsive  = Eigen::Matrix<double, 6, 1>::Zero();
-
-      if (parameters_.enable_obstacle_avoidance)
-      {
-        Eigen::Matrix<double, 6,1> F_obj_base_link = Eigen::Matrix<double, 6, 1>::Zero();
-        Eigen::Matrix<double, 6,1> F_table_base_link = Eigen::Matrix<double, 6, 1>::Zero();
-        Eigen::Matrix<double, 6,1> F_obj_base_total = Eigen::Matrix<double, 6, 1>::Zero();
-        Eigen::Matrix<double, 6,1> F_table_base_total = Eigen::Matrix<double, 6, 1>::Zero();
-        Eigen::Matrix<double, 6,1> F_table = Eigen::Matrix<double, 6, 1>::Zero();
-
-        for (unsigned int i = 0; i < parameters_.pf_list_of_links.size(); ++i)
+        for(int i = 0; i < F_attractive.size(); i++)
         {
-          KDL::JntArray joint_states_chain(parameters_.pf_list_of_chains[i].getNrOfJoints());
-          for (unsigned int j = 0; j < parameters_.pf_list_of_chains[i].getNrOfJoints(); ++j)
-          {
-            joint_states_chain(j) = joint_msr_states_.q(j);
+          x_err_integral += x_err_*period.toSec();
+            F_attractive(i) =  -parameters_.k_d(i,i) * ( x_dot_(i) -  v_limited * x_dot_d(i) ); //+        parameters_.k_i(i,i)*x_err_integral(i);
           }
-          KDL::Frame fk_chain;
-          parameters_.pf_list_of_fk[i].JntToCart(joint_states_chain,fk_chain);
-          Eigen::Matrix<double,6,6> Adjoint;
-          Adjoint = getAdjointT( fk_chain );
-          Eigen::Matrix<double, 6,1> F_obj = Eigen::Matrix<double, 6, 1>::Zero();
+        }
+            // computing b = J*M^-1*(c+g) - J_dot*q_dot
+        b_ = J_.data*M_inv_*(C_.data + G_.data) - J_dot_.data*joint_msr_states_.qdot.data;
 
-          for (unsigned int k = 0; k < Object_position.size(); ++k)
+            // computing omega = J*M^-1*N^T*J
+        omega_ = J_.data*M_inv_*N_trans_*J_.data.transpose();
+
+        JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
+            // computing lambda = omega^-1
+        pseudo_inverse(omega_,lambda_,sing_vals_2);
+
+        N_trans_ = N_trans_ - J_.data.transpose()*lambda_*J_.data*M_inv_;           
+
+        F_total = Eigen::Matrix<double, 6, 1>::Zero();
+        F_repulsive  = Eigen::Matrix<double, 6, 1>::Zero();
+
+        if (parameters_.enable_obstacle_avoidance)
+        {
+          Eigen::Matrix<double, 6,1> F_obj_base_link = Eigen::Matrix<double, 6, 1>::Zero();
+          Eigen::Matrix<double, 6,1> F_table_base_link = Eigen::Matrix<double, 6, 1>::Zero();
+          Eigen::Matrix<double, 6,1> F_obj_base_total = Eigen::Matrix<double, 6, 1>::Zero();
+          Eigen::Matrix<double, 6,1> F_table_base_total = Eigen::Matrix<double, 6, 1>::Zero();
+          Eigen::Matrix<double, 6,1> F_table = Eigen::Matrix<double, 6, 1>::Zero();
+
+          for (unsigned int i = 0; i < parameters_.pf_list_of_links.size(); ++i)
           {
-            double influence_local = Object_radius[i] +  parameters_.pf_dist_to_obstacles;
-            F_obj +=  (1.0/(parameters_.pf_list_of_links.size()*Object_position.size()))*GetRepulsiveForce(fk_chain, influence_local, Object_position[k], Object_radius[k], Object_height[k] );
-          }
+            KDL::JntArray joint_states_chain(parameters_.pf_list_of_chains[i].getNrOfJoints());
+            
+            for (unsigned int j = 0; j < parameters_.pf_list_of_chains[i].getNrOfJoints(); ++j)
+            {
+              joint_states_chain(j) = joint_msr_states_.q(j);
+            }
+            
+            KDL::Frame fk_chain;
+            parameters_.pf_list_of_fk[i].JntToCart(joint_states_chain,fk_chain);
+            Eigen::Matrix<double,6,6> Adjoint;
+            Adjoint = getAdjointT( fk_chain );
+            Eigen::Matrix<double, 6,1> F_obj = Eigen::Matrix<double, 6, 1>::Zero();
 
-          F_obj_base_link = Adjoint*F_obj;
-          F_obj_base_total += F_obj_base_link;
-          // F_obj_base_link += F_obj;
+            for (unsigned int k = 0; k < Object_position.size(); ++k)
+            {
+              double influence_local = Object_radius[k] +  parameters_.pf_dist_to_obstacles;
 
-          F_table = GetRepulsiveForceTable(fk_chain, parameters_.pf_dist_to_table );
-          F_table_base_link = (1.0/parameters_.pf_list_of_links.size())*Adjoint*F_table;
-          F_table_base_total += F_table_base_link;
+              F_obj +=  (1.0/(parameters_.pf_list_of_links.size()*Object_position.size()))*GetRepulsiveForce(fk_chain, influence_local, Object_position[k], Object_radius[k], Object_height[k] );
+            }
 
-          tau_repulsive.data += getTauRepulsive(lambda_, J_, parameters_.pf_list_of_chains[i].getNrOfJoints(), (F_table_base_link+F_obj_base_link) );
+            F_obj_base_link = Adjoint*F_obj;
+            F_obj_base_total += F_obj_base_link;
+            // F_obj_base_link += F_obj;
+
+            F_table = GetRepulsiveForceTable(fk_chain, parameters_.pf_dist_to_table );
+            F_table_base_link = (1.0/parameters_.pf_list_of_links.size())*Adjoint*F_table;
+            F_table_base_total += F_table_base_link;
+
+            tau_repulsive.data += getTauRepulsive(lambda_, J_, parameters_.pf_list_of_chains[i].getNrOfJoints(), (F_table_base_link+F_obj_base_link) );
 
         }
         // F_repulsive  = F_table_base_link;
 
         F_repulsive  = (F_table_base_total + F_obj_base_total);
+        // for(unsigned int k=0; k< F_repulsive.size(); k++)
+        // {
+        //   std::cout<<"F_table_base_total: "<<F_table_base_total[k]<<std::endl;
+        //   std::cout<<"F_obj_base_total: "<<F_obj_base_total[k]<<std::endl;
+        // }
         tau_.data += tau_repulsive.data;
       }
 
       F_total = (F_attractive + F_repulsive);
-
 
       Eigen::Matrix<double, 6, 1> F_to_plot  = getAdjointT( x_.Inverse() ) * (F_total);
       geometry_msgs::WrenchStamped total_repulsive_wrench_end_efector;
@@ -290,11 +297,8 @@ namespace desperate_housewife
       total_repulsive_wrench_end_efector.wrench.torque.z = F_to_plot(5);
       pub_total_wrench.publish(total_repulsive_wrench_end_efector);
 
-
-
       tau_.data += (J_.data.transpose()*lambda_*(F_attractive));
-
-      
+     
       if (parameters_.enable_joint_limits_avoidance)
       {
         tau_.data += JointLimitAvoidance( joint_msr_states_.q ).data;
@@ -402,7 +406,8 @@ namespace desperate_housewife
     {
       KDL::Frame frame_obj;
                 //radius
-      Object_radius.push_back(msg->geometries[i].info[0]);  
+      Object_radius.push_back(msg->geometries[i].info[0]); 
+       // std::cout<<" Object_radius[i]: "<<Object_radius[i]<<std::endl; 
           //height
       Object_height.push_back(msg->geometries[i].info[1]);  
 
@@ -449,29 +454,29 @@ namespace desperate_housewife
 
   KDL::JntArray PotentialFieldControl::JointLimitAvoidance(KDL::JntArray q)
   {// This function implements joint limit avoidance usung the penalty function V = \sum\limits_{i=1}^n\frac{1}{s^2} s = q_{l_1}-|q_i|        
-  KDL::JntArray tau_limit_avoidance(q.data.size());
-  double s, potential, k = .01, treshold, q_abs;
+    KDL::JntArray tau_limit_avoidance(q.data.size());
+    double s, potential, k = .01, treshold, q_abs;
 
-  for (unsigned int i = 0; i < q.data.size(); i++)
-  {
-    treshold = 5.0*M_PI/180.0;
-    q_abs = std::fabs(q.data[i]);
-    s = joint_limits_.max(i) - q_abs;
-
-
-    if (  s < treshold )
+    for (unsigned int i = 0; i < q.data.size(); i++)
     {
-      ROS_WARN("Joint limit %d", i);
-      potential = 0.5 * std::pow((1/s -1/treshold),2);
-      tau_limit_avoidance.data[i] = - k * KDL::sign(q.data[i]) * potential;  
-    }
-    else
-    {
-      tau_limit_avoidance(i) = 0.0;
-    }
-  }
+      treshold = 5.0*M_PI/180.0;
+      q_abs = std::fabs(q.data[i]);
+      s = joint_limits_.max(i) - q_abs;
 
-  return tau_limit_avoidance;
+
+      if (  s < treshold )
+      {
+        ROS_WARN("Joint limit %d", i);
+        potential = 0.5 * std::pow((1/s -1/treshold),2);
+        tau_limit_avoidance.data[i] = - k * KDL::sign(q.data[i]) * potential;  
+      }
+      else
+      {
+        tau_limit_avoidance(i) = 0.0;
+      }
+    }
+
+    return tau_limit_avoidance;
 }
 
 
@@ -483,10 +488,11 @@ Eigen::Matrix<double,6,1> PotentialFieldControl::GetRepulsiveForce(KDL::Frame &T
   double distance;
 
   distance = diff(Object_pos.p, T_in.p).Norm();
+  // std::cout<<"distance: "<<distance<<std::endl;
+  // std::cout<<"influence: "<<influence<<std::endl;
 
-  if( distance < influence)
+  if( distance <= influence)
   {
-
     Eigen::Vector3d distance_der_partial = GetPartialDerivate(Object_pos, T_in.p, radius, height);
     ForceAndIndex = GetFIRAS(distance, distance_der_partial, influence);
 
@@ -519,33 +525,33 @@ Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double min_distance, E
 }
 
 
-Eigen::Vector3d PotentialFieldControl::GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height)
-{
-    Eigen::Matrix<double,4,4>  Tvo_eigen; 
-    Tvo_eigen = FromKdlToEigen(T_v_o);
-    Eigen::Vector4d Point_v_eigen(Point_v.x(),Point_v.y(),Point_v.z(),1);
+  Eigen::Vector3d PotentialFieldControl::GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height)
+  {
+      Eigen::Matrix<double,4,4>  Tvo_eigen; 
+      Tvo_eigen = FromKdlToEigen(T_v_o);
+      Eigen::Vector4d Point_v_eigen(Point_v.x(),Point_v.y(),Point_v.z(),1);
 
-    Eigen::Vector4d Point_o;
-    Point_o = Tvo_eigen.inverse() * Point_v_eigen;
-    double n = 2; // n as in the paper should be in 4 but considering the shortest distance to obstacles. Here this is not being considered :( TODO
+      Eigen::Vector4d Point_o;
+      Point_o = Tvo_eigen.inverse() * Point_v_eigen;
+      double n = 2; // n as in the paper should be in 4 but considering the shortest distance to obstacles. Here this is not being considered :( TODO
 
-    Eigen::Vector4d distance_der_partial(0,0,0,0);
-            // distance_der_partial = x^2/radius + y^2 / radius + 2*(z^2n) /l 
-    distance_der_partial[0] = (Point_o[0]*2) / radius ;
-    distance_der_partial[1] = (Point_o[1]*2) / radius ;
-    distance_der_partial[2] = (std::pow((Point_o[2] *2 / height),(2*n -1)) * (2*n) ); //n=4
-            //n=1
-    // distance_der_partial[2] = (Point_o[2]*4) / height ; 
-    distance_der_partial[3] = 0; 
+      Eigen::Vector4d distance_der_partial(0,0,0,0);
+              // distance_der_partial = x^2/radius + y^2 / radius + 2*(z^2n) /l 
+      distance_der_partial[0] = (Point_o[0]*2) / radius ;
+      distance_der_partial[1] = (Point_o[1]*2) / radius ;
+      distance_der_partial[2] = (std::pow((Point_o[2] *2 / height),(2*n -1)) * (2*n) ); //n=4
+              //n=1
+      // distance_der_partial[2] = (Point_o[2]*4) / height ; 
+      distance_der_partial[3] = 0; 
 
-    Eigen::Vector3d Der_v;
-    Eigen::Vector4d partial_temp;
-    partial_temp = Tvo_eigen*distance_der_partial;
-    Der_v[0] = partial_temp[0];
-    Der_v[1] = partial_temp[1];
-    Der_v[2] = partial_temp[2];
+      Eigen::Vector3d Der_v;
+      Eigen::Vector4d partial_temp;
+      partial_temp = Tvo_eigen*distance_der_partial;
+      Der_v[0] = partial_temp[0];
+      Der_v[1] = partial_temp[1];
+      Der_v[2] = partial_temp[2];
 
-    return Der_v;
+      return Der_v;
   }
 
   Eigen::Matrix<double,4,4>  FromKdlToEigen(KDL::Frame &T_v_o)

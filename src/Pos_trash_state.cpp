@@ -21,8 +21,8 @@ Pos_trash::Pos_trash()
 
 	  id_class = static_cast<int>(transition_id::Vito_trash);
   	
-    step = 1;
-  	msg_arrived = 0;
+   //  step = 1;
+  	// msg_arrived = 0;
   	finish = false;
   	failed = false;
 
