@@ -43,18 +43,10 @@
     <param name="publish_frequency" value="100"/>
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"  />
 
-<!--     <group if="$(arg use_rviz)">
-        <node name="my_rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find vito_description)/launch/rviz_config.rviz" output="screen"/>
-    </group> -->
-
     <!-- load hardware interface and controller configurations -->
     <rosparam command="load" file="$(find desperate_housewife)/config/vito_controllers.yaml"/>
     <rosparam command="load" file="$(find desperate_housewife)/config/hardware_interfaces.yaml"/>
 
-    <!-- publish the environment in moveit -->
-    <!-- (useful for kinematic planning, not fully completed)-->
-    <!-- node name="collision_object_publisher" pkg="rostopic" type="rostopic" output="screen" args="pub /collision_object moveit_msgs/CollisionObject -l -f $(find vito_moveit_configuration)/config/environment.yaml">
-    </node-->
 
     <!-- #### simulation and planning -->
 
@@ -218,20 +210,14 @@
     <include file="$(find desperate_housewife)/launch/desperate_demo_fit_geometries.launch"/>
 
     <!-- <include file="$(find desperate_housewife)/launch/Desperate_pose_filter.launch"/> -->
-    <!-- <include file="$(find desperate_housewife)/launch/desperate_Vito_home.launch"/> -->
 
-    <include file="$(find desperate_housewife)/launch/simulated_positions.launch"/>
+    <!-- <include file="$(find desperate_housewife)/launch/simulated_positions.launch"/> -->
 
-    <!-- <include file="$(find desperate_housewife)/launch/desperate_mind.launch"/> -->
-   
-    <!-- <include file="$(find desperate_housewife)/launch/desperate_demo_hand_pose_generator.launch"/> -->
-
+     
     <include file="$(find desperate_housewife)/launch/main_grafo.launch"/>
 
     <group if="$(arg use_rviz)">
         <node name="desperate_rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find desperate_housewife)/launch/rviz_config.rviz" output="screen"/>
     </group>
-
-    <!-- <remap from="/simulated_desired_pose" to="/right_arm/PotentialFieldControl/desired_hand_right_pose"/> -->
 
 </launch>

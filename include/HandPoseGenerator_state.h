@@ -21,7 +21,7 @@
 #include <desperate_housewife/handPoseSingle.h>
 #include <desperate_housewife/Error_msg.h>
 #include <trajectory_msgs/JointTrajectory.h>
-#include <desperate_housewife/Start.h>
+// #include <desperate_housewife/Start.h>
 #include <std_msgs/UInt16.h>
 #include <visualization_msgs/Marker.h>
 // #include <transition.h>
@@ -173,8 +173,8 @@ public:
   // void SendObjRejectMsg(desperate_housewife::fittedGeometriesSingle obj_msg, int arm_);
 
 
-  void Start_left(const desperate_housewife::Start::ConstPtr& msg);
-  void Start_right(const desperate_housewife::Start::ConstPtr& msg);
+  // void Start_left(const desperate_housewife::Start::ConstPtr& msg);
+  // void Start_right(const desperate_housewife::Start::ConstPtr& msg);
   /*! 
   * \fn Start_left and Start_right (const desperate_housewife::Start::ConstPtr& msg);
   * \brief Function for move vito in the desired pose before control start   

@@ -6,12 +6,12 @@ Overtune_state::Overtune_state()
 	nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
   	error_sub_right = nh.subscribe(error_topic_right, 1, &Overtune_state::Error_info_right, this);
 
-  	nh.param<std::string>("/PotentialFieldControl/command", desired_hand_right_pose_topic_, "/PotentialFieldControl/command");
+  	nh.param<std::string>("/right_arm/PotentialFieldControl/topic_desired_reference", desired_hand_right_pose_topic_, "/right_arm/PotentialFieldControl/command");
   	desired_hand_publisher_right = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_right_pose_topic_.c_str(),1);
 
-  	nh.param<std::string>("/PotentialFieldControl/base_frame", base_frame_, "world");
+  	nh.param<std::string>("/right_arm/PotentialFieldControl/root_name", base_frame_, "world");
 
-  	nh.param<std::string>("/PotentialFieldControl/right_hand_frame", right_hand_frame_, "right_hand_palm_ref_link");
+  	nh.param<std::string>("/right_arm/PotentialFieldControl/tip_name", right_hand_frame_, "right_hand_palm_ref_link");
 
   	id_class = static_cast<int>(transition_id::Vito_Overtune);
   	overturn_check = 0;
@@ -90,41 +90,17 @@ void Overtune_state::run()
 	}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 bool Overtune_state::isComplete()
 {
-    return false;
+    return finish;
 }
 
 std::string Overtune_state::get_type()
 {
     return "Overtune_state";
 }
-
 
 
 bool Overtune_state::IsEqual(KDL::Twist E_pf)

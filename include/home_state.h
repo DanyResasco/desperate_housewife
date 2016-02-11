@@ -14,7 +14,7 @@
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/kdl.hpp>
 #include <kdl/frames_io.hpp>
-#include <desperate_housewife/Start.h>
+// #include <desperate_housewife/Start.h>
 // #include <check_error.hpp>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Float64MultiArray.h>
@@ -48,7 +48,7 @@ public:
 	KDL::Twist e_;
     int msg_arrived;
     bool finish, failed;
-    desperate_housewife::Start start_controller;
+    // desperate_housewife::Start start_controller;
     bool use_both_arm = false;
     ros::Publisher right_start_controller_pub;
     std::string start_topic_right;

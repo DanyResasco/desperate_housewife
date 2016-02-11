@@ -1,9 +1,6 @@
 <launch>
 	<rosparam command="load" file="$(find desperate_housewife)/config/desperate_mind_param.yaml" />
-	<rosparam command="load" file="$(find desperate_housewife)/config/desperate_home_position.yaml" />
-	<rosparam command="load" file="$(find desperate_housewife)/config/desperate_demo_hand_pose_params.yaml" />
-	
+	<rosparam command="load" file="$(find desperate_housewife)/config/desperate_home_trash_position.yaml" />
 	<node name="test_grafo" pkg="desperate_housewife" type="test_grafo" output="screen" >
   </node>
-
 </launch>

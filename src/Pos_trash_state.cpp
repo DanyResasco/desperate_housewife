@@ -6,13 +6,13 @@ Pos_trash::Pos_trash()
 	this->type=type;
 
 
-    nh.param<std::string>("/right_arm/PotentialFieldControl/command", desired_hand_right_pose_topic_, "/right_arm/PotentialFieldControl/command");
+    nh.param<std::string>("/right_arm/PotentialFieldControl/topic_desired_reference", desired_hand_right_pose_topic_, "/right_arm/PotentialFieldControl/command");
   	desired_hand_publisher_right = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_right_pose_topic_.c_str(),1);
 
   	nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
   	error_sub_right = nh.subscribe(error_topic_right, 1, &Pos_trash::Error_info_right, this);
 
-  	nh.param<std::string>("/PotentialFieldControl/base_frame", base_frame_, "world");
+  	nh.param<std::string>("/right_arm/PotentialFieldControl/root_name", base_frame_, "world");
 	  hand_publisher_right = nh.advertise<trajectory_msgs::JointTrajectory>(hand_close_right.c_str(), 1000);
 
 	  id_class = static_cast<int>(transition_id::Vito_trash);
@@ -25,20 +25,20 @@ Pos_trash::Pos_trash()
 
   	double x,y,z,rotx,roty,rotz;
     /*treshold error*/
-    nh.param<double>("/x_treshold",x,0.01);
-    nh.param<double>("/y_treshold",y,0.01);
-    nh.param<double>("/z_treshold",z,0.01);
-    nh.param<double>("/rot_x_treshold",rotx,0.01);
-    nh.param<double>("/rot_y_treshold",roty,0.01);
-    nh.param<double>("/rot_z_treshold",rotz,0.01);
+    nh.param<double>("/error/pos/x",x,0.01);
+    nh.param<double>("/error/pos/y",y,0.01);
+    nh.param<double>("/error/pos/z",z,0.01);
+    nh.param<double>("/error/rot/x",rotx,0.01);
+    nh.param<double>("/error/rot/y",roty,0.01);
+    nh.param<double>("/error/rot/z",rotz,0.01);
 
 
-      nh.param<double>("/trash_right_arm_position_x", trash_robot_pose.pose.position.x, -0.75022);
-      nh.param<double>("/trash_right_arm_position_y",  trash_robot_pose.pose.position.y,  -0.47078);
-      nh.param<double>("/trash_right_arm_position_z", trash_robot_pose.pose.position.z, 0.74494);
-      nh.param<double>("/trash_right_arm_A_yaw", yaw,  -0.12690);
-      nh.param<double>("/trash_right_arm_B_pitch", pitch, -0.06571);
-      nh.param<double>("/trash_right_arm_C_roll", roll, -0.11774);
+      nh.param<double>("/trash/right_arm_position_x", trash_robot_pose.pose.position.x, -0.75022);
+      nh.param<double>("/trash/right_arm_position_y",  trash_robot_pose.pose.position.y,  -0.47078);
+      nh.param<double>("/trash/right_arm_position_z", trash_robot_pose.pose.position.z, 0.74494);
+      nh.param<double>("/trash/right_arm_A_yaw", yaw,  -0.12690);
+      nh.param<double>("/trash/right_arm_B_pitch", pitch, -0.06571);
+      nh.param<double>("/trash/right_arm_C_roll", roll, -0.11774);
 
       KDL::Vector vel;
       KDL::Vector rot;

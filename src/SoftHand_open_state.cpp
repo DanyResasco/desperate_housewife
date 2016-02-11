@@ -9,8 +9,8 @@ SoftHand_open::SoftHand_open()
   	hand_info_right = nh.subscribe(hand_joint_position_r.c_str(),1, &SoftHand_open::HandInforRight,this);
 
   	bool use_sh_sim ;
-  	nh.param<bool>("use_sh_sim",use_sh_sim,false);
-  	nh.param<double>("/Info_open_hand", Info_open_hand, 0.6);
+  	nh.param<bool>("/use_sh_sim",use_sh_sim,false);
+  	nh.param<double>("/open_hand", Info_open_hand, 0.6);
 
     // std::cout<<"use_sh_sim: "<<std::boolalpha<<use_sh_sim<<std::endl;
    

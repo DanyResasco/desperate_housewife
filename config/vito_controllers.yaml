@@ -17,24 +17,26 @@ left_arm:
     type: desperate_housewife/PotentialFieldControl
     root_name: world
     tip_name: left_hand_palm_ref_link
-    topic_desired_reference: desired_reference
+    topic_desired_reference: command
     topic_obstacle: obstacles
     time_interpolation: 5
     max_tau_percentage: 0.5
     pf_repulsive_gain: 0.1
-    pf_dist_to_obstacles: 0.15
-    pf_dist_to_table: 0.15
-    k_p: [110.0, 110.0, 110.0, 110.0, 110.0, 110.0]
+    pf_dist_to_obstacles: 0.1
+    pf_dist_to_table: 0.05
+    vel_limit_robot: 2
+    k_p: [300.0, 300.0, 300.0, 300.0, 300.0, 300.0]
     # k_d: [55.0, 55.0, 55.0, 55.0, 55.0, 55.0]
-    k_d: [10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
+    k_d: [100.0, 100.0, 100.0, 100.0, 100.0, 100.0]
     # k_i: [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
     k_i: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     # links_with_potential_field: ['left_arm_4_link', 'left_arm_5_link', 'left_arm_6_link', 'left_arm_7_link', 'left_hand_palm_ref_link']
-    links_with_potential_field: ['left_arm_4_link', 'left_hand_palm_ref_link']
-    enable_joint_limits_avoidance: true
-    enable_obstacle_avoidance: true
+    links_with_potential_field: ['left_arm_4_link', 'left_arm_5_link', 'left_arm_6_link', 'left_arm_7_link', 'left_hand_palm_ref_link']
+    enable_joint_limits_avoidance: false
+    enable_obstacle_avoidance: false
     enable_attractive_field: true
-    enable_null_space: true
+    enable_null_space: false
+    enable_interpolation: false
 
 left_hand:
   joint_state_controller:

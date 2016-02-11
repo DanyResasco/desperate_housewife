@@ -8,8 +8,8 @@ SoftHand_close::SoftHand_close()
   	hand_info_right = nh.subscribe(hand_joint_position_r.c_str(),1, &SoftHand_close::HandInforRight,this);
 
   	bool use_sh_sim ;
-  	nh.param<bool>("use_sh_sim",use_sh_sim,false);
-  	nh.param<double>("/Info_closed_hand", Info_closed_hand, 0.6);
+  	nh.param<bool>("/use_sh_sim",use_sh_sim,false);
+  	nh.param<double>("/closed_hand", Info_closed_hand, 0.6);
    
     index_sh = use_sh_sim == false ? 0 : 28;
 

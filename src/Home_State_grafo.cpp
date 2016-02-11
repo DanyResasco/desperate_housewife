@@ -6,21 +6,22 @@ Home_state::Home_state()
   	nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
   	error_sub_right = nh.subscribe(error_topic_right, 1, &Home_state::Error_info_right, this);
 
-  	nh.param<std::string>("/right_arm//PotentialFieldControl/command", desired_hand_right_pose_topic_, "/right_arm/PotentialFieldControl/command");
-  	desired_hand_right_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_right_pose_topic_.c_str(),1);
+  	nh.param<std::string>("/right_arm/PotentialFieldControl/topic_desired_reference", desired_hand_right_pose_topic_, "/right_arm/PotentialFieldControl/command");
+  	desired_hand_right_pose_topic_ = std::string("/right_arm/PotentialFieldControl/") + desired_hand_right_pose_topic_;
+    desired_hand_right_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_right_pose_topic_.c_str(),1);
     
-    nh.param<std::string>("/PotentialFieldControl/base_frame", base_frame_, "world");
+    nh.param<std::string>("/right_arm/PotentialFieldControl/root_name", base_frame_, "world");
 
     sub_command_start = nh.subscribe("/right_arm/PotentialFieldControl/start_controller", 1, &Home_state::command_start, this);
 
     id_class = static_cast<int>(transition_id::Vito_home);
     /*treshold error*/
-    nh.param<double>("/x_treshold",x,0.01);
-    nh.param<double>("/y_treshold",y,0.01);
-    nh.param<double>("/z_treshold",z,0.01);
-    nh.param<double>("/rot_x_treshold",rotx,0.01);
-    nh.param<double>("/rot_y_treshold",roty,0.01);
-    nh.param<double>("/rot_z_treshold",rotz,0.01);
+    nh.param<double>("/error/pos/x",x,0.01);
+    nh.param<double>("/error/pos/y",y,0.01);
+    nh.param<double>("/error/pos/z",z,0.01);
+    nh.param<double>("/error/rot/x",rotx,0.01);
+    nh.param<double>("/error/rot/y",roty,0.01);
+    nh.param<double>("/error/rot/z",rotz,0.01);
 
     KDL::Vector vel;
     KDL::Vector rot;
@@ -83,7 +84,7 @@ void Home_state::Error_info_right(const desperate_housewife::Error_msg::ConstPtr
   void Home_state::command_start(const std_msgs::Bool::ConstPtr& msg)
   { 
       start_flag = true;
-      // std::cout<<"ricevuto sms"<<std::endl;
+      // ROS_INFO("Received message");
   }
 
 
@@ -137,12 +138,12 @@ void Home_state::SendHomeRobot_right()
     home_robot_right.obj = 0; 
     
     double roll_r,pitch_r,yaw_r;
-    nh.param<double>("/right_arm_position_x", home_robot_right.pose.position.x, -0.75022);
-    nh.param<double>("/right_arm_position_y",  home_robot_right.pose.position.y,  0.47078);
-    nh.param<double>("/right_arm_position_z", home_robot_right.pose.position.z, 0.74494);
-    nh.param<double>("/right_arm_A_yaw", yaw_r,  0.334);
-    nh.param<double>("/right_arm_B_pitch", pitch_r, -0.08650);
-    nh.param<double>("/right_arm_C_roll", roll_r, -0.5108);
+    nh.param<double>("/home/right_arm_position_x", home_robot_right.pose.position.x, -0.75022);
+    nh.param<double>("/home/right_arm_position_y",  home_robot_right.pose.position.y,  0.47078);
+    nh.param<double>("/home/right_arm_position_z", home_robot_right.pose.position.z, 0.74494);
+    nh.param<double>("/home/right_arm_A_yaw", yaw_r,  0.334);
+    nh.param<double>("/home/right_arm_B_pitch", pitch_r, -0.08650);
+    nh.param<double>("/home/right_arm_C_roll", roll_r, -0.5108);
 
   
     KDL::Rotation Rot_matrix_r = KDL::Rotation::RPY(roll_r,pitch_r,yaw_r);
@@ -157,6 +158,7 @@ void Home_state::SendHomeRobot_right()
     home_robot_right.id = id_class;
 
     desired_hand_right_pose_publisher_.publish( home_robot_right );
+    // ROS_INFO("Sending robot to home in topic: %s", desired_hand_right_pose_topic_.c_str() );
 
     tf::Transform tfHandTrasform1;    
     tf::poseMsgToTF( home_robot_right.pose, tfHandTrasform1);    
