@@ -42,17 +42,16 @@ void Desp_state_server::init()
      std::vector<std::tuple < state<transition>*, transition_type, state<transition>* > > Grafo{
         //------initial state---------+--------- command -----------------------------------+-- final state---- +
         // std::make_tuple( start        , std::make_pair(transition::started,true)      ,    Home),  
-        std::make_tuple( Home                 , std::make_pair(transition::Error_arrived,true)          ,  Hand_pose    ),        
-        std::make_tuple( Wait_HandPoseGen_msg , std::make_pair(transition::Grasp_Obj,true)              , Close_Softhand      ),
+        std::make_tuple( Home                 , std::make_pair(transition::Error_arrived,true)          , Hand_pose                ),        
+        std::make_tuple( Wait_HandPoseGen_msg , std::make_pair(transition::Grasp_Obj,true)              , Close_Softhand           ),
         std::make_tuple( Wait_HandPoseGen_msg , std::make_pair(transition::Removed_Obj,true)            , Obj_To_Removed           ),
         std::make_tuple( Wait_HandPoseGen_msg , std::make_pair(transition::Overtune_table,true)         , Overtune_                ),
-        // std::make_tuple( Obj_To_Grasp         , std::make_pair(transition::Error_arrived,true)          , Close_Softhand           ),
         std::make_tuple( Close_Softhand       , std::make_pair(transition::Wait_Closed_Softhand,true)   , Trash_Position           ),
         std::make_tuple( Trash_Position       , std::make_pair(transition::Error_arrived,true)          , Open_Softhand            ),
         std::make_tuple( Open_Softhand        , std::make_pair(transition::Wait_Open_Softhand,true)     , Home                     ),        
         std::make_tuple( Obj_To_Removed       , std::make_pair(transition::Error_arrived,true)          , Open_Softhand            ),
         std::make_tuple( Overtune_            , std::make_pair(transition::Error_arrived,true)          , Open_Softhand            ),
-        std::make_tuple( Hand_pose   , std::make_pair(transition::Error_arrived,true)          ,  Wait_HandPoseGen_msg    ), 
+        std::make_tuple( Hand_pose            , std::make_pair(transition::Error_arrived,true)          , Wait_HandPoseGen_msg     ), 
        
         /*! stay in same state untill msg doesn't arrived */
         // std::make_tuple( Home                   , std::make_pair(transition::failed,true)     , Home                  ),

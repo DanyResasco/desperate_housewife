@@ -51,7 +51,7 @@ void SoftHand_close::run()
     msg_jointT_hand.joint_names[0] = "right_hand_synergy_joint";
     hand_publisher_right.publish(msg_jointT_hand);
 
-    if(info_hand < Info_closed_hand )
+    if(info_hand <= Info_closed_hand )
     {
          finish = false;
          ROS_DEBUG("Waiting closing softhand");

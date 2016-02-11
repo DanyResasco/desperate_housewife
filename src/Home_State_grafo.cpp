@@ -95,7 +95,7 @@ void Home_state::run()
 {
   if(start_flag == true)
   {
-    if((id_class != id_error_msgs) && (!IsEqual(e_)))
+    if( ((id_class != id_error_msgs) && (!IsEqual(e_))) || ((id_class != id_error_msgs) && (IsEqual(e_))) )
     {
       // std::cout<<"send vito at home"<<std::endl;
   		SendHomeRobot_right(); 
@@ -105,6 +105,7 @@ void Home_state::run()
     {      
         finish = true;
 	  }
+
   }
   else
     finish = false;
@@ -148,7 +149,6 @@ void Home_state::SendHomeRobot_right()
     nh.param<double>("/home/right_arm_B_pitch", pitch_r, -0.08650);
     nh.param<double>("/home/right_arm_C_roll", roll_r, -0.5108);
 
-  
     KDL::Rotation Rot_matrix_r = KDL::Rotation::RPY(roll_r,pitch_r,yaw_r);
 
     Rot_matrix_r.GetQuaternion(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);

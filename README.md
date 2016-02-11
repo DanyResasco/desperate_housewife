@@ -20,7 +20,7 @@ Compile doing 'catkin_make --only_pkg-with-deps desperate_housewife' in your wor
 The command to launch the robot in simulation is : 
 	-roslaunch desperate_housewife run_vito.launch
 The demo doesn't start until does not receive the message :
-	- rostopic pub -1 /right_arm/PotentialFieldControl/start_control std_msgs/Bool 'True'
+	- rostopic pub -1 /right_arm/PotentialFieldControl/start_controller std_msgs/Bool 'True'
 If you want use this demo for one arm the command to launch is: roslaunch desperate_housewife run_vito.launch use_both_arm:=false 
 and select the arm to use with left_arm_enabled:=true or right_arm_enabled:=true
 

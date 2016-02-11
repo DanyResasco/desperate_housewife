@@ -521,18 +521,18 @@ Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double min_distance, E
 
 Eigen::Vector3d PotentialFieldControl::GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height)
 {
-  Eigen::Matrix<double,4,4>  Tvo_eigen; 
-  Tvo_eigen = FromKdlToEigen(T_v_o);
-  Eigen::Vector4d Point_v_eigen(Point_v.x(),Point_v.y(),Point_v.z(),1);
+    Eigen::Matrix<double,4,4>  Tvo_eigen; 
+    Tvo_eigen = FromKdlToEigen(T_v_o);
+    Eigen::Vector4d Point_v_eigen(Point_v.x(),Point_v.y(),Point_v.z(),1);
 
-  Eigen::Vector4d Point_o;
-  Point_o = Tvo_eigen.inverse() * Point_v_eigen;
+    Eigen::Vector4d Point_o;
+    Point_o = Tvo_eigen.inverse() * Point_v_eigen;
     double n = 2; // n as in the paper should be in 4 but considering the shortest distance to obstacles. Here this is not being considered :( TODO
 
-      Eigen::Vector4d distance_der_partial(0,0,0,0);
-          // distance_der_partial = x^2/radius + y^2 / radius + 2*(z^2n) /l 
-      distance_der_partial[0] = (Point_o[0]*2) / radius ;
-      distance_der_partial[1] = (Point_o[1]*2) / radius ;
+    Eigen::Vector4d distance_der_partial(0,0,0,0);
+            // distance_der_partial = x^2/radius + y^2 / radius + 2*(z^2n) /l 
+    distance_der_partial[0] = (Point_o[0]*2) / radius ;
+    distance_der_partial[1] = (Point_o[1]*2) / radius ;
     distance_der_partial[2] = (std::pow((Point_o[2] *2 / height),(2*n -1)) * (2*n) ); //n=4
             //n=1
     // distance_der_partial[2] = (Point_o[2]*4) / height ; 

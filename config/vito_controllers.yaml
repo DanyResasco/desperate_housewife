@@ -70,7 +70,7 @@ right_arm:
     topic_obstacle: obstacles
     time_interpolation: 5
     max_tau_percentage: 0.5
-    pf_repulsive_gain: 0.1
+    pf_repulsive_gain: 0.3
     pf_dist_to_obstacles: 0.1
     pf_dist_to_table: 0.05
     vel_limit_robot: 2
@@ -82,7 +82,7 @@ right_arm:
     # links_with_potential_field: ['right_arm_4_link', 'right_arm_5_link', 'right_arm_6_link', 'right_arm_7_link', 'right_hand_palm_ref_link']
     links_with_potential_field: ['right_arm_4_link', 'right_arm_5_link', 'right_arm_6_link', 'right_arm_7_link', 'right_hand_palm_ref_link']
     enable_joint_limits_avoidance: false
-    enable_obstacle_avoidance: false
+    enable_obstacle_avoidance: true
     enable_attractive_field: true
     enable_null_space: false
     enable_interpolation: false

@@ -13,7 +13,12 @@ HandPoseGenerator::HandPoseGenerator()
   // nh.param<std::string>("/right_arm/PotentialFieldControl/topic_obstacle", obstacles_topic_left, "/right_arm/PotentialFieldControl/obstacles");
   // obstacles_publisher_left = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_left.c_str(),1);
 
-  nh.param<std::string>("/right_arm/PotentialFieldControl/topic_obstacle", obstacles_topic_right, "/right_arm/PotentialFieldControl/obstacles");
+  std::string string_temp_o;
+    
+  nh.param<std::string>("/right_arm/PotentialFieldControl/topic_obstacle", string_temp_o, "obstacles");
+  obstacles_topic_right = std::string("/right_arm/PotentialFieldControl/") + string_temp_o;
+
+  // nh.param<std::string>("/right_arm/PotentialFieldControl/topic_obstacle", obstacles_topic_right, "/right_arm/PotentialFieldControl/obstacles");
   obstacles_publisher_right = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_right.c_str(),1);
 
   /*sends information about the remove or grasp objects */
@@ -29,15 +34,21 @@ HandPoseGenerator::HandPoseGenerator()
   // nh.param<std::string>("/right_arm/PotentialFieldControl/right_hand_frame", right_hand_frame_, "right_hand_palm_ref_link");
    
   /*sends hand pose*/
-  nh.param<std::string>("/right_arm/PotentialFieldControl/topic_desired_reference", desired_hand_pose_right_topic_, "/right_arm/PotentialFieldControl/command");
+  // nh.param<std::string>("/right_arm/PotentialFieldControl/topic_desired_reference", desired_hand_pose_right_topic_, "/right_arm/PotentialFieldControl/command");
+  // desired_hand_publisher_right = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_pose_right_topic_.c_str(),1);
+
+  std::string string_temp;
+    
+  nh.param<std::string>("/right_arm/PotentialFieldControl/topic_desired_reference", string_temp, "command");
+  desired_hand_pose_right_topic_ = std::string("/right_arm/PotentialFieldControl/") + string_temp;
+
   desired_hand_publisher_right = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_pose_right_topic_.c_str(),1);
+
 
   // nh.param<std::string>("/left_arm/PotentialFieldControl/command", desired_hand_pose_left_topic_, "/left_arm/PotentialFieldControl/command");
   // desired_hand_publisher_left = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_pose_left_topic_.c_str(),1);
 
   nh.param<bool>("/use_both_arm", use_both_arm, true);
-
-
 
 	id_class = static_cast<int>(transition_id::Gen_pose);
 
@@ -168,19 +179,19 @@ void HandPoseGenerator::run()
         DesperateDemo1(cylinder_geometry);
         
       }
-	}
-	else
-	{ 
-	    if((id_msgs == id_class) && (IsEqual(e_)))
-    	{
-        // std::cout<<"same id send mes"<<std::endl;
-    		Obj_info.data = ObjorObst;
-    		objects_info_right_pub.publish(Obj_info);
-    		finish = true;
-    		// step = 1;
-    		
-	    }
-	}
+  	}
+  	else
+  	{ 
+  	    if((id_msgs == id_class) && (IsEqual(e_)))
+      	{
+          std::cout<<"same id send mes"<<std::endl;
+      		Obj_info.data = ObjorObst;
+      		objects_info_right_pub.publish(Obj_info);
+      		finish = true;
+      		// step = 1;
+      		
+  	    }
+  	}
 	
   //     /*if there are more than a user defined number of object */
   //     else if (msg->geometries.size() >= (uint) Number_obj )
@@ -282,13 +293,6 @@ bool HandPoseGenerator::IsEqual(KDL::Twist E_pf)
     }
   }
 
-
-
-
-
-
-
-
 void HandPoseGenerator::DesperateDemo1(desperate_housewife::fittedGeometriesArray msg)
 {
     ROS_INFO("***DEMO1, take first graspable object with obstacle avoidance***");
@@ -347,25 +351,25 @@ void HandPoseGenerator::DesperateDemo1(desperate_housewife::fittedGeometriesArra
 
             // else right arm
             // {
-             DesiredHandPose.id = id_class;
-                desired_hand_publisher_right.publish( DesiredHandPose );
-                obstacles_publisher_right.publish(obstaclesMsg);
-                finish = false;
+            DesiredHandPose.id = id_class;
+            desired_hand_publisher_right.publish( DesiredHandPose );
+            obstacles_publisher_right.publish(obstaclesMsg);
+            finish = false;
                 // objects_info_right_pub.publish(Obj_info);
-                stop = 1;    
+                // stop = 1;    
             // }
-
-            tf::Transform tfHandTrasform;
-            tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform);
-            tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), right_hand_frame_ .c_str()) );
+            // ROS_INFO("pubblico tf");
+            // tf::Transform tfHandTrasform;
+            // tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform);
+            // tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), right_hand_frame_ .c_str()) );
           
             break;
         }
     }
 
     /*if there aren't graspable object call the funciont overtun */
-    // if(obj_grasp == 0)
-    //   Overturn(); 
+    if(obj_grasp == 0)
+      Overturn(); 
 }
 
 
