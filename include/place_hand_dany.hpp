@@ -123,21 +123,21 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
       ROS_DEBUG("cyl is lying");
 
-      if(whichArm == 1) /*left to check*/
-      {
-          z_l = -z;
-          x_l << T_vito_c(0,2), T_vito_c(1,2), T_vito_c(2,2) ;
-          y_l = z_l.cross(x_l);
+     //  if(whichArm == 1) /*left to check*/
+     //  {
+     //      z_l = -z;
+     //      x_l << T_vito_c(0,2), T_vito_c(1,2), T_vito_c(2,2) ;
+     //      y_l = z_l.cross(x_l);
 
-          T_w_h.col(0) << x_l,0;
-          T_w_h.col(1) << y_l,0;
-          T_w_h.col(2) << z_l,0;
-          T_w_h.col(3) << Point_desired;
-          std::cout<<"Lying, left Arm"<< std::endl;
-     }
+     //      T_w_h.col(0) << x_l,0;
+     //      T_w_h.col(1) << y_l,0;
+     //      T_w_h.col(2) << z_l,0;
+     //      T_w_h.col(3) << Point_desired;
+     //      std::cout<<"Lying, left Arm"<< std::endl;
+     // }
 
-      else /*right*/
-      { 
+     //  else /*right*/
+     //  { 
           z_l = -z;
           x_l << T_vito_c(0,2), T_vito_c(1,2), T_vito_c(2,2) ;
           y_l = z_l.cross(x_l);
@@ -149,7 +149,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
           T_w_h = T_w_h*Rot_z;
           std::cout<<"Lying, right Arm"<< std::endl;
-      }
+      // }
     }
 
   else
