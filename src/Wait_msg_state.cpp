@@ -7,9 +7,7 @@ Wait_msgs::Wait_msgs()
 	nh.param<std::string>("/right_arm/objects_info", obj_info_topic_r, "/right_arm/objects_info");
   	objects_info_right_sub = nh.subscribe(obj_info_topic_r.c_str(),1, &Wait_msgs::ObjOrObst_right,this);
 
-  	// this->type = type;
-  	arrived_r=0;
-    // finish = false;
+  	arrived_r = 0;
 }
 
 void Wait_msgs::ObjOrObst_right(const std_msgs::UInt16::ConstPtr& obj_msg)
@@ -33,20 +31,17 @@ std::map< transition, bool > Wait_msgs::getResults()
 			case 0:
 			{	
 				results[transition::Grasp_Obj] = true;
-        		// finish = true;
-				break;
+        		break;
 			}
 			case 1:
 			{
 				results[transition::Removed_Obj] = true;
-        		// finish = true;
-				break;
+        		break;
 			}
 			case 2:
 			{
 				results[transition::Overtune_table] = true;
-        		// finish = true;
-				break;
+        		break;
 			}
 
 		}
@@ -54,14 +49,6 @@ std::map< transition, bool > Wait_msgs::getResults()
 	
 	return results;
 }
-
-// void Wait_msgs::reset()
-// {
-//   finish = false;
-//   arrived_r = 0;
-// }
-
-
 
 void Wait_msgs::run()
 {	    
