@@ -8,10 +8,20 @@
   <xacro:include filename="$(find vito_description)/model/materials.urdf"/>
   <xacro:include filename="$(find lwr_description)/model/kuka_lwr.urdf.xacro"/>
   <xacro:include filename="$(find soft_hand_description)/model/soft_hand.urdf.xacro"/>
-  <!-- <xacro:include filename="$(find kit_head_description)/model/kit_head.urdf.xacro"/> -->
+  <xacro:include filename="$(find kit_head_description)/model/kit_head.urdf.xacro"/>
+
+
     
   <link name="vito_anchor" />
-  
+
+   <link name="world"/>
+
+  <joint name="fixed" type="fixed">
+    <parent link="world"/>
+    <child link="vito_anchor"/>
+  </joint>
+
+
   <!-- BODY -->
   <xacro:model_table name="table" 
                     parent="vito_anchor"
@@ -61,5 +71,36 @@
   <xacro:kit_head name="head" parent="vito_anchor">
     <origin xyz="0.0 0.0 ${0.55 + 0.1}" rpy="0.0 0.0 3.141592"/>
   </xacro:kit_head>
+
+
+  <link name="left_hand_palm_ref_link">
+      <inertial>
+        <insert_block name="negligible_inertia"/>
+      </inertial>
+  </link>
+  <joint name="left_hand_palm_ref_joint" type="fixed">
+    <origin xyz="0.002 0.007 0.161" rpy="${3.141592/2} 0 ${3.141592/2}"/>
+    <parent link="left_arm_7_link" />
+    <child link="left_hand_palm_ref_link" />
+  </joint>
+  <gazebo reference="left_hand_palm_ref_link">
+    <gravity>true</gravity>
+  </gazebo>
+
+
+  <link name="right_hand_palm_ref_link">
+      <inertial>
+        <insert_block name="negligible_inertia"/>
+      </inertial>
+  </link>
+  <joint name="right_hand_palm_ref_joint" type="fixed">
+    <origin xyz="0.002 -0.007 0.161" rpy="${3.141592/2} 0 ${3.141592/2}"/>
+    <parent link="right_arm_7_link" />
+    <child link="right_hand_palm_ref_link" />
+  </joint>
+  <gazebo reference="right_hand_palm_ref_link">
+    <gravity>true</gravity>
+  </gazebo>
+  
 
 </robot>

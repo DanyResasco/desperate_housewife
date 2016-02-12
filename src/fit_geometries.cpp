@@ -5,9 +5,7 @@
 
 BasicGeometriesNode::BasicGeometriesNode()
 {
-
-  // nh.param<bool>("/scene_filter/filter", filter_, "false");
-  // nh.param<double>("/scene_filter/xmin", xmin, -100);
+  // initialize all topic and frame with file vito_controllers.yaml
   nh = ros::NodeHandle("BasicGeometriesNode_node");
   nh.param<std::string>("/BasicGeometriesNode/camera_topic", camera_topic_, "/scene_filter/scene_filtered");
 
@@ -24,7 +22,7 @@ BasicGeometriesNode::BasicGeometriesNode()
   geometries_publisher_ = nh.advertise<desperate_housewife::fittedGeometriesArray>( geometries_topic_.c_str(), 1 );
 
   nh.param<std::string>("/BasicGeometriesNode/cylinder_names", object_names_, "object");
-  nh.param<int>("/BasicGeometriesNode/cluster_tolerance", min_cluster_size_, 100);
+  nh.param<int>("/BasicGeometriesNode/cluster_tolerance", min_cluster_size_, 200);
   nh.param<double>("/BasicGeometriesNode/min_cluster_size", cluster_tolerance_, 0.07);
 
 
@@ -58,13 +56,13 @@ void BasicGeometriesNode::BasicGeometriesNodeCallback(sensor_msgs::PointCloud2 m
   {
     generateMarkerMessages( geometries );
     generateGeometriesMessages( geometries );
-    printGometriesInfo( geometries );
+    // printGometriesInfo( geometries );
   }
 }
 
 std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr > BasicGeometriesNode::getClusters( pcl::PointCloud<pcl::PointXYZRGBA>::Ptr OriginalScene )
 {
-  // try with euclidean clusters
+  // Make a cluster with euclidean clusters
   // Creating the KdTree object for the search method of the extraction
   std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr > cluster_vector;
   pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBA>);
@@ -82,6 +80,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr > BasicGeometriesNode::getCl
 
   ROS_DEBUG("Number of clusters %lu", cluster_indices.size());
 
+  // from cluster[i] to point_cloud
   if (cluster_indices.size() > 0)
     {
 
@@ -107,44 +106,68 @@ std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr > BasicGeometriesNode::getCl
         }
     }
 
+    // ROS_INFO("Size cluster_vector %lu", cluster_vector.size());
+    // for (unsigned int i = 0; i < cluster_vector.size() ; ++i)
+    // {
+    //   ROS_INFO("Num of points in cluster %d is %lu", i, cluster_vector[i]->points.size());
+    // }
+
   return cluster_vector;
 }
 
 BasicGeometriesNode::geometry BasicGeometriesNode::fitGeometry( pcl::PointCloud<pcl::PointXYZRGBA>::Ptr OriginalCluster ){
 
-  BasicGeometriesNode::geometry new_geometry;
+  //std::vector<BasicGeometriesNode::geometry> new_geometry;
+  //new_geometry.resize(2); // 2 is the number of geometry that i can try to fit
+   BasicGeometriesNode::geometry cyl_geometry;
+  //  double ratio_cyl;
+  //  double ratio_sphere;
+   // BasicGeometriesNode::geometry sphere_geometry;
 
   // TODO Here we can implement more BAsic Geometries.
   BasicGeometries::cylinder cylinder_local( OriginalCluster );
+
   if( cylinder_local.fitCylinder() )
     {
-  //Cube = 1, Sphere = 2, Cylinder = 3, Cone = 11
-      new_geometry.geom_type = 3;
+    //Cube = 1, Sphere = 2, Cylinder = 3, Cone = 11
+      cyl_geometry.geom_type = 3;
       std::vector<double> cyl_info = cylinder_local.getInfo();
       double radius = cyl_info[0];
-      new_geometry.geom_info = cyl_info;
-      new_geometry.geom_info_marker.push_back( radius * 2 );
-      new_geometry.geom_info_marker.push_back( radius * 2 );
+      cyl_geometry.geom_info = cyl_info;
+      cyl_geometry.geom_info_marker.push_back( radius * 2 );
+      cyl_geometry.geom_info_marker.push_back( radius * 2 );
       double height = cyl_info[1];
-      new_geometry.geom_info_marker.push_back( height );
-      new_geometry.geom_transformation = cylinder_local.getTransformation();
-      return new_geometry;
+      cyl_geometry.geom_info_marker.push_back( height );
+      cyl_geometry.geom_transformation = cylinder_local.getTransformation();
+      cyl_geometry.geom_info.push_back(cyl_info[cyl_info.size() -1]); //ratio
+      return cyl_geometry;
     }
-    BasicGeometries::sphere sphere_local( OriginalCluster );
-    if( sphere_local.fitSphere() )
-    {
-      new_geometry.geom_type = 2;
-      std::vector<double> cyl_info = sphere_local.getInfo();
-      double radius = cyl_info[0];
-      new_geometry.geom_info = cyl_info;
-      new_geometry.geom_info_marker.push_back( radius );
-      new_geometry.geom_info_marker.push_back( radius );
-      new_geometry.geom_info_marker.push_back( radius );
-      new_geometry.geom_transformation = sphere_local.getTransformation();
-      return new_geometry;
-    }
+  
+  // BasicGeometries::sphere sphere_local( OriginalCluster );
+  // if( sphere_local.fitSphere() )
+  //   {
+  //     sphere_geometry.geom_type = 2;
+  //     std::vector<double> cyl_info = sphere_local.getInfo();
+  //     double radius = cyl_info[0];
+  //     sphere_geometry.geom_info = cyl_info;
+  //     sphere_geometry.geom_info_marker.push_back( radius );
+  //     sphere_geometry.geom_info_marker.push_back( radius );
+  //     sphere_geometry.geom_info_marker.push_back( radius );
+  //     sphere_geometry.geom_transformation = sphere_local.getTransformation();
+  //     // ratio_sphere = cyl_info[cyl_info.size() -1];
+  //     return sphere_geometry;
+  //   }
 
-  return new_geometry;
+  // if(ratio_cyl > ratio_sphere)
+  // {    
+     return cyl_geometry;
+  // }
+  // else
+  // {
+  //   return sphere_geometry;
+  // }
+
+ 
 }
 
 void BasicGeometriesNode::generateMarkerMessages( std::vector<geometry> geometries )
@@ -188,7 +211,7 @@ void BasicGeometriesNode::generateMarkerMessages( std::vector<geometry> geometri
 
 void BasicGeometriesNode::generateGeometriesMessages( std::vector<geometry> geometries){
 
-  
+  //send a geometry information (type, pose, info)  
   desperate_housewife::fittedGeometriesArray fittedGeometriesArrayMsg;
 
   for (unsigned int i=0; i < geometries.size(); i++)
@@ -228,7 +251,7 @@ geometry_msgs::Pose BasicGeometriesNode::fromEigenMatrix4x4ToPose( Eigen::Matrix
 void BasicGeometriesNode::printGometriesInfo ( std::vector<geometry> geometries )
 {
   ROS_INFO("Number of geometries %lu", geometries.size());
-
+  //only per print the cylinder's informations
   for (unsigned int i = 0; i < geometries.size(); ++i)
   {
     if (geometries[i].geom_type == 3)
@@ -238,6 +261,7 @@ void BasicGeometriesNode::printGometriesInfo ( std::vector<geometry> geometries 
       ROS_INFO("height = %f", geometries[i].geom_info[1]);
       ROS_INFO("isLying = %f", geometries[i].geom_info[2]);
       ROS_INFO("isFull = %f", geometries[i].geom_info[3]);
+      ROS_INFO("ratio = %f", geometries[i].geom_info[4]);
       ROS_INFO(" ");
     }
     else

@@ -1,0 +1,8 @@
+<launch>
+
+   
+  <node name="simulated_references_node" pkg="desperate_housewife" type="test_simulated_references" output="screen" >
+    <param name="reference_simulated_topic" value="/right_arm/PotentialFieldControl/desired_hand_right_pose"/>
+  </node>
+
+</launch>

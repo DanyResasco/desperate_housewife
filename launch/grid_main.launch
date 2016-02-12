@@ -1,0 +1,11 @@
+
+
+<launch>
+
+  <arg name="spin_rate" default="1" />
+
+	<node name="grid_main" pkg="desperate_housewife" type="grid" output="screen" >
+    <param name="spin_rate" value="$(arg spin_rate)" />
+  </node>
+
+</launch>

@@ -1,0 +1,9 @@
+<launch>
+
+  <arg name="spin_rate" default="1000" />
+
+	<node name="ball_main" pkg="desperate_housewife" type="ball_test" output="screen" >
+    <param name="spin_rate" value="$(arg spin_rate)" />
+  </node>
+
+</launch>

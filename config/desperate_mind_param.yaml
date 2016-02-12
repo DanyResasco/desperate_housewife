@@ -1,0 +1,13 @@
+error:
+  pos:
+    x: 0.05
+    y: 0.05
+    z: 0.05
+  rot:
+    x: 0.15
+    y: 0.15
+    z: 0.15
+demo: 1
+max_number_obj: 5
+close_hand: 0.7
+open_hand: 0.2

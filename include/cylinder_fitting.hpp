@@ -38,7 +38,7 @@ namespace BasicGeometries{
     
   };
 
-
+  //use a pcl function for fitting
   bool cylinder::fitCylinder(){    
 
     transformation_ = Eigen::Matrix4d::Identity();
@@ -59,7 +59,7 @@ namespace BasicGeometries{
 
     seg.setOptimizeCoefficients (true);
     seg.setModelType (pcl::SACMODEL_CYLINDER);
-    seg.setMethodType (pcl::SAC_RANSAC);
+    seg.setMethodType (pcl::SAC_LMEDS); 
     seg.setNormalDistanceWeight (0.1);
     seg.setMaxIterations (10000);
     seg.setDistanceThreshold (0.05);
@@ -112,13 +112,12 @@ namespace BasicGeometries{
 
     // Compose the transformation and return it
 
-
     transformation_.row(0) << rotation.row(0), position[0];
     transformation_.row(1) << rotation.row(1), position[1];
     transformation_.row(2) << rotation.row(2), position[2];
     transformation_.row(3) << 0,0,0, 1;
 
-    // Find Height
+    // Find Height in cylinder frame
 
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cylinder_points_local (new pcl::PointCloud<pcl::PointXYZRGBA>);
     Eigen::Matrix4d transformation_i = transformation_.inverse();
@@ -162,44 +161,21 @@ namespace BasicGeometries{
 
     pcl::transformPointCloud(*original_cloud_, *cylinder_points_, transformation_i);
 
-    // Identify if the cylinder is standing or lying 
-
-    // // Eigen::Vector3d u(0,-1,0);
-    // Eigen::Vector3d plane_coeff_kinect_frame, temp_n2;
-    // Eigen::Vector4d normal_plane_cyl_frame, temp_normal_plane;
-    // plane_coeff_kinect_frame(0) = Plane_coeff[0];
-    // plane_coeff_kinect_frame(1) = Plane_coeff[1];
-    // plane_coeff_kinect_frame(2) = Plane_coeff[2];
-
-
-    // if ((u.dot(plane_coeff_kinect_frame)) <0) // in kinect frame
-    // {
-    //   plane_coeff_kinect_frame = plane_coeff_kinect_frame * -1;
-    // }
-
-    // // in cyl frame
-    // temp_normal_plane << plane_coeff_kinect_frame, 1;
-    // normal_plane_cyl_frame = T_G_K * temp_normal_plane;
-    // normal_plane_cyl_frame.normalize();
-
+    //calculation if the geometry is lying or standing respect the normal plane
     Eigen::Vector3d nomal_plani_in_cyl_frame = transformation_i.block<3,3>(0,0) * Eigen::Vector3d( 0, 0, 1);
     nomal_plani_in_cyl_frame.normalize();
 
     Eigen::Vector3d vec_temp;
     vec_temp = nomal_plani_in_cyl_frame;
-    // Eigen::Vector3d axis_cyl_frame(0,0,1);
-    // vec_temp(0) = nomal_plani_in_cyl_frame(0);
-    // vec_temp(1) = nomal_plani_in_cyl_frame(1);
-    // vec_temp(2) = nomal_plani_in_cyl_frame(2);
-
+  
     vec_temp.normalize();
-    double dotproduct = vec_temp.dot(Eigen::Vector3d(0,0,1));
+    double dotproduct = vec_temp.dot(Eigen::Vector3d(0,0,1)); 
 
-    double theta = std::acos(dotproduct);
+    double theta = std::acos(dotproduct); //angle between plane and cylidner's z_axis
 
     double isLaying = 0.0;
-    // if(((theta >= 0.) && (theta<45.*(3.14/180.))) || ((theta <0) && (theta > -45.*(3.14/180.))))
-    if(((theta >= -45.*(3.14/180.)) && (theta <= 45.*(3.14/180.))))
+    //45 degree is the threshold chosen 
+    if(((theta >= -15.*(3.14/180.)) && (theta <= 15.*(3.14/180.)))) 
     {
       isLaying = 0.;
     }
@@ -216,7 +192,7 @@ namespace BasicGeometries{
     {
       // Check if the cylinder is empty
 
-      pcl::PointXYZRGBA point_center; //point at top of the object
+      pcl::PointXYZRGBA point_center; //center point at top of the object
 
       z_max= cylinder_points_->points[0].z;
       for (unsigned int i=1; i< cylinder_points_->points.size(); i++)
@@ -228,7 +204,7 @@ namespace BasicGeometries{
         }
       }
 
-      point_center.x = 0.; // TO Check
+      point_center.x = 0.; 
       point_center.y = 0.;
       point_center.z = z_max;
 
@@ -251,7 +227,15 @@ namespace BasicGeometries{
     }
 
     info_.push_back( isFull );
-    /* info contains: radius, height, isLying, isfull */
+
+    info_.push_back((((double)inliers_cylinder->indices.size()) / ((double)cylinder_points_->points.size()))*100);
+    
+
+    // int index = info_.size()-1;
+    // ROS_INFO("ratio cyl: %g", info_[index]);
+    // std::cout<<"rapp cyl: "<<info_[index]<<std::endl;
+    
+    /* info contains: radius, height, isLying, isfull,  ratio between number of inliers/number of pointCloud points*/
 
     return true;
   }

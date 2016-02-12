@@ -10,6 +10,7 @@
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/common/transforms.h>
+#include <iterator> 
 
 namespace BasicGeometries{
 
@@ -96,6 +97,13 @@ namespace BasicGeometries{
     Eigen::Matrix4d transformation_i = transformation_.inverse();
     pcl::transformPointCloud(*original_cloud_, *sphere_points_local, transformation_i);
     sphere_points_ = sphere_points_local;
+    
+    // int index = info_.size()-1;
+    // info_.push_back((((double)inliers_sphere->indices.size()) / ((double)sphere_points->points.size())));
+    // ROS_INFO("ratio %g", info_[index]);
+
+    /* info contains: radius, ratio between number of inliers/number of pointCloud points*/
+  
 
     return true;
   }

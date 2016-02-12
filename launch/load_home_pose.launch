@@ -1,0 +1,12 @@
+<launch>
+
+  <!-- oslaunch desperate_housewife load_home_pose.launch name_space:=/ file:=home_pose_right_arm /right_armr/PotentialFieldControl -->
+  
+  <arg name="name_space" default=""/>
+  <arg name="file" default="home_position.yaml"/>
+  <group ns="$(arg name_space)">
+		 <rosparam command="load" file="$(find desperate_housewife)/config/$(arg file).yaml" />
+  </group>
+
+</launch>
+
