@@ -29,6 +29,7 @@ private:
     std::string obj_info_topic_r;
     int arrived_r;
     bool finish;
+    const shared& data;
 };
 
 #endif // MSGS_WAIT_H

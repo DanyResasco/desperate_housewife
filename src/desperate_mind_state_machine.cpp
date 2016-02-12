@@ -4,7 +4,7 @@
 #include <Home_state.h>
 #include <SoftHand_states_close.h>
 #include <SoftHand_states_open.h>
-#include <grasp_state.h>
+#include <Grasp_state.h>
 #include <Wait_msgs_.h>
 #include <Trash_position.h>
 #include <Removed_state.h>

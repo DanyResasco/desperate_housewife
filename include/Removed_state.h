@@ -36,7 +36,7 @@ public:
    	std::string base_frame_;
    	ros::Publisher desired_hand_publisher_right;
    	ros::Subscriber error_sub_right;
-    int step;
+    // int step;
     // check_error Error_th;
     ros::NodeHandle nh;
     std::string error_topic_right, desired_hand_right_pose_topic_;
@@ -49,6 +49,7 @@ public:
     int id_class;
     KDL::Twist E_t;
     std::vector<KDL::Twist> vect_error;
+    const shared& data;
 };
 
 #endif // REMOVED_STATE_H

@@ -20,18 +20,20 @@ public:
     virtual std::string get_type();
 
      void HandInforRight(const sensor_msgs::JointState::ConstPtr &msg);
+     void HandInforLeft(const sensor_msgs::JointState::ConstPtr &msg);
 
 private:
 	std::string type;
 	ros::NodeHandle nh;
-	ros::Subscriber hand_info_right;
-	std::string hand_joint_position_r;
-	double info_hand;
+	ros::Subscriber hand_info_right, hand_info_left;
+	std::string hand_joint_position_r, hand_joint_position_l;
+	double info_hand_right, info_hand_left;
 	int index_sh;
-	ros::Publisher hand_publisher_right;
-	std::string hand_open_right;
+	ros::Publisher hand_publisher_right, hand_publisher_left;
+	std::string hand_open_right, hand_open_left;
 	bool finish;
 	double Info_open_hand;
+  const  shared& data;
 
 
 

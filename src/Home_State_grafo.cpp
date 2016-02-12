@@ -1,7 +1,7 @@
 #include <Home_state.h>
 // #include <check_error.hpp>
 
-Home_state::Home_state(const shared& data)
+Home_state::Home_state(const shared& m):data(m)
 {
   	nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
   	error_sub_right = nh.subscribe(error_topic_right, 1, &Home_state::Error_info_right, this);

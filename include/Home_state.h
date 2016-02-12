@@ -62,7 +62,7 @@ public:
     int id_class;
     int id_error_msgs;
     std::vector<KDL::Twist> vect_error;
-    shared data;
+    const shared& data;
     int Arm;
 
     struct quaternion_

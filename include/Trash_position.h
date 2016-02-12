@@ -46,7 +46,7 @@ private:
 	desperate_housewife::handPoseSingle trash_robot_pose;
 	std::string desired_hand_right_pose_topic_, desired_hand_left_pose_topic_;
 	ros::Publisher desired_hand_publisher_right, desired_hand_publisher_left;
-	int msg_arrived;
+	// int msg_arrived;
 	KDL::Twist e_;
 	KDL::Twist E_t;
 	int step;
@@ -66,8 +66,8 @@ private:
 	int index_sh;
 	int id_error_msgs;
 	int id_class;
-	shared data;
-	int id_msgs;
+	const shared& data;
+	// int id_msgs;
 	int id_arm_msg;
 
 	struct quaternion_

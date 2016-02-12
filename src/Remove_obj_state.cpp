@@ -1,6 +1,6 @@
 #include "Removed_state.h"
 
-Removed_moves::Removed_moves(const shared& data)
+Removed_moves::Removed_moves(const shared& m):data(m)
 {
 	 nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
   	error_sub_right = nh.subscribe(error_topic_right, 1, &Removed_moves::Error_info_right, this);

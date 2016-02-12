@@ -49,6 +49,7 @@ private:
     int id_class;
     int id_error_msgs;
     KDL::Twist E_t;
+    const shared& data;
 };
 
 #endif // OVERTUNE_STATE_H

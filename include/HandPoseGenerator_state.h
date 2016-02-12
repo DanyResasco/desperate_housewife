@@ -77,7 +77,7 @@ public:
   bool finish;
   int id_arm_msg;
   // int step;
-  shared data;
+  shared& data;
 
 
 

@@ -1,7 +1,7 @@
 #include <Trash_position.h>
 
 
-Pos_trash::Pos_trash(const shared& data)
+Pos_trash::Pos_trash(const shared& m):data(m)
 {
     std::string string_temp;
     
@@ -74,7 +74,7 @@ void Pos_trash::Error_info_right(const desperate_housewife::Error_msg::ConstPtr&
     KDL::Twist temp;
     tf::twistMsgToKDL (error_msg->error_, temp);
 
-    id_msgs = error_msg->id;
+    id_error_msgs = error_msg->id;
     id_arm_msg = error_msg->id_arm;
     vect_error[0] = temp;
 }
@@ -85,7 +85,7 @@ void Pos_trash::Error_info_left(const desperate_housewife::Error_msg::ConstPtr& 
     KDL::Twist temp;
     tf::twistMsgToKDL (error_msg->error_, temp);
 
-    id_msgs = error_msg->id;
+    id_error_msgs = error_msg->id;
     id_arm_msg = error_msg->id_arm;
     vect_error[1] = temp;
 }
@@ -107,8 +107,10 @@ void Pos_trash::run()
 {
   e_ = vect_error[0] + vect_error[1];
 
+  // int temp = data.arm_to_use;
 	if((id_class != id_error_msgs) && (IsEqual(e_)))
 	{	//send robot at trash position
+    // std::cout<<"data.arm_to_use: "<<temp<<std::endl;
       switch(data.arm_to_use)
       {
         case 0: //right
@@ -122,14 +124,12 @@ void Pos_trash::run()
           break;
         }
 
-      }
-
-      
+      } 
 	}
 
 	else if((id_class == id_error_msgs) && (IsEqual(e_)))
   { 	
-      // std::cout<<"same id and error is equal"<<std::endl;
+      std::cout<<"same id and error is equal"<<std::endl;
   	  finish = true;
   }
 

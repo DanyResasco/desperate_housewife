@@ -1,7 +1,7 @@
 #include "HandPoseGenerator_state.h"
 #include <place_hand_dany.hpp>
 
-HandPoseGenerator::HandPoseGenerator(shared& data)
+HandPoseGenerator::HandPoseGenerator(shared& m):data(m)
 {
   nh.param<int>("/demo", demo, 0);
   nh.param<int>("/max_number_obj", Number_obj, 5);
@@ -242,47 +242,13 @@ void HandPoseGenerator::run()
   	}
   	else if((id_msgs == id_class)  && (IsEqual(e_)))
     {
-          std::cout<<"same id send mes"<<std::endl;
+          // std::cout<<"same id send mes"<<std::endl;
       		Obj_info.data = ObjorObst;
       		objects_info_right_pub.publish(Obj_info);
       		finish = true;
   	}
     else if((id_msgs == id_class) && (!IsEqual(e_)))
     finish = false;
-
-	
-  //     /*if there are more than a user defined number of object */
-  //     else if (msg->geometries.size() >= (uint) Number_obj )
-  //     {
-  //     	ObjorObst = 2;
-  //       Overturn(); //da finire
-  //       finish = true;
-  //       // Obj_info.data = 2;
-  //       // objects_info_left_pub.publish(Obj_info);
-  //       // objects_info_right_pub.publish(Obj_info);
-  //       // stop = 1;
-  //     }
-  //     else
-  //     {      
-  //       switch(demo)
-  //       {
-  //         case 0: 
-  //          DesperateDemo1(msg); /*take graspable object with obstacle avoidance*/
-  //          break;
-  //         case 1:
-  //          DesperateDemo2(msg); /*take graspable object with removing the obstalce */
-  //          break;
-  //         case 2:
-  //           ROS_ERROR("IMPOSSIBLE DEMO.. Demo does not exist");
-  //           break;
-  //       }
-  //     }
-  //   }
-  //   /*until the robot doesn't arrived at home stay still.*/
-  //   else
-  //     return;
-       
-  // }
 }
   
 
@@ -397,21 +363,22 @@ void HandPoseGenerator::DesperateDemo1( std::vector<desperate_housewife::fittedG
                   for(unsigned int h=0; h <  cyl_[i_].info.size(); h++)
                   {
                     pos_obj_temp.info.push_back(  cyl_[i_].info[h]);
-                    // std::cout<<"objects_vec[k].info[0]: "<<objects_vec[h].info[0]<<std::endl;
-                    // std::cout<<"objects_vec[k].info[1]: "<<objects_vec[h].info[1]<<std::endl;
                   }
 
                   obstaclesMsg.geometries.push_back( pos_obj_temp);
               }
               
               data.arm_to_use = DesiredHandPose.whichArm;
+              std::cout<<"arm_to_use: "<<data.arm_to_use<<std::endl;
               
               if (DesiredHandPose.whichArm == 1) /*left arm*/
               {
+                  DesiredHandPose.id = id_class;
                   desired_hand_publisher_left.publish( DesiredHandPose );
                   obstacles_publisher_left.publish(obstaclesMsg);
                   //objects_info_left_pub.publish(Obj_info);
                   id_arm = 1;
+                  finish = false;
               } 
 
               else //right arm
