@@ -66,6 +66,11 @@ void Removed_moves::Error_info_right(const desperate_housewife::Error_msg::Const
     id_error_msgs = error_msg->id;
 }
 
+// void Wait_msgs::reset()
+// {
+//   finish = false;
+//   // arrived_r = 0;
+// }
 
 
 void Removed_moves::run()

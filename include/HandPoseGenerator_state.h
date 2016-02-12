@@ -184,7 +184,7 @@ public:
   * \return void
   */
   
-  void  DesperateDemo2(desperate_housewife::fittedGeometriesArray msg);
+  void  DesperateDemo2(std::vector<desperate_housewife::fittedGeometriesSingle> msg);
   /*! 
   * \fn: DesperateDemo2(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
   * \brief Second Demo. grasp object without obstacles avoidance. if item isn't graspable will be removed 
@@ -193,7 +193,7 @@ public:
   */
   
 
-  void  DesperateDemo1( desperate_housewife::fittedGeometriesArray msg);
+  void  DesperateDemo1(std::vector<desperate_housewife::fittedGeometriesSingle> msg);
   /*! 
   * \fn DesperateDemo1( const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
   * \brief First Demo. grasp object with obstacles avoidance. 
