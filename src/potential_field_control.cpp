@@ -713,6 +713,7 @@ Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double min_distance, E
   void PotentialFieldControl::startControllerCallBack(const std_msgs::Bool::ConstPtr& msg)
   {
     start_controller = msg->data;
+    std::cout<<"ricevuto nel potential_field_control"<<std::endl;
     return;
   }
 

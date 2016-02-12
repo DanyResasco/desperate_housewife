@@ -141,7 +141,7 @@ void HandPoseGenerator::run()
     ROS_DEBUG("start controller");
     desperate_housewife::handPoseSingle DesiredHandPose;
       
-    DesiredHandPose.home = 0;
+    // DesiredHandPose.home = 0;
     std_msgs::UInt16 Obj_info;  /*msg for desperate_mind with object's information*/
 
     desperate_housewife::fittedGeometriesArray obstaclesMsg;
@@ -265,7 +265,7 @@ void HandPoseGenerator::run()
 desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( desperate_housewife::fittedGeometriesSingle geometry, int cyl_nbr )
 {
   desperate_housewife::handPoseSingle hand_pose_local;
-  hand_pose_local.obj = 1;
+  // hand_pose_local.obj = 1;
 
   if ( isGeometryGraspable ( geometry ))
   {

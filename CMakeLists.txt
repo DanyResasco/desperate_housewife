@@ -60,8 +60,6 @@ add_message_files(
   FILES
   fittedGeometriesSingle.msg
   fittedGeometriesArray.msg
-  obstacleSingle.msg
-  obstacleArray.msg
   handPoseSingle.msg
   handPosesArray.msg
   Error_msg.msg

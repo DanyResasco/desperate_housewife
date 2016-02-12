@@ -83,10 +83,7 @@ void Pos_trash::run()
 	if((id_class != id_error_msgs) && (IsEqual(e_)))
 	{	//send robot at trash position
       desperate_housewife::handPoseSingle home_robot_right;  
-    
-      home_robot_right.home = 1;
-      home_robot_right.obj = 0; 
-      
+        
       double roll_r,pitch_r,yaw_r;
       nh.param<double>("/trash/right_arm_position_x", home_robot_right.pose.position.x, -0.75022);
       nh.param<double>("/trash/right_arm_position_y",  home_robot_right.pose.position.y,  0.47078);

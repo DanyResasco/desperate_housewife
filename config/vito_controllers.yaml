@@ -31,7 +31,7 @@ left_arm:
     # k_i: [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
     k_i: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     # links_with_potential_field: ['left_arm_4_link', 'left_arm_5_link', 'left_arm_6_link', 'left_arm_7_link', 'left_hand_palm_ref_link']
-    links_with_potential_field: ['left_arm_5_link']
+    links_with_potential_field: ['right_arm_4_link', 'right_arm_5_link', 'right_arm_6_link', 'right_arm_7_link', 'right_hand_palm_ref_link']
     enable_joint_limits_avoidance: false
     enable_obstacle_avoidance: false
     enable_attractive_field: true
