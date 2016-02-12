@@ -21,7 +21,7 @@
 class Overtune_state : public state<transition>
 {
 public:
-    Overtune_state();
+    Overtune_state(const shared& data);
     virtual std::map< transition, bool > getResults();
     virtual void run();
     virtual bool isComplete();

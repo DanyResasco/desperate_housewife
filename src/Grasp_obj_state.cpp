@@ -1,7 +1,7 @@
 #include <grasp_state.h>
 
 
-Grasp_move::Grasp_move()
+Grasp_move::Grasp_move(const shared& data)
 {
 	this->type=type;
 	nh.param<std::string>("/right_arm/PotentialFieldControl/error_interpolate", error_topic_right, "/right_arm/PotentialFieldControl/error_interpolate");

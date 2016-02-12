@@ -21,7 +21,7 @@
 class Grasp_move : public state<transition>
 {
 public:
-    Grasp_move();
+    Grasp_move(const shared& data);
     virtual std::map< transition, bool > getResults();
     virtual void run();
     virtual bool isComplete();

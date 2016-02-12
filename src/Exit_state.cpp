@@ -1,6 +1,6 @@
 #include "exit_state.h"
 
-exit_state::exit_state()
+exit_state::exit_state(const shared& data)
 {
 
 }

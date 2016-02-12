@@ -71,6 +71,7 @@ namespace desperate_housewife
 
     start_controller = false;
     error_id.id = 10000;
+    error_id.id_arm = parameters_.id_arm;
     return true;
   }
 
@@ -630,6 +631,7 @@ Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double min_distance, E
     nh_.param<bool>("enable_attractive_field", parameters_.enable_attractive_field ,true);
     nh_.param<bool>("enable_null_space", parameters_.enable_null_space ,true);
     nh_.param<bool>("enable_interpolation", parameters_.enable_interpolation ,false);
+    nh_.param<int>("id_arm", parameters_.id_arm ,0);
               // ROS_INFO("topic_desired_reference: %s", desired_reference_topic.c_str());
     ROS_INFO("topic_obstacle: %s", topic_obstacle_avoidance.c_str());
     ROS_INFO("link_tip_name: %s", parameters_.tip_name.c_str());

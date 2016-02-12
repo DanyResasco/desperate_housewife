@@ -2,7 +2,7 @@
 #include <Wait_msgs_.h>
 
 
-Wait_msgs::Wait_msgs()
+Wait_msgs::Wait_msgs(const shared& data)
 {
 	nh.param<std::string>("/right_arm/objects_info", obj_info_topic_r, "/right_arm/objects_info");
   	objects_info_right_sub = nh.subscribe(obj_info_topic_r.c_str(),1, &Wait_msgs::ObjOrObst_right,this);

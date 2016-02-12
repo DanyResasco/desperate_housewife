@@ -1,6 +1,6 @@
 #include "overtune_state.h"
 
-Overtune_state::Overtune_state()
+Overtune_state::Overtune_state(const shared& data)
 {
 
 	nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");

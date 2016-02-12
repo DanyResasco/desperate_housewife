@@ -13,7 +13,7 @@
 class SoftHand_open : public state<transition>
 {
 public:
-    SoftHand_open();
+    SoftHand_open(const shared& data);
     virtual std::map< transition, bool > getResults();
     virtual void run();
     virtual bool isComplete();

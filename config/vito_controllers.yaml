@@ -37,6 +37,7 @@ left_arm:
     enable_attractive_field: true
     enable_null_space: false
     enable_interpolation: false
+    id_arm: 1
 
 left_hand:
   joint_state_controller:
@@ -82,10 +83,11 @@ right_arm:
     links_with_potential_field: ['right_arm_4_link', 'right_arm_5_link', 'right_arm_6_link', 'right_arm_7_link', 'right_hand_palm_ref_link']
     # links_with_potential_field: ['right_arm_5_link']
     enable_joint_limits_avoidance: false
-    enable_obstacle_avoidance: true
+    enable_obstacle_avoidance: false
     enable_attractive_field: true
     enable_null_space: false
     enable_interpolation: false
+    id_arm: 0
 
 right_hand:
   joint_state_controller:

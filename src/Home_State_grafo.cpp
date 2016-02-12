@@ -1,7 +1,7 @@
 #include <Home_state.h>
 // #include <check_error.hpp>
 
-Home_state::Home_state()
+Home_state::Home_state(const shared& data)
 {
   	nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
   	error_sub_right = nh.subscribe(error_topic_right, 1, &Home_state::Error_info_right, this);
@@ -31,8 +31,8 @@ Home_state::Home_state()
     sub_command_start = nh.subscribe("/desperate_housewife/start_controller", 1, &Home_state::command_start, this);
 
     /*subcribe to start command for single arm*/
-    sub_start_r = nh.subscribe("/right_arm/desperate_housewife/start_controller", 1, &Home_state::state_right, this);
-    sub_start_l = nh.subscribe("/left_arm/desperate_housewife/start_controller", 1, &Home_state::state_left, this);
+    sub_start_r = nh.subscribe("/right_arm/PotentialFieldControl/start_controller", 1, &Home_state::state_right, this);
+    sub_start_l = nh.subscribe("/left_arm/PotentialFieldControl/start_controller", 1, &Home_state::state_left, this);
 
     /*publish the start to PotentialFieldContol*/
     ros_pub_start_left = nh.advertise<std_msgs::Bool > ("/left_arm/PotentialFieldControl/start_controller",1);
@@ -41,6 +41,12 @@ Home_state::Home_state()
     /*id class for msg*/
     id_class = static_cast<int>(transition_id::Vito_home);
     
+    vect_error.resize(2);
+    KDL::Twist TEMP;
+    SetToZero(TEMP);
+    vect_error[0] = TEMP;
+    vect_error[1] = TEMP;
+
     /*treshold error*/
     nh.param<double>("/error/pos/x",x,0.01);
     nh.param<double>("/error/pos/y",y,0.01);
@@ -98,19 +104,22 @@ bool Home_state::IsEqual(KDL::Twist E_pf)
 
 void Home_state::Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg)
 {
-    tf::twistMsgToKDL (error_msg->error_, e_);
-
+    KDL::Twist e_right;
+    tf::twistMsgToKDL (error_msg->error_, e_right);
     id_error_msgs = error_msg->id;
     Arm_used = 0;
+    vect_error[0] = e_right;
     // std::cout<<"error: "<<error_msg->data[0]<<error_msg->data[1]<<error_msg->data[2]<<std::endl;
 }
 
 void Home_state::Error_info_left(const desperate_housewife::Error_msg::ConstPtr& error_msg)
 {
-    tf::twistMsgToKDL (error_msg->error_, e_);
+    KDL::Twist e_left;
+    tf::twistMsgToKDL (error_msg->error_, e_left);
 
     id_error_msgs = error_msg->id;
     Arm_used = 1;
+    vect_error[1] = e_left;
     // std::cout<<"error: "<<error_msg->data[0]<<error_msg->data[1]<<error_msg->data[2]<<std::endl;
 }
 
@@ -144,37 +153,57 @@ void Home_state::run()
 {
   if(start_flag == true)
   {
+    Arm = data.arm_to_use;
+    e_ = vect_error[0] + vect_error [1];
+
     if( ((id_class != id_error_msgs) && (!IsEqual(e_))) || ((id_class != id_error_msgs) && (IsEqual(e_))) )
     {
-      switch(Arm_used)
-      {
-        case 0: /*use only the righ arm*/
+    // std::cout<<"Arm_used: "<<std::endl;
+        switch(Arm_used)
         {
-            SendHomeRobot_right(); 
-            finish = false;
-            break;
-        }
-        case 1: /*use only the left arm*/
-        {
-            SendHomeRobot_left(); 
-            finish = false;
-            break;
-        }
-        case 2: /*use both arm*/
-        {
-            std::cout<<"**********+send both arm at home position"<<std::endl;
-            SendHomeRobot_left();
-            SendHomeRobot_right(); 
-            finish = false;
-            break;
-        }
-      } 		
+            case 0: /*use only the righ arm*/
+            {   
+                std::cout<<"case 0"<<std::endl;
+                // if( ((id_class != id_error_msgs) && (!IsEqual(e_right))) || ((id_class != id_error_msgs) && (IsEqual(e_right))) )
+                // {
+                    SendHomeRobot_right(); 
+                    finish = false;
+                // }
+                // if( (id_class == id_error_msgs) && (IsEqual(e_right)) )
+                //     finish = true;
+                break;
+            }
+            case 1: /*use only the left arm*/
+            {
+                // if( ((id_class != id_error_msgs) && (!IsEqual(e_left))) || ((id_class != id_error_msgs) && (IsEqual(e_left))) )
+                // {
+                    SendHomeRobot_left(); 
+                    finish = false;
+                // }
+                // if( (id_class == id_error_msgs) && (IsEqual(e_left)) )
+                //     finish = true;
+                break;
+            }
+            case 2: /*use both arm*/
+            {
+                // std::cout<<"**********+send both arm at home position"<<std::endl;
+                // if( ((id_class != id_error_msgs) && (!IsEqual(e_right))) || ((id_class != id_error_msgs) && (!IsEqual(e_left))) )
+                // {
+                //     SendHomeRobot_left();
+                    SendHomeRobot_right(); 
+                    finish = false;
+                // }
+                //  if( (id_class == id_error_msgs) && (IsEqual(e_right)) &&  (IsEqual(e_left)) )
+                //     finish = true;
+                break;
+            }
+        } 		
   	}
-    
-    else  if((id_class == id_error_msgs) && (IsEqual(e_)))
-    {      
-        finish = true;
-	  }
+
+    else if( (id_class == id_error_msgs) && (IsEqual(e_)) )
+                    finish = true;
+
+
 
   }
   else
@@ -265,3 +294,46 @@ void Home_state::SendHomeRobot_left()
     tf::poseMsgToTF( home_robot_left.pose, tfHandTrasform1);    
     tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform1, ros::Time::now(), base_frame_.c_str(),"home_robot_left") );  
 }
+
+// switch(Arm_used)
+//         {
+//             case 0: /*use only the righ arm*/
+//             {   
+//                 std::cout<<"case 0"<<std::endl;
+//                 if( ((id_class != id_error_msgs) && (!IsEqual(e_right))) || ((id_class != id_error_msgs) && (IsEqual(e_right))) )
+//                 {
+//                     SendHomeRobot_right(); 
+//                     finish = false;
+//                 }
+//                 if( (id_class == id_error_msgs) && (IsEqual(e_right)) )
+//                     finish = true;
+//                 break;
+//             }
+//             case 1: /*use only the left arm*/
+//             {
+//                 if( ((id_class != id_error_msgs) && (!IsEqual(e_left))) || ((id_class != id_error_msgs) && (IsEqual(e_left))) )
+//                 {
+//                     SendHomeRobot_left(); 
+//                     finish = false;
+//                 }
+//                 if( (id_class == id_error_msgs) && (IsEqual(e_left)) )
+//                     finish = true;
+//                 break;
+//             }
+//             case 2: /*use both arm*/
+//             {
+//                 // std::cout<<"**********+send both arm at home position"<<std::endl;
+//                 if( ((id_class != id_error_msgs) && (!IsEqual(e_right))) || ((id_class != id_error_msgs) && (!IsEqual(e_left))) )
+//                 {
+//                     SendHomeRobot_left();
+//                     SendHomeRobot_right(); 
+//                     finish = false;
+//                 }
+//                  if( (id_class == id_error_msgs) && (IsEqual(e_right)) &&  (IsEqual(e_left)) )
+//                     finish = true;
+//                 break;
+//             }
+//         }       
+//     }
+//     else
+//         finish = false;

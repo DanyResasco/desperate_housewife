@@ -11,7 +11,7 @@
 class Wait_msgs : public state<transition>
 {
 public:
-    Wait_msgs();
+    Wait_msgs(const shared& data);
     virtual std::map< transition, bool > getResults();
     virtual void run();
     virtual bool isComplete();

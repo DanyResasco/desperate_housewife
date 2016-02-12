@@ -23,7 +23,7 @@
 class Home_state : public state<transition>
 {
 public:
-    Home_state();
+    Home_state(const shared& data);
     virtual std::map< transition, bool > getResults();
     virtual void run();
     virtual bool isComplete();
@@ -61,6 +61,9 @@ public:
     ros::Subscriber sub_command_start;
     int id_class;
     int id_error_msgs;
+    std::vector<KDL::Twist> vect_error;
+    shared data;
+    int Arm;
 
     struct quaternion_
     {

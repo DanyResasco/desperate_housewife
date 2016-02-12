@@ -6,7 +6,7 @@
 class exit_state : public state<transition>
 {
 public:
-    exit_state();
+    exit_state(const shared& data);
     virtual std::map< transition, bool > getResults();
     virtual void run();
     virtual bool isComplete();

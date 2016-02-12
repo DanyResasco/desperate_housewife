@@ -22,7 +22,7 @@
 class Removed_moves : public state<transition>
 {
 public:
-    Removed_moves();
+    Removed_moves(const shared& data);
     virtual std::map< transition, bool > getResults();
     virtual void run();
     virtual bool isComplete();
@@ -48,6 +48,7 @@ public:
     int id_error_msgs;
     int id_class;
     KDL::Twist E_t;
+    std::vector<KDL::Twist> vect_error;
 };
 
 #endif // REMOVED_STATE_H

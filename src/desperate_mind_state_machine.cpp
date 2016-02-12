@@ -29,15 +29,15 @@ Desp_state_server::Desp_state_server() : aspin(1)
 void Desp_state_server::init()
 {
     // auto start = new starting_state();
-    auto Home = new Home_state();
-    auto Wait_HandPoseGen_msg = new Wait_msgs();
-    auto Obj_To_Grasp = new Grasp_move();
-    auto Close_Softhand = new SoftHand_close();
-    auto Open_Softhand = new SoftHand_open();
-    auto Trash_Position = new Pos_trash();
-    auto Obj_To_Removed = new Removed_moves();
-    auto Overtune_ = new Overtune_state();
-    auto Hand_pose = new HandPoseGenerator();
+    auto Home = new Home_state(data);
+    auto Wait_HandPoseGen_msg = new Wait_msgs(data);
+    auto Obj_To_Grasp = new Grasp_move(data);
+    auto Close_Softhand = new SoftHand_close(data);
+    auto Open_Softhand = new SoftHand_open(data);
+    auto Trash_Position = new Pos_trash(data);
+    auto Obj_To_Removed = new Removed_moves(data);
+    auto Overtune_ = new Overtune_state(data);
+    auto Hand_pose = new HandPoseGenerator(data);
       
      std::vector<std::tuple < state<transition>*, transition_type, state<transition>* > > Grafo{
         //------initial state---------+--------- command -----------------------------------+-- final state---- +
@@ -161,7 +161,7 @@ void Desp_state_server::reset()
 
 Desp_state_server::~Desp_state_server()
 {
-    current_state = new exit_state();
+    current_state = new exit_state(data);
     if(loop_thread.joinable()) join();
 }
 

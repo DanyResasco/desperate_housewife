@@ -2,6 +2,7 @@
 #define STATE_H
 #include <map>
 #include "transition.h"
+#include <memory_.h>
 
 template <class property>
 class state

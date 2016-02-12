@@ -211,8 +211,8 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
   int return_value;
 	tf::StampedTransform hand_left, hand_rigth, hand_r_object,hand_l_object;
 
-	// listener_info.waitForTransform(base_frame_.c_str(), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
-	// listener_info.lookupTransform(base_frame_.c_str(), left_hand_frame_.c_str(), ros::Time(0), hand_left);
+	listener_info.waitForTransform(base_frame_.c_str(), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
+	listener_info.lookupTransform(base_frame_.c_str(), left_hand_frame_.c_str(), ros::Time(0), hand_left);
 
 	listener_info.waitForTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
 	listener_info.lookupTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time(0), hand_rigth);
@@ -221,41 +221,41 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
   listener_info.waitForTransform("object_"+ std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
   listener_info.lookupTransform("object_"+ std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time(0), hand_r_object);
 
-  // listener_info.waitForTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
-  // listener_info.lookupTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time(0), hand_l_object);
+  listener_info.waitForTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
+  listener_info.lookupTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time(0), hand_l_object);
 
 	Eigen::Vector3d object_position(object_pose.position.x, object_pose.position.y, object_pose.position.z);
-	// Eigen::Vector3d hand_left_position(hand_left.getOrigin().x(),hand_left.getOrigin().y(),hand_left.getOrigin().z());
+	Eigen::Vector3d hand_left_position(hand_left.getOrigin().x(),hand_left.getOrigin().y(),hand_left.getOrigin().z());
 	Eigen::Vector3d hand_right_position(hand_rigth.getOrigin().x(),hand_rigth.getOrigin().y(),hand_rigth.getOrigin().z());
 
   /*distance from each arm to cylinder. it use for decide wich arm to use*/
-	// double dist_to_left_hand = std::sqrt((object_position[0] - hand_left_position[0]) * (object_position[0] - hand_left_position[0]) +
-	// 			   (object_position[1] - hand_left_position[1]) * (object_position[1] - hand_left_position[1]) +
-	// 			   (object_position[2] - hand_left_position[2]) * (object_position[2] - hand_left_position[2]) );
+	double dist_to_left_hand = std::sqrt((object_position[0] - hand_left_position[0]) * (object_position[0] - hand_left_position[0]) +
+				   (object_position[1] - hand_left_position[1]) * (object_position[1] - hand_left_position[1]) +
+				   (object_position[2] - hand_left_position[2]) * (object_position[2] - hand_left_position[2]) );
 
-	// double dist_to_right_hand = std::sqrt((object_position[0] - hand_right_position[0]) * (object_position[0] - hand_right_position[0]) +
-	// 			   (object_position[1] - hand_right_position[1]) * (object_position[1] - hand_right_position[1]) +
-	// 			   (object_position[2] - hand_right_position[2]) * (object_position[2] - hand_right_position[2]) );
+	double dist_to_right_hand = std::sqrt((object_position[0] - hand_right_position[0]) * (object_position[0] - hand_right_position[0]) +
+				   (object_position[1] - hand_right_position[1]) * (object_position[1] - hand_right_position[1]) +
+				   (object_position[2] - hand_right_position[2]) * (object_position[2] - hand_right_position[2]) );
 
   /*the straight line is calculates in cilynder frame*/
-	// if(dist_to_left_hand < dist_to_right_hand)
-	// {
-	//   // ROS_INFO("Vito uses a: left arm because of distance");
- //    retta_hand_obj[0] =  hand_l_object.getOrigin().x();
- //    retta_hand_obj[1] =  hand_l_object.getOrigin().y();
- //    retta_hand_obj[2] =  hand_l_object.getOrigin().z();
+	if(dist_to_left_hand < dist_to_right_hand)
+	{
+	  // ROS_INFO("Vito uses a: left arm because of distance");
+    retta_hand_obj[0] =  hand_l_object.getOrigin().x();
+    retta_hand_obj[1] =  hand_l_object.getOrigin().y();
+    retta_hand_obj[2] =  hand_l_object.getOrigin().z();
 
- //    return_value = 1;
-	// }
- //  else
- //  {
-	//   // ROS_INFO("Vito uses a: Right arm because of distance");
+    return_value = 1;
+	}
+  else
+  {
+	  // ROS_INFO("Vito uses a: Right arm because of distance");
     retta_hand_obj[0] =  hand_r_object.getOrigin().x();
     retta_hand_obj[1] =  hand_r_object.getOrigin().y();
     retta_hand_obj[2] =  hand_r_object.getOrigin().z();
 
   	return_value = 0;
-  // }
+  }
   // ROS_INFO("finito mano");
   return return_value; 
 }

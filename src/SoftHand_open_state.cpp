@@ -1,7 +1,7 @@
 #include <SoftHand_states_open.h>
 
 
-SoftHand_open::SoftHand_open()
+SoftHand_open::SoftHand_open(const shared& data)
 {
   	this->type=type;
   	

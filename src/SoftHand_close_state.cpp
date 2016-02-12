@@ -1,6 +1,6 @@
 #include <SoftHand_states_close.h>
 
-SoftHand_close::SoftHand_close()
+SoftHand_close::SoftHand_close(const shared& data)
 {
 	  this->type=type;
 	

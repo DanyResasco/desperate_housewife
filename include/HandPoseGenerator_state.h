@@ -38,18 +38,13 @@ private:
   std::string base_frame_, desired_hand_frame_, right_hand_frame_, left_hand_frame_;
   std::string start_topic_left, start_topic_right;
   ros::Subscriber left_start_controller_sub, right_start_controller_sub;
-  ros::Publisher hand_publisher_right;
-  std::string hand_close_right;
+  ros::Publisher hand_publisher_right, hand_publisher_left;
+  std::string hand_close_right, hand_close_left; 
 
   Eigen::Vector3d retta_hand_obj;
-  int start_controller_left = 0;
-  int start_controller_right = 0;
   int demo;
   int Number_obj;
-  int flag_obj = 0;
-  int flag_remove = 0;
-  int step_grasp = 0;
-  int stop;
+  int id_arm;
 
   bool use_both_arm;
 
@@ -59,29 +54,30 @@ public:
   ros::Subscriber stream_subscriber_, error_sub_left, error_sub_right;
   ros::NodeHandle nh;
   ros::Publisher desired_hand_publisher_, desired_hand_right_pose_publisher_, desired_hand_left_pose_publisher_, obstacles_publisher_right, obstacles_publisher_left;
-  ros::Publisher Reject_obstacles_publisher_left, Reject_obstacles_publisher_right ; 
+  // ros::Publisher Reject_obstacles_publisher_left, Reject_obstacles_publisher_right ; 
   ros::Publisher home_robot_pub, desired_hand_publisher_right, desired_hand_publisher_left;
   std::string desired_hand_pose_left_topic_, desired_hand_pose_right_topic_;
   tf::TransformBroadcaster tf_desired_hand_pose;
   tf::TransformListener listener_info;
   ros::Publisher objects_info_right_pub, objects_info_left_pub;
   std::string obj_info_topic_r, obj_info_topic_l;
-  ros::Publisher vis_pub;
-  // std::string hand_close_left, hand_close_right;
-  // ros::Publisher hand_publisher_left, hand_publisher_right;
   std::string right_hand_synergy_joint, left_hand_synergy_joint;
   tf::TransformListener listener_object;
+  std::vector<KDL::Twist> vect_error;
+  // int index;
 
 
   desperate_housewife::fittedGeometriesArray cylinder_geometry;
   int ObjorObst;
   int id_class;
   KDL::Twist e_;
+  KDL::Twist e_l, e_r;
   KDL::Twist E_t;
   int id_msgs;
   bool finish;
-  int step;
-
+  int id_arm_msg;
+  // int step;
+  shared data;
 
 
 
@@ -92,10 +88,13 @@ public:
   virtual std::string get_type();
 
 
-  HandPoseGenerator();
-  ~HandPoseGenerator(){};
+  HandPoseGenerator(shared& data);
+  // ~HandPoseGenerator(){};
 
   void Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+
+  void Error_info_left(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+
   void HandPoseGeneratorCallback(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
   /*! 
   * \fn HandPoseGeneratorCallback(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);

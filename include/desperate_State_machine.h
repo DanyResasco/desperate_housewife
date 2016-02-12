@@ -18,8 +18,8 @@
                 Desp_state_server();
                 ~Desp_state_server();
                 void join();
-                 ros::NodeHandle node;
-                // shared_memory data;
+                ros::NodeHandle node;
+                shared data;
             private:
                 ros::AsyncSpinner aspin;
                 void loop();
