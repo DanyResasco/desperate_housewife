@@ -9,6 +9,7 @@ Wait_msgs::Wait_msgs()
 
   	// this->type = type;
   	arrived_r=0;
+    finish = false;
 }
 
 void Wait_msgs::ObjOrObst_right(const std_msgs::UInt16::ConstPtr& obj_msg)
@@ -31,16 +32,19 @@ std::map< transition, bool > Wait_msgs::getResults()
 			case 0:
 			{	
 				results[transition::Grasp_Obj] = true;
+        finish = true;
 				break;
 			}
 			case 1:
 			{
 				results[transition::Removed_Obj] = true;
+        finish = true;
 				break;
 			}
 			case 2:
 			{
 				results[transition::Overtune_table] = true;
+        finish = true;
 				break;
 			}
 
@@ -50,6 +54,14 @@ std::map< transition, bool > Wait_msgs::getResults()
 	return results;
 }
 
+void Wait_msgs::reset()
+{
+  finish = false;
+  arrived_r = 0;
+}
+
+
+
 void Wait_msgs::run()
 {
     usleep(200000);
@@ -57,8 +69,8 @@ void Wait_msgs::run()
 
 bool Wait_msgs::isComplete()
 {
-	if(arrived_r == 1)
-		return true;
+	if(finish == true)
+		return finish;
 	else
     return false;
 }

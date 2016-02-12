@@ -145,7 +145,6 @@ void HandPoseGenerator::run()
 
     desperate_housewife::fittedGeometriesArray obstaclesMsg;
 
-    // if(step == 1)
     if((id_msgs != id_class) && IsEqual(e_))
   	{
       if ( cylinder_geometry.geometries.size() == 1)
@@ -193,22 +192,21 @@ void HandPoseGenerator::run()
           case 1:
           {
             DesperateDemo2(cylinder_geometry);
+            break;
           } 
         }       
       }
   	}
-  	else
-  	{ 
-  	    if((id_msgs == id_class) && (IsEqual(e_)))
-      	{
+  	else if((id_msgs == id_class) && (IsEqual(e_)))
+    {
           std::cout<<"same id send mes"<<std::endl;
       		Obj_info.data = ObjorObst;
       		objects_info_right_pub.publish(Obj_info);
       		finish = true;
-      		stop = 0;
-      		
-  	    }
   	}
+    else if((id_msgs == id_class) && (!IsEqual(e_)))
+    finish = false;
+
 	
   //     /*if there are more than a user defined number of object */
   //     else if (msg->geometries.size() >= (uint) Number_obj )
@@ -312,8 +310,6 @@ bool HandPoseGenerator::IsEqual(KDL::Twist E_pf)
 
 void HandPoseGenerator::DesperateDemo1(desperate_housewife::fittedGeometriesArray msg)
 {
-    // if(stop == 0)
-    // {
       ROS_INFO("***DEMO1, take first graspable object with obstacle avoidance***");
       std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec;
           
@@ -409,9 +405,6 @@ void HandPoseGenerator::DesperateDemo1(desperate_housewife::fittedGeometriesArra
         Overturn(); 
         finish = false;
       }
-    // }
-    // else
-    //   finish = false;
 }
 
 void  HandPoseGenerator::DesperateDemo2(desperate_housewife::fittedGeometriesArray msg)
@@ -434,22 +427,19 @@ void  HandPoseGenerator::DesperateDemo2(desperate_housewife::fittedGeometriesArr
       std::sort(objects_vec.begin(), objects_vec.end(), [](desperate_housewife::fittedGeometriesSingle first, desperate_housewife::fittedGeometriesSingle second) {
           double distfirst = std::sqrt( first.pose.position.x*first.pose.position.x + first.pose.position.y*first.pose.position.y + first.pose.position.z*first.pose.position.z);
           double distsecond = std::sqrt( second.pose.position.x*second.pose.position.x + second.pose.position.y*second.pose.position.y + second.pose.position.z*second.pose.position.z);
-          return (distfirst > distsecond); });
+          return (distfirst < distsecond); });
 
-    for(unsigned int h= 0; h < objects_vec.size(); h++)
-    {
-
-
-      DesiredHandPose = generateHandPose( objects_vec[h], h );
+      DesiredHandPose = generateHandPose( objects_vec[0], 0 );
       
       if (!DesiredHandPose.isGraspable )
       {
             ROS_DEBUG("Object to Reject");
-            DesiredHandPose.pose = ObstacleReject(objects_vec[h], DesiredHandPose.whichArm);
+            DesiredHandPose.pose = ObstacleReject(objects_vec[0], DesiredHandPose.whichArm);
             Obj_info.data = 1; 
             tf::Transform tfHandTrasform2;
             tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform2); 
             tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"ObstacleReject") );
+            ROS_INFO("TO remove");
       }
       else
       {
@@ -472,16 +462,9 @@ void  HandPoseGenerator::DesperateDemo2(desperate_housewife::fittedGeometriesArr
       DesiredHandPose.id = id_class;
       desired_hand_publisher_right.publish(DesiredHandPose);
       finish = false;
-      break;
-    }
-    //   stop  = 1;
-    // }
-          // stop = 1;
-          // objects_info_right_pub.publish(Obj_info);
-      // }
-
-
+     
 }
+
 
 
 

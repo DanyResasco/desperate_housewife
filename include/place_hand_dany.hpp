@@ -219,7 +219,7 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
 
   /*Get information about the distance between the cylinder and soft-hand*/
   listener_info.waitForTransform("object_"+ std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
-  listener_info.lookupTransform("object_"+std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time(0), hand_r_object);
+  listener_info.lookupTransform("object_"+ std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time(0), hand_r_object);
 
   // listener_info.waitForTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
   // listener_info.lookupTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time(0), hand_l_object);
