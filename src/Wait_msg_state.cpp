@@ -23,7 +23,7 @@ void Wait_msgs::ObjOrObst_right(const std_msgs::UInt16::ConstPtr& obj_msg)
 std::map< transition, bool > Wait_msgs::getResults()
 {
 	std::map< transition, bool > results;
-	std::cout<<"send results"<<std::endl;
+	// std::cout<<"send results"<<std::endl;
     if(arrived_r == 1)
     {
 		switch(ObjOrObst)

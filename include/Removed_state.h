@@ -27,24 +27,27 @@ public:
     virtual void run();
     virtual bool isComplete();
     virtual std::string get_type();
+    // virtual void reset();
     void Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+    void Error_info_left(const desperate_housewife::Error_msg::ConstPtr& error_msg);
     bool IsEqual(KDL::Twist E_pf);
+    void RemObjLeft();
+    void RemObjRight();
 
    private:
    	KDL::Twist e_;
    	desperate_housewife::handPoseSingle New_Hand_Position;
    	std::string base_frame_;
-   	ros::Publisher desired_hand_publisher_right;
+   	ros::Publisher desired_hand_publisher_right, desired_hand_publisher_left;
    	ros::Subscriber error_sub_right;
-    // int step;
-    // check_error Error_th;
     ros::NodeHandle nh;
     std::string error_topic_right, desired_hand_right_pose_topic_;
+    std::string desired_hand_left_pose_topic_;
     bool finish;
     bool failed;
     tf::TransformBroadcaster tf_desired_hand_pose;
     tf::TransformListener listener_info;
-    std::string right_hand_frame_;
+    std::string right_hand_frame_, left_hand_frame_;
     int id_error_msgs;
     int id_class;
     KDL::Twist E_t;
