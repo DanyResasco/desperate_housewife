@@ -16,7 +16,7 @@ public:
     virtual void run();
     virtual bool isComplete();
     virtual std::string get_type();
-    virtual void reset();
+    // virtual void reset();
 
     void ObjOrObst_right(const std_msgs::UInt16::ConstPtr& obj_msg);
 
