@@ -56,14 +56,8 @@ void Desp_state_server::init()
         std::make_tuple( Hand_pose            , std::make_pair(transition::Error_arrived,true)          , Wait_HandPoseGen_msg     ), 
        
         /*! stay in same state untill msg doesn't arrived */
-        std::make_tuple( Hand_pose                   , std::make_pair(transition::failed,true)     , Exit_state                  ),
-        // std::make_tuple( Wait_HandPoseGen_msg   , std::make_pair(transition::failed,true)     , Wait_HandPoseGen_msg  ),
-        // std::make_tuple( Trash_Position         , std::make_pair(transition::failed,true)     , Trash_Position        ),
-        // std::make_tuple( Obj_To_Grasp           , std::make_pair(transition::failed,true)     , Obj_To_Grasp          ),
-        // std::make_tuple( Obj_To_Removed         , std::make_pair(transition::failed,true)     , Obj_To_Removed        ),
-        // std::make_tuple( Overtune_              , std::make_pair(transition::failed,true)     , Overtune_             ),
-        // std::make_tuple( Open_Softhand          , std::make_pair(transition::failed,true)     , Open_Softhand         ),
-        // std::make_tuple( Close_Softhand         , std::make_pair(transition::failed,true)     , Close_Softhand        ),
+        std::make_tuple( Hand_pose            , std::make_pair(transition::failed,true)                 , Exit_state                ),
+
     };
 
     sm.insert(Grafo);
