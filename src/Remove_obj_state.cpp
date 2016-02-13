@@ -82,7 +82,7 @@ void Removed_moves::Error_info_right(const desperate_housewife::Error_msg::Const
 {
     KDL::Twist e_r;
     tf::twistMsgToKDL (error_msg->error_, e_r);
-    id_error_msgs = error_msg->id;
+    id_error_msgs_r = error_msg->id;
     vect_error[0] = e_r;
 }
 
@@ -91,7 +91,7 @@ void Removed_moves::Error_info_left(const desperate_housewife::Error_msg::ConstP
 {
     KDL::Twist e_l;
     tf::twistMsgToKDL (error_msg->error_, e_l);
-    id_error_msgs = error_msg->id;
+    id_error_msgs_l = error_msg->id;
     vect_error[1] = e_l;
 }
 
@@ -101,31 +101,52 @@ void Removed_moves::run()
 {
 	 e_ = vect_error[0] + vect_error[1];
 
-		if((id_class != id_error_msgs) && IsEqual(e_))
-		{	
-        switch(data.arm_to_use)
-        {
+      switch(data.arm_to_use)
+      {
           case 0: //right
           {
-            RemObjRight();
+            if((id_class != id_error_msgs_r) && IsEqual(e_))
+            { 
+              RemObjRight();
+              
+            }
+            else if((id_class = id_error_msgs_r) && IsEqual(e_))
+            {
+                  finish = true;      
+            }
+            else if( (id_class != id_error_msgs_r) && (!IsEqual(e_)))
+            {
+                finish = false;
+            }
             break;
           }
           case 1:
           {
-            RemObjLeft();
-            break;
-          }
-        }   
-		}
+            if((id_class != id_error_msgs_l) && IsEqual(e_))
+            { 
+              RemObjLeft();
+             
+            }
+            else if((id_class = id_error_msgs_l) && IsEqual(e_))
+            {
+                  finish = true;      
+            }
+            else if( (id_class != id_error_msgs_l) && (!IsEqual(e_)))
+            {
+                finish = false;
+            }
+             break;
+          }   
+		  }
 
-  	else if((id_class = id_error_msgs) && IsEqual(e_))
-  	{
-  			finish = true;			
-  	}
-    else if( (id_class != id_error_msgs) && (!IsEqual(e_)))
-    {
-      finish = false;
-    }
+  	// else if((id_class = id_error_msgs) && IsEqual(e_))
+  	// {
+  	// 		finish = true;			
+  	// }
+   //  else if( (id_class != id_error_msgs) && (!IsEqual(e_)))
+   //  {
+   //    finish = false;
+   //  }
 }
 
 bool Removed_moves::isComplete()
@@ -219,13 +240,11 @@ void Removed_moves::RemObjLeft()
 
       matrix_temp.GetQuaternion(New_Hand_Position.pose.orientation.x,New_Hand_Position.pose.orientation.y,
                     New_Hand_Position.pose.orientation.z,New_Hand_Position.pose.orientation.w);
-
         
       New_Hand_Position.id = id_class;
 
       desired_hand_publisher_left.publish( New_Hand_Position );  
         
-
       tf::Transform tfHandTrasform;
       tf::poseMsgToTF( New_Hand_Position.pose, tfHandTrasform);  
       tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(),"ObstacleReject_new_pose") );

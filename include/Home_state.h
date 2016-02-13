@@ -28,6 +28,7 @@ public:
     virtual void run();
     virtual bool isComplete();
     virtual std::string get_type();
+    virtual void reset();
 
     private:
 
@@ -60,10 +61,11 @@ public:
     tf::TransformBroadcaster  tf_desired_hand_pose;
     ros::Subscriber sub_command_start;
     int id_class;
-    int id_error_msgs;
+    int id_error_msgs_r, id_error_msgs_l;
     std::vector<KDL::Twist> vect_error;
     const shared& data;
     int Arm;
+    int id_error_msgs;
 
     struct quaternion_
     {

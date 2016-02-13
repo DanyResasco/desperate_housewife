@@ -49,7 +49,7 @@ public:
     tf::TransformBroadcaster tf_desired_hand_pose;
     tf::TransformListener listener_info;
     std::string right_hand_frame_, left_hand_frame_;
-    int id_error_msgs;
+    int id_error_msgs_r, id_error_msgs_l, id_error_msgs;
     int id_class;
     KDL::Twist E_t;
     std::vector<KDL::Twist> vect_error;

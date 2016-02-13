@@ -146,55 +146,41 @@ void Home_state::state_left(const std_msgs::Bool::ConstPtr& msg)
   Arm_used = 1;
 }
 
-
+void Home_state::reset()
+{
+    id_error_msgs = 100;
+}
 
 
 void Home_state::run()
 {
   if(start_flag == true)
   {
-    Arm = data.arm_to_use;
+    // Arm = data.arm_to_use;
     e_ = vect_error[0] + vect_error [1];
 
-    if( ((id_class != id_error_msgs) && (!IsEqual(e_))) || ((id_class != id_error_msgs) && (IsEqual(e_))) )
+    if( ((id_class != id_error_msgs) && (!IsEqual(e_))) ) 
     {
-    // std::cout<<"Arm_used: "<<std::endl;
         switch(Arm_used)
         {
             case 0: /*use only the righ arm*/
             {   
-                std::cout<<"case 0"<<std::endl;
-                // if( ((id_class != id_error_msgs) && (!IsEqual(e_right))) || ((id_class != id_error_msgs) && (IsEqual(e_right))) )
-                // {
-                    SendHomeRobot_right(); 
-                    finish = false;
-                // }
-                // if( (id_class == id_error_msgs) && (IsEqual(e_right)) )
-                //     finish = true;
+                SendHomeRobot_right(); 
+                finish = false;
+
                 break;
             }
             case 1: /*use only the left arm*/
             {
-                // if( ((id_class != id_error_msgs) && (!IsEqual(e_left))) || ((id_class != id_error_msgs) && (IsEqual(e_left))) )
-                // {
-                    SendHomeRobot_left(); 
-                    finish = false;
-                // }
-                // if( (id_class == id_error_msgs) && (IsEqual(e_left)) )
-                //     finish = true;
+                SendHomeRobot_left(); 
+                finish = false;
                 break;
             }
             case 2: /*use both arm*/
             {
-                // std::cout<<"**********+send both arm at home position"<<std::endl;
-                // if( ((id_class != id_error_msgs) && (!IsEqual(e_right))) || ((id_class != id_error_msgs) && (!IsEqual(e_left))) )
-                // {
-                //     SendHomeRobot_left();
-                    SendHomeRobot_right(); 
-                    finish = false;
-                // }
-                //  if( (id_class == id_error_msgs) && (IsEqual(e_right)) &&  (IsEqual(e_left)) )
-                //     finish = true;
+                SendHomeRobot_right(); 
+                finish = false;
+
                 break;
             }
         } 		
@@ -202,7 +188,25 @@ void Home_state::run()
 
     else if( (id_class == id_error_msgs) && (IsEqual(e_)) )
                     finish = true;
-
+    
+    else if ((id_class != id_error_msgs) && (IsEqual(e_)))
+    {
+        switch(data.arm_to_use)
+        {
+            case 0: /*use only the righ arm*/
+            {                   
+                SendHomeRobot_right(); 
+                finish = false;              
+                break;
+            }
+            case 1: /*use only the left arm*/
+            {
+                SendHomeRobot_left(); 
+                finish = false;
+                break;
+            }           
+        }       
+    } 
 
 
   }
