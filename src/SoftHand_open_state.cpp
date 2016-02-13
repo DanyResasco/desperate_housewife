@@ -107,6 +107,33 @@ void SoftHand_open::run()
 
           break;
       }
+      case 2:
+      {
+          trajectory_msgs::JointTrajectory msg_jointT_hand;
+          msg_jointT_hand.points.resize(1);
+          msg_jointT_hand.joint_names.resize(1);
+          msg_jointT_hand.points[0].positions.resize(1);
+          msg_jointT_hand.points[0].positions[0] = 0.0;
+          msg_jointT_hand.points[0].time_from_start = ros::Duration(1.0); // 1s;
+          msg_jointT_hand.joint_names[0] = "left_hand_synergy_joint";
+          hand_publisher_left.publish(msg_jointT_hand);
+          msg_jointT_hand.joint_names[0] = "right_hand_synergy_joint";
+          hand_publisher_right.publish(msg_jointT_hand);
+
+          if((info_hand_left >= Info_open_hand ) && (info_hand_right >= Info_open_hand ))
+          {
+               finish = false;
+               ROS_DEBUG("Waiting closing softhand");
+          }
+          else
+          {
+            finish = true;
+            ROS_DEBUG("Closing softhand ");
+          }
+
+          break;
+
+      }
     }
     
 }

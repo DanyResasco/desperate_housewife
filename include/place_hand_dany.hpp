@@ -434,6 +434,16 @@ void HandPoseGenerator::Overturn()
   tf::Transform tfHandTrasform2;
   tf::poseMsgToTF( DesiredHandPose_right.pose, tfHandTrasform2);
   tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str()," right_ribalto") ); 
+  ObjorObst = 2;
+
+  DesiredHandPose_left.id = id_class;
+  desired_hand_publisher_left.publish( DesiredHandPose_left );
+
+  DesiredHandPose_right.id = id_class;
+  desired_hand_publisher_right.publish( DesiredHandPose_right );
+  finish = false;
+  data.arm_to_use = 2;
+
   // ROS_INFO("BUTTO TUTTO");
 }
 

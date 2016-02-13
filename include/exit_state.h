@@ -11,6 +11,7 @@ public:
     virtual void run();
     virtual bool isComplete();
     virtual std::string get_type();
+
 };
 
 #endif // EXIT_STATE_H

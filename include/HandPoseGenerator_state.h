@@ -47,6 +47,7 @@ private:
   int id_arm;
   double SoftHandDistanceFrame;
   bool use_both_arm;
+  bool failed;
 
 
 public:

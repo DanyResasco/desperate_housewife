@@ -12,7 +12,7 @@ std::map< transition, bool > exit_state::getResults()
 
 void exit_state::run()
 {
-
+  
 }
 
 bool exit_state::isComplete()

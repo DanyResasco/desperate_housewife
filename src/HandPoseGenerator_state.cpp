@@ -88,6 +88,7 @@ HandPoseGenerator::HandPoseGenerator(shared& m):data(m)
     Arm_r = false;
     Arm_l = false;
     finish = false;
+    failed = false;
     /*to initialize the error*/
     vect_error.resize(2);
     KDL::Twist temp;
@@ -141,6 +142,11 @@ std::map< transition, bool > HandPoseGenerator::getResults()
 		results[transition::Error_arrived] = true;
     finish = false;
 	}
+  if(failed == true)
+  {
+    results[transition::failed] = true;
+    finish = false;
+  }
   return results;
 }
 
@@ -206,8 +212,14 @@ void HandPoseGenerator::run()
          
 	    }
       else if (cylinder_geometry.geometries.size() >= Number_obj)
-      {
-        Overturn();
+      { 
+        if ((Arm_l == true) && (Arm_r == true))
+          Overturn();
+        else
+        {
+            failed = true;
+            ROS_ERROR("There are more than: %d ", Number_obj);
+        }
       }
       else
       {

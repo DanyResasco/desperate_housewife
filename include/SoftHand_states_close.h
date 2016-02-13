@@ -34,6 +34,7 @@ private:
 	double Info_closed_hand;
 	bool finish;
   const shared& data;
+  int overtune_state;
 };
 
 #endif // SOFTHAND_STATE_H

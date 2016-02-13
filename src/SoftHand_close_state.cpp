@@ -23,6 +23,7 @@ SoftHand_close::SoftHand_close(const shared& m):data(m)
     hand_publisher_left = nh.advertise<trajectory_msgs::JointTrajectory>(hand_close_left.c_str(), 1000);
 
   	finish = false;
+    overtune_state = 0;
 }
 
 
@@ -42,9 +43,12 @@ void SoftHand_close::HandInforLeft(const sensor_msgs::JointState::ConstPtr &msg)
 std::map< transition, bool > SoftHand_close::getResults()
 {
 	std::map< transition, bool > results;
-	if(finish == true)
+	if((finish == true) && (overtune_state == 0))
+  {
 		results[transition::Wait_Closed_Softhand] = finish;
-
+  }
+  else if((finish == true) && (overtune_state == 1))
+    results[transition::Overtune_table] = finish;
   return results;
 }
 
@@ -102,6 +106,33 @@ void SoftHand_close::run()
           }
 
           break;
+      }
+      case 2: //overtune state
+      {
+          trajectory_msgs::JointTrajectory msg_jointT_hand;
+          msg_jointT_hand.points.resize(1);
+          msg_jointT_hand.joint_names.resize(1);
+          msg_jointT_hand.points[0].positions.resize(1);
+          msg_jointT_hand.points[0].positions[0] = 1.0;
+          msg_jointT_hand.points[0].time_from_start = ros::Duration(1.0); // 1s;
+          msg_jointT_hand.joint_names[0] = "left_hand_synergy_joint";
+          hand_publisher_left.publish(msg_jointT_hand);
+          msg_jointT_hand.joint_names[0] = "right_hand_synergy_joint";
+          hand_publisher_right.publish(msg_jointT_hand);
+
+          if((info_hand_left <= Info_closed_hand ) && (info_hand_right <= Info_closed_hand ))
+          {
+               finish = false;
+              ROS_DEBUG("Waiting closing softhand");
+          }
+          else
+          {
+            finish = true;
+            overtune_state = 1;
+            ROS_DEBUG("Closing softhand ");
+          }
+
+
       }
   }
 

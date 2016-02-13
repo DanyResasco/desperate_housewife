@@ -28,28 +28,33 @@ public:
     virtual std::string get_type();
 
     void Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+    void Error_info_left(const desperate_housewife::Error_msg::ConstPtr& error_msg);
     bool IsEqual(KDL::Twist E_pf);
+    void InfoArm();
+    // void SendArmReplaceTable();
 
 private:
 
 	KDL::Twist e_;
-   	desperate_housewife::handPoseSingle New_Hand_Position;
+   	desperate_housewife::handPoseSingle New_Hand_Position_right, New_Hand_Position_left;
    	std::string base_frame_;
-   	ros::Publisher desired_hand_publisher_right;
-   	ros::Subscriber error_sub_right;
+   	ros::Publisher desired_hand_publisher_right, desired_hand_publisher_left;
+   	ros::Subscriber error_sub_right, error_sub_left;
     int step;
     // check_error Error_th;
     ros::NodeHandle nh;
     std::string error_topic_right, desired_hand_right_pose_topic_;
+    std::string error_topic_left, desired_hand_left_pose_topic_;
     bool finish;
     tf::TransformBroadcaster tf_desired_hand_pose;
     int overturn_check;
     tf::TransformListener listener_info;
-    std::string right_hand_frame_;
+    std::string right_hand_frame_, left_hand_frame_;
     int id_class;
     int id_error_msgs;
     KDL::Twist E_t;
     const shared& data;
+    std::vector<KDL::Twist> vect_error;
 };
 
 #endif // OVERTUNE_STATE_H
