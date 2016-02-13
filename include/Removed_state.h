@@ -39,8 +39,9 @@ public:
    	desperate_housewife::handPoseSingle New_Hand_Position;
    	std::string base_frame_;
    	ros::Publisher desired_hand_publisher_right, desired_hand_publisher_left;
-   	ros::Subscriber error_sub_right;
+   	ros::Subscriber error_sub_right, error_sub_left;
     ros::NodeHandle nh;
+    std::string error_topic_left;
     std::string error_topic_right, desired_hand_right_pose_topic_;
     std::string desired_hand_left_pose_topic_;
     bool finish;

@@ -32,7 +32,7 @@ public:
     virtual void run();
     virtual bool isComplete();
     virtual std::string get_type();
-     virtual void reset();
+     // virtual void reset();
 
    	bool IsEqual(KDL::Twist E_pf);
 

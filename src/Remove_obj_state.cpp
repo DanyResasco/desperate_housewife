@@ -2,8 +2,11 @@
 
 Removed_moves::Removed_moves(const shared& m):data(m)
 {
-	 nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
+	  nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
   	error_sub_right = nh.subscribe(error_topic_right, 1, &Removed_moves::Error_info_right, this);
+
+    nh.param<std::string>("/left_arm/PotentialFieldControl/error_id", error_topic_left, "/left_arm/PotentialFieldControl/error_id");
+    error_sub_left = nh.subscribe(error_topic_left, 1, &Removed_moves::Error_info_left, this);
 
   	// nh.param<std::string>("/right_arm/PotentialFieldControl/topic_desired_reference", desired_hand_right_pose_topic_, "/right_arm/PotentialFieldControl/command");
   	// desired_hand_publisher_right = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_right_pose_topic_.c_str(),1);
@@ -80,7 +83,6 @@ void Removed_moves::Error_info_right(const desperate_housewife::Error_msg::Const
     KDL::Twist e_r;
     tf::twistMsgToKDL (error_msg->error_, e_r);
     id_error_msgs = error_msg->id;
-    // id_arm_msg = error_msg->id_arm;
     vect_error[0] = e_r;
 }
 
@@ -90,7 +92,6 @@ void Removed_moves::Error_info_left(const desperate_housewife::Error_msg::ConstP
     KDL::Twist e_l;
     tf::twistMsgToKDL (error_msg->error_, e_l);
     id_error_msgs = error_msg->id;
-    // id_arm_msg = error_msg->id_arm;
     vect_error[1] = e_l;
 }
 
@@ -102,7 +103,6 @@ void Removed_moves::run()
 
 		if((id_class != id_error_msgs) && IsEqual(e_))
 		{	
-      // std::cout<<"caso qui"<<std::endl;
         switch(data.arm_to_use)
         {
           case 0: //right
@@ -123,7 +123,9 @@ void Removed_moves::run()
   			finish = true;			
   	}
     else if( (id_class != id_error_msgs) && (!IsEqual(e_)))
+    {
       finish = false;
+    }
 }
 
 bool Removed_moves::isComplete()
@@ -176,7 +178,7 @@ bool Removed_moves::IsEqual(KDL::Twist E_pf)
 
 void Removed_moves::RemObjRight()
 {
-  // std::cout<<"diversi id ed error_ uguale"<<std::endl;
+  
       tf::StampedTransform hand_rigth;
       listener_info.waitForTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
       listener_info.lookupTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time(0), hand_rigth);
@@ -204,7 +206,6 @@ void Removed_moves::RemObjRight()
 
 void Removed_moves::RemObjLeft()
 {
-  // std::cout<<"diversi id ed error_ uguale"<<std::endl;
       tf::StampedTransform hand_left;
 
       listener_info.waitForTransform(base_frame_.c_str(), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));

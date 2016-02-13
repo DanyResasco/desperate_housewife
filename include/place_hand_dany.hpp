@@ -290,25 +290,25 @@ geometry_msgs::Pose HandPoseGenerator::ObstacleReject( desperate_housewife::fitt
 
   M_desired_local = Eigen::Matrix4d::Identity();
 
-  // if(arm_ == 1) /*left*/
-  // { 
-  //     T_w_ob.col(0) << -z, 0;  
-  //     T_w_ob.col(1) << y, 0;
-  //     T_w_ob.col(2) << y.cross(z) , 0;
+  if(arm_ == 1) /*left*/
+  { 
+      T_w_ob.col(0) << -z, 0;  
+      T_w_ob.col(1) << y, 0;
+      T_w_ob.col(2) << y.cross(z) , 0;
 
-  //     msg_jointT_hand.joint_names[0] = "left_hand_synergy_joint";
-  //     hand_publisher_left.publish(msg_jointT_hand);
-  // }
+      msg_jointT_hand.joint_names[0] = "left_hand_synergy_joint";
+      hand_publisher_left.publish(msg_jointT_hand);
+  }
 
-  // else  right
-  // {
+  else  /*right*/
+  {
     T_w_ob.col(0) << z, 0; 
     T_w_ob.col(1) << -y,0;
     T_w_ob.col(2) << y.cross(z), 0;
 
     msg_jointT_hand.joint_names[0] = "right_hand_synergy_joint";
     hand_publisher_right.publish(msg_jointT_hand);
-  // }
+  }
 
   T_w_ob.col(3) << Point_desired;  
 

@@ -134,10 +134,10 @@ void Pos_trash::run()
 
 }	
 
-void Pos_trash::reset()
-{
-  finish = false;
-}
+// void Pos_trash::reset()
+// {
+//   finish = false;
+// }
 
    
 
