@@ -78,6 +78,9 @@ public:
   int id_arm_msg;
   // int step;
   shared& data;
+  bool Arm_r, Arm_l;
+  int send_msg ;
+  // std_msgs::UInt16 Obj_info;
 
 
 
@@ -223,6 +226,13 @@ public:
 
 
 // void DrawStraingLIne( Eigen::Vector3d &rett_pos );
+
+   int CheckWhichArmIsActive();
+
+  void OnlyRight(int cyl_nbr);
+  void OnlyLeft(int cyl_nbr);
+  int SendBoth(geometry_msgs::Pose object_pose, int cyl_nbr);
+
 
 };
 

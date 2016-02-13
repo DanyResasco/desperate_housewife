@@ -85,7 +85,8 @@ HandPoseGenerator::HandPoseGenerator(shared& m):data(m)
     rot.data[2] = rotz;
     E_t.vel = vel;
     E_t.rot = rot;
-
+    Arm_r = false;
+    Arm_l = false;
     finish = false;
     /*to initialize the error*/
     vect_error.resize(2);
@@ -93,6 +94,7 @@ HandPoseGenerator::HandPoseGenerator(shared& m):data(m)
     SetToZero(temp);
     vect_error[0] = temp;
     vect_error[1] = temp;
+    send_msg = 0;
 }
 
 
@@ -103,6 +105,7 @@ void HandPoseGenerator::Error_info_right(const desperate_housewife::Error_msg::C
     id_msgs = error_msg->id;
     id_arm_msg = error_msg->id_arm;
     vect_error[0] = e_r;
+    Arm_r = true;
 }
 
 
@@ -113,6 +116,7 @@ void HandPoseGenerator::Error_info_left(const desperate_housewife::Error_msg::Co
     id_msgs = error_msg->id;
     id_arm_msg = error_msg->id_arm;
     vect_error[1] = e_l;
+    Arm_l = true;
 }
 
 
@@ -164,10 +168,10 @@ void HandPoseGenerator::run()
     
     e_ = vect_error[0] + vect_error[1]; //sum of error norma uno
 
-    if((id_msgs != id_class) && IsEqual(e_))
+    if((id_msgs != id_class) && IsEqual(e_) && (send_msg == 0))
   	{
       if ( cylinder_geometry.geometries.size() == 1)
-	    {
+	    {   send_msg = 1;   
 	        DesiredHandPose = generateHandPose( cylinder_geometry.geometries[0], 0 );
 
 	          /*check if is graspable (send hand desired pose) or not (remove object)*/
@@ -198,16 +202,17 @@ void HandPoseGenerator::run()
               desired_hand_publisher_right.publish( DesiredHandPose );
               finish = false;
               // id_arm = 0;
-          }   
+          }
+         
 	    }
-      // else if (cylinder_geometry.geometries.size() >= Number_obj)
-      // {
-      //   Overturn();
-      // }
+      else if (cylinder_geometry.geometries.size() >= Number_obj)
+      {
+        Overturn();
+      }
       else
       {
           std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec;
-          
+           send_msg = 1;   
           desperate_housewife::fittedGeometriesArray obstaclesMsg;
           std_msgs::UInt16 Obj_info;
          
@@ -240,10 +245,11 @@ void HandPoseGenerator::run()
   	}
   	else if((id_msgs == id_class)  && (IsEqual(e_)))
     {
-          // std::cout<<"same id send mes"<<std::endl;
+          std::cout<<"same id send mes"<<std::endl;
       		Obj_info.data = ObjorObst;
       		objects_info_right_pub.publish(Obj_info);
       		finish = true;
+          send_msg = 0;
   	}
     else if((id_msgs == id_class) && (!IsEqual(e_)))
     finish = false;
@@ -318,10 +324,8 @@ bool HandPoseGenerator::IsEqual(KDL::Twist E_pf)
 void HandPoseGenerator::DesperateDemo1( std::vector<desperate_housewife::fittedGeometriesSingle> cyl_)
 {
       ROS_INFO("***DEMO1, take first graspable object with obstacle avoidance***");
-      // std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec;
           
       desperate_housewife::fittedGeometriesArray obstaclesMsg;
-      std_msgs::UInt16 Obj_info;
       
       int obj_grasp = 0;
            
@@ -348,7 +352,7 @@ void HandPoseGenerator::DesperateDemo1( std::vector<desperate_housewife::fittedG
 
           else
           {
-              Obj_info.data = 0;
+              ObjorObst = 0;
               obj_grasp = obj_grasp + 1;
               ROS_DEBUG("Graspable objects");
 
@@ -367,15 +371,12 @@ void HandPoseGenerator::DesperateDemo1( std::vector<desperate_housewife::fittedG
               }
               
               data.arm_to_use = DesiredHandPose.whichArm;
-              std::cout<<"arm_to_use: "<<data.arm_to_use<<std::endl;
               
               if (DesiredHandPose.whichArm == 1) /*left arm*/
               {
                   DesiredHandPose.id = id_class;
                   desired_hand_publisher_left.publish( DesiredHandPose );
                   obstacles_publisher_left.publish(obstaclesMsg);
-                  //objects_info_left_pub.publish(Obj_info);
-                  id_arm = 1;
                   finish = false;
               } 
 
@@ -385,7 +386,6 @@ void HandPoseGenerator::DesperateDemo1( std::vector<desperate_housewife::fittedG
                 desired_hand_publisher_right.publish( DesiredHandPose );
                 obstacles_publisher_right.publish(obstaclesMsg);
                 finish = false;
-                id_arm = 0;
               }
 
               break;
@@ -403,31 +403,21 @@ void HandPoseGenerator::DesperateDemo1( std::vector<desperate_housewife::fittedG
 void  HandPoseGenerator::DesperateDemo2(std::vector<desperate_housewife::fittedGeometriesSingle> cyl_)
 {
       ROS_INFO("***DEMO2, take first graspable object without obstacles avoidance***");
-      // std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec;
-      
-      std_msgs::UInt16 Obj_info;
-      
-     
+
         desperate_housewife::handPoseSingle DesiredHandPose;
         DesiredHandPose = generateHandPose( cyl_[0], cyl_[0].id );
-        
+ 
         if (!DesiredHandPose.isGraspable )
         {
               ROS_DEBUG("Object to Reject");
               DesiredHandPose.pose = ObstacleReject(cyl_[0], DesiredHandPose.whichArm);
-              Obj_info.data = 1; 
-              // tf::Transform tfHandTrasform2;
-              // tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform2); 
-              // tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"ObstacleReject") );
+              ObjorObst = 1; 
               ROS_INFO("TO remove");
         }
         else
         {
               ROS_DEBUG("Graspable objects");
-              Obj_info.data = 0; //flag to grasp object in the desperate_mind code
-              // tf::Transform tfHandTrasform;
-              // tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform);
-              // tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), "pose_desired") ); 
+              ObjorObst = 0; //flag to grasp object in the desperate_mind code
               ROS_INFO("TO GRASP");
         }
 
@@ -435,8 +425,8 @@ void  HandPoseGenerator::DesperateDemo2(std::vector<desperate_housewife::fittedG
           
         if (DesiredHandPose.whichArm == 1) 
         {
-              desired_hand_publisher_left.publish(DesiredHandPose);
               DesiredHandPose.id = id_class;
+              desired_hand_publisher_left.publish(DesiredHandPose);
               finish = false;
         }
         else
@@ -445,91 +435,5 @@ void  HandPoseGenerator::DesperateDemo2(std::vector<desperate_housewife::fittedG
           desired_hand_publisher_right.publish(DesiredHandPose);
           finish = false;
         }
-   
-     
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// void  HandPoseGenerator::DesperateDemo2(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
-// {
-//     ROS_INFO("***DEMO2, take first graspable without obstacles avoidance***");
-//     std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec;
-//     desperate_housewife::handPoseSingle DesiredHandPose;
-//     desperate_housewife::fittedGeometriesSingle obstacle;
-//     desperate_housewife::fittedGeometriesArray obstaclesMsg;
-//     std_msgs::UInt16 Obj_info;
-    
-//     for (unsigned int i=0; i< msg->geometries.size(); i++)
-//     {
-//         objects_vec.push_back(msg->geometries[i]);
-//     }
-
-//      // std::vector< desperate_housewife::fittedGeometriesSingle > vect_sort = SortCylinder();
-    
-//     /*sort the cylinder by the shortes distance from softhand */
-//     std::sort(objects_vec.begin(), objects_vec.end(), [](desperate_housewife::fittedGeometriesSingle first, desperate_housewife::fittedGeometriesSingle second) {
-//         double distfirst = std::sqrt( first.pose.position.x*first.pose.position.x + first.pose.position.y*first.pose.position.y + first.pose.position.z*first.pose.position.z);
-//         double distsecond = std::sqrt( second.pose.position.x*second.pose.position.x + second.pose.position.y*second.pose.position.y + second.pose.position.z*second.pose.position.z);
-//         return (distfirst > distsecond); });
-
-//     DesiredHandPose = generateHandPose( objects_vec[0], 0 );
-//     if (!DesiredHandPose.isGraspable )
-//       {
-//           ROS_DEBUG("Object to Reject");
-//           DesiredHandPose.pose = ObstacleReject(objects_vec[0], DesiredHandPose.whichArm);
-//           Obj_info.data = 1; 
-//           tf::Transform tfHandTrasform2;
-//           tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform2); 
-//           tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str(),"ObstacleReject") );
-//       }
-//     else
-//     {
-//           ROS_DEBUG("Graspable objects");
-//           Obj_info.data = 0; //flag to grasp object in the desperate_mind code
-//           tf::Transform tfHandTrasform;
-//           tf::poseMsgToTF( DesiredHandPose.pose, tfHandTrasform);
-//           tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(), right_hand_frame_ .c_str()) ); 
-//     }
-
-//       if (DesiredHandPose.whichArm == 1) 
-//       {
-//           desired_hand_publisher_left.publish(DesiredHandPose);
-//           stop = 1; /* flag to stop this procedure */
-//           objects_info_left_pub.publish(Obj_info);
-//       }
-//       else
-//       {
-//           desired_hand_publisher_right.publish(DesiredHandPose);
-//           stop = 1;
-//           objects_info_right_pub.publish(Obj_info);
-//       }
-
-
-// }

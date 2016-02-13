@@ -109,8 +109,7 @@ void Pos_trash::run()
 
   // int temp = data.arm_to_use;
 	if((id_class != id_error_msgs) && (IsEqual(e_)))
-	{	//send robot at trash position
-    // std::cout<<"data.arm_to_use: "<<temp<<std::endl;
+	{	
       switch(data.arm_to_use)
       {
         case 0: //right
