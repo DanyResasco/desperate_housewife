@@ -43,7 +43,8 @@ HandPoseGenerator::HandPoseGenerator(shared& m):data(m)
     desired_hand_pose_left_topic_ = std::string("/left_arm/PotentialFieldControl/") + string_temp_left;
     desired_hand_publisher_left = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_pose_left_topic_.c_str(),1);
 
-    nh.param<bool>("/use_both_arm", use_both_arm, true);
+    // nh.param<bool>("/use_both_arm", use_both_arm, true);
+     nh.param<double>("/SoftHandDistanceFrame", SoftHandDistanceFrame, 0.2);
 
   	id_class = static_cast<int>(transition_id::Gen_pose);
     id_arm = 3;

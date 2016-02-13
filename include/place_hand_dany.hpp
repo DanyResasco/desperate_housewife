@@ -58,32 +58,32 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   M_desired_local.col(2) << z_l, 0; /*z_cylinder*/
 
   /*takes the object on the top moved on the board*/
+  double distance_softhand_obj = GetDistanceForHand(radius);
+  
   if((isLying == 0) && (isFull == 0)) 
     {
       Point_desired(0) = 0;
       Point_desired(1) = 0;
-      Point_desired(2) = height * 0.5 + 0.03; //0.05;	
+      Point_desired(2) = height * 0.5 + 0.05; //0.05;	
       Point_desired(3) = 1;
       ROS_DEBUG("cyl upright and empty");
       
-      // if (whichArm == 1) left arm
-      // {
-        Point_desired(1) =  radius;  /*along the y axis*/
-      //   M_desired_local.col(3) << Point_desired;
-      //   T_w_h = T_vito_c * M_desired_local* Rot_z;;
-      //   std::cout<<"Not Lying, Empty, left Arm, "<< std::endl;
-      // }
+      if (whichArm == 1) //left arm
+      {
+        Point_desired(0) =  -radius - distance_softhand_obj;  /*along the x axis*/
+         ROS_INFO("Not Lying, Empty, left Arm, ");
+      }
 
-      // else
-      // {
-      //   Point_desired(1) = - 2*radius;  /*along the y axis*/
-        M_desired_local.col(3) << Point_desired;
+      else
+      {
+         Point_desired(0) = radius + distance_softhand_obj;  /*along the x axis*/
+         ROS_INFO("Not Lying, Empty, right Arm, ");
+      }
 
-        T_w_h = T_vito_c * M_desired_local* Rot_z;
-        ROS_INFO("Not Lying, Empty, right Arm, ");
-      // }   
+      M_desired_local.col(3) << Point_desired;
 
-    }
+      T_w_h = T_vito_c * M_desired_local* Rot_z;
+  }
 
   /*takes the object on the top if the object's radius is minus than treshold*/
   else if(((isLying == 0) && (isFull != 0)) && (radius< max_radius))
@@ -167,6 +167,17 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
   return local_sh_pose;
 }
+
+double HandPoseGenerator::GetDistanceForHand(double radius)
+{
+  std::cout<<"distance_softhand_obj: "<<SoftHandDistanceFrame<<std::endl;;
+  return (std::abs(SoftHandDistanceFrame - radius));
+
+}
+
+
+
+
 
 void HandPoseGenerator::fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &Hand_pose)
 {

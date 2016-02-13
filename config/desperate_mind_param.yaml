@@ -11,3 +11,4 @@ demo: 0
 max_number_obj: 5
 close_hand: 0.7
 open_hand: 0.2
+SoftHandDistanceFrame: 0.10

@@ -138,15 +138,6 @@ void Removed_moves::run()
              break;
           }   
 		  }
-
-  	// else if((id_class = id_error_msgs) && IsEqual(e_))
-  	// {
-  	// 		finish = true;			
-  	// }
-   //  else if( (id_class != id_error_msgs) && (!IsEqual(e_)))
-   //  {
-   //    finish = false;
-   //  }
 }
 
 bool Removed_moves::isComplete()

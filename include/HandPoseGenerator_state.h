@@ -45,7 +45,7 @@ private:
   int demo;
   int Number_obj;
   int id_arm;
-
+  double SoftHandDistanceFrame;
   bool use_both_arm;
 
 
@@ -200,7 +200,7 @@ public:
   * \return void
   */
 
-
+  double GetDistanceForHand(double radius);
 
   
   void Overturn();
