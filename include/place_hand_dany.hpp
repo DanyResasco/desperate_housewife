@@ -188,7 +188,7 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
   // ROS_INFO("inizio mano");
   /*We use vito frame for chose which arm use, while we use cylinder frame for calculates the straight line between hand frame and objects frame.*/
   int arm_active  = CheckWhichArmIsActive();
-  int return_value;
+  int return_value = 3; // this value is meaningless. this is just to initialize the variable
   switch(arm_active)
   {
     case 0: //only right
@@ -218,7 +218,7 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
 
  int HandPoseGenerator::CheckWhichArmIsActive()
  {
-    int value_ret;
+    int value_ret = 3;
     if ((Arm_r == true) && (Arm_l == true))
     {
       value_ret = 2;
@@ -271,7 +271,7 @@ int HandPoseGenerator::SendBoth(geometry_msgs::Pose object_pose, int cyl_nbr)
 {
   ROS_DEBUG("use both arm");
   tf::StampedTransform hand_left, hand_rigth, hand_r_object,hand_l_object;
-  int return_value;
+  int return_value = 3;
 
   listener_info.waitForTransform(base_frame_.c_str(), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
   listener_info.lookupTransform(base_frame_.c_str(), left_hand_frame_.c_str(), ros::Time(0), hand_left);
