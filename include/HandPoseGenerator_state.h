@@ -16,8 +16,8 @@
 
 #include <desperate_housewife/fittedGeometriesSingle.h>
 #include <desperate_housewife/fittedGeometriesArray.h>
-#include <desperate_housewife/obstacleSingle.h>
-#include <desperate_housewife/obstacleArray.h>
+// #include <desperate_housewife/obstacleSingle.h>
+// #include <desperate_housewife/obstacleArray.h>
 #include <desperate_housewife/handPoseSingle.h>
 #include <desperate_housewife/Error_msg.h>
 #include <trajectory_msgs/JointTrajectory.h>
@@ -66,7 +66,8 @@ public:
   tf::TransformListener listener_object;
   std::vector<KDL::Twist> vect_error;
   // int index;
-
+  ros::Publisher marker_publisher_;
+  tf::TransformBroadcaster tf_geometriesTransformations_;
 
   desperate_housewife::fittedGeometriesArray cylinder_geometry;
   int ObjorObst;
@@ -91,7 +92,7 @@ public:
   virtual bool isComplete();
   virtual std::string get_type();
 
-
+  void generateMarkerMessages( desperate_housewife::fittedGeometriesSingle cylMsg, int obstorobj, int  i);
   HandPoseGenerator(shared& data);
   // ~HandPoseGenerator(){};
 
