@@ -649,36 +649,41 @@ Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double min_distance, E
     ROS_INFO_STREAM("Null Space: " << (parameters_.enable_null_space ? "Enabled" : "Disabled") );
     ROS_INFO_STREAM("Interpolation: " << (parameters_.enable_interpolation ? "Enabled" : "Disabled") );
 
-    XmlRpc::XmlRpcValue my_list;
-    nh_.getParam("links_with_potential_field", my_list);
-    ROS_ASSERT(my_list.getType() == XmlRpc::XmlRpcValue::TypeArray);
 
-    parameters_.pf_list_of_links.clear();
-    parameters_.pf_list_of_chains.clear();
-    parameters_.pf_list_of_fk.clear();
-
-    for ( int i = 0; i < my_list.size(); ++i) 
+    if(!start_controller)
     {
-      ROS_ASSERT(my_list[i].getType() == XmlRpc::XmlRpcValue::TypeString);
-      parameters_.pf_list_of_links.push_back(static_cast<std::string>(my_list[i]).c_str());
-      ROS_INFO("Link %s defined as collision point", static_cast<std::string>(my_list[i]).c_str());
-    }
 
-    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size(); ++i)
-    {
-      KDL::Chain chain_tmp;
+      XmlRpc::XmlRpcValue my_list;
+      nh_.getParam("links_with_potential_field", my_list);
+      ROS_ASSERT(my_list.getType() == XmlRpc::XmlRpcValue::TypeArray);
 
-      if(!kdl_tree_.getChain(parameters_.root_name.c_str(), parameters_.pf_list_of_links[i].c_str(), chain_tmp))
+      parameters_.pf_list_of_links.clear();
+      parameters_.pf_list_of_chains.clear();
+      parameters_.pf_list_of_fk.clear();
+
+      for ( int i = 0; i < my_list.size(); ++i) 
       {
-        ROS_ERROR("Error processing chain from %s to %s ", parameters_.root_name.c_str(), parameters_.pf_list_of_links[i].c_str());
+        ROS_ASSERT(my_list[i].getType() == XmlRpc::XmlRpcValue::TypeString);
+        parameters_.pf_list_of_links.push_back(static_cast<std::string>(my_list[i]).c_str());
+        ROS_INFO("Link %s defined as collision point", static_cast<std::string>(my_list[i]).c_str());
       }
-      else
+
+      for (unsigned int i = 0; i < parameters_.pf_list_of_links.size(); ++i)
       {
-        parameters_.pf_list_of_chains.push_back(chain_tmp);
-        parameters_.pf_list_of_fk.push_back(KDL::ChainFkSolverPos_recursive(chain_tmp));
-        parameters_.pf_list_of_jac.push_back(KDL::ChainJntToJacSolver(chain_tmp));
-        ROS_INFO("Chain from %s to %s correctly initialized. Num oj Joints = %d", parameters_.root_name.c_str(), parameters_.pf_list_of_links[i].c_str(),
-          chain_tmp.getNrOfJoints());
+        KDL::Chain chain_tmp;
+
+        if(!kdl_tree_.getChain(parameters_.root_name.c_str(), parameters_.pf_list_of_links[i].c_str(), chain_tmp))
+        {
+          ROS_ERROR("Error processing chain from %s to %s ", parameters_.root_name.c_str(), parameters_.pf_list_of_links[i].c_str());
+        }
+        else
+        {
+          parameters_.pf_list_of_chains.push_back(chain_tmp);
+          parameters_.pf_list_of_fk.push_back(KDL::ChainFkSolverPos_recursive(chain_tmp));
+          parameters_.pf_list_of_jac.push_back(KDL::ChainJntToJacSolver(chain_tmp));
+          ROS_INFO("Chain from %s to %s correctly initialized. Num oj Joints = %d", parameters_.root_name.c_str(), parameters_.pf_list_of_links[i].c_str(),
+            chain_tmp.getNrOfJoints());
+        }
       }
     }
 

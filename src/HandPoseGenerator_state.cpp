@@ -211,7 +211,7 @@ void HandPoseGenerator::run()
           }
          
 	    }
-      else if (cylinder_geometry.geometries.size() >= Number_obj)
+      else if (static_cast<int>(cylinder_geometry.geometries.size()) >= Number_obj)
       { 
         if ((Arm_l == true) && (Arm_r == true))
           Overturn();
@@ -405,10 +405,15 @@ void HandPoseGenerator::DesperateDemo1( std::vector<desperate_housewife::fittedG
       }
 
       /*if there aren't graspable object call the funciont overtun */
-      if(obj_grasp == 0)
+      if((obj_grasp == 0) && (Arm_r == true) && (Arm_l == true))
       {
         Overturn(); 
         finish = false;
+      }
+      else
+      {
+        failed = true;
+        ROS_ERROR("No objects on table");
       }
 }
 
@@ -417,6 +422,8 @@ void  HandPoseGenerator::DesperateDemo2(std::vector<desperate_housewife::fittedG
       ROS_INFO("***DEMO2, take first graspable object without obstacles avoidance***");
 
         desperate_housewife::handPoseSingle DesiredHandPose;
+      if (cyl_.size() > 0)
+      {
         DesiredHandPose = generateHandPose( cyl_[0], cyl_[0].id );
  
         if (!DesiredHandPose.isGraspable )
@@ -447,5 +454,12 @@ void  HandPoseGenerator::DesperateDemo2(std::vector<desperate_housewife::fittedG
           desired_hand_publisher_right.publish(DesiredHandPose);
           finish = false;
         }
+      }
+      else
+      {
+        failed = true;
+        ROS_ERROR("There are no objects on the table");
+      }
+
 }
 
