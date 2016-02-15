@@ -35,12 +35,37 @@ public:
      // virtual void reset();
 
    	bool IsEqual(KDL::Twist E_pf);
+   	   /*! 
+      * \fn  IsEqual(KDL::Twist E_pf); 
+      * \brief function that calculates the difference between the error and the error threshold. if return true the arm has arrived
+      * \param  error in kdl twist
+      * \return bool
+    */ 
 
 	void Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg);
 	void Error_info_left(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+	 /*! 
+      * \fn Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+      * \brief callback that store the error msg 
+      * \param  ros message
+      * \return void
+    */
     void HandInforRight(const sensor_msgs::JointState::ConstPtr &msg);
+        /*! 
+      * \fn  HandInforLeft(const sensor_msgs::JointState::ConstPtr &msg);
+      * \brief callback that store the softhand information i.e the joint position
+      * \param  ros message
+      * \return void
+    */
+
     void SendTrashPosRight();
     void SendTrashPosLeft();
+    /*! 
+      * \fn  SendTrashPosLeft() and SendTrashPosRight();
+      * \brief function that sends the arm at trash position. This position is read by config file
+      * \param  void 
+      * \return void
+    */
 
 private:
 	std::string type;

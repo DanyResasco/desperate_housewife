@@ -20,7 +20,13 @@ public:
     virtual std::string get_type();
 
     void HandInforRight(const sensor_msgs::JointState::ConstPtr &msg);
-     void HandInforLeft(const sensor_msgs::JointState::ConstPtr &msg);
+    void HandInforLeft(const sensor_msgs::JointState::ConstPtr &msg);
+      /*! 
+      * \fn  HandInforLeft(const sensor_msgs::JointState::ConstPtr &msg);
+      * \brief callback that store the softhand information i.e the joint position
+      * \param  ros message
+      * \return void
+    */ 
 
 private:
 	std::string type;

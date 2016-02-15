@@ -29,9 +29,27 @@ public:
 
     void Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg);
     void Error_info_left(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+         /*! 
+      * \fn Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+      * \brief callback that store the error msg 
+      * \param  ros message
+      * \return void
+    */
     bool IsEqual(KDL::Twist E_pf);
+   /*! 
+      * \fn  IsEqual(KDL::Twist E_pf); 
+      * \brief function that calculates the difference between the error and the error threshold. if return true the arm has arrived
+      * \param  error in kdl twist
+      * \return bool
+    */ 
     void InfoArm();
-    // void SendArmReplaceTable();
+      /*! 
+      * \fn  InfoArm();
+      * \brief function that take the softhand SO3 poses  
+      * \param  void
+      * \return void
+    */ 
+
 
 private:
 

@@ -18,11 +18,19 @@ public:
     
     private:
     	desperate_housewife::fittedGeometriesArray cylinder_geometry;
-    	void steady_stateCallback(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
+
     	ros::Subscriber stream_subscriber_;
     	std::string geometries_topic_;
     	bool finish;
     	ros::NodeHandle nh;
+
+        void steady_stateCallback(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
+        /*! 
+          * \fn  steady_stateCallback(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
+          * \brief callback that store the number of cluster in the scene
+          * \param  ros message
+          * \return void
+        */ 
 };
 
 #endif // STEADY_STATE_H

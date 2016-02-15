@@ -404,7 +404,7 @@ void HandPoseGenerator::DesperateDemo1( std::vector<desperate_housewife::fittedG
                     finish = false;
                 } 
 
-                else //right arm
+                else /*right arm*/
                 {
                   DesiredHandPose.id = id_class;
                   desired_hand_publisher_right.publish( DesiredHandPose );
@@ -480,8 +480,6 @@ void  HandPoseGenerator::DesperateDemo2(std::vector<desperate_housewife::fittedG
 
 void HandPoseGenerator::generateMarkerMessages( desperate_housewife::fittedGeometriesSingle cylMsg, int obstorobj, int  i)
 {
-  // for (unsigned int i = 0; i < obstaclesMsg.geometries.size(); ++i)
-  // {
     visualization_msgs::Marker marker;
     std::string obst_name;
 
@@ -510,7 +508,7 @@ void HandPoseGenerator::generateMarkerMessages( desperate_housewife::fittedGeome
     }
     else
     {
-        obst_name= "to_grasp_" ;//+ std::to_string(i);
+        obst_name= "to_grasp_" ;
         marker.color.r = 0.0;
         marker.color.g = 1.0;
         marker.color.b = 0.5;
