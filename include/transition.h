@@ -12,6 +12,7 @@ enum class transition {
     Overtune_table,
     started,
     failed,
+    Geometries_ok,
 
 };
 

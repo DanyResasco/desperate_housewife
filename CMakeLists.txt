@@ -144,6 +144,7 @@ src/Wait_msg_state.cpp
 src/Remove_obj_state.cpp
 src/Overtune_state.cpp
 src/HandPoseGenerator_state.cpp
+src/steady_state.cpp
 )
 
 add_executable(test_grafo ${STATES_FILES} src/desperate_mind_state_machine.cpp src/main_grafo.cpp)

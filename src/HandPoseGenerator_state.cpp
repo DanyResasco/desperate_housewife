@@ -137,15 +137,16 @@ std::map< transition, bool > HandPoseGenerator::getResults()
 
 	std::map< transition, bool > results;
 	
-	if(finish == true)
+	if((finish == true) && (failed == false))
 	{
 		results[transition::Error_arrived] = true;
     finish = false;
 	}
-  if(failed == true)
+  if((failed == true) && (finish == true))
   {
     results[transition::failed] = true;
     finish = false;
+    send_msg = 0;
   }
   return results;
 }
@@ -381,7 +382,7 @@ void HandPoseGenerator::DesperateDemo1( std::vector<desperate_housewife::fittedG
 
                   obstaclesMsg.geometries.push_back( pos_obj_temp);
               }
-              generateMarkerMessages(obstaclesMsg);
+              // generateMarkerMessages(obstaclesMsg);
               data.arm_to_use = DesiredHandPose.whichArm;
               
               if (DesiredHandPose.whichArm == 1) /*left arm*/
@@ -405,23 +406,18 @@ void HandPoseGenerator::DesperateDemo1( std::vector<desperate_housewife::fittedG
       }
 
       /*if there aren't graspable object call the funciont overtun */
-<<<<<<< HEAD
       if((obj_grasp == 0) && (Arm_l == true) && (Arm_r == true))
-=======
-      if((obj_grasp == 0) && (Arm_r == true) && (Arm_l == true))
->>>>>>> a5db6dfdaba9086f8c16473b9bac2fe5584521ca
       {
         Overturn(); 
         finish = false;
+        // failed = true;
       }
       else
       {
         failed = true;
-<<<<<<< HEAD
-        ROS_ERROR("There aren't cylinder to grasp");
-=======
-        ROS_ERROR("No objects on table");
->>>>>>> a5db6dfdaba9086f8c16473b9bac2fe5584521ca
+        finish = true;
+        // send_msg = 0;
+        ROS_INFO("No objects on table");
       }
 }
 
@@ -466,7 +462,9 @@ void  HandPoseGenerator::DesperateDemo2(std::vector<desperate_housewife::fittedG
       else
       {
         failed = true;
-        ROS_ERROR("There are no objects on the table");
+        finish = true;
+        // send_msg = 0;
+        ROS_INFO("No objects on table");
       }
 
 }
@@ -474,46 +472,46 @@ void  HandPoseGenerator::DesperateDemo2(std::vector<desperate_housewife::fittedG
 
 
 
-void HandPoseGenerator::generateMarkerMessages( desperate_housewife::fittedGeometriesArray obstaclesMsg )
-{
-  for (unsigned int i = 0; i < obstaclesMsg.size(); ++i)
-  {
-    visualization_msgs::Marker marker;
-    marker.header.frame_id = "world";
-    marker.header.stamp = ros::Time();
-    marker.ns = "";
-    marker.id = i;
-    marker.type = visualization_msgs::Marker::CYLINDER;
-    marker.action = visualization_msgs::Marker::ADD;
+// void HandPoseGenerator::generateMarkerMessages( desperate_housewife::fittedGeometriesArray obstaclesMsg )
+// {
+//   for (unsigned int i = 0; i < obstaclesMsg.size(); ++i)
+//   {
+//     visualization_msgs::Marker marker;
+//     marker.header.frame_id = "world";
+//     marker.header.stamp = ros::Time();
+//     marker.ns = "";
+//     marker.id = i;
+//     marker.type = visualization_msgs::Marker::CYLINDER;
+//     marker.action = visualization_msgs::Marker::ADD;
     
-    marker.pose.position.x = obstaclesMsg.geometries[i].pose.p.x();
-    marker.pose.position.y = obstaclesMsg.geometries[i].pose.p.y();
-    marker.pose.position.z = obstaclesMsg.geometries[i].pose.p.z();
-    double x,y,z,w;
-    obstaclesMsg.geometries[i].pose.M.GetQuaternion(x,y,z,w);
+//     marker.pose.position.x = obstaclesMsg.geometries[i].pose.p.x();
+//     marker.pose.position.y = obstaclesMsg.geometries[i].pose.p.y();
+//     marker.pose.position.z = obstaclesMsg.geometries[i].pose.p.z();
+//     double x,y,z,w;
+//     obstaclesMsg.geometries[i].pose.M.GetQuaternion(x,y,z,w);
 
-    marker.pose.orientation.x = x;
-    marker.pose.orientation.y = y;
-    marker.pose.orientation.z = z;
-    marker.pose.orientation.w = w;
+//     marker.pose.orientation.x = x;
+//     marker.pose.orientation.y = y;
+//     marker.pose.orientation.z = z;
+//     marker.pose.orientation.w = w;
 
-    marker.scale.x = radius[i];
-    marker.scale.y = radius[i];
-    marker.scale.z = height[i];
+//     marker.scale.x = radius[i];
+//     marker.scale.y = radius[i];
+//     marker.scale.z = height[i];
 
-    marker.color.a = 1.0; // for the clearness
-    marker.color.r = 0.0;
-    marker.color.g = 0.0;
-    marker.color.b = 1.0;
-    marker.lifetime = ros::Duration(100);
-    marker_publisher_.publish(marker); 
+//     marker.color.a = 1.0; // for the clearness
+//     marker.color.r = 0.0;
+//     marker.color.g = 0.0;
+//     marker.color.b = 1.0;
+//     marker.lifetime = ros::Duration(100);
+//     marker_publisher_.publish(marker); 
 
-    std::string obst_name= "obj_" + std::to_string(i);
+//     std::string obst_name= "obj_" + std::to_string(i);
 
-    tf::Transform tfGeomTRansform;
-    geometry_msgs::Pose p;
-    tf::poseKDLToMsg (Obj_pose[i], p );
-    tf::poseMsgToTF( p, tfGeomTRansform );
-    tf_geometriesTransformations_.sendTransform( tf::StampedTransform( tfGeomTRansform, ros::Time::now(), "world", obst_name.c_str()) );
-  }
-}
+//     tf::Transform tfGeomTRansform;
+//     geometry_msgs::Pose p;
+//     tf::poseKDLToMsg (Obj_pose[i], p );
+//     tf::poseMsgToTF( p, tfGeomTRansform );
+//     tf_geometriesTransformations_.sendTransform( tf::StampedTransform( tfGeomTRansform, ros::Time::now(), "world", obst_name.c_str()) );
+//   }
+// }
