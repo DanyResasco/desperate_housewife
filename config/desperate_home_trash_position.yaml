@@ -12,9 +12,9 @@ home:
   right_arm_B_pitch: 0.140
   right_arm_C_roll: 2.914
 trash:
-  left_arm_position_x: -0.75022
-  left_arm_position_y: -0.47078
-  left_arm_position_z: 0.54494
+  left_arm_position_x: -1.0
+  left_arm_position_y: -0.864
+  left_arm_position_z: 0.513
   left_arm_A_yaw: -1.273
   left_arm_B_pitch: 0.323
   left_arm_C_roll: 2.759

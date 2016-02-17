@@ -4,7 +4,7 @@
 #include <Home_state.h>
 #include <SoftHand_states_close.h>
 #include <SoftHand_states_open.h>
-#include <grasp_state.h>
+#include <Grasp_state.h>
 #include <Wait_msgs_.h>
 #include <Trash_position.h>
 #include <Removed_state.h>
@@ -14,6 +14,7 @@
 #include <std_msgs/String.h>
 #include <exit_state.h>
 #include <HandPoseGenerator_state.h>
+#include <Steady_state.h>
 
 // using namespace dual_manipulation::state_manager;
 
@@ -29,15 +30,17 @@ Desp_state_server::Desp_state_server() : aspin(1)
 void Desp_state_server::init()
 {
     // auto start = new starting_state();
-    auto Home = new Home_state();
-    auto Wait_HandPoseGen_msg = new Wait_msgs();
-    auto Obj_To_Grasp = new Grasp_move();
-    auto Close_Softhand = new SoftHand_close();
-    auto Open_Softhand = new SoftHand_open();
-    auto Trash_Position = new Pos_trash();
-    auto Obj_To_Removed = new Removed_moves();
-    auto Overtune_ = new Overtune_state();
-    auto Hand_pose = new HandPoseGenerator();
+    auto Home = new Home_state(data);
+    auto Wait_HandPoseGen_msg = new Wait_msgs(data);
+    // auto Obj_To_Grasp = new Grasp_move(data);
+    auto Close_Softhand = new SoftHand_close(data);
+    auto Open_Softhand = new SoftHand_open(data);
+    auto Trash_Position = new Pos_trash(data);
+    auto Obj_To_Removed = new Removed_moves(data);
+    auto Overtune_ = new Overtune_state(data);
+    auto Hand_pose = new HandPoseGenerator(data);
+    // auto Exit_state = new exit_state(data); 
+    auto wait_state = new steady_state();
       
      std::vector<std::tuple < state<transition>*, transition_type, state<transition>* > > Grafo{
         //------initial state---------+--------- command -----------------------------------+-- final state---- +
@@ -45,23 +48,19 @@ void Desp_state_server::init()
         std::make_tuple( Home                 , std::make_pair(transition::Error_arrived,true)          , Hand_pose                ),        
         std::make_tuple( Wait_HandPoseGen_msg , std::make_pair(transition::Grasp_Obj,true)              , Close_Softhand           ),
         std::make_tuple( Wait_HandPoseGen_msg , std::make_pair(transition::Removed_Obj,true)            , Obj_To_Removed           ),
-        std::make_tuple( Wait_HandPoseGen_msg , std::make_pair(transition::Overtune_table,true)         , Overtune_                ),
+        std::make_tuple( Wait_HandPoseGen_msg , std::make_pair(transition::Overtune_table,true)         , Close_Softhand           ),
+        std::make_tuple( Close_Softhand       , std::make_pair(transition::Overtune_table,true)         , Overtune_                ),
         std::make_tuple( Close_Softhand       , std::make_pair(transition::Wait_Closed_Softhand,true)   , Trash_Position           ),
         std::make_tuple( Trash_Position       , std::make_pair(transition::Error_arrived,true)          , Open_Softhand            ),
         std::make_tuple( Open_Softhand        , std::make_pair(transition::Wait_Open_Softhand,true)     , Home                     ),        
         std::make_tuple( Obj_To_Removed       , std::make_pair(transition::Error_arrived,true)          , Open_Softhand            ),
         std::make_tuple( Overtune_            , std::make_pair(transition::Error_arrived,true)          , Open_Softhand            ),
         std::make_tuple( Hand_pose            , std::make_pair(transition::Error_arrived,true)          , Wait_HandPoseGen_msg     ), 
-       
+        std::make_tuple( Hand_pose            , std::make_pair(transition::failed,true)                 , wait_state               ),
+        std::make_tuple( wait_state            , std::make_pair(transition::Geometries_ok,true)         , Hand_pose                ),
+
+
         /*! stay in same state untill msg doesn't arrived */
-        // std::make_tuple( Home                   , std::make_pair(transition::failed,true)     , Home                  ),
-        // std::make_tuple( Wait_HandPoseGen_msg   , std::make_pair(transition::failed,true)     , Wait_HandPoseGen_msg  ),
-        // std::make_tuple( Trash_Position         , std::make_pair(transition::failed,true)     , Trash_Position        ),
-        // std::make_tuple( Obj_To_Grasp           , std::make_pair(transition::failed,true)     , Obj_To_Grasp          ),
-        // std::make_tuple( Obj_To_Removed         , std::make_pair(transition::failed,true)     , Obj_To_Removed        ),
-        // std::make_tuple( Overtune_              , std::make_pair(transition::failed,true)     , Overtune_             ),
-        // std::make_tuple( Open_Softhand          , std::make_pair(transition::failed,true)     , Open_Softhand         ),
-        // std::make_tuple( Close_Softhand         , std::make_pair(transition::failed,true)     , Close_Softhand        ),
     };
 
     sm.insert(Grafo);
@@ -161,7 +160,7 @@ void Desp_state_server::reset()
 
 Desp_state_server::~Desp_state_server()
 {
-    current_state = new exit_state();
+    current_state = new exit_state(data);
     if(loop_thread.joinable()) join();
 }
 

@@ -11,6 +11,8 @@ enum class transition {
     Removed_Obj,
     Overtune_table,
     started,
+    failed,
+    Geometries_ok,
 
 };
 

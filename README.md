@@ -20,9 +20,17 @@ Compile doing 'catkin_make --only_pkg-with-deps desperate_housewife' in your wor
 The command to launch the robot in simulation is : 
 	-roslaunch desperate_housewife run_vito.launch
 The demo doesn't start until does not receive the message :
-	- rostopic pub -1 /right_arm/PotentialFieldControl/start_controller std_msgs/Bool 'True'
-If you want use this demo for one arm the command to launch is: roslaunch desperate_housewife run_vito.launch use_both_arm:=false 
-and select the arm to use with left_arm_enabled:=true or right_arm_enabled:=true
+If you want to use both arm sends:
+	- rostopic pub -1 /desperate_housewife/start_controller std_msgs/Bool 'True'
+
+instead if you want only the right arm:
+	-rostopic pub -1 /right_arm/PotentialFieldControl/start_controller std_msgs/Bool 'True'
+
+Left arm:
+	-rostopic pub -1 /left_arm/PotentialFieldControl/start_controller std_msgs/Bool 'True'
+
+If you want use this demo for one arm the command to launch is: 
+- roslaunch desperate_housewife run_vito.launch use_both_arm:=false and select the arm to use with left_arm_enabled:=true or right_arm_enabled:=true
 
 
 DESPERATE MIND DEMO
@@ -40,6 +48,8 @@ Lets a look of all code:
 To swicth the controller without rqt call:
 	-rosservice call /right_arm/controller_manager/switch_controller "{start_controllers: ['PotentialFieldControl'], stop_controllers: ['joint_trajectory_controller'], strictness: 2}"
 
+	-rosservice call /left_arm/controller_manager/switch_controller "{start_controllers: ['PotentialFieldControl'], stop_controllers: ['joint_trajectory_controller'], strictness: 2}"
+	
 TEST FILE
 
 To test potential field: 

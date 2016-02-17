@@ -1,13 +1,14 @@
-#include <grasp_state.h>
+#include <Grasp_state.h>
 
 
-Grasp_move::Grasp_move()
+Grasp_move::Grasp_move(const shared& m):data(m)
+
 {
 	this->type=type;
 	nh.param<std::string>("/right_arm/PotentialFieldControl/error_interpolate", error_topic_right, "/right_arm/PotentialFieldControl/error_interpolate");
   error_sub_right = nh.subscribe(error_topic_right, 1, &Grasp_move::Error_info_right, this);
 
-  	msg_arrived = 0;
+  	// msg_arrived = 0;
   	finish = false;
   	failed = false;
 

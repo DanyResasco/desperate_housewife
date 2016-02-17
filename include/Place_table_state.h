@@ -6,7 +6,7 @@
 class Place_table_state : public state<transition>
 {
 public:
-    Place_table_state();
+    Place_table_state(const shared& data);
     virtual std::map< transition, bool > getResults();
     virtual void run();
     virtual bool isComplete();

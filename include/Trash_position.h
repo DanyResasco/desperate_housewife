@@ -27,32 +27,63 @@
 class Pos_trash : public state<transition>
 {
 public:
-    Pos_trash();
+    Pos_trash(const shared& data);
     virtual std::map< transition, bool > getResults();
     virtual void run();
     virtual bool isComplete();
     virtual std::string get_type();
+     // virtual void reset();
 
    	bool IsEqual(KDL::Twist E_pf);
+   	   /*! 
+      * \fn  IsEqual(KDL::Twist E_pf); 
+      * \brief function that calculates the difference between the error and the error threshold. if return true the arm has arrived
+      * \param  error in kdl twist
+      * \return bool
+    */ 
+
 	void Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+	void Error_info_left(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+	 /*! 
+      * \fn Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+      * \brief callback that store the error msg 
+      * \param  ros message
+      * \return void
+    */
     void HandInforRight(const sensor_msgs::JointState::ConstPtr &msg);
+        /*! 
+      * \fn  HandInforLeft(const sensor_msgs::JointState::ConstPtr &msg);
+      * \brief callback that store the softhand information i.e the joint position
+      * \param  ros message
+      * \return void
+    */
+
+    void SendTrashPosRight();
+    void SendTrashPosLeft();
+    /*! 
+      * \fn  SendTrashPosLeft() and SendTrashPosRight();
+      * \brief function that sends the arm at trash position. This position is read by config file
+      * \param  void 
+      * \return void
+    */
 
 private:
 	std::string type;
 	desperate_housewife::handPoseSingle trash_robot_pose;
-	std::string desired_hand_right_pose_topic_;
-	ros::Publisher desired_hand_publisher_right;
-	int msg_arrived;
+	std::string desired_hand_right_pose_topic_, desired_hand_left_pose_topic_;
+	ros::Publisher desired_hand_publisher_right, desired_hand_publisher_left;
+	// int msg_arrived;
 	KDL::Twist e_;
 	KDL::Twist E_t;
 	int step;
+	std::vector<KDL::Twist> vect_error;
 	// check_error Error_th;
 	bool finish, failed;
 	ros::NodeHandle nh;
-	ros::Subscriber error_sub_right;
+	ros::Subscriber error_sub_right, error_sub_left;
 	std::string error_topic_right;
 	ros::Subscriber hand_info_right;
-	std::string hand_joint_position_r;
+	std::string hand_joint_position_r, error_topic_left;
 	int info_hand;
 	ros::Publisher hand_publisher_right;
 	std::string hand_close_right;
@@ -61,6 +92,9 @@ private:
 	int index_sh;
 	int id_error_msgs;
 	int id_class;
+	const shared& data;
+	// int id_msgs;
+	int id_arm_msg;
 
 	struct quaternion_
     {

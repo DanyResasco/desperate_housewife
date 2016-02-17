@@ -135,7 +135,7 @@ BasicGeometriesNode::geometry BasicGeometriesNode::fitGeometry( pcl::PointCloud<
       double radius = cyl_info[0];
       cyl_geometry.geom_info = cyl_info;
       cyl_geometry.geom_info_marker.push_back( radius * 2 );
-      cyl_geometry.geom_info_marker.push_back( radius * 2 );
+      cyl_geometry.geom_info_marker.push_back( radius * 2 );  /*cyl marker like an ellisse*/
       double height = cyl_info[1];
       cyl_geometry.geom_info_marker.push_back( height );
       cyl_geometry.geom_transformation = cylinder_local.getTransformation();

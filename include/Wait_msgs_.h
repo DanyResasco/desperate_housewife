@@ -11,7 +11,7 @@
 class Wait_msgs : public state<transition>
 {
 public:
-    Wait_msgs();
+    Wait_msgs(const shared& data);
     virtual std::map< transition, bool > getResults();
     virtual void run();
     virtual bool isComplete();
@@ -19,6 +19,12 @@ public:
     // virtual svoid reset();
 
     void ObjOrObst_right(const std_msgs::UInt16::ConstPtr& obj_msg);
+    /*! 
+      * \fn  ObjOrObst_right(const std_msgs::UInt16::ConstPtr& obj_msg);
+      * \brief callback that store the information about the object and send the next transition 
+      * \param  ros messages 
+      * \return void
+    */
 
 
 private:
@@ -29,6 +35,7 @@ private:
     std::string obj_info_topic_r;
     int arrived_r;
     bool finish;
+    const shared& data;
 };
 
 #endif // MSGS_WAIT_H

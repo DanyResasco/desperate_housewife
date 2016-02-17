@@ -21,7 +21,7 @@
 class Grasp_move : public state<transition>
 {
 public:
-    Grasp_move();
+    Grasp_move(const shared& data);
     virtual std::map< transition, bool > getResults();
     virtual void run();
     virtual bool isComplete();
@@ -37,12 +37,13 @@ private:
 	ros::Subscriber error_sub_right;
 	std::string error_topic_right;
 	KDL::Twist e_;
-	int msg_arrived;
+	// int msg_arrived;
 	bool finish;
 	bool failed;
 	KDL::Twist E_t;
 	int id_class;
 	int id_msgs;
+  const shared& data;
 };
 
 #endif // GRASP_OBJ_H

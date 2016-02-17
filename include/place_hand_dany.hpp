@@ -54,64 +54,51 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
   M_desired_local = Eigen::Matrix4d::Identity();
   M_desired_local.col(0) << x_l, 0; 
-  M_desired_local.col(1) << y_l, 0; /*y_porojection*/
+  M_desired_local.col(1) << y_l, 0; /*y_projection*/
   M_desired_local.col(2) << z_l, 0; /*z_cylinder*/
 
   /*takes the object on the top moved on the board*/
   if((isLying == 0) && (isFull == 0)) 
-    {
+  {
       Point_desired(0) = 0;
       Point_desired(1) = 0;
-      Point_desired(2) = height * 0.5 + 0.03; //0.05;	
+      Point_desired(2) = height * 0.5 + 0.05; //0.05;	
       Point_desired(3) = 1;
+  
       ROS_DEBUG("cyl upright and empty");
+      double distance_softhand_obj = GetDistanceForHand(radius);
       
-      // if (whichArm == 1) left arm
-      // {
-        Point_desired(1) =  radius;  /*along the y axis*/
-      //   M_desired_local.col(3) << Point_desired;
-      //   T_w_h = T_vito_c * M_desired_local* Rot_z;;
-      //   std::cout<<"Not Lying, Empty, left Arm, "<< std::endl;
-      // }
+      if (whichArm == 1) //left arm
+      {
+         Point_desired(0) =  -radius - distance_softhand_obj;  /*along the x axis*/
+         ROS_DEBUG("Not Lying, Empty, left Arm, ");
+      }
 
-      // else
-      // {
-      //   Point_desired(1) = - 2*radius;  /*along the y axis*/
-        M_desired_local.col(3) << Point_desired;
+      else
+      {
+         Point_desired(0) =  radius + distance_softhand_obj;  /*along the x axis*/
+         ROS_DEBUG("Not Lying, Empty, right Arm, ");
+      }
 
-        T_w_h = T_vito_c * M_desired_local* Rot_z;
-        ROS_INFO("Not Lying, Empty, right Arm, ");
-      // }   
+      M_desired_local.col(3) << Point_desired;
 
-    }
+      T_w_h = T_vito_c * M_desired_local* Rot_z;
+  }
 
   /*takes the object on the top if the object's radius is minus than treshold*/
   else if(((isLying == 0) && (isFull != 0)) && (radius< max_radius))
-    {
+  {
       Point_desired(0) = 0;
       Point_desired(1) = 0;
-      Point_desired(2) = height *0.5 + 0.03;  //0.05; 
+      Point_desired(2) = height *0.5 + 0.05;  //0.05; 
       Point_desired(3) = 1;
       ROS_DEBUG("cyl upright and full");
       
       M_desired_local.col(3) << Point_desired;
 
-      // if (whichArm == 1) //left arm
-      // {
-      //    T_w_h = T_vito_c * M_desired_local* Rot_z;
-      //    std::cout<<"Not Lying, full, left Arm"<< std::endl;
-      // }
-
-      // else
-      // {
-      //   T_w_h = T_vito_c * M_desired_local* Rot_z;
-      //   std::cout<<"Not Lying, full, rigth Arm"<< std::endl;
-      // }
        T_w_h = T_vito_c * M_desired_local* Rot_z;
-       ROS_INFO("Not Lying, full");
-       // std::cout<<"Not Lying, full"<< std::endl;
-     
-    }
+       // ROS_INFO("Not Lying, full");
+  }
 
   /*if cilynder is lying, the pose is calculates in vito frame and we take it on the middle*/
   else if ((isLying != 0) && (radius < max_radius))
@@ -123,33 +110,16 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
       ROS_DEBUG("cyl is lying");
 
-     //  if(whichArm == 1) /*left to check*/
-     //  {
-     //      z_l = -z;
-     //      x_l << T_vito_c(0,2), T_vito_c(1,2), T_vito_c(2,2) ;
-     //      y_l = z_l.cross(x_l);
+      z_l = -z;
+      x_l << T_vito_c(0,2), T_vito_c(1,2), T_vito_c(2,2) ;
+      y_l = z_l.cross(x_l);
 
-     //      T_w_h.col(0) << x_l,0;
-     //      T_w_h.col(1) << y_l,0;
-     //      T_w_h.col(2) << z_l,0;
-     //      T_w_h.col(3) << Point_desired;
-     //      std::cout<<"Lying, left Arm"<< std::endl;
-     // }
+      T_w_h.col(0) << x_l,0;
+      T_w_h.col(1) << y_l,0;
+      T_w_h.col(2) << z_l,0;
+      T_w_h.col(3) << Point_desired;
 
-     //  else /*right*/
-     //  { 
-          z_l = -z;
-          x_l << T_vito_c(0,2), T_vito_c(1,2), T_vito_c(2,2) ;
-          y_l = z_l.cross(x_l);
-
-          T_w_h.col(0) << x_l,0;
-          T_w_h.col(1) << y_l,0;
-          T_w_h.col(2) << z_l,0;
-          T_w_h.col(3) << Point_desired;
-
-          T_w_h = T_w_h*Rot_z;
-          std::cout<<"Lying, right Arm"<< std::endl;
-      // }
+      T_w_h = T_w_h*Rot_z;
     }
 
   else
@@ -167,6 +137,12 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
   return local_sh_pose;
 }
+
+double HandPoseGenerator::GetDistanceForHand(double radius)
+{
+  return (std::abs(SoftHandDistanceFrame - radius));
+}
+
 
 void HandPoseGenerator::fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &Hand_pose)
 {
@@ -208,56 +184,139 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
 {
   // ROS_INFO("inizio mano");
   /*We use vito frame for chose which arm use, while we use cylinder frame for calculates the straight line between hand frame and objects frame.*/
-  int return_value;
-	tf::StampedTransform hand_left, hand_rigth, hand_r_object,hand_l_object;
+  int arm_active  = CheckWhichArmIsActive();
+  int return_value = 3; // this value is meaningless. this is just to initialize the variable
+  switch(arm_active)
+  {
+    case 0: //only right
+    {
+      OnlyRight(cyl_nbr);
+      return_value = 0;
+      break;
+    }
+    case 1:
+    {
+      OnlyLeft(cyl_nbr);
+      return_value = 1;
+      break;
+    }
+    case 2:
+    {
+      return_value = SendBoth(object_pose, cyl_nbr);
+      break;
+    }
 
-	// listener_info.waitForTransform(base_frame_.c_str(), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
-	// listener_info.lookupTransform(base_frame_.c_str(), left_hand_frame_.c_str(), ros::Time(0), hand_left);
+  }
+  return return_value;
 
-	listener_info.waitForTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
-	listener_info.lookupTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time(0), hand_rigth);
+}
 
-  /*Get information about the distance between the cylinder and soft-hand*/
+int HandPoseGenerator::CheckWhichArmIsActive()
+{
+    int value_ret = 3;
+    if ((Arm_r == true) && (Arm_l == true))
+    {
+      value_ret = 2;
+    }
+    else if ((Arm_r != true) && (Arm_l == true))
+    {
+      value_ret = 1;
+    }
+    else if ((Arm_r == true) && (Arm_l != true))
+    {
+      value_ret = 0;
+    }
+    return value_ret;
+}
+
+
+void HandPoseGenerator::OnlyRight(int cyl_nbr)
+{
+  ROS_DEBUG("Use right arm");
+  tf::StampedTransform  hand_rigth, hand_r_object;
+
+  listener_info.waitForTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
+  listener_info.lookupTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time(0), hand_rigth);
+
+  // Get information about the distance between the cylinder and soft-hand
+  listener_info.waitForTransform("object_"+ std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
+  listener_info.lookupTransform("object_"+ std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time(0), hand_r_object);
+  retta_hand_obj[0] =  hand_r_object.getOrigin().x();
+  retta_hand_obj[1] =  hand_r_object.getOrigin().y();
+  retta_hand_obj[2] =  hand_r_object.getOrigin().z();
+
+}
+
+void HandPoseGenerator::OnlyLeft(int cyl_nbr)
+{
+  ROS_DEBUG("use left arm");
+  tf::StampedTransform hand_left, hand_l_object;
+
+  listener_info.waitForTransform(base_frame_.c_str(), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
+  listener_info.lookupTransform(base_frame_.c_str(), left_hand_frame_.c_str(), ros::Time(0), hand_left);
+  listener_info.waitForTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
+  listener_info.lookupTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time(0), hand_l_object);
+  retta_hand_obj[0] =  hand_l_object.getOrigin().x();
+  retta_hand_obj[1] =  hand_l_object.getOrigin().y();
+  retta_hand_obj[2] =  hand_l_object.getOrigin().z();
+
+}
+
+int HandPoseGenerator::SendBoth(geometry_msgs::Pose object_pose, int cyl_nbr)
+{
+  ROS_DEBUG("use both arm");
+  tf::StampedTransform hand_left, hand_rigth, hand_r_object,hand_l_object;
+  int return_value = 3;
+
+  listener_info.waitForTransform(base_frame_.c_str(), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
+  listener_info.lookupTransform(base_frame_.c_str(), left_hand_frame_.c_str(), ros::Time(0), hand_left);
+
+  listener_info.waitForTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
+  listener_info.lookupTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time(0), hand_rigth);
+
+  // Get information about the distance between the cylinder and soft-hand
   listener_info.waitForTransform("object_"+ std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
   listener_info.lookupTransform("object_"+ std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time(0), hand_r_object);
 
-  // listener_info.waitForTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
-  // listener_info.lookupTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time(0), hand_l_object);
+  listener_info.waitForTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
+  listener_info.lookupTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time(0), hand_l_object);
 
-	Eigen::Vector3d object_position(object_pose.position.x, object_pose.position.y, object_pose.position.z);
-	// Eigen::Vector3d hand_left_position(hand_left.getOrigin().x(),hand_left.getOrigin().y(),hand_left.getOrigin().z());
-	Eigen::Vector3d hand_right_position(hand_rigth.getOrigin().x(),hand_rigth.getOrigin().y(),hand_rigth.getOrigin().z());
+  Eigen::Vector3d object_position(object_pose.position.x, object_pose.position.y, object_pose.position.z);
+  Eigen::Vector3d hand_left_position(hand_left.getOrigin().x(),hand_left.getOrigin().y(),hand_left.getOrigin().z());
+  Eigen::Vector3d hand_right_position(hand_rigth.getOrigin().x(),hand_rigth.getOrigin().y(),hand_rigth.getOrigin().z());
 
   /*distance from each arm to cylinder. it use for decide wich arm to use*/
-	// double dist_to_left_hand = std::sqrt((object_position[0] - hand_left_position[0]) * (object_position[0] - hand_left_position[0]) +
-	// 			   (object_position[1] - hand_left_position[1]) * (object_position[1] - hand_left_position[1]) +
-	// 			   (object_position[2] - hand_left_position[2]) * (object_position[2] - hand_left_position[2]) );
+  double dist_to_left_hand = std::sqrt((object_position[0] - hand_left_position[0]) * (object_position[0] - hand_left_position[0]) +
+           (object_position[1] - hand_left_position[1]) * (object_position[1] - hand_left_position[1]) +
+           (object_position[2] - hand_left_position[2]) * (object_position[2] - hand_left_position[2]) );
 
-	// double dist_to_right_hand = std::sqrt((object_position[0] - hand_right_position[0]) * (object_position[0] - hand_right_position[0]) +
-	// 			   (object_position[1] - hand_right_position[1]) * (object_position[1] - hand_right_position[1]) +
-	// 			   (object_position[2] - hand_right_position[2]) * (object_position[2] - hand_right_position[2]) );
+  double dist_to_right_hand = std::sqrt((object_position[0] - hand_right_position[0]) * (object_position[0] - hand_right_position[0]) +
+           (object_position[1] - hand_right_position[1]) * (object_position[1] - hand_right_position[1]) +
+           (object_position[2] - hand_right_position[2]) * (object_position[2] - hand_right_position[2]) );
 
   /*the straight line is calculates in cilynder frame*/
-	// if(dist_to_left_hand < dist_to_right_hand)
-	// {
-	//   // ROS_INFO("Vito uses a: left arm because of distance");
- //    retta_hand_obj[0] =  hand_l_object.getOrigin().x();
- //    retta_hand_obj[1] =  hand_l_object.getOrigin().y();
- //    retta_hand_obj[2] =  hand_l_object.getOrigin().z();
+  if(dist_to_left_hand < dist_to_right_hand)
+  {
+    // ROS_INFO("Vito uses a: left arm because of distance");
+    retta_hand_obj[0] =  hand_l_object.getOrigin().x();
+    retta_hand_obj[1] =  hand_l_object.getOrigin().y();
+    retta_hand_obj[2] =  hand_l_object.getOrigin().z();
 
- //    return_value = 1;
-	// }
- //  else
- //  {
-	//   // ROS_INFO("Vito uses a: Right arm because of distance");
+    return_value = 1;
+  }
+  else
+  {
+    // ROS_INFO("Vito uses a: Right arm because of distance");
     retta_hand_obj[0] =  hand_r_object.getOrigin().x();
     retta_hand_obj[1] =  hand_r_object.getOrigin().y();
     retta_hand_obj[2] =  hand_r_object.getOrigin().z();
 
-  	return_value = 0;
-  // }
+    return_value = 0;
+  }
   // ROS_INFO("finito mano");
   return return_value; 
+
+
 }
 
 
@@ -290,25 +349,25 @@ geometry_msgs::Pose HandPoseGenerator::ObstacleReject( desperate_housewife::fitt
 
   M_desired_local = Eigen::Matrix4d::Identity();
 
-  // if(arm_ == 1) /*left*/
-  // { 
-  //     T_w_ob.col(0) << -z, 0;  
-  //     T_w_ob.col(1) << y, 0;
-  //     T_w_ob.col(2) << y.cross(z) , 0;
+  if(arm_ == 1) /*left*/
+  { 
+      T_w_ob.col(0) << -z, 0;  
+      T_w_ob.col(1) << y, 0;
+      T_w_ob.col(2) << y.cross(z) , 0;
 
-  //     msg_jointT_hand.joint_names[0] = "left_hand_synergy_joint";
-  //     hand_publisher_left.publish(msg_jointT_hand);
-  // }
+      msg_jointT_hand.joint_names[0] = "left_hand_synergy_joint";
+      hand_publisher_left.publish(msg_jointT_hand);
+  }
 
-  // else  right
-  // {
+  else  /*right*/
+  {
     T_w_ob.col(0) << z, 0; 
     T_w_ob.col(1) << -y,0;
     T_w_ob.col(2) << y.cross(z), 0;
 
     msg_jointT_hand.joint_names[0] = "right_hand_synergy_joint";
     hand_publisher_right.publish(msg_jointT_hand);
-  // }
+  }
 
   T_w_ob.col(3) << Point_desired;  
 
@@ -370,40 +429,16 @@ void HandPoseGenerator::Overturn()
   tf::Transform tfHandTrasform2;
   tf::poseMsgToTF( DesiredHandPose_right.pose, tfHandTrasform2);
   tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform2, ros::Time::now(), base_frame_.c_str()," right_ribalto") ); 
+  ObjorObst = 2;
+
+  DesiredHandPose_left.id = id_class;
+  desired_hand_publisher_left.publish( DesiredHandPose_left );
+
+  DesiredHandPose_right.id = id_class;
+  desired_hand_publisher_right.publish( DesiredHandPose_right );
+  finish = false;
+  data.arm_to_use = 2;
+
   // ROS_INFO("BUTTO TUTTO");
 }
-
-// void HandPoseGenerator::DrawStraingLIne( Eigen::Vector3d &rett_pos )
-//   {
-//     // std::cout<<"disegno"<<std::endl;
-    
-//     visualization_msgs::Marker marker;
-
-//     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-//     marker.header.frame_id = "vito_anchor";
-//     marker.header.stamp = ros::Time::now();
-//     marker.id = 10;
-//     marker.type = marker.LINE_STRIP;
-//     marker.action = marker.ADD;
-//     marker.scale.x = .2;
-//     marker.color.a = 1; 
-//     marker.color.r = 1.0;
-//     marker.color.g = 0.0;
-//     marker.color.b = 0.0;
-//     marker.pose.orientation.w = 1.0;
-
-//     geometry_msgs::Point p;
-//     p.x = rett_pos(0);
-//     p.y = rett_pos(1);
-//     p.z = rett_pos(2);
-
-//     marker.points.push_back(p);
-
-//     marker.lifetime = ros::Duration(1000);
-
-//     vis_pub.publish(marker);
-//     // ros::spinOnce();
-//     std::cout << "Publishing line" << std::endl;
-
-//   }
 

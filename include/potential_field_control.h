@@ -188,7 +188,7 @@ namespace desperate_housewife
 			std::vector<KDL::ChainFkSolverPos_recursive> pf_list_of_fk;
 			std::vector<KDL::ChainJntToJacSolver> pf_list_of_jac;
 			bool enable_obstacle_avoidance, enable_joint_limits_avoidance, enable_attractive_field, enable_null_space, enable_interpolation;
-
+			int id_arm;
 		} parameters_;
 
 		std::string  topic_obstacle_avoidance, topic_desired_reference;

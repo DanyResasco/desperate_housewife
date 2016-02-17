@@ -2,7 +2,7 @@
 #include <Wait_msgs_.h>
 
 
-Wait_msgs::Wait_msgs()
+Wait_msgs::Wait_msgs(const shared& m):data(m)
 {
 	nh.param<std::string>("/right_arm/objects_info", obj_info_topic_r, "/right_arm/objects_info");
   	objects_info_right_sub = nh.subscribe(obj_info_topic_r.c_str(),1, &Wait_msgs::ObjOrObst_right,this);
@@ -23,7 +23,7 @@ void Wait_msgs::ObjOrObst_right(const std_msgs::UInt16::ConstPtr& obj_msg)
 std::map< transition, bool > Wait_msgs::getResults()
 {
 	std::map< transition, bool > results;
-	std::cout<<"send results"<<std::endl;
+	// std::cout<<"send results"<<std::endl;
     if(arrived_r == 1)
     {
 		switch(ObjOrObst)

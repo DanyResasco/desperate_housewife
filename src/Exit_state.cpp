@@ -1,6 +1,6 @@
 #include "exit_state.h"
 
-exit_state::exit_state()
+exit_state::exit_state(const shared& data)
 {
 
 }
@@ -12,7 +12,7 @@ std::map< transition, bool > exit_state::getResults()
 
 void exit_state::run()
 {
-
+  
 }
 
 bool exit_state::isComplete()

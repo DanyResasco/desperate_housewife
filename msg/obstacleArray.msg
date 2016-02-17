@@ -1,1 +1,0 @@
-obstacleSingle[] obstacles

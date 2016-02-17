@@ -16,8 +16,8 @@
 
 #include <desperate_housewife/fittedGeometriesSingle.h>
 #include <desperate_housewife/fittedGeometriesArray.h>
-#include <desperate_housewife/obstacleSingle.h>
-#include <desperate_housewife/obstacleArray.h>
+// #include <desperate_housewife/obstacleSingle.h>
+// #include <desperate_housewife/obstacleArray.h>
 #include <desperate_housewife/handPoseSingle.h>
 #include <desperate_housewife/Error_msg.h>
 #include <trajectory_msgs/JointTrajectory.h>
@@ -38,20 +38,16 @@ private:
   std::string base_frame_, desired_hand_frame_, right_hand_frame_, left_hand_frame_;
   std::string start_topic_left, start_topic_right;
   ros::Subscriber left_start_controller_sub, right_start_controller_sub;
-  ros::Publisher hand_publisher_right;
-  std::string hand_close_right;
+  ros::Publisher hand_publisher_right, hand_publisher_left;
+  std::string hand_close_right, hand_close_left; 
 
   Eigen::Vector3d retta_hand_obj;
-  int start_controller_left = 0;
-  int start_controller_right = 0;
   int demo;
   int Number_obj;
-  int flag_obj = 0;
-  int flag_remove = 0;
-  int step_grasp = 0;
-  int stop;
-
+  int id_arm;
+  double SoftHandDistanceFrame;
   bool use_both_arm;
+  bool failed;
 
 
 public:
@@ -59,29 +55,34 @@ public:
   ros::Subscriber stream_subscriber_, error_sub_left, error_sub_right;
   ros::NodeHandle nh;
   ros::Publisher desired_hand_publisher_, desired_hand_right_pose_publisher_, desired_hand_left_pose_publisher_, obstacles_publisher_right, obstacles_publisher_left;
-  ros::Publisher Reject_obstacles_publisher_left, Reject_obstacles_publisher_right ; 
+  // ros::Publisher Reject_obstacles_publisher_left, Reject_obstacles_publisher_right ; 
   ros::Publisher home_robot_pub, desired_hand_publisher_right, desired_hand_publisher_left;
   std::string desired_hand_pose_left_topic_, desired_hand_pose_right_topic_;
   tf::TransformBroadcaster tf_desired_hand_pose;
   tf::TransformListener listener_info;
   ros::Publisher objects_info_right_pub, objects_info_left_pub;
   std::string obj_info_topic_r, obj_info_topic_l;
-  ros::Publisher vis_pub;
-  // std::string hand_close_left, hand_close_right;
-  // ros::Publisher hand_publisher_left, hand_publisher_right;
   std::string right_hand_synergy_joint, left_hand_synergy_joint;
   tf::TransformListener listener_object;
-
+  std::vector<KDL::Twist> vect_error;
+  // int index;
+  ros::Publisher marker_publisher_;
+  tf::TransformBroadcaster tf_geometriesTransformations_;
 
   desperate_housewife::fittedGeometriesArray cylinder_geometry;
   int ObjorObst;
   int id_class;
   KDL::Twist e_;
+  KDL::Twist e_l, e_r;
   KDL::Twist E_t;
   int id_msgs;
   bool finish;
-  int step;
-
+  int id_arm_msg;
+  // int step;
+  shared& data;
+  bool Arm_r, Arm_l;
+  int send_msg ;
+  // std_msgs::UInt16 Obj_info;
 
 
 
@@ -91,11 +92,14 @@ public:
   virtual bool isComplete();
   virtual std::string get_type();
 
-
-  HandPoseGenerator();
-  ~HandPoseGenerator(){};
+  void generateMarkerMessages( desperate_housewife::fittedGeometriesSingle cylMsg, int obstorobj, int  i);
+  HandPoseGenerator(shared& data);
+  // ~HandPoseGenerator(){};
 
   void Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+
+  void Error_info_left(const desperate_housewife::Error_msg::ConstPtr& error_msg);
+
   void HandPoseGeneratorCallback(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
   /*! 
   * \fn HandPoseGeneratorCallback(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
@@ -138,7 +142,7 @@ public:
   int whichArm( geometry_msgs::Pose object_pose, int cyl_nbr );
   /*!
   * \fn whichArm( geometry_msgs::Pose object_pose, int cyl_nbr );
-  * \brief Function that calulates whichArm use. It's calculate looking the shortes distance between the object and the arm.  
+  * \brief Function that calulates whichArm use. 
   * \param pose
   * \return integrer 1 left arm 0 right arm
   */
@@ -170,20 +174,6 @@ public:
   * \return geometry pose
   */
  
-  /*! Function for send the obstacle messages
-  */
-  // void SendObjRejectMsg(desperate_housewife::fittedGeometriesSingle obj_msg, int arm_);
-
-
-  // void Start_left(const desperate_housewife::Start::ConstPtr& msg);
-  // void Start_right(const desperate_housewife::Start::ConstPtr& msg);
-  /*! 
-  * \fn Start_left and Start_right (const desperate_housewife::Start::ConstPtr& msg);
-  * \brief Function for move vito in the desired pose before control start   
-  * \param: start msgs
-  * \return void
-  */
-  
   void  DesperateDemo2(std::vector<desperate_housewife::fittedGeometriesSingle> msg);
   /*! 
   * \fn: DesperateDemo2(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
@@ -201,7 +191,13 @@ public:
   * \return void
   */
 
-
+  double GetDistanceForHand(double radius);
+  /*! 
+  * \fn GetDistanceForHand(double radius);
+  * \brief function that calculates the softhand position 
+  * \param object radius
+  * \return double
+  */
 
   
   void Overturn();
@@ -213,25 +209,46 @@ public:
   */
 
 
-  // std::vector< desperate_housewife::fittedGeometriesSingle > SortCylinder(std::vector< desperate_housewife::fittedGeometriesSingle > VECT_cyl1);
 
-   /*! Function: CheckRealTimeObstacleMovements
-  *input: cylinder
-  *output: void
-  *Description:Send a obstacles at real time 
+   int CheckWhichArmIsActive();
+  /*! 
+  * \fn CheckWhichArmIsActive();
+  * \brief function that compare the arm flag to see which one is active
+  * \param void
+  * \return int, 0 only right arm, 1 only left arm, 2 both arm
   */
-  // void CheckRealTimeObstacleMovements(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
 
+  void OnlyRight(int cyl_nbr);
+  /*! 
+  * \fn OnlyRight(int cyl_nbr);
+  * \brief function that take the right softhand SO3 pose
+  * \param cylinder's id 
+  * \return void
+  */
 
-// void DrawStraingLIne( Eigen::Vector3d &rett_pos );
+  void OnlyLeft(int cyl_nbr);
+    /*! 
+  * \fn OnlyLeft(int cyl_nbr);
+  * \brief function that take the left softhand SO3 pose
+  * \param cylinder's id 
+  * \return void
+  */
+  int SendBoth(geometry_msgs::Pose object_pose, int cyl_nbr);
+  /*! 
+  * \fn SendBoth(geometry_msgs::Pose object_pose, int cyl_nbr);
+  * \brief function that take the both softhand SO3 pose and decide which one to use. It's calculate looking the shortes distance between the object and the arm.  
+  * \param object pose and object's id
+  * \return int.  0 only right arm, 1 only left arm,
+  */
+  std::vector<desperate_housewife::fittedGeometriesSingle> getClosestObject(std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec);
+  std::vector<desperate_housewife::fittedGeometriesSingle> SortbyHand(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec, tf::StampedTransform hand_position);
+  // std::vector<desperate_housewife::fittedGeometriesSingle> SortedLeft(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec);
+  std::vector<desperate_housewife::fittedGeometriesSingle> SortBoth(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec, tf::StampedTransform hand_right, tf::StampedTransform hand_left);
+  std::vector<desperate_housewife::fittedGeometriesSingle> transform_to_world(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec, tf::StampedTransform hand_position);
+  
 
+  
 };
 
-    /*! Function: SetObstacleMsg
-  *input: obstacle
-  *output: obstacle in
-  *Description:Send a obstacles at real time 
-  */
-  // desperate_housewife::fittedGeometriesSingle SetObstacleMsg(desperate_housewife::fittedGeometriesSingle geo_obst);
 
 #endif

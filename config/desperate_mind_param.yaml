@@ -7,7 +7,8 @@ error:
     x: 0.15
     y: 0.15
     z: 0.15
-demo: 1
+demo: 0 #  [ 0 -> demo 1, 1 -> demo 2] 
 max_number_obj: 5
 close_hand: 0.7
 open_hand: 0.2
+SoftHandDistanceFrame: 0.10

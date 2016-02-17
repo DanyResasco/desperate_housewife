@@ -111,6 +111,13 @@
     <!-- load the controllers in current namespace -->
     <node ns="head" name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="joint_state_controller joint_trajectory_controller"/>
 
+  <!--   <group if= "$(arg left_arm_enabled)">
+        if="$(arg right_arm_enabled)"
+    </group> -->
+
+
+
+
     <param name="use_both_arm" value="false"/>
     <param name="use_sh_sim" value="$(arg use_robot_sim)"/>
 
@@ -136,6 +143,8 @@
 
         <!-- load the controllers in current namespace -->
         <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="joint_state_controller joint_trajectory_controller"/>
+
+        <node name="controller_stopper" pkg="controller_manager" type="spawner" args="--stopped  PotentialFieldControl" output="screen"/>
 
     </group>
     
