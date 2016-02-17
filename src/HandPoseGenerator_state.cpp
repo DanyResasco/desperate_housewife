@@ -1,5 +1,6 @@
 #include "HandPoseGenerator_state.h"
 #include <place_hand_dany.hpp>
+#include <getClosestObject.hpp>
 
 HandPoseGenerator::HandPoseGenerator(shared& m):data(m)
 {
@@ -236,21 +237,24 @@ void HandPoseGenerator::run()
           }
           
           /* sort the cylinder by the shortes distance from softhand */
-          std::sort(objects_vec.begin(), objects_vec.end(), [](desperate_housewife::fittedGeometriesSingle first, desperate_housewife::fittedGeometriesSingle second) {
-                double distfirst = std::sqrt( first.pose.position.x*first.pose.position.x + first.pose.position.y*first.pose.position.y + first.pose.position.z*first.pose.position.z);
-                double distsecond = std::sqrt( second.pose.position.x*second.pose.position.x + second.pose.position.y*second.pose.position.y + second.pose.position.z*second.pose.position.z);
-                return (distfirst > distsecond); });
+          // std::sort(objects_vec.begin(), objects_vec.end(), [](desperate_housewife::fittedGeometriesSingle first, desperate_housewife::fittedGeometriesSingle second) {
+          //       double distfirst = std::sqrt( first.pose.position.x*first.pose.position.x + first.pose.position.y*first.pose.position.y + first.pose.position.z*first.pose.position.z);
+          //       double distsecond = std::sqrt( second.pose.position.x*second.pose.position.x + second.pose.position.y*second.pose.position.y + second.pose.position.z*second.pose.position.z);
+          //       return (distfirst > distsecond); });
+
+          std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec_sorted = getClosestObject( objects_vec);
+
 
           switch(demo)
           {
             case 0:
             {
-              DesperateDemo1(objects_vec);
+              DesperateDemo1(objects_vec_sorted);
               break;
             }
             case 1:
             {
-              DesperateDemo2(objects_vec);
+              DesperateDemo2(objects_vec_sorted);
               break;
             } 
           }       

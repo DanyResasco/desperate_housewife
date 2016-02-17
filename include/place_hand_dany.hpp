@@ -144,9 +144,6 @@ double HandPoseGenerator::GetDistanceForHand(double radius)
 }
 
 
-
-
-
 void HandPoseGenerator::fromEigenToPose(Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &Hand_pose)
 {
   Eigen::Matrix<double,3,3> Tmatrix;
@@ -214,10 +211,8 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
 
 }
 
-
-
- int HandPoseGenerator::CheckWhichArmIsActive()
- {
+int HandPoseGenerator::CheckWhichArmIsActive()
+{
     int value_ret = 3;
     if ((Arm_r == true) && (Arm_l == true))
     {
@@ -232,7 +227,7 @@ int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
       value_ret = 0;
     }
     return value_ret;
- }
+}
 
 
 void HandPoseGenerator::OnlyRight(int cyl_nbr)
@@ -447,97 +442,3 @@ void HandPoseGenerator::Overturn()
   // ROS_INFO("BUTTO TUTTO");
 }
 
-// void HandPoseGenerator::DrawStraingLIne( Eigen::Vector3d &rett_pos )
-//   {
-//     // std::cout<<"disegno"<<std::endl;
-    
-//     visualization_msgs::Marker marker;
-
-//     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-//     marker.header.frame_id = "vito_anchor";
-//     marker.header.stamp = ros::Time::now();
-//     marker.id = 10;
-//     marker.type = marker.LINE_STRIP;
-//     marker.action = marker.ADD;
-//     marker.scale.x = .2;
-//     marker.color.a = 1; 
-//     marker.color.r = 1.0;
-//     marker.color.g = 0.0;
-//     marker.color.b = 0.0;
-//     marker.pose.orientation.w = 1.0;
-
-//     geometry_msgs::Point p;
-//     p.x = rett_pos(0);
-//     p.y = rett_pos(1);
-//     p.z = rett_pos(2);
-
-//     marker.points.push_back(p);
-
-//     marker.lifetime = ros::Duration(1000);
-
-//     vis_pub.publish(marker);
-//     // ros::spinOnce();
-//     std::cout << "Publishing line" << std::endl;
-
-//   }
-
-// int HandPoseGenerator::whichArm( geometry_msgs::Pose object_pose, int cyl_nbr )
-// {
-//   // ROS_INFO("inizio mano");
-//   /*We use vito frame for chose which arm use, while we use cylinder frame for calculates the straight line between hand frame and objects frame.*/
-//   int arm_active  = CheckWhichArmIsActive();
-//   int return_value;
-//   // switch(arm_active)
-//   // {
-//   //   case 0: //only right
-//   // }
-//   tf::StampedTransform hand_left, hand_rigth, hand_r_object,hand_l_object;
-
-//   listener_info.waitForTransform(base_frame_.c_str(), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
-//   listener_info.lookupTransform(base_frame_.c_str(), left_hand_frame_.c_str(), ros::Time(0), hand_left);
-
-//   listener_info.waitForTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
-//   listener_info.lookupTransform(base_frame_.c_str(), right_hand_frame_.c_str(), ros::Time(0), hand_rigth);
-
-//   /*Get information about the distance between the cylinder and soft-hand*/
-//   listener_info.waitForTransform("object_"+ std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
-//   listener_info.lookupTransform("object_"+ std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time(0), hand_r_object);
-
-//   listener_info.waitForTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
-//   listener_info.lookupTransform("object_"+std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time(0), hand_l_object);
-
-//   Eigen::Vector3d object_position(object_pose.position.x, object_pose.position.y, object_pose.position.z);
-//   Eigen::Vector3d hand_left_position(hand_left.getOrigin().x(),hand_left.getOrigin().y(),hand_left.getOrigin().z());
-//   Eigen::Vector3d hand_right_position(hand_rigth.getOrigin().x(),hand_rigth.getOrigin().y(),hand_rigth.getOrigin().z());
-
-//   /*distance from each arm to cylinder. it use for decide wich arm to use*/
-//   double dist_to_left_hand = std::sqrt((object_position[0] - hand_left_position[0]) * (object_position[0] - hand_left_position[0]) +
-//            (object_position[1] - hand_left_position[1]) * (object_position[1] - hand_left_position[1]) +
-//            (object_position[2] - hand_left_position[2]) * (object_position[2] - hand_left_position[2]) );
-
-//   double dist_to_right_hand = std::sqrt((object_position[0] - hand_right_position[0]) * (object_position[0] - hand_right_position[0]) +
-//            (object_position[1] - hand_right_position[1]) * (object_position[1] - hand_right_position[1]) +
-//            (object_position[2] - hand_right_position[2]) * (object_position[2] - hand_right_position[2]) );
-
-//   /*the straight line is calculates in cilynder frame*/
-//   if(dist_to_left_hand < dist_to_right_hand)
-//   {
-//     // ROS_INFO("Vito uses a: left arm because of distance");
-//     retta_hand_obj[0] =  hand_l_object.getOrigin().x();
-//     retta_hand_obj[1] =  hand_l_object.getOrigin().y();
-//     retta_hand_obj[2] =  hand_l_object.getOrigin().z();
-
-//     return_value = 1;
-//   }
-//   else
-//   {
-//     // ROS_INFO("Vito uses a: Right arm because of distance");
-//     retta_hand_obj[0] =  hand_r_object.getOrigin().x();
-//     retta_hand_obj[1] =  hand_r_object.getOrigin().y();
-//     retta_hand_obj[2] =  hand_r_object.getOrigin().z();
-
-//     return_value = 0;
-//   }
-//   // ROS_INFO("finito mano");
-//   return return_value; 
-// }

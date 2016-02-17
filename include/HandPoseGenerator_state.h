@@ -142,7 +142,7 @@ public:
   int whichArm( geometry_msgs::Pose object_pose, int cyl_nbr );
   /*!
   * \fn whichArm( geometry_msgs::Pose object_pose, int cyl_nbr );
-  * \brief Function that calulates whichArm use. It's calculate looking the shortes distance between the object and the arm.  
+  * \brief Function that calulates whichArm use. 
   * \param pose
   * \return integrer 1 left arm 0 right arm
   */
@@ -174,20 +174,6 @@ public:
   * \return geometry pose
   */
  
-  /*! Function for send the obstacle messages
-  */
-  // void SendObjRejectMsg(desperate_housewife::fittedGeometriesSingle obj_msg, int arm_);
-
-
-  // void Start_left(const desperate_housewife::Start::ConstPtr& msg);
-  // void Start_right(const desperate_housewife::Start::ConstPtr& msg);
-  /*! 
-  * \fn Start_left and Start_right (const desperate_housewife::Start::ConstPtr& msg);
-  * \brief Function for move vito in the desired pose before control start   
-  * \param: start msgs
-  * \return void
-  */
-  
   void  DesperateDemo2(std::vector<desperate_housewife::fittedGeometriesSingle> msg);
   /*! 
   * \fn: DesperateDemo2(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
@@ -206,6 +192,12 @@ public:
   */
 
   double GetDistanceForHand(double radius);
+  /*! 
+  * \fn GetDistanceForHand(double radius);
+  * \brief function that calculates the softhand position 
+  * \param object radius
+  * \return double
+  */
 
   
   void Overturn();
@@ -217,32 +209,45 @@ public:
   */
 
 
-  // std::vector< desperate_housewife::fittedGeometriesSingle > SortCylinder(std::vector< desperate_housewife::fittedGeometriesSingle > VECT_cyl1);
-
-   /*! Function: CheckRealTimeObstacleMovements
-  *input: cylinder
-  *output: void
-  *Description:Send a obstacles at real time 
-  */
-  // void CheckRealTimeObstacleMovements(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
-
-
-// void DrawStraingLIne( Eigen::Vector3d &rett_pos );
 
    int CheckWhichArmIsActive();
+  /*! 
+  * \fn CheckWhichArmIsActive();
+  * \brief function that compare the arm flag to see which one is active
+  * \param void
+  * \return int, 0 only right arm, 1 only left arm, 2 both arm
+  */
 
   void OnlyRight(int cyl_nbr);
+  /*! 
+  * \fn OnlyRight(int cyl_nbr);
+  * \brief function that take the right softhand SO3 pose
+  * \param cylinder's id 
+  * \return void
+  */
+
   void OnlyLeft(int cyl_nbr);
+    /*! 
+  * \fn OnlyLeft(int cyl_nbr);
+  * \brief function that take the left softhand SO3 pose
+  * \param cylinder's id 
+  * \return void
+  */
   int SendBoth(geometry_msgs::Pose object_pose, int cyl_nbr);
+  /*! 
+  * \fn SendBoth(geometry_msgs::Pose object_pose, int cyl_nbr);
+  * \brief function that take the both softhand SO3 pose and decide which one to use. It's calculate looking the shortes distance between the object and the arm.  
+  * \param object pose and object's id
+  * \return int.  0 only right arm, 1 only left arm,
+  */
+  std::vector<desperate_housewife::fittedGeometriesSingle> getClosestObject(std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec);
+  std::vector<desperate_housewife::fittedGeometriesSingle> SortedRight(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec);
+  std::vector<desperate_housewife::fittedGeometriesSingle> SortedLeft(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec);
+  std::vector<desperate_housewife::fittedGeometriesSingle> SortBoth(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec);
+  
 
-
+  
 };
 
-    /*! Function: SetObstacleMsg
-  *input: obstacle
-  *output: obstacle in
-  *Description:Send a obstacles at real time 
-  */
-  // desperate_housewife::fittedGeometriesSingle SetObstacleMsg(desperate_housewife::fittedGeometriesSingle geo_obst);
 
 #endif
