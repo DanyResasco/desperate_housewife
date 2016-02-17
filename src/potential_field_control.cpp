@@ -311,7 +311,7 @@ namespace desperate_housewife
 
       if (parameters_.enable_null_space)
       {
-        tau_.data += N_trans_* .1 * task_objective_function( joint_msr_states_.q );
+        tau_.data += N_trans_* .5 * task_objective_function( joint_msr_states_.q );
       }
 
           // saving J_ and phi of the last iteration
@@ -537,11 +537,8 @@ Eigen::Matrix<double,6,1> PotentialFieldControl::GetRepulsiveForce(KDL::Frame &T
 
     if (distance_local <= parameters_.pf_dist_to_table )
     {
-      ROS_INFO_STREAM("repulsing with table");
       force_local_object = GetFIRAS(distance_local, distance_der_partial, parameters_.pf_dist_to_table);
-      ROS_INFO_STREAM(force_local_object);
     }
-
 
     Eigen::Matrix<double,6,1> force_local_link = Eigen::Matrix<double,6,1>::Zero();
     force_local_link = getAdjointT( T_in.Inverse() * T_table_world) * force_local_object;
@@ -658,8 +655,6 @@ Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double min_distance, E
 
     if(!start_controller)
     {
-      ROS_INFO("********************");
-
       XmlRpc::XmlRpcValue my_list;
       nh_.getParam("links_with_potential_field", my_list);
       ROS_ASSERT(my_list.getType() == XmlRpc::XmlRpcValue::TypeArray);
@@ -727,7 +722,6 @@ Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double min_distance, E
   void PotentialFieldControl::startControllerCallBack(const std_msgs::Bool::ConstPtr& msg)
   {
     start_controller = msg->data;
-    // std::cout<<"+++++++++++++++++++++++++++++++++++++++++++++++++++ricevuto nel potential_field_control"<<std::endl;
     return;
   }
 
@@ -780,25 +774,6 @@ Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double min_distance, E
     return J_local.data.transpose()*lambda*F;
     
   }
-
-
-  // Eigen::Matrix<double, 7, 1> PotentialFieldControl::task_objective_function(KDL::JntArray q)
-  // {
-  //   double sum = 0;
-  //   // double temp;
-  //   int N = q.data.size();
-
-    // Eigen::Matrix<double, 7, 1> temp =  Eigen::Matrix<double, 7, 1>::Zero();
-    // Eigen::Matrix<double, 7, 1> weights =  Eigen::Matrix<double, 7, 1>::Zero();
-  //   weights << 1, 1, 1, 1, .1, .1, .1;
-
-  //   for (int i = 0; i < N; i++)
-  //   {
-  //     temp(i) =   weights(i) * 1 * ( 0  - q(i));
-  //   }
-
-  //   return temp/N;
-  // }
 
 }
 

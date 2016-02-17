@@ -107,7 +107,7 @@ void Desp_state_server::loop()
                 std_msgs::String s;
                 s.data=current_state->get_type();
                 state_pub.publish(s);
-                std::cout<<"- new state type: "<<current_state->get_type()<<std::endl;
+                ROS_INFO_STREAM("- new state type: " << current_state->get_type());
                 transition_map.clear();
                 break;
             }

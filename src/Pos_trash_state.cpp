@@ -127,7 +127,7 @@ void Pos_trash::run()
 
 	else if((id_class == id_error_msgs) && (IsEqual(e_)))
   { 	
-      std::cout<<"same id and error is equal"<<std::endl;
+      // std::cout<<"same id and error is equal"<<std::endl;
   	  finish = true;
   }
 

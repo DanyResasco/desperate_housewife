@@ -40,6 +40,7 @@ private:
   ros::Subscriber left_start_controller_sub, right_start_controller_sub;
   ros::Publisher hand_publisher_right, hand_publisher_left;
   std::string hand_close_right, hand_close_left; 
+  ros::Publisher pub_projection;
 
   Eigen::Vector3d retta_hand_obj;
   int demo;
@@ -245,6 +246,7 @@ public:
   // std::vector<desperate_housewife::fittedGeometriesSingle> SortedLeft(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec);
   std::vector<desperate_housewife::fittedGeometriesSingle> SortBoth(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec, tf::StampedTransform hand_right, tf::StampedTransform hand_left);
   std::vector<desperate_housewife::fittedGeometriesSingle> transform_to_world(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec, tf::StampedTransform hand_position);
+  void plotLine(int cyl_nbr ,tf::StampedTransform hand_pose);
   
 
   

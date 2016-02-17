@@ -66,6 +66,9 @@ HandPoseGenerator::HandPoseGenerator(shared& m):data(m)
     nh.param<std::string>("/left_hand/joint_trajectory_controller/command", hand_close_left, "/left_hand/joint_trajectory_controller/command");
     hand_publisher_left = nh.advertise<trajectory_msgs::JointTrajectory>(hand_close_left.c_str(), 1000);
 
+    pub_projection = nh.advertise<visualization_msgs::Marker>("projection", 10);
+
+
     
     marker_publisher_ = nh.advertise<visualization_msgs::Marker >( "obstacles_in_control", 1 );
     /*treshold error*/
@@ -262,7 +265,7 @@ void HandPoseGenerator::run()
   	}
   	else if((id_msgs == id_class)  && (IsEqual(e_)))
     {
-          ROS_INFO("Sens msgs to whait_msg_state");
+          // ROS_INFO("Sens msgs to whait_msg_state");
       		Obj_info.data = ObjorObst;
       		objects_info_right_pub.publish(Obj_info);
       		finish = true;
@@ -282,7 +285,7 @@ desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( despera
   if ( isGeometryGraspable ( geometry ))
   {
     hand_pose_local.whichArm = whichArm( geometry.pose , cyl_nbr);
-    // std::cout<<"^^^^^^^hand_pose_local.whichArm^^^^ : "<<hand_pose_local.whichArm <<std::endl;
+    // ROS_INFO_STREAM("Using Arm : "<< (hand_pose_local.whichArm == 0 ? "right" : "left") );
     hand_pose_local.pose = placeHand( geometry, hand_pose_local.whichArm );
     hand_pose_local.isGraspable = true;
   }
@@ -327,21 +330,21 @@ bool HandPoseGenerator::IsEqual(KDL::Twist E_pf)
           (E_pf_abs.rot.data[1] < E_t.rot.data[1]) &&
           (E_pf_abs.rot.data[2] < E_t.rot.data[2]) )
     {
-       ROS_DEBUG("is equal");
+       // ROS_DEBUG("is equal");
       return true;
     }
     else
     {
-      ROS_DEBUG("is not equal");
-      ROS_DEBUG("error linear: E_pf_abs.vel.data[0] %g E_pf_abs.vel.data[1] %g  E_pf_abs.vel.data[2]: %g",  E_pf_abs.vel.data[0],E_pf_abs.vel.data[1], E_pf_abs.vel.data[2]);
-      ROS_DEBUG("error agular: E_pf_abs.rot.data[0] %g E_pf_abs.rot.data[1] %g E_pf_abs.rot.data[2] %g", E_pf_abs.rot.data[0], E_pf_abs.rot.data[1], E_pf_abs.rot.data[2]);
+      // ROS_DEBUG("is not equal");
+      // ROS_DEBUG("error linear: E_pf_abs.vel.data[0] %g E_pf_abs.vel.data[1] %g  E_pf_abs.vel.data[2]: %g",  E_pf_abs.vel.data[0],E_pf_abs.vel.data[1], E_pf_abs.vel.data[2]);
+      // ROS_DEBUG("error agular: E_pf_abs.rot.data[0] %g E_pf_abs.rot.data[1] %g E_pf_abs.rot.data[2] %g", E_pf_abs.rot.data[0], E_pf_abs.rot.data[1], E_pf_abs.rot.data[2]);
       return false;
     }
 }
 
 void HandPoseGenerator::DesperateDemo1( std::vector<desperate_housewife::fittedGeometriesSingle> cyl_)
 {
-      ROS_INFO("***DEMO1, take first graspable object with obstacle avoidance***");
+      ROS_INFO("*** DEMO 0, take first graspable object with obstacle avoidance ***");
           
       desperate_housewife::fittedGeometriesArray obstaclesMsg;
       
@@ -427,12 +430,15 @@ void HandPoseGenerator::DesperateDemo1( std::vector<desperate_housewife::fittedG
           finish = false;
         }
       }
+
+
+      
    
 }
 
 void  HandPoseGenerator::DesperateDemo2(std::vector<desperate_housewife::fittedGeometriesSingle> cyl_)
 {
-      ROS_INFO("***DEMO2, take first graspable object without obstacles avoidance***");
+      ROS_INFO("*** DEMO1, take first graspable object without obstacles avoidance ***");
 
       desperate_housewife::handPoseSingle DesiredHandPose;
       
@@ -445,13 +451,13 @@ void  HandPoseGenerator::DesperateDemo2(std::vector<desperate_housewife::fittedG
               ROS_DEBUG("Object to Reject");
               DesiredHandPose.pose = ObstacleReject(cyl_[0], DesiredHandPose.whichArm);
               ObjorObst = 1; 
-              ROS_INFO("TO remove");
+              // ROS_INFO("TO remove");
         }
         else
         {
               ROS_DEBUG("Graspable objects");
               ObjorObst = 0; //flag to grasp object in the desperate_mind code
-              ROS_INFO("TO GRASP");
+              // ROS_INFO("TO GRASP");
         }
 
         data.arm_to_use = DesiredHandPose.whichArm;

@@ -73,7 +73,7 @@ right_arm:
     pf_repulsive_gain: 0.3
     pf_dist_to_obstacles: 0.1
     pf_dist_to_table: 0.15
-    vel_limit_robot: 2
+    vel_limit_robot: 1
     k_p: [300.0, 300.0, 300.0, 300.0, 300.0, 300.0]
     # k_d: [55.0, 55.0, 55.0, 55.0, 55.0, 55.0]
     k_d: [100.0, 100.0, 100.0, 100.0, 100.0, 100.0]

@@ -49,6 +49,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   Eigen::Vector3d Liyng_projection(retta_hand_obj[0], 0, retta_hand_obj[2]);
   
   Eigen::Vector3d y_l = projection.normalized();
+  // ROS_INFO_STREAM("y_l: " << y_l.transpose());
   Eigen::Vector3d z_l = -z ;
   Eigen::Vector3d x_l = y_l.cross(z_l);
 
@@ -65,7 +66,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       Point_desired(2) = height * 0.5 + 0.05; //0.05;	
       Point_desired(3) = 1;
   
-      ROS_DEBUG("cyl upright and empty");
+      // ROS_INFO("cyl upright and empty");
       double distance_softhand_obj = GetDistanceForHand(radius);
       
       if (whichArm == 1) //left arm
@@ -92,7 +93,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
       Point_desired(1) = 0;
       Point_desired(2) = height *0.5 + 0.05;  //0.05; 
       Point_desired(3) = 1;
-      ROS_DEBUG("cyl upright and full");
+      // ROS_INFO("cyl upright and full");
       
       M_desired_local.col(3) << Point_desired;
 
@@ -245,6 +246,8 @@ void HandPoseGenerator::OnlyRight(int cyl_nbr)
   retta_hand_obj[1] =  hand_r_object.getOrigin().y();
   retta_hand_obj[2] =  hand_r_object.getOrigin().z();
 
+  plotLine(cyl_nbr, hand_r_object);
+
 }
 
 void HandPoseGenerator::OnlyLeft(int cyl_nbr)
@@ -260,6 +263,35 @@ void HandPoseGenerator::OnlyLeft(int cyl_nbr)
   retta_hand_obj[1] =  hand_l_object.getOrigin().y();
   retta_hand_obj[2] =  hand_l_object.getOrigin().z();
 
+  plotLine(cyl_nbr, hand_l_object);
+
+}
+
+void HandPoseGenerator::plotLine(int cyl_nbr ,tf::StampedTransform hand_pose)
+{
+  visualization_msgs::Marker line_list;
+  line_list.header.frame_id = "object_"+ std::to_string(cyl_nbr);
+  line_list.action = visualization_msgs::Marker::ADD;
+  line_list.type = visualization_msgs::Marker::LINE_LIST;
+  line_list.id = 1;
+  line_list.scale.x = 0.01;
+  line_list.color.r = 1.0;
+  line_list.color.g = 0.0;
+  line_list.color.b = 0.0;
+  line_list.color.a = 1.0;
+  geometry_msgs::Point p1;
+  p1.x = 0;
+  p1.y = 0;
+  p1.z = 0;
+
+  geometry_msgs::Point p2;
+  p2.x = hand_pose.getOrigin().x();
+  p2.y = hand_pose.getOrigin().y();
+  p2.z = hand_pose.getOrigin().z();
+
+  line_list.points.push_back(p1);
+  line_list.points.push_back(p2);
+  pub_projection.publish(line_list);
 }
 
 int HandPoseGenerator::SendBoth(geometry_msgs::Pose object_pose, int cyl_nbr)
@@ -297,19 +329,21 @@ int HandPoseGenerator::SendBoth(geometry_msgs::Pose object_pose, int cyl_nbr)
   /*the straight line is calculates in cilynder frame*/
   if(dist_to_left_hand < dist_to_right_hand)
   {
-    // ROS_INFO("Vito uses a: left arm because of distance");
+    ROS_INFO("Vito uses a: left arm because of distance");
     retta_hand_obj[0] =  hand_l_object.getOrigin().x();
     retta_hand_obj[1] =  hand_l_object.getOrigin().y();
     retta_hand_obj[2] =  hand_l_object.getOrigin().z();
+    plotLine(cyl_nbr, hand_l_object);
 
     return_value = 1;
   }
   else
   {
-    // ROS_INFO("Vito uses a: Right arm because of distance");
+    ROS_INFO("Vito uses a: Right arm because of distance");
     retta_hand_obj[0] =  hand_r_object.getOrigin().x();
     retta_hand_obj[1] =  hand_r_object.getOrigin().y();
     retta_hand_obj[2] =  hand_r_object.getOrigin().z();
+    plotLine(cyl_nbr, hand_r_object);
 
     return_value = 0;
   }
