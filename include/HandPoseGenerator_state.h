@@ -241,9 +241,10 @@ public:
   * \return int.  0 only right arm, 1 only left arm,
   */
   std::vector<desperate_housewife::fittedGeometriesSingle> getClosestObject(std::vector< desperate_housewife::fittedGeometriesSingle > objects_vec);
-  std::vector<desperate_housewife::fittedGeometriesSingle> SortedRight(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec);
-  std::vector<desperate_housewife::fittedGeometriesSingle> SortedLeft(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec);
-  std::vector<desperate_housewife::fittedGeometriesSingle> SortBoth(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec);
+  std::vector<desperate_housewife::fittedGeometriesSingle> SortbyHand(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec, tf::StampedTransform hand_position);
+  // std::vector<desperate_housewife::fittedGeometriesSingle> SortedLeft(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec);
+  std::vector<desperate_housewife::fittedGeometriesSingle> SortBoth(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec, tf::StampedTransform hand_right, tf::StampedTransform hand_left);
+  std::vector<desperate_housewife::fittedGeometriesSingle> transform_to_world(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec, tf::StampedTransform hand_position);
   
 
   

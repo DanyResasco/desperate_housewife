@@ -67,7 +67,7 @@ HandPoseGenerator::HandPoseGenerator(shared& m):data(m)
     hand_publisher_left = nh.advertise<trajectory_msgs::JointTrajectory>(hand_close_left.c_str(), 1000);
 
     
-    marker_publisher_ = nh.advertise<visualization_msgs::Marker >( "frame_obst", 1 );
+    marker_publisher_ = nh.advertise<visualization_msgs::Marker >( "obstacles_in_control", 1 );
     /*treshold error*/
   	double x,y,z,rotx,roty,rotz;
   

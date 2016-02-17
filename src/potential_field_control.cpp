@@ -26,6 +26,7 @@ namespace desperate_housewife
     ROS_WARN("Number of segments: %d", kdl_chain_.getNrOfSegments());
 
           // for swicht the hand_desired
+    start_controller = false;
     load_parameters(n);
 
           //resize the vector that we use for calculates the dynamic      
@@ -69,7 +70,6 @@ namespace desperate_housewife
 
     srv_start_controller = nh_.advertiseService("load_parameters", &PotentialFieldControl::loadParametersCallback, this);
 
-    start_controller = false;
     error_id.id = 10000;
     error_id.id_arm = parameters_.id_arm;
     return true;
@@ -94,6 +94,7 @@ namespace desperate_housewife
     SetToZero(x_err_integral);
     SetToZero(x_err_);
     x_err_.vel.data[0] = 10000.0;
+    start_controller = false;
   }
 
   void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& period)
@@ -234,6 +235,7 @@ namespace desperate_housewife
 
         if (parameters_.enable_obstacle_avoidance)
         {
+          // ROS_INFO_STREAM("In obstacle ovoidance");
           Eigen::Matrix<double, 6,1> F_obj_base_link = Eigen::Matrix<double, 6, 1>::Zero();
           Eigen::Matrix<double, 6,1> F_table_base_link = Eigen::Matrix<double, 6, 1>::Zero();
           Eigen::Matrix<double, 6,1> F_obj_base_total = Eigen::Matrix<double, 6, 1>::Zero();
@@ -309,7 +311,7 @@ namespace desperate_housewife
 
       if (parameters_.enable_null_space)
       {
-        tau_.data += N_trans_* .005 * task_objective_function( joint_msr_states_.q );
+        tau_.data += N_trans_* .1 * task_objective_function( joint_msr_states_.q );
       }
 
           // saving J_ and phi of the last iteration
@@ -535,8 +537,11 @@ Eigen::Matrix<double,6,1> PotentialFieldControl::GetRepulsiveForce(KDL::Frame &T
 
     if (distance_local <= parameters_.pf_dist_to_table )
     {
+      ROS_INFO_STREAM("repulsing with table");
       force_local_object = GetFIRAS(distance_local, distance_der_partial, parameters_.pf_dist_to_table);
+      ROS_INFO_STREAM(force_local_object);
     }
+
 
     Eigen::Matrix<double,6,1> force_local_link = Eigen::Matrix<double,6,1>::Zero();
     force_local_link = getAdjointT( T_in.Inverse() * T_table_world) * force_local_object;
@@ -649,9 +654,11 @@ Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double min_distance, E
     ROS_INFO_STREAM("Null Space: " << (parameters_.enable_null_space ? "Enabled" : "Disabled") );
     ROS_INFO_STREAM("Interpolation: " << (parameters_.enable_interpolation ? "Enabled" : "Disabled") );
 
+    ROS_INFO_STREAM("start_controller: " << (start_controller ? "Enabled" : "Disabled") );
 
     if(!start_controller)
     {
+      ROS_INFO("********************");
 
       XmlRpc::XmlRpcValue my_list;
       nh_.getParam("links_with_potential_field", my_list);
@@ -720,7 +727,7 @@ Eigen::Matrix<double,6,1> PotentialFieldControl::GetFIRAS(double min_distance, E
   void PotentialFieldControl::startControllerCallBack(const std_msgs::Bool::ConstPtr& msg)
   {
     start_controller = msg->data;
-    // std::cout<<"ricevuto nel potential_field_control"<<std::endl;
+    // std::cout<<"+++++++++++++++++++++++++++++++++++++++++++++++++++ricevuto nel potential_field_control"<<std::endl;
     return;
   }
 
