@@ -35,6 +35,7 @@ left_arm:
     enable_obstacle_avoidance: true
     enable_attractive_field: true
     enable_null_space: true
+    gain_null_space: 0.5
     enable_interpolation: false
     id_arm: 1
 
@@ -84,6 +85,7 @@ right_arm:
     enable_obstacle_avoidance: true
     enable_attractive_field: true
     enable_null_space: true
+    gain_null_space: 0.5
     enable_interpolation: false
     id_arm: 0
 

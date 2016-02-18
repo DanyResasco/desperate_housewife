@@ -22,7 +22,7 @@ error:
     x: 0.4
     y: 0.4
     z: 0.4
-demo: 1 #  [ 0 -> Take the first graspable object avoiding obstacles, 1 -> Move/grasp the first object] 
+demo: 0 #  [ 0 -> Take the first graspable object avoiding obstacles, 1 -> Move/grasp the first object] 
 max_number_obj: 5
 close_hand: 0.7
 open_hand: 0.2

@@ -311,7 +311,9 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
 
         if (parameters_.enable_null_space)
         {
-            tau_.data += N_trans_ * .5 * task_objective_function( joint_msr_states_.q );
+            // tau_.data += N_trans_ * task_objective_function( joint_msr_states_.q );
+            // tau_.data += N_trans_ * MaxZYDistance( joint_msr_states_.q );
+            tau_.data += N_trans_ * potentialEnergy( joint_msr_states_.q );
         }
 
         // saving J_ and phi of the last iteration
@@ -627,6 +629,7 @@ void PotentialFieldControl::load_parameters(ros::NodeHandle &n)
     nh_.param<double>("pf_dist_to_obstacles", parameters_.pf_dist_to_obstacles , 1);
     nh_.param<double>("pf_dist_to_table", parameters_.pf_dist_to_table , 1);
     nh_.param<double>("vel_limit_robot", parameters_.vel_limit_robot , 0.5);
+    nh_.param<double>("gain_null_space", parameters_.gain_null_space , 1.0);
 
     nh_.param<bool>("enable_obstacle_avoidance", parameters_.enable_obstacle_avoidance , true);
     nh_.param<bool>("enable_joint_limits_avoidance", parameters_.enable_joint_limits_avoidance , true);
@@ -644,6 +647,7 @@ void PotentialFieldControl::load_parameters(ros::NodeHandle &n)
     ROS_INFO("pf_dist_to_obstacles: %f", parameters_.pf_dist_to_obstacles);
     ROS_INFO("pf_dist_to_table: %f", parameters_.pf_dist_to_table);
     ROS_INFO("vel_limit_robot: %f", parameters_.vel_limit_robot);
+    ROS_INFO("gain_null_space: %f", parameters_.gain_null_space);
 
     ROS_INFO_STREAM("Obstacle avoidance " << (parameters_.enable_obstacle_avoidance ? "Enabled" : "Disabled") );
     ROS_INFO_STREAM("Joint Limit Avoidance: " << (parameters_.enable_joint_limits_avoidance ? "Enabled" : "Disabled") );
@@ -753,12 +757,12 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControl::task_objective_function(KDL::
 
     for (int i = 0; i < N; i++)
     {
-        tempret(i) = -sum;
+        tempret(i) = sum;
     }
 
-    Eigen::Matrix<double, 7, 1> temp_mat = MaxZDistance( q );
+    // Eigen::Matrix<double, 7, 1> temp_mat = MaxZYDistance( q );
 
-    return tempret;
+    return -parameters_.gain_null_space *   tempret;
 
 }
 
@@ -777,41 +781,110 @@ Eigen::Matrix<double, 7, 1>  PotentialFieldControl::getTauRepulsive(Eigen::Matri
 
 }
 
-Eigen::Matrix<double, 7, 1> PotentialFieldControl::MaxZDistance(KDL::JntArray q)
+Eigen::Matrix<double, 7, 1> PotentialFieldControl::MaxZYDistance(KDL::JntArray q)
 {
     Eigen::Matrix<double, 7, 1> potential = Eigen::Matrix<double, 7, 1>::Zero();
-    // double cost = 0;
+    double cost = 0;
 
-    // for (unsigned int i = 0; i < parameters_.pf_list_of_links; ++i)
+    unsigned int index = 2;
+    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size(); ++i)
+        // for (unsigned int i = 0; i < 1; ++i)
+    {
+        KDL::Frame T;
+        const unsigned int numJoints = parameters_.pf_list_of_chains[i].getNrOfJoints();
+        KDL::JntArray q_local( numJoints );
+
+        for (unsigned j = 0; j < numJoints; ++j) {
+            q_local(j) = q(j);
+        }
+        parameters_.pf_list_of_fk[i].JntToCart(q_local, T);
+
+        cost = T.p.data[index] * T.p.data[index];
+
+        KDL::Jacobian jac_local;
+        jac_local.resize( numJoints );
+        Eigen::Matrix<double, 1, 7> jac_local_eigen = Eigen::Matrix<double, 1, 7>::Zero();
+        jac_local_eigen.block(0, 0, 1, numJoints) = jac_local.data.block(index, 0, 1, numJoints);
+
+        potential += jac_local_eigen.transpose() * cost;
+
+        if ( T.p.data[index] > 0)
+        {
+            potential += jac_local_eigen.transpose() * cost;
+        }
+        else
+        {
+            potential -= jac_local_eigen.transpose() * cost;
+        }
+
+    }
+
+    index = 1;
+
+    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size(); ++i)
+    {
+        KDL::Frame T;
+        const unsigned int numJoints = parameters_.pf_list_of_chains[i].getNrOfJoints();
+        KDL::JntArray q_local( numJoints );
+
+        for (unsigned j = 0; j < numJoints; ++j) {
+            q_local(j) = q(j);
+        }
+        parameters_.pf_list_of_fk[i].JntToCart(q_local, T);
+
+        cost = T.p.data[index] * T.p.data[index];
+
+        KDL::Jacobian jac_local;
+        jac_local.resize( numJoints );
+        Eigen::Matrix<double, 1, 7> jac_local_eigen = Eigen::Matrix<double, 1, 7>::Zero();
+        jac_local_eigen.block(0, 0, 1, numJoints) = jac_local.data.block(index, 0, 1, numJoints);
+
+        if ( T.p.data[index] > 0)
+        {
+            potential += jac_local_eigen.transpose() * cost;
+        }
+        else
+        {
+            potential -= jac_local_eigen.transpose() * cost;
+        }
+
+    }
+
+    return -parameters_.gain_null_space * potential;
+
+}
+
+
+Eigen::Matrix<double, 7, 1> PotentialFieldControl::potentialEnergy(KDL::JntArray q)
+{
+    // double sum = 0;
+    // double temp;
+    // int N = q.data.size();
+
+    // Eigen::Matrix<double, 7, 1> tempret =  Eigen::Matrix<double, 7, 1>::Zero();
+    // Eigen::Matrix<double, 7, 1> weights =  Eigen::Matrix<double, 7, 1>::Zero();
+    // weights << 1, 1, 1, 1, .1, .1, .1;
+
+    // for (int i = 0; i < N; i++)
     // {
-    //     KDL::Frame T;
-    //     fk_pos_solver_->JntToCart(q, )
-    //     for (unsigned int i = 6; i > parameters_.pf_list_of_chains.getNrOfJoints() - 1; --i)
-    //     {
-    //         cost = parameters_.pf_list_of_fk[i].JntToCart(q, T);
-    //         J_local.setColumn(i, KDL::Twist::Zero());
-    //     }
-
-        
-    //     cost = parameters_.pf_list_of_fk[i].JntToCart(q, T);
-    //     KDL::Jacobian jac_local;
-    //     cost = parameters_.pf_list_of_jac.JntToJac(q, J_local);
-
-    //     Eigen::Matrix<double, 1 , 7> jac_local_eigen = J_local.local.data.block<1, 7>(2, 0);
-    //     potential = jac_local_eigen.transpose();
+    //     temp = weights(i) * ((q(i) - joint_limits_.center(i)) / (joint_limits_.max(i) - joint_limits_.min(i)));
+    //     // sum += temp*temp;
+    //     sum += temp;
     // }
 
-    //     KDL::Jacobian J_local;
-    // J_local.resize(7);
-    // J_local.data = J.data;
+    // sum /= 2 * N;
 
-    // for (unsigned int i = 6; i > n_joint - 1; i--)
+    // for (int i = 0; i < N; i++)
     // {
-    //     J_local.setColumn(i, KDL::Twist::Zero());
+    //     tempret(i) = sum;
     // }
-    // return J_local.data.transpose() * lambda * F;
 
-    return potential;
+    // Eigen::Matrix<double, 7, 1> temp_mat = MaxZYDistance( q );
+    KDL::JntArray G_local(7);
+    id_solver_->JntToGravity(joint_msr_states_.q, G_local);
+
+    return parameters_.gain_null_space * G_local.data ;
+
 }
 
 }
