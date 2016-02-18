@@ -58,10 +58,8 @@ std::map< transition, bool > Overtune_state::getResults()
 {
   std::map< transition, bool > results;
 
-  if(finish == true)
-    {
-      results[transition::Error_arrived] = finish;
-    }
+  results[transition::Error_arrived] = finish;
+  finish = false;
 
   return results;
 }
@@ -115,7 +113,7 @@ void Overtune_state::run()
     {
 
       switch(overturn_check)
-        {
+      {
         InfoArm();
         case 0: //replace table
           {
@@ -148,7 +146,7 @@ void Overtune_state::run()
             finish = true;
             break;
           }
-        }
+      }
     }
 }
 

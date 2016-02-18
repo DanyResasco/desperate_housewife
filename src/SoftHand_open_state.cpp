@@ -48,9 +48,14 @@ std::map< transition, bool > SoftHand_open::getResults()
   std::map< transition, bool > results;
 
     if(home_reset == true)
+    {
        results[transition::home_reset] = finish;
-      else
-    results[transition::Wait_Open_Softhand] = finish;
+    }
+    else
+    {
+      results[transition::Wait_Open_Softhand] = finish;
+      finish = false;
+    }
 
 
   // if(finish == true)
@@ -136,7 +141,7 @@ void SoftHand_open::run()
         else
           {
             finish = true;
-            ROS_DEBUG("Closing softhand ");
+            ROS_DEBUG("Open softhand ");
           }
 
         break;

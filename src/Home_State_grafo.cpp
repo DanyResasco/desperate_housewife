@@ -149,6 +149,7 @@ void Home_state::state_left(const std_msgs::Bool::ConstPtr& msg)
 void Home_state::reset()
 {
   id_error_msgs = 100;
+  finish = false;
 }
 
 
@@ -179,6 +180,7 @@ void Home_state::run()
             case 2: /*use both arm*/
               {
                 SendHomeRobot_right();
+                SendHomeRobot_left();
                 finish = false;
 
                 break;
@@ -205,6 +207,14 @@ void Home_state::run()
                 finish = false;
                 break;
               }
+            case 2: /*use both arm*/
+              {
+                SendHomeRobot_right();
+                SendHomeRobot_left();
+                finish = false;
+
+                break;
+              }
             }
         }
 
@@ -227,6 +237,7 @@ std::map< transition, bool > Home_state::getResults()
   if(finish == true)
     {
       results[transition::Error_arrived] = finish;
+
     }
   return results;
 }

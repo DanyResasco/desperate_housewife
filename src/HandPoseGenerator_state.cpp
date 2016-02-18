@@ -148,7 +148,6 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
 
 std::map< transition, bool > HandPoseGenerator::getResults()
 {
-  ROS_INFO("DENTRO getResults");
   std::map< transition, bool > results;
 
   if (failed == true)
@@ -163,7 +162,7 @@ std::map< transition, bool > HandPoseGenerator::getResults()
       results[transition::home_reset] = true;
       home_reset = false;
       send_msg = 0;
-      ROS_INFO("RESET");
+      ROS_DEBUG("RESET");
       // id_class = static_cast<int>(transition_id::Vito_trash);
     }
     else
@@ -215,7 +214,10 @@ void HandPoseGenerator::run()
     else if (static_cast<int>(cylinder_geometry.geometries.size()) >= Number_obj)
     {
       if ((Arm_l == true) && (Arm_r == true))
+      {
         Overturn();
+        data.arm_to_use = 2;
+      }
       else
       {
         failed = true;
