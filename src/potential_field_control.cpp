@@ -312,8 +312,8 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
         if (parameters_.enable_null_space)
         {
             // tau_.data += N_trans_ * task_objective_function( joint_msr_states_.q );
-            // tau_.data += N_trans_ * MaxZYDistance( joint_msr_states_.q );
-            tau_.data += N_trans_ * potentialEnergy( joint_msr_states_.q );
+            tau_.data += N_trans_ * MaxZYDistance( joint_msr_states_.q );
+            // tau_.data += N_trans_ * potentialEnergy( joint_msr_states_.q );
         }
 
         // saving J_ and phi of the last iteration
@@ -857,29 +857,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControl::MaxZYDistance(KDL::JntArray q
 
 Eigen::Matrix<double, 7, 1> PotentialFieldControl::potentialEnergy(KDL::JntArray q)
 {
-    // double sum = 0;
-    // double temp;
-    // int N = q.data.size();
 
-    // Eigen::Matrix<double, 7, 1> tempret =  Eigen::Matrix<double, 7, 1>::Zero();
-    // Eigen::Matrix<double, 7, 1> weights =  Eigen::Matrix<double, 7, 1>::Zero();
-    // weights << 1, 1, 1, 1, .1, .1, .1;
-
-    // for (int i = 0; i < N; i++)
-    // {
-    //     temp = weights(i) * ((q(i) - joint_limits_.center(i)) / (joint_limits_.max(i) - joint_limits_.min(i)));
-    //     // sum += temp*temp;
-    //     sum += temp;
-    // }
-
-    // sum /= 2 * N;
-
-    // for (int i = 0; i < N; i++)
-    // {
-    //     tempret(i) = sum;
-    // }
-
-    // Eigen::Matrix<double, 7, 1> temp_mat = MaxZYDistance( q );
     KDL::JntArray G_local(7);
     id_solver_->JntToGravity(joint_msr_states_.q, G_local);
 
