@@ -32,20 +32,18 @@ void Desp_state_server::init()
   // auto start = new starting_state();
   auto Home = new Home_state(data);
   auto Wait_HandPoseGen_msg = new Wait_msgs(data);
-  // auto Obj_To_Grasp = new Grasp_move(data);
   auto Close_Softhand = new SoftHand_close(data);
   auto Open_Softhand = new SoftHand_open(data);
   auto Trash_Position = new Pos_trash(data);
   auto Obj_To_Removed = new Removed_moves(data);
   auto Overtune_ = new Overtune_state(data);
   auto Hand_pose = new HandPoseGenerator(data);
-  // auto Exit_state = new exit_state(data);
   auto wait_state = new steady_state();
 
   std::vector<std::tuple < state<transition>*, transition_type, state<transition>* > > Grafo{
     //------initial state---------+--------- command -----------------------------------+-- final state---- +
     // std::make_tuple( start        , std::make_pair(transition::started,true)      ,    Home),
-    std::make_tuple( Home                 , std::make_pair(transition::Error_arrived,true)          , Hand_pose                ),
+        std::make_tuple( Home                 , std::make_pair(transition::Error_arrived,true)          , Hand_pose                ),
         std::make_tuple( Wait_HandPoseGen_msg , std::make_pair(transition::Grasp_Obj,true)              , Close_Softhand           ),
         std::make_tuple( Wait_HandPoseGen_msg , std::make_pair(transition::Removed_Obj,true)            , Obj_To_Removed           ),
         std::make_tuple( Wait_HandPoseGen_msg , std::make_pair(transition::Overtune_table,true)         , Close_Softhand           ),
@@ -57,9 +55,12 @@ void Desp_state_server::init()
         std::make_tuple( Overtune_            , std::make_pair(transition::Error_arrived,true)          , Open_Softhand            ),
         std::make_tuple( Hand_pose            , std::make_pair(transition::Error_arrived,true)          , Wait_HandPoseGen_msg     ),
         std::make_tuple( Hand_pose            , std::make_pair(transition::failed,true)                 , wait_state               ),
-        std::make_tuple( wait_state            , std::make_pair(transition::Geometries_ok,true)         , Hand_pose                ),
-         std::make_tuple( Hand_pose            , std::make_pair(transition::home_reset,true)            ,Open_Softhand             ),
-         std::make_tuple( Close_Softhand       , std::make_pair(transition::home_reset,true)            , Open_Softhand            ),
+        std::make_tuple( wait_state           , std::make_pair(transition::Geometries_ok,true)          , Hand_pose                ),
+        std::make_tuple( Hand_pose            , std::make_pair(transition::home_reset,true)             ,Open_Softhand             ),
+        std::make_tuple( Close_Softhand       , std::make_pair(transition::home_reset,true)             , Open_Softhand            ),
+        std::make_tuple( Close_Softhand       , std::make_pair(transition::home_reset,true)             , Home                     ),
+        std::make_tuple( Obj_To_Removed       , std::make_pair(transition::home_reset,true)             , Open_Softhand            ),
+        std::make_tuple( Trash_Position       , std::make_pair(transition::home_reset,true)             , Open_Softhand            ),
         /*! stay in same state untill msg doesn't arrived */
   };
 

@@ -32,6 +32,9 @@ Pos_trash::Pos_trash(const shared& m):data(m)
   nh.param<std::string>("/right_arm/PotentialFieldControl/root_name", base_frame_, "world");
   hand_publisher_right = nh.advertise<trajectory_msgs::JointTrajectory>(hand_close_right.c_str(), 1000);
 
+  
+    srv_reset = nh.subscribe("/reset",1, &Pos_trash::resetCallBack, this);
+
   id_class = static_cast<int>(transition_id::Vito_trash);
 
   vect_error.resize(2);
@@ -65,7 +68,8 @@ Pos_trash::Pos_trash(const shared& m):data(m)
   E_t.vel = vel;
   E_t.rot = rot;
 
-  finish = false;
+  // finish = false;
+  home_reset = false;
 }
 
 
@@ -95,10 +99,12 @@ std::map< transition, bool > Pos_trash::getResults()
 {
   std::map< transition, bool > results;
 
-  if(finish == true)
+  if(home_reset == true)
     {
-      results[transition::Error_arrived] = true;
+        results[transition::home_reset] = true;
     }
+    else
+      results[transition::Error_arrived] = true;
 
   return results;
 }
@@ -252,3 +258,24 @@ void Pos_trash::SendTrashPosLeft()
   finish = false;
 
 }
+
+
+
+void Pos_trash::resetCallBack(const std_msgs::Bool::ConstPtr msg)
+{
+  // ROS_INFO("Pos_trash::Reset called");
+  home_reset = msg->data;
+  finish = true;
+  // failed = false;
+  // return true;
+}
+
+
+void Pos_trash::reset()
+{
+  home_reset = false;
+  finish = false;
+  // failed = false;
+}
+
+

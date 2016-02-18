@@ -74,8 +74,9 @@ HandPoseGenerator::HandPoseGenerator(shared& m): data(m)
 
   marker_publisher_ = nh.advertise<visualization_msgs::MarkerArray>( "obstacles_in_control", 1 );
 
+  srv_reset = nh.subscribe("/reset",1, &HandPoseGenerator::resetCallBack, this);
 
-  srv_reset = nh.advertiseService("/reset", &HandPoseGenerator::resetCallBack, this);
+  // srv_reset = nh.advertiseService("/reset", &HandPoseGenerator::resetCallBack, this);
   // marker_publisher_objecttograsp = nh.advertise<visualization_msgs::MarkerArray>( "object_to_grasp_in_control", 1 );
   /*treshold error*/
   double x, y, z, rotx, roty, rotz;
@@ -147,12 +148,13 @@ void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fit
 
 std::map< transition, bool > HandPoseGenerator::getResults()
 {
-
+  ROS_INFO("DENTRO getResults");
   std::map< transition, bool > results;
 
   if (failed == true)
   {
     results[transition::failed] = true;
+     send_msg = 0;
   } 
   else
   {
@@ -160,6 +162,8 @@ std::map< transition, bool > HandPoseGenerator::getResults()
     {
       results[transition::home_reset] = true;
       home_reset = false;
+      send_msg = 0;
+      ROS_INFO("RESET");
       // id_class = static_cast<int>(transition_id::Vito_trash);
     }
     else
@@ -168,7 +172,7 @@ std::map< transition, bool > HandPoseGenerator::getResults()
     }
   }
 
-  send_msg = 0;
+ 
   finish = false;
   return results;
 }
@@ -260,7 +264,7 @@ void HandPoseGenerator::run()
   {
     // ROS_INFO("Sens msgs to whait_msg_state");
     Obj_info.data = ObjorObst;
-    ROS_INFO_STREAM("ObjorObst: " << ObjorObst);
+    // ROS_INFO_STREAM("ObjorObst: " << ObjorObst);
     objects_info_right_pub.publish(Obj_info);
     finish = true;
     send_msg = 0;
@@ -505,10 +509,32 @@ void HandPoseGenerator::plotObstacles( desperate_housewife::fittedGeometriesArra
 
 }
 
-bool HandPoseGenerator::resetCallBack(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+void HandPoseGenerator::resetCallBack(const std_msgs::Bool::ConstPtr msg)
 {
-  ROS_INFO("Reset called");
-  home_reset = true;
+  ROS_INFO("HandPoseGenerator::Reset called");
+  home_reset = msg->data;
   finish = true;
-  return true;
+  failed = false;
+  // return true;
 }
+
+
+void HandPoseGenerator::reset()
+{
+  home_reset = false;
+  finish = false;
+  failed = false;
+}
+
+
+
+
+
+// bool HandPoseGenerator::resetCallBack(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+// {
+//   ROS_INFO("HandPoseGenerator::Reset called");
+//   home_reset = true;
+//   finish = true;
+//   failed = false;
+//   return true;
+// }

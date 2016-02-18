@@ -25,7 +25,9 @@ SoftHand_close::SoftHand_close(const shared& m): data(m)
   finish = false;
   overtune_state = 0;
   home_reset = false;
-  srv_reset = nh.advertiseService("/reset", &SoftHand_close::resetCallBack, this);
+
+    srv_reset = nh.subscribe("/reset",1, &SoftHand_close::resetCallBack, this);
+  // srv_reset = nh.advertiseService("/reset", &SoftHand_close::resetCallBack, this);
 }
 
 
@@ -177,10 +179,44 @@ std::string SoftHand_close::get_type()
 }
 
 
-bool SoftHand_close::resetCallBack(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+void SoftHand_close::resetCallBack(const std_msgs::Bool::ConstPtr msg)
 {
-  ROS_INFO("Reset called");
-  home_reset = true;
+  // ROS_INFO("SoftHand_close::Reset called");
+  home_reset = msg->data;
   finish = true;
-  return true;
+  // failed = false;
+  // return true;
 }
+
+
+void SoftHand_close::reset()
+{
+  home_reset = false;
+  finish = false;
+  // failed = false;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// bool SoftHand_close::resetCallBack(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+// {
+//   ROS_INFO("SoftHand_close::Reset called");
+//   home_reset = true;
+//   finish = true;
+//   return true;
+// }

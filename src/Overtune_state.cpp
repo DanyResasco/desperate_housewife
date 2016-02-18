@@ -227,3 +227,22 @@ void Overtune_state::InfoArm()
                               New_Hand_Position_left.pose.orientation.z,New_Hand_Position_left.pose.orientation.w);
 
 }
+
+
+// void Overtune_state::resetCallBack(const std_msgs::Bool::ConstPtr msg)
+// {
+//   ROS_INFO("Overtune_state::Reset called");
+//   home_reset = msg->data;
+//   finish = true;
+//   // failed = false;
+//   // return true;
+// }
+
+
+// void Overtune_state::reset()
+// {
+//   home_reset = false;
+//   finish = false;
+//   o
+//   // failed = false;
+// }

@@ -31,6 +31,7 @@ Removed_moves::Removed_moves(const shared& m):data(m)
   nh.param<std::string>("/left_arm/PotentialFieldControl/tip_name", left_hand_frame_, "left_hand_palm_ref_link");
 
 
+    srv_reset = nh.subscribe("/reset",1, &Removed_moves::resetCallBack, this);
   id_class = static_cast<int>(transition_id::Vito_Removed);
 
 
@@ -69,11 +70,12 @@ std::map< transition, bool > Removed_moves::getResults()
 
   std::map< transition, bool > results;
 
-  if(finish == true)
-    {
+  if(home_reset == true)
+  {
+    results[transition::home_reset] = finish;    
+  }
+  else
       results[transition::Error_arrived] = finish;
-    }
-
   return results;
 }
 
@@ -241,3 +243,23 @@ void Removed_moves::RemObjLeft()
   tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform, ros::Time::now(), base_frame_.c_str(),"ObstacleReject_new_pose") );
   finish = false;
 }
+
+
+
+void Removed_moves::resetCallBack(const std_msgs::Bool::ConstPtr msg)
+{
+  ROS_INFO("Removed_moves::Reset called");
+  home_reset = msg->data;
+  finish = true;
+  // failed = false;
+  // return true;
+}
+
+
+void Removed_moves::reset()
+{
+  home_reset = false;
+  finish = false;
+  // failed = false;
+}
+

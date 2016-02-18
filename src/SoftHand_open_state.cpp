@@ -26,6 +26,7 @@ SoftHand_open::SoftHand_open(const shared& m):data(m)
   hand_publisher_left = nh.advertise<trajectory_msgs::JointTrajectory>(hand_open_left.c_str(), 1000);
 
   finish = false;
+  home_reset = false;
 }
 
 
@@ -45,8 +46,15 @@ void SoftHand_open::HandInforLeft(const sensor_msgs::JointState::ConstPtr &msg)
 std::map< transition, bool > SoftHand_open::getResults()
 {
   std::map< transition, bool > results;
-  if(finish == true)
+
+    if(home_reset == true)
+       results[transition::home_reset] = finish;
+      else
     results[transition::Wait_Open_Softhand] = finish;
+
+
+  // if(finish == true)
+  //   results[transition::Wait_Open_Softhand] = finish;
 
   return results;
 }
@@ -147,3 +155,22 @@ std::string SoftHand_open::get_type()
 {
   return "SoftHand_open";
 }
+
+void SoftHand_open::resetCallBack(const std_msgs::Bool::ConstPtr msg)
+{
+  ROS_INFO("SoftHand_open::Reset called");
+  home_reset = msg->data;
+  finish = true;
+  // failed = false;
+  // return true;
+}
+
+
+void SoftHand_open::reset()
+{
+  home_reset = false;
+  finish = false;
+  // failed = false;
+}
+
+

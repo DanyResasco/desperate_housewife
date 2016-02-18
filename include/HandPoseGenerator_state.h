@@ -23,6 +23,7 @@
 #include <trajectory_msgs/JointTrajectory.h>
 // #include <desperate_housewife/Start.h>
 #include <std_msgs/UInt16.h>
+#include <std_msgs/Bool.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <std_srvs/Empty.h>
@@ -88,8 +89,8 @@ public:
   bool Arm_r, Arm_l;
   int send_msg ;
   bool home_reset;
-
-  ros::ServiceServer srv_reset;
+  ros::Subscriber srv_reset;
+  // ros::ServiceServer srv_reset;
   // std_msgs::UInt16 Obj_info;
 
 
@@ -99,6 +100,7 @@ public:
   virtual void run();
   virtual bool isComplete();
   virtual std::string get_type();
+  virtual void reset();
 
   void generateMarkerMessages( desperate_housewife::fittedGeometriesSingle cylMsg, int obstorobj, int  i);
   HandPoseGenerator(shared& data);
@@ -257,9 +259,9 @@ public:
   std::vector<desperate_housewife::fittedGeometriesSingle> transform_to_world(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec, tf::StampedTransform hand_position);
   void plotLine(int cyl_nbr ,tf::StampedTransform hand_pose);
   void plotObstacles( desperate_housewife::fittedGeometriesArray Obstacles, int index_grasp = 0 );
-  bool resetCallBack(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+  // bool resetCallBack(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
   // void plotObjectToGrasp( desperate_housewife::fittedGeometriesSingle Obstacles );
-  
+  void resetCallBack(const std_msgs::Bool::ConstPtr msg);
 
   
 };

@@ -32,7 +32,7 @@ public:
     virtual void run();
     virtual bool isComplete();
     virtual std::string get_type();
-     // virtual void reset();
+     virtual void reset();
 
    	bool IsEqual(KDL::Twist E_pf);
    	   /*! 
@@ -66,7 +66,9 @@ public:
       * \param  void 
       * \return void
     */
-
+          void resetCallBack(const std_msgs::Bool::ConstPtr msg);
+     
+      ros::Subscriber srv_reset;
 private:
 	std::string type;
 	desperate_housewife::handPoseSingle trash_robot_pose;
@@ -104,6 +106,7 @@ private:
 
     tf::TransformBroadcaster  tf_desired_hand_pose;
     std::string base_frame_;
+    bool home_reset;
 
 };
 
