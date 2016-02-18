@@ -24,6 +24,8 @@
 // #include <desperate_housewife/Start.h>
 #include <std_msgs/UInt16.h>
 #include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <std_srvs/Empty.h>
 // #include <transition.h>
 #include "state.h"
 
@@ -39,8 +41,10 @@ private:
   std::string start_topic_left, start_topic_right;
   ros::Subscriber left_start_controller_sub, right_start_controller_sub;
   ros::Publisher hand_publisher_right, hand_publisher_left;
-  std::string hand_close_right, hand_close_left; 
-  ros::Publisher pub_projection;
+  std::string hand_close_right, hand_close_left;
+
+
+  ros::Publisher pub_aux_projection, pub_aux_objects_sorted, pub_aux_graspable_object, pub_aux_obstacles;
 
   Eigen::Vector3d retta_hand_obj;
   int demo;
@@ -67,7 +71,7 @@ public:
   tf::TransformListener listener_object;
   std::vector<KDL::Twist> vect_error;
   // int index;
-  ros::Publisher marker_publisher_;
+  ros::Publisher marker_publisher_, marker_publisher_objecttograsp;
   tf::TransformBroadcaster tf_geometriesTransformations_;
 
   desperate_housewife::fittedGeometriesArray cylinder_geometry;
@@ -83,6 +87,9 @@ public:
   shared& data;
   bool Arm_r, Arm_l;
   int send_msg ;
+  bool home_reset;
+
+  ros::ServiceServer srv_reset;
   // std_msgs::UInt16 Obj_info;
 
 
@@ -140,13 +147,15 @@ public:
   * \return pose
   */
 
-  int whichArm( geometry_msgs::Pose object_pose, int cyl_nbr );
+  int whichArm( int cyl_nbr );
   /*!
   * \fn whichArm( geometry_msgs::Pose object_pose, int cyl_nbr );
   * \brief Function that calulates whichArm use. 
   * \param pose
   * \return integrer 1 left arm 0 right arm
   */
+
+  void fillProjection(tf::StampedTransform hand_Pose);
 
 
   void fromEigenToPose (Eigen::Matrix4d &tranfs_matrix, geometry_msgs::Pose &Hand_pose);
@@ -175,7 +184,7 @@ public:
   * \return geometry pose
   */
  
-  void  DesperateDemo2(std::vector<desperate_housewife::fittedGeometriesSingle> msg);
+  void  DesperateDemo1(std::vector<desperate_housewife::fittedGeometriesSingle> msg);
   /*! 
   * \fn: DesperateDemo2(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
   * \brief Second Demo. grasp object without obstacles avoidance. if item isn't graspable will be removed 
@@ -184,7 +193,7 @@ public:
   */
   
 
-  void  DesperateDemo1(std::vector<desperate_housewife::fittedGeometriesSingle> msg);
+  void  DesperateDemo0(std::vector<desperate_housewife::fittedGeometriesSingle> msg);
   /*! 
   * \fn DesperateDemo1( const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
   * \brief First Demo. grasp object with obstacles avoidance. 
@@ -234,7 +243,7 @@ public:
   * \param cylinder's id 
   * \return void
   */
-  int SendBoth(geometry_msgs::Pose object_pose, int cyl_nbr);
+  int SendBoth(tf::StampedTransform hand_right, tf::StampedTransform hand_left);
   /*! 
   * \fn SendBoth(geometry_msgs::Pose object_pose, int cyl_nbr);
   * \brief function that take the both softhand SO3 pose and decide which one to use. It's calculate looking the shortes distance between the object and the arm.  
@@ -247,6 +256,9 @@ public:
   std::vector<desperate_housewife::fittedGeometriesSingle> SortBoth(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec, tf::StampedTransform hand_right, tf::StampedTransform hand_left);
   std::vector<desperate_housewife::fittedGeometriesSingle> transform_to_world(std::vector<desperate_housewife::fittedGeometriesSingle> objects_vec, tf::StampedTransform hand_position);
   void plotLine(int cyl_nbr ,tf::StampedTransform hand_pose);
+  void plotObstacles( desperate_housewife::fittedGeometriesArray Obstacles, int index_grasp = 0 );
+  bool resetCallBack(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+  // void plotObjectToGrasp( desperate_housewife::fittedGeometriesSingle Obstacles );
   
 
   

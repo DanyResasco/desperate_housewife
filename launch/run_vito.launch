@@ -1,7 +1,7 @@
 <launch>
     <!-- LAUNCH INTERFACE -->
     <arg name="gui" default="false" />
-    <arg name="gazebo_gui" default="false" />
+    <arg name="gazebo_gui" default="true" />
     <arg name="robot_name" default="vito"/>
     <arg name="use_rviz" default="true"/>
     <arg name="use_joint_state_publisher" default="true"/>

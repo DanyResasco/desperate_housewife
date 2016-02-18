@@ -17,10 +17,10 @@ void exit_state::run()
 
 bool exit_state::isComplete()
 {
-    return false;
+  return false;
 }
 
 std::string exit_state::get_type()
 {
-    return "exit_state";
+  return "exit_state";
 }

@@ -311,6 +311,7 @@ namespace desperate_housewife
 		bool loadParametersCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 
 		Eigen::Matrix<double, 7, 1> task_objective_function(KDL::JntArray q);
+		Eigen::Matrix<double, 7, 1> MaxZDistance(KDL::JntArray q);
 		double VelocityLimit(KDL::Twist x_dot_d );
 
 	};

@@ -5,10 +5,11 @@ scene_filter/ymin: -0.4
 scene_filter/ymax: 1.1
 scene_filter/zmin: 0.1
 scene_filter/zmax: 1.0
-scene_filter/erase_plane: true
+scene_filter/erase_plane: false
 scene_filter/downsample: true
 scene_filter/leaf_s: 0.01
 scene_filter/keep_organized: false
 scene_filter/change_frame: true
 scene_filter/new_frame: world
 scene_filter/table_pad: 0.01
+

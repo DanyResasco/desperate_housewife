@@ -1,13 +1,28 @@
+# error:
+#   pos:
+#     x: 0.05
+#     y: 0.05
+#     z: 0.05
+#   rot:
+#     x: 0.15
+#     y: 0.15
+#     z: 0.15
+# demo: 0 #  [ 0 -> Take the first graspable object avoiding obstacles, 1 -> Move/grasp the first object] 
+# max_number_obj: 5
+# close_hand: 0.7
+# open_hand: 0.2
+# SoftHandDistanceFrame: 0.10
+
 error:
   pos:
-    x: 0.05
-    y: 0.05
-    z: 0.05
-  rot:
     x: 0.15
     y: 0.15
     z: 0.15
-demo: 0 #  [ 0 -> Take the first graspable object avoiding obstacles, 1 -> Move/grasp the first object] 
+  rot:
+    x: 0.4
+    y: 0.4
+    z: 0.4
+demo: 1 #  [ 0 -> Take the first graspable object avoiding obstacles, 1 -> Move/grasp the first object] 
 max_number_obj: 5
 close_hand: 0.7
 open_hand: 0.2

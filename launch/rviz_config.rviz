@@ -9,7 +9,7 @@ Panels:
         - /Marker1/Namespaces1
         - /TF1/Frames1
         - /Marker2
-        - /Marker3
+        - /MarkerArray1
       Splitter Ratio: 0.683794
     Tree Height: 463
   - Class: rviz/Selection
@@ -64,7 +64,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: RGB8
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -80,7 +80,7 @@ Visualization Manager:
       Topic: /camera/depth_registered/points
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Class: rviz/Marker
       Enabled: false
       Marker Topic: /BasicGeometriesNode/markers
@@ -90,526 +90,19 @@ Visualization Manager:
       Queue Size: 100
       Value: false
     - Class: rviz/TF
-      Enabled: true
+      Enabled: false
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        camera_depth_frame:
-          Value: false
-        camera_depth_optical_frame:
-          Value: false
-        camera_link:
-          Value: false
-        camera_rgb_frame:
-          Value: false
-        camera_rgb_optical_frame:
-          Value: false
-        head_asus/camera_depth_frame:
-          Value: false
-        head_asus/camera_depth_optical_frame:
-          Value: false
-        head_asus/camera_link:
-          Value: false
-        head_asus/camera_rgb_frame:
-          Value: false
-        head_asus/camera_rgb_optical_frame:
-          Value: false
-        head_asus_link:
-          Value: false
-        head_base_link:
-          Value: false
-        head_head_1_link:
-          Value: false
-        head_head_2_link:
-          Value: false
-        head_head_3_link:
-          Value: false
-        head_head_4_link:
-          Value: false
-        head_head_5_link:
-          Value: false
-        head_left_eye_calib_frame:
-          Value: false
-        head_left_eye_link:
-          Value: false
-        head_right_eye_calib_frame:
-          Value: false
-        head_right_eye_link:
-          Value: false
-        home_robot_left:
-          Value: false
-        left_arm_1_link:
-          Value: false
-        left_arm_1_link_dummy:
-          Value: false
-        left_arm_2_link:
-          Value: false
-        left_arm_2_link_dummy:
-          Value: false
-        left_arm_3_link:
-          Value: false
-        left_arm_3_link_dummy:
-          Value: false
-        left_arm_4_link:
-          Value: false
-        left_arm_4_link_dummy:
-          Value: false
-        left_arm_5_link:
-          Value: false
-        left_arm_5_link_dummy:
-          Value: false
-        left_arm_6_link:
-          Value: false
-        left_arm_6_link_dummy:
-          Value: false
-        left_arm_7_link:
-          Value: false
-        left_arm_7_link_dummy:
-          Value: false
-        left_arm_base_link:
-          Value: false
-        left_hand_clamp:
-          Value: false
-        left_hand_index_distal_link:
-          Value: false
-        left_hand_index_fake_link1:
-          Value: false
-        left_hand_index_fake_link2:
-          Value: false
-        left_hand_index_fake_link3:
-          Value: false
-        left_hand_index_knuckle_link:
-          Value: false
-        left_hand_index_middle_link:
-          Value: false
-        left_hand_index_proximal_link:
-          Value: false
-        left_hand_invisible_wire_link:
-          Value: false
-        left_hand_kuka_coupler:
-          Value: false
-        left_hand_kuka_coupler_bottom:
-          Value: false
-        left_hand_little_distal_link:
-          Value: false
-        left_hand_little_fake_link1:
-          Value: false
-        left_hand_little_fake_link2:
-          Value: false
-        left_hand_little_fake_link3:
-          Value: false
-        left_hand_little_knuckle_link:
-          Value: false
-        left_hand_little_middle_link:
-          Value: false
-        left_hand_little_proximal_link:
-          Value: false
-        left_hand_middle_distal_link:
-          Value: false
-        left_hand_middle_fake_link1:
-          Value: false
-        left_hand_middle_fake_link2:
-          Value: false
-        left_hand_middle_fake_link3:
-          Value: false
-        left_hand_middle_knuckle_link:
-          Value: false
-        left_hand_middle_middle_link:
-          Value: false
-        left_hand_middle_proximal_link:
-          Value: false
-        left_hand_palm_link:
-          Value: false
-        left_hand_palm_ref_link:
-          Value: false
-        left_hand_ring_distal_link:
-          Value: false
-        left_hand_ring_fake_link1:
-          Value: false
-        left_hand_ring_fake_link2:
-          Value: false
-        left_hand_ring_fake_link3:
-          Value: false
-        left_hand_ring_knuckle_link:
-          Value: false
-        left_hand_ring_middle_link:
-          Value: false
-        left_hand_ring_proximal_link:
-          Value: false
-        left_hand_softhand_base:
-          Value: false
-        left_hand_thumb_distal_link:
-          Value: false
-        left_hand_thumb_fake_link1:
-          Value: false
-        left_hand_thumb_fake_link3:
-          Value: false
-        left_hand_thumb_knuckle_link:
-          Value: false
-        left_hand_thumb_proximal_link:
-          Value: false
-        object_0:
-          Value: false
-        object_1:
-          Value: false
-        object_2:
-          Value: true
-        object_3:
-          Value: true
-        obstacle_1:
-          Value: false
-        pose_desired:
-          Value: false
-        right_arm_1_link:
-          Value: false
-        right_arm_1_link_dummy:
-          Value: false
-        right_arm_2_link:
-          Value: false
-        right_arm_2_link_dummy:
-          Value: false
-        right_arm_3_link:
-          Value: false
-        right_arm_3_link_dummy:
-          Value: false
-        right_arm_4_link:
-          Value: false
-        right_arm_4_link_dummy:
-          Value: false
-        right_arm_5_link:
-          Value: false
-        right_arm_5_link_dummy:
-          Value: false
-        right_arm_6_link:
-          Value: false
-        right_arm_6_link_dummy:
-          Value: false
-        right_arm_7_link:
-          Value: false
-        right_arm_7_link_dummy:
-          Value: false
-        right_arm_base_link:
-          Value: false
-        right_hand_clamp:
-          Value: false
-        right_hand_index_distal_link:
-          Value: false
-        right_hand_index_fake_link1:
-          Value: false
-        right_hand_index_fake_link2:
-          Value: false
-        right_hand_index_fake_link3:
-          Value: false
-        right_hand_index_knuckle_link:
-          Value: false
-        right_hand_index_middle_link:
-          Value: false
-        right_hand_index_proximal_link:
-          Value: false
-        right_hand_invisible_wire_link:
-          Value: false
-        right_hand_kuka_coupler:
-          Value: false
-        right_hand_kuka_coupler_bottom:
-          Value: false
-        right_hand_little_distal_link:
-          Value: false
-        right_hand_little_fake_link1:
-          Value: false
-        right_hand_little_fake_link2:
-          Value: false
-        right_hand_little_fake_link3:
-          Value: false
-        right_hand_little_knuckle_link:
-          Value: false
-        right_hand_little_middle_link:
-          Value: false
-        right_hand_little_proximal_link:
-          Value: false
-        right_hand_middle_distal_link:
-          Value: false
-        right_hand_middle_fake_link1:
-          Value: false
-        right_hand_middle_fake_link2:
-          Value: false
-        right_hand_middle_fake_link3:
-          Value: false
-        right_hand_middle_knuckle_link:
-          Value: false
-        right_hand_middle_middle_link:
-          Value: false
-        right_hand_middle_proximal_link:
-          Value: false
-        right_hand_palm_link:
-          Value: false
-        right_hand_palm_ref_link:
-          Value: false
-        right_hand_ring_distal_link:
-          Value: false
-        right_hand_ring_fake_link1:
-          Value: false
-        right_hand_ring_fake_link2:
-          Value: false
-        right_hand_ring_fake_link3:
-          Value: false
-        right_hand_ring_knuckle_link:
-          Value: false
-        right_hand_ring_middle_link:
-          Value: false
-        right_hand_ring_proximal_link:
-          Value: false
-        right_hand_softhand_base:
-          Value: false
-        right_hand_thumb_distal_link:
-          Value: false
-        right_hand_thumb_fake_link1:
-          Value: false
-        right_hand_thumb_fake_link3:
-          Value: false
-        right_hand_thumb_knuckle_link:
-          Value: false
-        right_hand_thumb_proximal_link:
-          Value: false
-        table_leg_0_link:
-          Value: false
-        table_leg_1_link:
-          Value: false
-        table_leg_2_link:
-          Value: false
-        table_leg_3_link:
-          Value: false
-        table_plate_link:
-          Value: false
-        to_grasp_:
-          Value: false
-        torso_link:
-          Value: false
-        vito_anchor:
-          Value: false
-        workbench_leg_0_link:
-          Value: false
-        workbench_leg_1_link:
-          Value: false
-        workbench_leg_2_link:
-          Value: false
-        workbench_leg_3_link:
-          Value: false
-        workbench_plate_link:
-          Value: false
-        world:
-          Value: false
       Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        camera_link:
-          camera_depth_frame:
-            camera_depth_optical_frame:
-              {}
-          camera_rgb_frame:
-            camera_rgb_optical_frame:
-              world:
-                home_robot_left:
-                  {}
-                object_0:
-                  {}
-                object_1:
-                  {}
-                object_2:
-                  {}
-                object_3:
-                  {}
-                obstacle_1:
-                  {}
-                pose_desired:
-                  {}
-                to_grasp_:
-                  {}
-                vito_anchor:
-                  head_base_link:
-                    head_head_1_link:
-                      head_head_2_link:
-                        head_head_3_link:
-                          head_head_4_link:
-                            head_head_5_link:
-                              head_asus_link:
-                                head_asus/camera_link:
-                                  head_asus/camera_depth_frame:
-                                    {}
-                                  head_asus/camera_depth_optical_frame:
-                                    {}
-                                  head_asus/camera_rgb_frame:
-                                    {}
-                                  head_asus/camera_rgb_optical_frame:
-                                    {}
-                              head_left_eye_link:
-                                head_left_eye_calib_frame:
-                                  {}
-                              head_right_eye_link:
-                                head_right_eye_calib_frame:
-                                  {}
-                  left_arm_base_link:
-                    left_arm_1_link:
-                      left_arm_2_link:
-                        left_arm_3_link:
-                          left_arm_4_link:
-                            left_arm_5_link:
-                              left_arm_6_link:
-                                left_arm_7_link:
-                                  left_hand_kuka_coupler_bottom:
-                                    left_hand_kuka_coupler:
-                                      left_hand_clamp:
-                                        left_hand_softhand_base:
-                                          left_hand_palm_link:
-                                            left_hand_index_knuckle_link:
-                                              left_hand_index_fake_link1:
-                                                left_hand_index_proximal_link:
-                                                  left_hand_index_fake_link2:
-                                                    left_hand_index_middle_link:
-                                                      left_hand_index_fake_link3:
-                                                        left_hand_index_distal_link:
-                                                          {}
-                                            left_hand_invisible_wire_link:
-                                              {}
-                                            left_hand_little_knuckle_link:
-                                              left_hand_little_fake_link1:
-                                                left_hand_little_proximal_link:
-                                                  left_hand_little_fake_link2:
-                                                    left_hand_little_middle_link:
-                                                      left_hand_little_fake_link3:
-                                                        left_hand_little_distal_link:
-                                                          {}
-                                            left_hand_middle_knuckle_link:
-                                              left_hand_middle_fake_link1:
-                                                left_hand_middle_proximal_link:
-                                                  left_hand_middle_fake_link2:
-                                                    left_hand_middle_middle_link:
-                                                      left_hand_middle_fake_link3:
-                                                        left_hand_middle_distal_link:
-                                                          {}
-                                            left_hand_ring_knuckle_link:
-                                              left_hand_ring_fake_link1:
-                                                left_hand_ring_proximal_link:
-                                                  left_hand_ring_fake_link2:
-                                                    left_hand_ring_middle_link:
-                                                      left_hand_ring_fake_link3:
-                                                        left_hand_ring_distal_link:
-                                                          {}
-                                            left_hand_thumb_knuckle_link:
-                                              left_hand_thumb_fake_link1:
-                                                left_hand_thumb_proximal_link:
-                                                  left_hand_thumb_fake_link3:
-                                                    left_hand_thumb_distal_link:
-                                                      {}
-                                  left_hand_palm_ref_link:
-                                    {}
-                                left_arm_7_link_dummy:
-                                  {}
-                              left_arm_6_link_dummy:
-                                {}
-                            left_arm_5_link_dummy:
-                              {}
-                          left_arm_4_link_dummy:
-                            {}
-                        left_arm_3_link_dummy:
-                          {}
-                      left_arm_2_link_dummy:
-                        {}
-                    left_arm_1_link_dummy:
-                      {}
-                  right_arm_base_link:
-                    right_arm_1_link:
-                      right_arm_2_link:
-                        right_arm_3_link:
-                          right_arm_4_link:
-                            right_arm_5_link:
-                              right_arm_6_link:
-                                right_arm_7_link:
-                                  right_hand_kuka_coupler_bottom:
-                                    right_hand_kuka_coupler:
-                                      right_hand_clamp:
-                                        right_hand_softhand_base:
-                                          right_hand_palm_link:
-                                            right_hand_index_knuckle_link:
-                                              right_hand_index_fake_link1:
-                                                right_hand_index_proximal_link:
-                                                  right_hand_index_fake_link2:
-                                                    right_hand_index_middle_link:
-                                                      right_hand_index_fake_link3:
-                                                        right_hand_index_distal_link:
-                                                          {}
-                                            right_hand_invisible_wire_link:
-                                              {}
-                                            right_hand_little_knuckle_link:
-                                              right_hand_little_fake_link1:
-                                                right_hand_little_proximal_link:
-                                                  right_hand_little_fake_link2:
-                                                    right_hand_little_middle_link:
-                                                      right_hand_little_fake_link3:
-                                                        right_hand_little_distal_link:
-                                                          {}
-                                            right_hand_middle_knuckle_link:
-                                              right_hand_middle_fake_link1:
-                                                right_hand_middle_proximal_link:
-                                                  right_hand_middle_fake_link2:
-                                                    right_hand_middle_middle_link:
-                                                      right_hand_middle_fake_link3:
-                                                        right_hand_middle_distal_link:
-                                                          {}
-                                            right_hand_ring_knuckle_link:
-                                              right_hand_ring_fake_link1:
-                                                right_hand_ring_proximal_link:
-                                                  right_hand_ring_fake_link2:
-                                                    right_hand_ring_middle_link:
-                                                      right_hand_ring_fake_link3:
-                                                        right_hand_ring_distal_link:
-                                                          {}
-                                            right_hand_thumb_knuckle_link:
-                                              right_hand_thumb_fake_link1:
-                                                right_hand_thumb_proximal_link:
-                                                  right_hand_thumb_fake_link3:
-                                                    right_hand_thumb_distal_link:
-                                                      {}
-                                  right_hand_palm_ref_link:
-                                    {}
-                                right_arm_7_link_dummy:
-                                  {}
-                              right_arm_6_link_dummy:
-                                {}
-                            right_arm_5_link_dummy:
-                              {}
-                          right_arm_4_link_dummy:
-                            {}
-                        right_arm_3_link_dummy:
-                          {}
-                      right_arm_2_link_dummy:
-                        {}
-                    right_arm_1_link_dummy:
-                      {}
-                  table_plate_link:
-                    table_leg_0_link:
-                      {}
-                    table_leg_1_link:
-                      {}
-                    table_leg_2_link:
-                      {}
-                    table_leg_3_link:
-                      {}
-                  torso_link:
-                    {}
-                  workbench_plate_link:
-                    workbench_leg_0_link:
-                      {}
-                    workbench_leg_1_link:
-                      {}
-                    workbench_leg_2_link:
-                      {}
-                    workbench_leg_3_link:
-                      {}
+        {}
       Update Interval: 0
-      Value: true
+      Value: false
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
@@ -1247,7 +740,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: Intensity
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -1263,19 +756,19 @@ Visualization Manager:
       Topic: /scene_filter/scene_filtered
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /obstacles_in_control
+      Marker Topic: /aux_projection
       Name: Marker
       Namespaces:
-        "": true
+        {}
       Queue Size: 100
       Value: true
-    - Class: rviz/Marker
+    - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /projection
-      Name: Marker
+      Marker Topic: /obstacles_in_control
+      Name: MarkerArray
       Namespaces:
         {}
       Queue Size: 100
@@ -1304,7 +797,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 2.35063
+      Distance: 3.01978
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -1316,10 +809,10 @@ Visualization Manager:
         Z: 0
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.019797
+      Pitch: 0.0447971
       Target Frame: vito_anchor
       Value: XYOrbit (rviz)
-      Yaw: 3.35357
+      Yaw: 3.16358
     Saved: ~
 Window Geometry:
   Displays:

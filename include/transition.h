@@ -13,6 +13,7 @@ enum class transition {
     started,
     failed,
     Geometries_ok,
+    home_reset,
 
 };
 
