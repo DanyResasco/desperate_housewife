@@ -762,7 +762,7 @@ Visualization Manager:
       Marker Topic: /aux_projection
       Name: Marker
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -770,7 +770,7 @@ Visualization Manager:
       Marker Topic: /obstacles_in_control
       Name: MarkerArray
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -809,10 +809,10 @@ Visualization Manager:
         Z: 0
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.0447971
+      Pitch: 0.0947971
       Target Frame: vito_anchor
       Value: XYOrbit (rviz)
-      Yaw: 3.16358
+      Yaw: 2.38358
     Saved: ~
 Window Geometry:
   Displays:

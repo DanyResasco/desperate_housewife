@@ -134,7 +134,7 @@ target_link_libraries(test_parse_list_yaml ${PROJECT_NAME} ${catkin_LIBRARIES} k
 
 
 SET( STATES_FILES
-src/Grasp_obj_state.cpp
+# src/Grasp_obj_state.cpp
 src/Home_State_grafo.cpp
 src/Pos_trash_state.cpp
 src/SoftHand_close_state.cpp

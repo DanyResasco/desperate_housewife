@@ -9,6 +9,7 @@
 #include <std_msgs/Bool.h>
 #include <sensor_msgs/JointState.h> 
 #include <trajectory_msgs/JointTrajectory.h>
+#include <std_srvs/Empty.h>
 
 class SoftHand_close : public state<transition>
 {
@@ -21,6 +22,8 @@ public:
 
     void HandInforRight(const sensor_msgs::JointState::ConstPtr &msg);
     void HandInforLeft(const sensor_msgs::JointState::ConstPtr &msg);
+    ros::ServiceServer srv_reset;
+    bool resetCallBack(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
       /*! 
       * \fn  HandInforLeft(const sensor_msgs::JointState::ConstPtr &msg);
       * \brief callback that store the softhand information i.e the joint position
@@ -41,6 +44,7 @@ private:
 	bool finish;
   const shared& data;
   int overtune_state;
+  bool home_reset;
 };
 
 #endif // SOFTHAND_STATE_H

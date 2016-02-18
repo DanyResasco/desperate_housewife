@@ -4,7 +4,7 @@
 #include <Home_state.h>
 #include <SoftHand_states_close.h>
 #include <SoftHand_states_open.h>
-#include <Grasp_state.h>
+// #include <Grasp_state.h>
 #include <Wait_msgs_.h>
 #include <Trash_position.h>
 #include <Removed_state.h>
@@ -58,8 +58,8 @@ void Desp_state_server::init()
         std::make_tuple( Hand_pose            , std::make_pair(transition::Error_arrived,true)          , Wait_HandPoseGen_msg     ),
         std::make_tuple( Hand_pose            , std::make_pair(transition::failed,true)                 , wait_state               ),
         std::make_tuple( wait_state            , std::make_pair(transition::Geometries_ok,true)         , Hand_pose                ),
-         std::make_tuple( Hand_pose            , std::make_pair(transition::home_reset,true)            ,Home               ),
-
+         std::make_tuple( Hand_pose            , std::make_pair(transition::home_reset,true)            ,Open_Softhand             ),
+         std::make_tuple( Close_Softhand       , std::make_pair(transition::home_reset,true)            , Open_Softhand            ),
         /*! stay in same state untill msg doesn't arrived */
   };
 
