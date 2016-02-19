@@ -138,12 +138,24 @@ void HandPoseGenerator::Error_info_left(const desperate_housewife::Error_msg::Co
 
 void HandPoseGenerator::HandPoseGeneratorCallback(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
 {
-  cylinder_geometry.geometries.resize(msg->geometries.size());
+  // if (id_msgs == static_cast<int>(transition_id::Vito_home))
+  // {
+    cylinder_geometry.geometries.clear();
+    if (id_msgs == static_cast<int>(transition_id::Vito_home))
+    {
+      cylinder_geometry.geometries.resize(msg->geometries.size());
 
-  for (unsigned int i = 0; i < msg->geometries.size(); i++ )
-  {
-    cylinder_geometry.geometries[i] = msg->geometries[i];
-  }
+      for (unsigned int i = 0; i < msg->geometries.size(); i++ )
+      {
+        cylinder_geometry.geometries[i] = msg->geometries[i];
+      }
+      // ROS_INFO_STREAM("New environment received and considered");
+    }
+    // else
+    // {
+    //   ROS_INFO_STREAM("New environment received but not considered");
+    // }
+    
 }
 
 std::map< transition, bool > HandPoseGenerator::getResults()
@@ -292,7 +304,8 @@ desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( despera
 bool HandPoseGenerator::isGeometryGraspable ( desperate_housewife::fittedGeometriesSingle geometry )
 {
   /*comparision between ration and treshold and cylinder radius with another threshold*/
-  if ( (geometry.info[geometry.info.size() - 1] >= 55) && (geometry.info[0] < 0.10))
+  // if ( (geometry.info[geometry.info.size() - 1] >= 55) && (geometry.info[0] < 0.10))
+  if ( geometry.info[0] < 0.10 )
   {
     return true;
   }
@@ -338,6 +351,8 @@ void HandPoseGenerator::DesperateDemo0( std::vector<desperate_housewife::fittedG
 
   desperate_housewife::fittedGeometriesSingle grapableObjectMsg;
 
+  obstaclesMsg.geometries.clear();
+
   bool graspable_object_exist = false;
   int index_grasp = 0;
   for (unsigned int k = 0; k < cyl_.size(); k++)
@@ -366,6 +381,7 @@ void HandPoseGenerator::DesperateDemo0( std::vector<desperate_housewife::fittedG
 
       desired_hand_publisher_left.publish( DesiredHandPose );
       obstacles_publisher_left.publish(obstaclesMsg);
+      ROS_INFO_STREAM("There is a graspable object, No. objects in obstaclesMsg: " << obstaclesMsg.geometries.size() );
       // finish = false;
     }
 
@@ -388,7 +404,10 @@ void HandPoseGenerator::DesperateDemo0( std::vector<desperate_housewife::fittedG
     DesiredHandPose = generateHandPose( obstaclesMsg.geometries[0], obstaclesMsg.geometries[0].id );
     DesiredHandPose.pose = ObstacleReject( obstaclesMsg.geometries[0], DesiredHandPose.whichArm);
 
-    desperate_housewife::fittedGeometriesArray obstaclesMsg_local = obstaclesMsg;
+    desperate_housewife::fittedGeometriesArray obstaclesMsg_local;
+    obstaclesMsg_local.geometries.clear();
+    obstaclesMsg_local = obstaclesMsg;
+
 
     data.arm_to_use = DesiredHandPose.whichArm;
 

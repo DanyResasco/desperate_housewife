@@ -87,6 +87,7 @@ void SoftHand_close::run()
   {
     /*close the softhand*/
     trajectory_msgs::JointTrajectory msg_jointT_hand;
+    msg_jointT_hand.header.stamp = ros::Time::now();
     msg_jointT_hand.points.resize(1);
     msg_jointT_hand.joint_names.resize(1);
     msg_jointT_hand.points[0].positions.resize(1);

@@ -33,6 +33,7 @@ SoftHand_open::SoftHand_open(const shared& m):data(m)
 
 void SoftHand_open::HandInforRight(const sensor_msgs::JointState::ConstPtr &msg)
 {
+
   info_hand_right = msg->position[index_sh];
 }
 
@@ -73,6 +74,7 @@ void SoftHand_open::run()
       {
         /*close the softhand*/
         trajectory_msgs::JointTrajectory msg_jointT_hand;
+        msg_jointT_hand.header.stamp = ros::Time::now();
         msg_jointT_hand.points.resize(1);
         msg_jointT_hand.joint_names.resize(1);
         msg_jointT_hand.points[0].positions.resize(1);

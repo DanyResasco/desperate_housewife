@@ -235,6 +235,7 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
 
         if (parameters_.enable_obstacle_avoidance)
         {
+            double num_of_links_in_potential = 0.0;
             // ROS_INFO_STREAM("In obstacle ovoidance");
             Eigen::Matrix<double, 6, 1> F_obj_base_link = Eigen::Matrix<double, 6, 1>::Zero();
             Eigen::Matrix<double, 6, 1> F_table_base_link = Eigen::Matrix<double, 6, 1>::Zero();
@@ -261,7 +262,13 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
                 {
                     double influence_local = Object_radius[k] +  parameters_.pf_dist_to_obstacles;
                     // ROS_INFO_STREAM("Checkin collision of link " << i << " with object " << k << "of radius " << Object_radius[k]);
-                    F_obj +=  (1.0 / (parameters_.pf_list_of_links.size() * Object_position.size())) * GetRepulsiveForce(fk_chain, influence_local, Object_position[k], Object_radius[k], Object_height[k] );
+                    Eigen::Matrix<double, 6, 1> F_obj_local = Eigen::Matrix<double, 6, 1>::Zero();
+                    F_obj_local = GetRepulsiveForce(fk_chain, influence_local, Object_position[k], Object_radius[k], Object_height[k] );
+                    F_obj = F_obj + F_obj_local;
+                    if (F_obj_local.norm() != 0.0)
+                    {
+                        num_of_links_in_potential = num_of_links_in_potential + 1.0;
+                    }
                 }
 
                 F_obj_base_link = Adjoint * F_obj;
@@ -270,7 +277,11 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
                 // F_obj_base_link += F_obj;
 
                 F_table = GetRepulsiveForceTable(fk_chain, parameters_.pf_dist_to_table );
-                F_table_base_link = (1.0 / parameters_.pf_list_of_links.size()) * Adjoint * F_table;
+                if (F_table.norm() != 0.0)
+                {
+                    num_of_links_in_potential = num_of_links_in_potential + 1.0;
+                }
+                F_table_base_link = Adjoint * F_table;
                 F_table_base_total += F_table_base_link;
 
                 tau_repulsive.data += getTauRepulsive(lambda_, J_, parameters_.pf_list_of_chains[i].getNrOfJoints(), (F_table_base_link + F_obj_base_link) );
@@ -284,7 +295,13 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
             //   std::cout<<"F_table_base_total: "<<F_table_base_total[k]<<std::endl;
             //   std::cout<<"F_obj_base_total: "<<F_obj_base_total[k]<<std::endl;
             // }
+            if (num_of_links_in_potential > 1.0)
+            {
+                tau_repulsive.data = (1.0 / num_of_links_in_potential) * tau_repulsive.data;    
+            }
+            // ROS_INFO_STREAM("Num of liks with potential: " << num_of_links_in_potential);
             tau_.data += tau_repulsive.data;
+            // ROS_INFO_STREAM("tau_repulsive: " << tau_.data );
         }
 
         F_total = (F_attractive + F_repulsive);
