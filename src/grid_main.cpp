@@ -12,12 +12,12 @@ int main(int argc, char **argv)
   ros::param::get("~spin_rate",spin_rate);
   ROS_INFO( "Spin Rate %lf", spin_rate);
 
-  ros::Rate rate(spin_rate); 
+  ros::Rate rate(spin_rate);
 
   while (node.nh.ok())
-  {
-    ros::spinOnce(); 
-    rate.sleep();
-  }
+    {
+      ros::spinOnce();
+      rate.sleep();
+    }
   return 0;
 }

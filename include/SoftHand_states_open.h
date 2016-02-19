@@ -18,6 +18,7 @@ public:
     virtual void run();
     virtual bool isComplete();
     virtual std::string get_type();
+    virtual void reset();
 
     void HandInforRight(const sensor_msgs::JointState::ConstPtr &msg);
     void HandInforLeft(const sensor_msgs::JointState::ConstPtr &msg);
@@ -27,7 +28,9 @@ public:
       * \param  ros message
       * \return void
     */ 
-
+            void resetCallBack(const std_msgs::Bool::ConstPtr msg);
+     
+      ros::Subscriber srv_reset;
 private:
 	std::string type;
 	ros::NodeHandle nh;
@@ -40,6 +43,7 @@ private:
 	bool finish;
 	double Info_open_hand;
   const  shared& data;
+  bool home_reset;
 
 
 

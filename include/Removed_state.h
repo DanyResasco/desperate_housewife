@@ -17,6 +17,7 @@
 #include <std_msgs/Float64MultiArray.h>
 #include <ros/ros.h>
 #include <ros/console.h>
+#include <std_msgs/Bool.h>
 
 
 class Removed_moves : public state<transition>
@@ -27,7 +28,7 @@ public:
     virtual void run();
     virtual bool isComplete();
     virtual std::string get_type();
-    // virtual void reset();
+    virtual void reset();
     void Error_info_right(const desperate_housewife::Error_msg::ConstPtr& error_msg);
     void Error_info_left(const desperate_housewife::Error_msg::ConstPtr& error_msg);
      /*! 
@@ -52,6 +53,9 @@ public:
       * \return void
     */   
 
+    void resetCallBack(const std_msgs::Bool::ConstPtr msg);
+     
+      ros::Subscriber srv_reset;
    private:
    	KDL::Twist e_;
    	desperate_housewife::handPoseSingle New_Hand_Position;
@@ -72,6 +76,7 @@ public:
     KDL::Twist E_t;
     std::vector<KDL::Twist> vect_error;
     const shared& data;
+    bool home_reset;
 };
 
 #endif // REMOVED_STATE_H

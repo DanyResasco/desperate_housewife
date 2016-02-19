@@ -2,7 +2,7 @@
 
   <!-- Configurations -->
   <!-- launch_openni: true if you want to include openni2_launch with custom parameters, if set to false make sure you enable depth_registration and set intrinsics parameters correctly -->
-  <arg name="spin_rate" default="50" />
+  <arg name="spin_rate" default="100" />
   <arg name="launch_openni" default="true" />
   <!-- asus: which asus to use. Currently there are 2 asus sensors. 'asus1' is the one at CP, 'asus2' is the one at PhaseSpace lab. This argument is needed to
        correctly load intrinsic calibrations from calibration package -->
