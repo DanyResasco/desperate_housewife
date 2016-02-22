@@ -205,36 +205,36 @@ void PotentialFieldControlKinematic::update(const ros::Time& time, const ros::Du
         // for (int i = 0; i < 6; i++)
         // {
         //     
-        x_err_.vel.data[0] = -x_.p.x() + x_des_.p.x();
-        x_err_.vel.data[1] = -x_.p.y() + x_des_.p.y();
-        x_err_.vel.data[2] = -x_.p.z() + x_des_.p.z();
-            // F_attractive(i) =  - ( -  v_limited * x_dot_d(i) ); //+        parameters_.k_i(i,i)*x_err_integral(i);
+        // x_err_.vel.data[0] = -x_.p.x() + x_des_.p.x();
+        // x_err_.vel.data[1] = -x_.p.y() + x_des_.p.y();
+        // x_err_.vel.data[2] = -x_.p.z() + x_des_.p.z();
+        //     // F_attractive(i) =  - ( -  v_limited * x_dot_d(i) ); //+        parameters_.k_i(i,i)*x_err_integral(i);
+        // // }
+        // // x_err_ = diff(x_,x_now_int);
+
+        // KDL::Twist x_dot_d;
+
+        // x_dot_d.vel.data[0] = parameters_.k_p(0, 0) * x_err_.vel.data[0];
+        // x_dot_d.vel.data[1] = parameters_.k_p(1, 1) * x_err_.vel.data[1];
+        // x_dot_d.vel.data[2] = parameters_.k_p(2, 2) * x_err_.vel.data[2];
+        // x_dot_d.rot.data[0] = parameters_.k_p(3, 3) * x_err_.rot.data[0];
+        // x_dot_d.rot.data[1] = parameters_.k_p(4, 4) * x_err_.rot.data[1];
+        // x_dot_d.rot.data[2] = parameters_.k_p(5, 5) * x_err_.rot.data[2];
+
+        // double v_limited = VelocityLimit(x_dot_d);
+
+        // //calculate the attractive filed like PID control
+        // // F_attractive = Eigen::Matrix<double,6,1>::Zero();
+        // x_err_integral += x_err_ * period.toSec();
+
+        // if (parameters_.enable_attractive_field)
+        // {
+        //     for (int i = 0; i < F_attractive.size(); i++)
+        //     {
+        //         x_err_integral += x_err_ * period.toSec();
+        //         F_attractive(i) =  - ( -  v_limited * x_dot_d(i) ); //+        parameters_.k_i(i,i)*x_err_integral(i);
+        //     }
         // }
-        // x_err_ = diff(x_,x_now_int);
-
-        KDL::Twist x_dot_d;
-
-        x_dot_d.vel.data[0] = parameters_.k_p(0, 0) * x_err_.vel.data[0];
-        x_dot_d.vel.data[1] = parameters_.k_p(1, 1) * x_err_.vel.data[1];
-        x_dot_d.vel.data[2] = parameters_.k_p(2, 2) * x_err_.vel.data[2];
-        x_dot_d.rot.data[0] = parameters_.k_p(3, 3) * x_err_.rot.data[0];
-        x_dot_d.rot.data[1] = parameters_.k_p(4, 4) * x_err_.rot.data[1];
-        x_dot_d.rot.data[2] = parameters_.k_p(5, 5) * x_err_.rot.data[2];
-
-        double v_limited = VelocityLimit(x_dot_d);
-
-        //calculate the attractive filed like PID control
-        // F_attractive = Eigen::Matrix<double,6,1>::Zero();
-        x_err_integral += x_err_ * period.toSec();
-
-        if (parameters_.enable_attractive_field)
-        {
-            for (int i = 0; i < F_attractive.size(); i++)
-            {
-                x_err_integral += x_err_ * period.toSec();
-                F_attractive(i) =  - ( -  v_limited * x_dot_d(i) ); //+        parameters_.k_i(i,i)*x_err_integral(i);
-            }
-        }
         // computing b = J*M^-1*(c+g) - J_dot*q_dot
         b_ = J_.data * M_inv_ * (C_.data + G_.data) - J_dot_.data * joint_msr_states_.qdot.data;
 
@@ -389,7 +389,7 @@ void PotentialFieldControlKinematic::update(const ros::Time& time, const ros::Du
         {
             joint_des_states_.qdot(i) = 0.0;
             for (int k = 0; k < J_pinv_n.cols(); k++){
-                joint_des_states_.qdot(i) += J_pinv_n(i, k) * F_attractive(k); //removed scaling factor of .7
+                joint_des_states_.qdot(i) += J_pinv_n(i, k) * x_err_(k); //removed scaling factor of .7
             }
             joint_des_states_.qdot(i) += (tau_repulsive.data[i] + J_null[i]);
             // ROS_INFO_STREAM(tau_repulsive.data[i]);
@@ -870,7 +870,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematic::MaxZYDistance(KDL::J
     double cost = 0;
 
     unsigned int index = 2;
-    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size(); ++i)
+    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size()-1; ++i)
         // for (unsigned int i = 0; i < 1; ++i)
     {
         KDL::Frame T;
@@ -918,7 +918,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematic::MaxZYDistance(KDL::J
 
     index = 1;
 
-    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size(); ++i)
+    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size()-1; ++i)
     {
         KDL::Frame T;
         const unsigned int numJoints = parameters_.pf_list_of_chains[i].getNrOfJoints();

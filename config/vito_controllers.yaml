@@ -97,7 +97,7 @@ right_arm:
     topic_obstacle: obstacles
     time_interpolation: 3
     max_tau_percentage: 0.5
-    pf_repulsive_gain: 0.1
+    pf_repulsive_gain: 0.3
     pf_dist_to_obstacles: 0.15
     pf_dist_to_table: 0.15
     vel_limit_robot: 2.0
@@ -111,7 +111,7 @@ right_arm:
     enable_obstacle_avoidance: true
     enable_attractive_field: true
     enable_null_space: true
-    gain_null_space: 1.0
+    gain_null_space: 0.1
     enable_interpolation: true
     id_arm: 0
 
