@@ -383,7 +383,7 @@ void PotentialFieldControlKinematic::update(const ros::Time& time, const ros::Du
         J_null =  N_trans_k * MaxZYDistance( joint_msr_states_.q );
         // J_null =  N_trans_k * task_objective_function( joint_msr_states_.q );
         
-        ROS_INFO_STREAM(" ");
+        // ROS_INFO_STREAM(" ");
         
         for (int i = 0; i < J_pinv_n.rows(); i++)
         {
@@ -393,7 +393,7 @@ void PotentialFieldControlKinematic::update(const ros::Time& time, const ros::Du
             }
             joint_des_states_.qdot(i) += (tau_repulsive.data[i] + J_null[i]);
             // ROS_INFO_STREAM(tau_repulsive.data[i]);
-            ROS_INFO_STREAM("q_des[" << i << "]:\t" << joint_des_states_.qdot(i) << "\tNullSpace[" << i << "]:\t" << (tau_repulsive.data[i] + J_null[i]));
+            // ROS_INFO_STREAM("q_des[" << i << "]:\t" << joint_des_states_.qdot(i) << "\tNullSpace[" << i << "]:\t" << (tau_repulsive.data[i] + J_null[i]));
 
         }
 

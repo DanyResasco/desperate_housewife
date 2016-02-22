@@ -111,7 +111,7 @@ right_arm:
     enable_obstacle_avoidance: true
     enable_attractive_field: true
     enable_null_space: true
-    gain_null_space: 0.5
+    gain_null_space: 1.0
     enable_interpolation: true
     id_arm: 0
 
