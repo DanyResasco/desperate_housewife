@@ -145,9 +145,10 @@ private:
 	{
 		KDL::Vector v;
 		double a;
-	} quat_now, quat_des_;
+	} quat_curr_, quat_des_, quat_now, q_e_c_des, q_e_now;
 
-
+	Eigen::Matrix<double,3,3> skew_;
+		KDL::Vector v_temp_;
 
 	tf::Quaternion quat_tf;
 	// double percentage;

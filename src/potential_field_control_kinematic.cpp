@@ -101,7 +101,7 @@ void PotentialFieldControlKinematic::starting(const ros::Time& time)
 
     SetToZero(x_err_integral);
     SetToZero(x_err_);
-    x_err_.vel.data[0] = 10000.0;
+    // x_err_.vel.data[0] = 10000.0;
     start_controller = false;
 }
 
@@ -201,16 +201,25 @@ void PotentialFieldControlKinematic::update(const ros::Time& time, const ros::Du
         x_dot_ = J_.data * joint_msr_states_.qdot.data;
         // std::cout << x_des_ << std::endl;
         x_err_ = diff(x_, x_des_);
+
+        // for (int i = 0; i < 6; i++)
+        // {
+        //     
+        x_err_.vel.data[0] = -x_.p.x() + x_des_.p.x();
+        x_err_.vel.data[1] = -x_.p.y() + x_des_.p.y();
+        x_err_.vel.data[2] = -x_.p.z() + x_des_.p.z();
+            // F_attractive(i) =  - ( -  v_limited * x_dot_d(i) ); //+        parameters_.k_i(i,i)*x_err_integral(i);
+        // }
         // x_err_ = diff(x_,x_now_int);
 
         KDL::Twist x_dot_d;
 
-        x_dot_d.vel.data[0] = parameters_.k_p(0, 0) / parameters_.k_d(0, 0) * x_err_.vel.data[0];
-        x_dot_d.vel.data[1] = parameters_.k_p(1, 1) / parameters_.k_d(1, 1) * x_err_.vel.data[1];
-        x_dot_d.vel.data[2] = parameters_.k_p(2, 2) / parameters_.k_d(2, 2) * x_err_.vel.data[2];
-        x_dot_d.rot.data[0] = parameters_.k_p(3, 3) / parameters_.k_d(3, 3) * x_err_.rot.data[0];
-        x_dot_d.rot.data[1] = parameters_.k_p(4, 4) / parameters_.k_d(4, 4) * x_err_.rot.data[1];
-        x_dot_d.rot.data[2] = parameters_.k_p(5, 5) / parameters_.k_d(5, 5) * x_err_.rot.data[2];
+        x_dot_d.vel.data[0] = parameters_.k_p(0, 0) * x_err_.vel.data[0];
+        x_dot_d.vel.data[1] = parameters_.k_p(1, 1) * x_err_.vel.data[1];
+        x_dot_d.vel.data[2] = parameters_.k_p(2, 2) * x_err_.vel.data[2];
+        x_dot_d.rot.data[0] = parameters_.k_p(3, 3) * x_err_.rot.data[0];
+        x_dot_d.rot.data[1] = parameters_.k_p(4, 4) * x_err_.rot.data[1];
+        x_dot_d.rot.data[2] = parameters_.k_p(5, 5) * x_err_.rot.data[2];
 
         double v_limited = VelocityLimit(x_dot_d);
 
@@ -223,7 +232,7 @@ void PotentialFieldControlKinematic::update(const ros::Time& time, const ros::Du
             for (int i = 0; i < F_attractive.size(); i++)
             {
                 x_err_integral += x_err_ * period.toSec();
-                F_attractive(i) =  -parameters_.k_d(i, i) * ( x_dot_(i) -  v_limited * x_dot_d(i) ); //+        parameters_.k_i(i,i)*x_err_integral(i);
+                F_attractive(i) =  - ( -  v_limited * x_dot_d(i) ); //+        parameters_.k_i(i,i)*x_err_integral(i);
             }
         }
         // computing b = J*M^-1*(c+g) - J_dot*q_dot
@@ -361,29 +370,30 @@ void PotentialFieldControlKinematic::update(const ros::Time& time, const ros::Du
 
         tf::twistKDLToMsg(x_err_msg, error_id.error_);
 
-        Eigen::MatrixXd J_pinv_;
+        Eigen::MatrixXd J_pinv_n;
         // pseudo_inverse(J_.data, J_pinv_);
 
         // JacobiSVD<MatrixXd>::SingularValuesType sing_vals_;
         // computing the inverse of M_ now, since it will be used often
-        pseudo_inverse(J_.data, J_pinv_, sing_vals_, true);
+        pseudo_inverse(J_.data, J_pinv_n, sing_vals_, true);
 
         Eigen::Matrix<double,7,7> N_trans_k = Eigen::Matrix<double,7,7>::Zero();
-        N_trans_k = (Eigen::Matrix<double,7,7>::Identity() - J_pinv_*J_.data);
-        Eigen::Matrix<double, 7, 1> J_null;
-        // J_null =  N_trans_k * JointLimitAvoidance( joint_msr_states_.q ).data;
-        J_null =  N_trans_k * task_objective_function( joint_msr_states_.q );
-        // ROS_INFO_STREAM(J_null);
+        N_trans_k = (Eigen::Matrix<double,7,7>::Identity() - J_pinv_n*J_.data);
+        Eigen::Matrix<double, 7, 1> J_null = Eigen::Matrix<double, 7, 1>::Zero();
+        J_null =  N_trans_k * MaxZYDistance( joint_msr_states_.q );
+        // J_null =  N_trans_k * task_objective_function( joint_msr_states_.q );
+        
         ROS_INFO_STREAM(" ");
-        for (int i = 0; i < J_pinv_.rows(); i++)
+        
+        for (int i = 0; i < J_pinv_n.rows(); i++)
         {
             joint_des_states_.qdot(i) = 0.0;
-            for (int k = 0; k < J_pinv_.cols(); k++){
-                joint_des_states_.qdot(i) += J_pinv_(i, k) * x_err_(k); //removed scaling factor of .7
+            for (int k = 0; k < J_pinv_n.cols(); k++){
+                joint_des_states_.qdot(i) += J_pinv_n(i, k) * F_attractive(k); //removed scaling factor of .7
             }
-            // joint_des_states_.qdot(i) += tau_repulsive.data[i];
-            joint_des_states_.qdot(i) += J_null[i];
-            ROS_INFO_STREAM(joint_des_states_.qdot(i));
+            joint_des_states_.qdot(i) += (tau_repulsive.data[i] + J_null[i]);
+            // ROS_INFO_STREAM(tau_repulsive.data[i]);
+            ROS_INFO_STREAM("q_des[" << i << "]:\t" << joint_des_states_.qdot(i) << "\tNullSpace[" << i << "]:\t" << (tau_repulsive.data[i] + J_null[i]));
 
         }
 
@@ -418,6 +428,7 @@ void PotentialFieldControlKinematic::update(const ros::Time& time, const ros::Du
             for (int i = 0; i < joint_handles_.size(); i++)
         {
             joint_handles_[i].setCommand(joint_des_states_.q(i));
+            tau_msg.data.push_back(joint_des_states_.q(i));
         }
 
 
@@ -846,10 +857,10 @@ Eigen::Matrix<double, 7, 1>  PotentialFieldControlKinematic::getTauRepulsive(Eig
     }
 
     JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
-    Eigen::MatrixXd J_pinv_;
-    pseudo_inverse(J_local.data, J_pinv_, sing_vals_2, true);
+    Eigen::MatrixXd J_pinv_n;
+    pseudo_inverse(J_local.data, J_pinv_n, sing_vals_2, true);
 
-    return J_pinv_ * F;
+    return J_pinv_n * F;
 
 }
 
@@ -878,15 +889,29 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematic::MaxZYDistance(KDL::J
         Eigen::Matrix<double, 1, 7> jac_local_eigen = Eigen::Matrix<double, 1, 7>::Zero();
         jac_local_eigen.block(0, 0, 1, numJoints) = jac_local.data.block(index, 0, 1, numJoints);
 
-        potential += jac_local_eigen.transpose() * cost;
+        Eigen::MatrixXd jac_pseudo_local_eigen = Eigen::Matrix<double, 7, 1>::Zero();
+
+        JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
+        pseudo_inverse(jac_local_eigen, jac_pseudo_local_eigen, sing_vals_2);
+        // ROS_INFO_STREAM(jac_pseudo_local_eigen);
+
+        for(unsigned l = 0; l < 7; ++l) {
+            // ROS_INFO_STREAM(jac_pseudo_local_eigen(l) << "\t" << std::boolalpha << "isnan(NaN) = " << std::isnan( jac_pseudo_local_eigen(l) ) );
+            if ( std::isnan( jac_pseudo_local_eigen(l)) )
+            {
+                jac_pseudo_local_eigen = Eigen::Matrix<double, 7, 1>::Zero();
+            }
+        }
+
+        // potential += jac_local_eigen.transpose() * cost;
 
         if ( T.p.data[index] > 0)
         {
-            potential += jac_local_eigen.transpose() * cost;
+            potential += jac_pseudo_local_eigen * cost;
         }
         else
         {
-            potential -= jac_local_eigen.transpose() * cost;
+            potential -= jac_pseudo_local_eigen * cost;
         }
 
     }
@@ -911,13 +936,26 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematic::MaxZYDistance(KDL::J
         Eigen::Matrix<double, 1, 7> jac_local_eigen = Eigen::Matrix<double, 1, 7>::Zero();
         jac_local_eigen.block(0, 0, 1, numJoints) = jac_local.data.block(index, 0, 1, numJoints);
 
+        Eigen::MatrixXd jac_pseudo_local_eigen;
+
+        JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
+        pseudo_inverse(jac_local_eigen, jac_pseudo_local_eigen, sing_vals_2);
+
+        for(unsigned l = 0; l < 7; ++l) {
+            // ROS_INFO_STREAM(jac_pseudo_local_eigen(l) << "\t" << std::boolalpha << "isnan(NaN) = " << std::isnan( jac_pseudo_local_eigen(l) ) );
+            if ( std::isnan( jac_pseudo_local_eigen(l)) )
+            {
+                jac_pseudo_local_eigen = Eigen::Matrix<double, 7, 1>::Zero();
+            }
+        }
+
         if ( T.p.data[index] > 0)
         {
-            potential += jac_local_eigen.transpose() * cost;
+            potential += jac_pseudo_local_eigen * cost;
         }
         else
         {
-            potential -= jac_local_eigen.transpose() * cost;
+            potential -= jac_pseudo_local_eigen * cost;
         }
 
     }
