@@ -56,17 +56,9 @@ public:
 	void load_parameters(ros::NodeHandle &n);
 	Eigen::Matrix<double, 6, 1> GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial , double influence);
 	Eigen::Matrix<double, 6, 1> GetRepulsiveForce(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height);
-	// void setTreshold(double tresholdin){treshold_influence=tresholdin;}
-	// void setNi(double Niin){Ni_=Niin;}
+
 
 private:
-	// ros::Subscriber sub_command_, sub_command_start;
-	// ros::Publisher pub_error_,  pub_tau_;
-	// ros::Publisher pub_pose_;
-	// tf::TransformBroadcaster tf_now_hand;
-
-	// std::stringstream sstr_;
-	// std::string desired_reference_topic, desired_hand_name, desired_hand_topic;
 
 	KDL::JntArray qdot_last_;
 
@@ -83,63 +75,23 @@ private:
 
 	// KDL::JntArray Kp_,Kd_,Ki_;	/*!gains*/
 
-	KDL::JntArray tau_;	/*!tau*/
-
-	KDL::JntSpaceInertiaMatrix M_;	/*! intertia matrix*/
-	KDL::JntArray C_;	/*! coriolis*/
-	KDL::JntArray G_;	/*! gravity*/
-
 	KDL::Jacobian J_;	/*!Jacobian J(q)*/
-	KDL::Jacobian J_last_;	/*!Jacobian of the last step*/
-	KDL::Jacobian J_dot_;	/*!d/dt(J(q))*/
-	KDL::Jacobian J_star_; /*! it will be J_*P_*/
 
-	Eigen::Matrix<double, 7, 7> I_;
-	Eigen::Matrix<double, 7, 7> N_trans_;
-	Eigen::MatrixXd M_inv_;
-	Eigen::MatrixXd omega_;	/*!M in operation space*/
-	Eigen::MatrixXd lambda_;	/*!omega_inv*/
-	Eigen::Matrix<double, 6, 1> b_;
-
-	double phi_;
-	double phi_last_;
-	int first_step_;
 
 	boost::scoped_ptr<KDL::ChainJntToJacSolver> jnt_to_jac_solver_;
 	boost::scoped_ptr<KDL::ChainDynParam> id_solver_;
 	boost::scoped_ptr<KDL::ChainFkSolverPos_recursive> fk_pos_solver_;
 
 
-	// Eigen::Matrix<double,6,1> Force_attractive;
-
-	// Eigen::Matrix<double,7,1> Force_total_rep;
-	// Eigen::Matrix<double,7,1> Force_repulsive_prev;
-	// Eigen::Matrix<double,7,1> tau_repulsive;
-	// Eigen::Matrix<double,7,1> F_Rep_table;
-	// Eigen::Matrix<double,7,1> Force_repulsive;
-	// double V_max_kuka = 1.5;
-	std::vector<KDL::Frame> x_chain;	/*!14 is soft_hand (end_effector)*/
-
 	// ros::Subscriber obstacles_subscribe_, obstacles_remove_sub, sub_gains_;
 	std::vector<double> Object_radius;
 	std::vector<double> Object_height;
 	std::vector<KDL::Frame> Object_position;
-	// ros::Publisher hand_publisher_ ,pub_xdes_;
-	// std::vector<KDL::Jacobian> JAC_repulsive;	!vector with all jabobian
-	// std::string obstacle_remove_topic, obstacle_avoidance;
-	// desperate_housewife::Error_msg error_pose_trajectory;
-	// int ObjOrObst;
-	// std::string tip_name, object_names_,set_gains_;
-	// std::string error_topic;
-	// ros::Publisher pub_error_right, pub_error_left,pub_qdot_;
-	// std::string tau_commad;
 
-	/*!information for message*/
-	// int erro_arr, err_obj, err_home ;
 	double time_inter; /*!time to interpolate*/
 	// double T_des; /*!time desired to interpolate*/
 	/*! int Int = 0;*/
-	// double time_inter_jerk;
+	tfScalar Time;
 
 	struct quaternion_
 	{
@@ -152,29 +104,11 @@ private:
 
 	tf::Quaternion quat_tf;
 	// double percentage;
-	tfScalar Time;
-	// int a ;
-	// bool start_flag;
-	// ros::Publisher pub_Freptavolo_, pub_Fa_, pub_f_total_, pub_diff,pub_xdot,pub_sing_val;
-	// std::vector<KDL::Frame> test_pos_jerk;
-	// Eigen::Matrix<double,6,1> Force_attractive_last,  Force_repulsive_last;
-	// Eigen::Matrix<double,7,1> Force_total_rep_last;
-	// bool switch_trajectory;
-	double Time_traj, Time_traj_rep;
-	// KDL::JntArray tau_prev_;
-	// ros::Subscriber sub_grid_;
-	// std::vector<int> list_of_link;
 
-	// std::string point_;
-	// ros::Subscriber sub_force_point_;
-	// ros::Publisher vis_pub,pub_Fr_,pub_velocity_,pub_error_int_;
-	// tf::TransformBroadcaster tf_geometriesTransformations_;
+	double Time_traj, Time_traj_rep;
+
 	KDL::Twist x_err_integral;
 
-	// double Time_log;
-	// double Ni_, treshold_influence, Repulsive_table;
-
-	// ros::Publisher wrench_pub;
 
 	struct parameters
 	{

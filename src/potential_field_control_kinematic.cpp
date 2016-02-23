@@ -34,16 +34,7 @@ bool PotentialFieldControlKinematic::init(hardware_interface::PositionJointInter
     id_solver_.reset(new KDL::ChainDynParam(kdl_chain_, gravity_));
     fk_pos_solver_.reset(new KDL::ChainFkSolverPos_recursive(kdl_chain_));
 
-// qdot_last_.resize(kdl_chain_.getNrOfJoints());
-    tau_.resize(kdl_chain_.getNrOfJoints());
-    J_.resize(kdl_chain_.getNrOfJoints());
-    J_dot_.resize(kdl_chain_.getNrOfJoints());
-    J_last_.resize(kdl_chain_.getNrOfJoints());
-    M_.resize(kdl_chain_.getNrOfJoints());
-    C_.resize(kdl_chain_.getNrOfJoints());
-    G_.resize(kdl_chain_.getNrOfJoints());
 
-    I_ = Eigen::Matrix<double, 7, 7>::Identity(7, 7);
     F_repulsive = Eigen::Matrix<double, 6, 1>::Zero();
     F_attractive = Eigen::Matrix<double, 6, 1>::Zero();
     F_total = Eigen::Matrix<double, 6, 1>::Zero();
@@ -89,8 +80,6 @@ void PotentialFieldControlKinematic::starting(const ros::Time& time)
     x_now_int = x_des_;
     x_des_int = x_des_;
 
-    first_step_ = 1;
-
     SetToZero(x_err_integral);
     SetToZero(x_err_);
     x_err_.vel.data[0] = 10000.0;
@@ -112,8 +101,7 @@ void PotentialFieldControlKinematic::update(const ros::Time& time, const ros::Du
         joint_msr_states_.q(i) = joint_handles_[i].getPosition();
         joint_msr_states_.qdot(i) = joint_handles_[i].getVelocity();
     }
-    N_trans_ = I_;
-    SetToZero(tau_);
+
     KDL::JntArray vel_repulsive;
     vel_repulsive.resize(7);
     SetToZero(vel_repulsive);
@@ -317,7 +305,6 @@ void PotentialFieldControlKinematic::update(const ros::Time& time, const ros::Du
     pub_error.publish(err_msg);
     pub_tau.publish(q_msg);
 
-    x_chain.clear();
     ros::spinOnce();
 }
 
