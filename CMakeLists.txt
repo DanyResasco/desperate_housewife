@@ -106,7 +106,7 @@ add_dependencies(fit_geometries ${PROJECT_NAME}_gencpp)
 target_link_libraries(fit_geometries ${catkin_LIBRARIES}  ${PCL_LIBRARIES} )
 
 
-add_library(${PROJECT_NAME} src/potential_field_control.cpp src/potential_field_control_kinematic.cpp)
+add_library(${PROJECT_NAME} src/potential_field_control.cpp src/potential_field_control_kinematic.cpp src/potential_field_control_kinematic_reverse.cpp)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 

@@ -10,10 +10,11 @@
 #include <Eigen/SVD>
 using namespace Eigen;
 
-inline void pseudo_inverse(const Eigen::MatrixXd &M_, Eigen::MatrixXd &M_pinv_, JacobiSVD<MatrixXd>::SingularValuesType &sing_vals_, bool damped = true)
+inline void pseudo_inverse(const Eigen::MatrixXd &M_, Eigen::MatrixXd &M_pinv_, bool damped = true)
 {
   double lambda_max = damped ? 1.0e-3 : 0.0;
 
+  JacobiSVD<MatrixXd>::SingularValuesType sing_vals_;
   JacobiSVD<MatrixXd> svd(M_, ComputeFullU | ComputeFullV);
   sing_vals_ = svd.singularValues();
   MatrixXd S_ = M_; // copying the dimensions of M_, its content is not needed.

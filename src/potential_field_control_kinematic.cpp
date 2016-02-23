@@ -33,6 +33,7 @@ bool PotentialFieldControlKinematic::init(hardware_interface::PositionJointInter
     jnt_to_jac_solver_.reset(new KDL::ChainJntToJacSolver(kdl_chain_));
     id_solver_.reset(new KDL::ChainDynParam(kdl_chain_, gravity_));
     fk_pos_solver_.reset(new KDL::ChainFkSolverPos_recursive(kdl_chain_));
+    J_.resize(kdl_chain_.getNrOfJoints());
 
 
     F_repulsive = Eigen::Matrix<double, 6, 1>::Zero();
@@ -236,8 +237,8 @@ void PotentialFieldControlKinematic::update(const ros::Time& time, const ros::Du
 
 
         Eigen::MatrixXd J_pinv_n;
-        JacobiSVD<MatrixXd>::SingularValuesType sing_vals_;
-        pseudo_inverse(J_.data, J_pinv_n, sing_vals_, true);
+        // JacobiSVD<MatrixXd>::SingularValuesType sing_vals_;
+        pseudo_inverse(J_.data, J_pinv_n);
 
         Eigen::Matrix<double, 7, 7> N_trans_k = Eigen::Matrix<double, 7, 7>::Zero();
         N_trans_k = (Eigen::Matrix<double, 7, 7>::Identity() - J_pinv_n * J_.data);
@@ -724,9 +725,9 @@ Eigen::Matrix<double, 7, 1>  PotentialFieldControlKinematic::getVelRepulsive( KD
         J_local.setColumn(i, KDL::Twist::Zero());
     }
 
-    JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
+    // JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
     Eigen::MatrixXd J_pinv_n;
-    pseudo_inverse(J_local.data, J_pinv_n, sing_vals_2, true);
+    pseudo_inverse(J_local.data, J_pinv_n);
 
     // return J_pinv_n * F;
     return Eigen::Matrix<double, 7, 1>::Zero();
@@ -761,7 +762,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematic::MaxZYDistance(KDL::J
         Eigen::MatrixXd jac_pseudo_local_eigen = Eigen::Matrix<double, 7, 1>::Zero();
 
         JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
-        pseudo_inverse(jac_local_eigen, jac_pseudo_local_eigen, sing_vals_2);
+        pseudo_inverse(jac_local_eigen, jac_pseudo_local_eigen);
 
         for (unsigned l = 0; l < 7; ++l) {
             if ( std::isnan( jac_pseudo_local_eigen(l)) )

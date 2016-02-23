@@ -17,7 +17,7 @@ class SimulatedReferences
 public:
   SimulatedReferences( ros::NodeHandle n_in){
     n = n_in;
-    n.param<std::string>("/reference_simulated_topic", reference_simulated_topic, "/right_arm/PotentialFieldControlKinematic/command");
+    n.param<std::string>("/reference_simulated_topic", reference_simulated_topic, "/right_arm/PotentialFieldControlKinematicReverse/command");
     pose_publisher = n.advertise< desperate_housewife::handPoseSingle >(reference_simulated_topic.c_str(), 100);
     ROS_INFO("Publishing references in: %s", reference_simulated_topic.c_str());
   };

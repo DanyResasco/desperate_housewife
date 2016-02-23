@@ -133,9 +133,9 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
         id_solver_->JntToGravity(joint_msr_states_.q, G_);
         G_.data.setZero();
 
-        JacobiSVD<MatrixXd>::SingularValuesType sing_vals_;
+        // JacobiSVD<MatrixXd>::SingularValuesType sing_vals_;
         // computing the inverse of M_ now, since it will be used often
-        pseudo_inverse(M_.data, M_inv_, sing_vals_, false);
+        pseudo_inverse(M_.data, M_inv_);
 
         // computing Jacobian J(q)
         jnt_to_jac_solver_->JntToJac(joint_msr_states_.q, J_);
@@ -226,7 +226,7 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
 
         JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
         // computing lambda = omega^-1
-        pseudo_inverse(omega_, lambda_, sing_vals_2);
+        pseudo_inverse(omega_, lambda_);
 
         N_trans_ = N_trans_ - J_.data.transpose() * lambda_ * J_.data * M_inv_;
 
@@ -804,7 +804,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControl::MaxZYDistance(KDL::JntArray q
     double cost = 0;
 
     unsigned int index = 2;
-    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size(); ++i)
+    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size() -1; ++i)
         // for (unsigned int i = 0; i < 1; ++i)
     {
         KDL::Frame T;
@@ -838,7 +838,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControl::MaxZYDistance(KDL::JntArray q
 
     index = 1;
 
-    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size(); ++i)
+    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size() -1; ++i)
     {
         KDL::Frame T;
         const unsigned int numJoints = parameters_.pf_list_of_chains[i].getNrOfJoints();
