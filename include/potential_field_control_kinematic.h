@@ -234,7 +234,7 @@ private:
 	Eigen::Matrix<double, 7, 1> RepulsiveWithTable();
 
 	Eigen::Matrix<double, 7, 1>  GetRepulsiveWithObstacle();
-	Eigen::Matrix<double, 7, 1>  getTauRepulsive(Eigen::Matrix<double, 6, 6> lambda, KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F);
+	Eigen::Matrix<double, 7, 1>  getVelRepulsive(KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F);
 
 
 	/** Caalback: InfoOBj
