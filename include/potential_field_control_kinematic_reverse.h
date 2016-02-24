@@ -36,6 +36,8 @@
 #include <control_toolbox/filters.h>
 #include <std_srvs/Empty.h>
 
+#include <trajectory_msgs/JointTrajectory.h>
+
 namespace desperate_housewife
 {
 
@@ -87,6 +89,17 @@ private:
 	std::vector<double> Object_radius;
 	std::vector<double> Object_height;
 	std::vector<KDL::Frame> Object_position;
+
+	KDL::JntArrayAcc joint_des_states_filtered, joint_des_states_old;
+	
+
+
+	ros::Publisher pub_right_arm;
+	trajectory_msgs::JointTrajectory right_robot_msgs;
+
+
+
+
 
 	double time_inter; /*!time to interpolate*/
 	// double T_des; /*!time desired to interpolate*/

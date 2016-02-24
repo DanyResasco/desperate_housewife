@@ -122,6 +122,7 @@ public:
     // ros::NodeHandle nh;
     double x,y,z,rotx,roty,rotz;
     int Arm_used;
+    std::string control_topic_right, control_topic_left;
 
 
 

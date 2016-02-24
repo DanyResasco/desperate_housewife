@@ -2,29 +2,40 @@
 
 Overtune_state::Overtune_state(const shared& m):data(m)
 {
+  nh.param<std::string>("/right_arm/controller", control_topic_right, "PotentialFieldControl");
+  nh.param<std::string>("/left_arm/controller", control_topic_left, "PotentialFieldControl");
 
-  nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
-  error_sub_right = nh.subscribe(error_topic_right, 1, &Overtune_state::Error_info_right, this);
+  error_topic_right = "/right_arm/" + control_topic_right + "/error_id";
 
-  nh.param<std::string>("/left_arm/PotentialFieldControl/error_id", error_topic_left, "/left_arm/PotentialFieldControl/error_id");
-  error_sub_left = nh.subscribe(error_topic_left, 1, &Overtune_state::Error_info_left, this);
 
-  std::string string_temp;
+  // nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
+  error_sub_right = nh.subscribe(error_topic_right.c_str(), 1, &Overtune_state::Error_info_right, this);
 
-  nh.param<std::string>("/right_arm/PotentialFieldControl/topic_desired_reference", string_temp, "command");
-  desired_hand_right_pose_topic_ = std::string("/right_arm/PotentialFieldControl/") + string_temp;
+  // nh.param<std::string>("/left_arm/PotentialFieldControl/error_id", error_topic_left, "/left_arm/PotentialFieldControl/error_id");
+  error_topic_left = "/left_arm/" + control_topic_left + "/error_id";
+  error_sub_left = nh.subscribe(error_topic_left.c_str(), 1, &Overtune_state::Error_info_left, this);
+
+  // std::string string_temp;
+
+  // nh.param<std::string>("/right_arm/PotentialFieldControl/topic_desired_reference", string_temp, "command");
+  // desired_hand_right_pose_topic_ = std::string("/right_arm/PotentialFieldControl/") + string_temp;
+  
+  desired_hand_right_pose_topic_ = "/right_arm/" + control_topic_right + "/command";
+
   desired_hand_publisher_right = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_right_pose_topic_.c_str(),1);
 
-  std::string string_temp_l;
-  nh.param<std::string>("/left_arm/PotentialFieldControl/topic_desired_reference", string_temp_l, "command");
-  desired_hand_left_pose_topic_ = std::string("/left_arm/PotentialFieldControl/") + string_temp_l;
+  // std::string string_temp_l;
+  // nh.param<std::string>("/left_arm/PotentialFieldControl/topic_desired_reference", string_temp_l, "command");
+  // desired_hand_left_pose_topic_ = std::string("/left_arm/PotentialFieldControl/") + string_temp_l;
+  
+   desired_hand_left_pose_topic_ = "/left_arm/" + control_topic_left + "/command";
   desired_hand_publisher_left = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_left_pose_topic_.c_str(),1);
 
-  nh.param<std::string>("/right_arm/PotentialFieldControl/root_name", base_frame_, "world");
+  nh.param<std::string>( "/right_arm/" + control_topic_right +"/root_name", base_frame_, "world");
 
-  nh.param<std::string>("/right_arm/PotentialFieldControl/tip_name", right_hand_frame_, "right_hand_palm_ref_link");
+  nh.param<std::string>( "/right_arm/" + control_topic_right +"/tip_name", right_hand_frame_, "right_hand_palm_ref_link");
 
-  nh.param<std::string>("/left_arm/PotentialFieldControl/tip_name", left_hand_frame_, "left_hand_palm_ref_link");
+  nh.param<std::string>( "/left_arm/" + control_topic_right +"/tip_name", left_hand_frame_, "left_hand_palm_ref_link");
 
   id_class = static_cast<int>(transition_id::Vito_Overtune);
   vect_error.resize(2);

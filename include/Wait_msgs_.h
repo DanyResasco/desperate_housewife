@@ -32,7 +32,7 @@ private:
   	int ObjOrObst;
   	std::string type;
     ros::NodeHandle nh;
-    std::string obj_info_topic_r;
+    std::string obj_info_topic_r, control_topic_right, control_topic_left;
     int arrived_r;
     bool finish;
     const shared& data;

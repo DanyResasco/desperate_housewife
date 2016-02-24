@@ -73,6 +73,7 @@ private:
     KDL::Twist E_t;
     const shared& data;
     std::vector<KDL::Twist> vect_error;
+    std::string control_topic_right, control_topic_left;
 };
 
 #endif // OVERTUNE_STATE_H

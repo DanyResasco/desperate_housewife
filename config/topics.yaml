@@ -1,0 +1,4 @@
+right_arm:
+  controller: PotentialFieldControl
+left_arm:
+  controller: PotentialFieldControl

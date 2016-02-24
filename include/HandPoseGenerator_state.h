@@ -54,6 +54,7 @@ private:
   double SoftHandDistanceFrame;
   bool use_both_arm;
   bool failed;
+  std::string control_topic_right, control_topic_left;
 
 
 public:

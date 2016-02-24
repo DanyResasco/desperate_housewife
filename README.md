@@ -18,7 +18,8 @@ To use this repo execute the following steps:
 
 Compile doing 'catkin_make --only_pkg-with-deps desperate_housewife' in your workspace
 The command to launch the robot in simulation is : 
-	-roslaunch desperate_housewife run_vito.launch
+	-roslaunch desperate_housewife run_vito.launch 
+
 The demo doesn't start until does not receive the message :
 If you want to use both arm sends:
 	- rostopic pub -1 /desperate_housewife/start_controller std_msgs/Bool 'True'
@@ -43,12 +44,13 @@ The third demo is not properly a demo because works always at background and sta
 
 Lets a look of all code:  
 
-	- Desperate mind is logic of a system.
-	- Generate hand pose decide wich arm to use, if cylinder is a graspable object or it's a obstacle and decide the relative poses.
 	- Fit geometries make a cluster of scene point cloud and fittig a cylinder
 	- Scene filtering make a filter of camera point cloud, erasing the table and the environment
+	- Desperate mind is logic of a system. It's a state machine that handle all algorithm.
+	- Generate hand pose decide which arm to use, if cylinder is a graspable object or it's a obstacle and decide the relative poses.
 
-To swicth the controller without rqt call:
+
+To switch the controller without rqt call:
 
 	- rosservice call /right_arm/controller_manager/switch_controller "{start_controllers: ['PotentialFieldControl'], stop_controllers: ['joint_trajectory_controller'], strictness: 2}"
 
@@ -58,7 +60,7 @@ TEST FILE
 
 To test potential field: 
 
-	- roslaunch test_send_obst.launch  (sends only upright cylinder)
+	- roslaunch desperate_housewife test_send_obst.launch  (sends only upright cylinder)
 	
 	- To send only upright cylinder: rostopic pub  -1 /send_obst std_msgs/Float64MultiArray " data: [Pos_ost_1_x, Pos_ost_1_y, Ps_ost_1_z, radius_1, height_1, Pos_ost_2_x, Pos_ost_2_y, Pos_ost_2_z, radius_2, height_2] "
 

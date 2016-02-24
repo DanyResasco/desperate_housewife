@@ -3,8 +3,11 @@
 
 
 Wait_msgs::Wait_msgs(const shared& m):data(m)
-{
-  nh.param<std::string>("/right_arm/objects_info", obj_info_topic_r, "/right_arm/objects_info");
+{  nh.param<std::string>("/right_arm/controller", control_topic_right, "PotentialFieldControl");
+  nh.param<std::string>("/left_arm/controller", control_topic_left, "PotentialFieldControl");
+
+  // nh.param<std::string>("/right_arm/objects_info", obj_info_topic_r, "/right_arm/objects_info");
+  obj_info_topic_r = "/right_arm/" + control_topic_right + "/objects_info";
   objects_info_right_sub = nh.subscribe(obj_info_topic_r.c_str(),1, &Wait_msgs::ObjOrObst_right,this);
 
   arrived_r = 0;

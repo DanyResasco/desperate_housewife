@@ -107,6 +107,7 @@ private:
     tf::TransformBroadcaster  tf_desired_hand_pose;
     std::string base_frame_;
     bool home_reset;
+    std::string control_topic_left,control_topic_right;
 
 };
 

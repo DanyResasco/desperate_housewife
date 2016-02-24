@@ -8,41 +8,53 @@ HandPoseGenerator::HandPoseGenerator(shared& m): data(m)
   nh.param<int>("/demo", demo, 0);
   nh.param<int>("/max_number_obj", Number_obj, 5);
 
+  nh.param<std::string>("/right_arm/controller", control_topic_right, "PotentialFieldControl");
+  nh.param<std::string>("/left_arm/controller", control_topic_left, "PotentialFieldControl");
+
   /*reads geometry information*/
   nh.param<std::string>("/BasicGeometriesNode/geometries_topic", geometries_topic_, "/BasicGeometriesNode/geometries");
   stream_subscriber_ = nh.subscribe(geometries_topic_, 1, &HandPoseGenerator::HandPoseGeneratorCallback, this);
 
-  /*sends obstacle informations*/
-  std::string string_temp_obst_right;
-  nh.param<std::string>("/right_arm/PotentialFieldControl/topic_obstacle", string_temp_obst_right, "obstacles");
-  obstacles_topic_right = std::string("/right_arm/PotentialFieldControl/") + string_temp_obst_right;
+  // /*sends obstacle informations*/
+  obstacles_topic_right = "/right_arm/" + control_topic_right + "/topic_obstacle";
+  // std::string string_temp_obst_right;
+  // nh.param<std::string>("/right_arm/PotentialFieldControl/topic_obstacle", string_temp_obst_right, "obstacles");
+  // obstacles_topic_right = std::string("/right_arm/PotentialFieldControl/") + string_temp_obst_right;
+  
   obstacles_publisher_right = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_right.c_str(), 1);
 
-  std::string string_temp_obst_left;
-  nh.param<std::string>("/left_arm/PotentialFieldControl/topic_obstacle", string_temp_obst_left, "obstacles");
-  obstacles_topic_left = std::string("/left_arm/PotentialFieldControl/") + string_temp_obst_left;
+   obstacles_topic_left = "/left_arm/" + control_topic_left + "/topic_obstacle";
+  // std::string string_temp_obst_left;
+  // nh.param<std::string>("/left_arm/PotentialFieldControl/topic_obstacle", string_temp_obst_left, "obstacles");
+  // obstacles_topic_left = std::string("/left_arm/PotentialFieldControl/") + string_temp_obst_left;
   obstacles_publisher_left = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_left.c_str(), 1);
 
   /*sends information about the remove or grasp objects */
-  nh.param<std::string>("/right_arm/objects_info", obj_info_topic_r, "/right_arm/objects_info");
+   
+  obj_info_topic_r = "/right_arm/" + control_topic_right + "/objects_info";
+  // nh.param<std::string>("/right_arm/objects_info", obj_info_topic_r, "/right_arm/objects_info");
   objects_info_right_pub = nh.advertise<std_msgs::UInt16 > (obj_info_topic_r.c_str(), 1, this);
-  nh.param<std::string>("/left_arm/PotentialFieldControl/objects_info_l", obj_info_topic_l, "/left_arm/objects_info");
+  
+  obj_info_topic_l = "/left_arm/" + control_topic_left + "/objects_info";
+  // nh.param<std::string>("/left_arm/PotentialFieldControl/objects_info_l", obj_info_topic_l, "/left_arm/objects_info");
   objects_info_left_pub = nh.advertise<std_msgs::UInt16 > (obj_info_topic_l.c_str(), 1, this);
 
   /*config parameteres*/
-  nh.param<std::string>("/right_arm/PotentialFieldControl/tip_name", right_hand_frame_ , "right_hand_palm_ref_link");
-  nh.param<std::string>("/right_arm/PotentialFieldControl/root_name", base_frame_, "world");
-  nh.param<std::string>("/left_arm/PotentialFieldControl/tip_name", left_hand_frame_, "left_hand_palm_ref_link");
+  nh.param<std::string>("/right_arm/" + control_topic_right + "/tip_name", right_hand_frame_ , "right_hand_palm_ref_link");
+  nh.param<std::string>("/right_arm/" + control_topic_right + "/root_name", base_frame_, "world");
+  nh.param<std::string>("/left_arm/" + control_topic_right + "/tip_name", left_hand_frame_, "left_hand_palm_ref_link");
 
   /*sends hand pose*/
-  std::string string_temp_right;
-  nh.param<std::string>("/right_arm/PotentialFieldControl/topic_desired_reference", string_temp_right, "command");
-  desired_hand_pose_right_topic_ = std::string("/right_arm/PotentialFieldControl/") + string_temp_right;
+   desired_hand_pose_right_topic_ = "/right_arm/" + control_topic_right + "/command";
+  // std::string string_temp_right;
+  // nh.param<std::string>("/right_arm/PotentialFieldControl/topic_desired_reference", string_temp_right, "command");
+  // desired_hand_pose_right_topic_ = std::string("/right_arm/PotentialFieldControl/") + string_temp_right;
   desired_hand_publisher_right = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_pose_right_topic_.c_str(), 1);
 
-  std::string string_temp_left;
-  nh.param<std::string>("/left_arm/PotentialFieldControl/topic_desired_reference", string_temp_left, "command");
-  desired_hand_pose_left_topic_ = std::string("/left_arm/PotentialFieldControl/") + string_temp_left;
+   desired_hand_pose_left_topic_ = "/left_arm/" + control_topic_left + "/command";
+  // std::string string_temp_left;
+  // nh.param<std::string>("/left_arm/PotentialFieldControl/topic_desired_reference", string_temp_left, "command");
+  // desired_hand_pose_left_topic_ = std::string("/left_arm/PotentialFieldControl/") + string_temp_left;
   desired_hand_publisher_left = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_pose_left_topic_.c_str(), 1);
 
   // nh.param<bool>("/use_both_arm", use_both_arm, true);
@@ -54,11 +66,13 @@ HandPoseGenerator::HandPoseGenerator(shared& m): data(m)
   ROS_INFO("HandPoseGenerator: %d", id_class);
 
   /*read the error*/
-  nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
-  error_sub_right = nh.subscribe(error_topic_right, 1, &HandPoseGenerator::Error_info_right, this);
+  error_topic_right = "/right_arm/" + control_topic_right + "/error_id";
+  error_topic_left = "/left_arm/" + control_topic_left + "/error_id";
+  // nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
+  error_sub_right = nh.subscribe(error_topic_right.c_str(), 1, &HandPoseGenerator::Error_info_right, this);
 
-  nh.param<std::string>("/left_arm/PotentialFieldControl/error_id", error_topic_left, "/left_arm/PotentialFieldControl/error_id");
-  error_sub_left = nh.subscribe(error_topic_left, 1, &HandPoseGenerator::Error_info_left, this);
+  // nh.param<std::string>("/left_arm/PotentialFieldControl/error_id", error_topic_left, "/left_arm/PotentialFieldControl/error_id");
+  error_sub_left = nh.subscribe(error_topic_left.c_str(), 1, &HandPoseGenerator::Error_info_left, this);
 
   /*send the msg to close hand*/
   nh.param<std::string>("/right_hand/joint_trajectory_controller/command", hand_close_right, "/right_hand/joint_trajectory_controller/command");

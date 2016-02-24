@@ -77,6 +77,7 @@ public:
     std::vector<KDL::Twist> vect_error;
     const shared& data;
     bool home_reset;
+    std::string control_topic_right,control_topic_left;
 };
 
 #endif // REMOVED_STATE_H

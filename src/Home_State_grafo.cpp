@@ -3,40 +3,51 @@
 
 Home_state::Home_state(const shared& m):data(m)
 {
-  nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
-  error_sub_right = nh.subscribe(error_topic_right, 1, &Home_state::Error_info_right, this);
 
-  nh.param<std::string>("/left_arm/PotentialFieldControl/error_id", error_topic_left, "/left_arm/PotentialFieldControl/error_id");
-  error_sub_left = nh.subscribe(error_topic_left, 1, &Home_state::Error_info_left, this);
+  nh.param<std::string>("/right_arm/controller", control_topic_right, "PotentialFieldControl");
+  nh.param<std::string>("/left_arm/controller", control_topic_left, "PotentialFieldControl");
 
-  std::string string_temp;
+  ROS_INFO_STREAM("**** control_topic_right: "<< control_topic_right.c_str() );
+  error_topic_right = "/right_arm/" + control_topic_right + "/error_id";
+  error_topic_left = "/left_arm/" + control_topic_left + "/error_id";
 
-  nh.param<std::string>("/right_arm/PotentialFieldControl/topic_desired_reference", string_temp, "command");
-  desired_hand_right_pose_topic_ = std::string("/right_arm/PotentialFieldControl/") + string_temp;
+  // ROS_INFO_STREAM("****++++++++++: "<< error_topic_left.c_str() );
+  // nh.param<std::string>("/right_arm/" + control_topic_right + "/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
+
+  error_sub_right = nh.subscribe(error_topic_right.c_str(), 1, &Home_state::Error_info_right, this);
+
+  // nh.param<std::string>("/left_arm/PotentialFieldControl/error_id", error_topic_left, "/left_arm/PotentialFieldControl/error_id");
+  error_sub_left = nh.subscribe(error_topic_left.c_str(), 1, &Home_state::Error_info_left, this);
+
+  // std::string string_temp;
+
+  // nh.param<std::string>("/right_arm/PotentialFieldControl/topic_desired_reference", string_temp, "command");
+  desired_hand_right_pose_topic_ = "/right_arm/" + control_topic_right + "/command";
 
   desired_hand_right_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_right_pose_topic_.c_str(),1);
 
 
-  std::string string_temp_l;
+  // std::string string_temp_l;
 
-  nh.param<std::string>("/left_arm/PotentialFieldControl/topic_desired_reference", string_temp_l, "command");
-  desired_hand_left_pose_topic_ = std::string("/left_arm/PotentialFieldControl/") + string_temp_l;
+  // nh.param<std::string>("/left_arm/PotentialFieldControl/topic_desired_reference", string_temp_l, "command");
+  // desired_hand_left_pose_topic_ = std::string("/left_arm/PotentialFieldControl/") + string_temp_l;
+  desired_hand_left_pose_topic_ = "/left_arm/" + control_topic_left + "/command";
 
   desired_hand_left_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_left_pose_topic_.c_str(),1);
 
 
-  nh.param<std::string>("/right_arm/PotentialFieldControl/root_name", base_frame_, "world");
+  nh.param<std::string>("/right_arm/" + control_topic_right + "/root_name", base_frame_, "world");
 
   /*subscribe to start commad for both arm*/
   sub_command_start = nh.subscribe("/desperate_housewife/start_controller", 1, &Home_state::command_start, this);
 
   /*subcribe to start command for single arm*/
-  sub_start_r = nh.subscribe("/right_arm/PotentialFieldControl/start_controller", 1, &Home_state::state_right, this);
-  sub_start_l = nh.subscribe("/left_arm/PotentialFieldControl/start_controller", 1, &Home_state::state_left, this);
+  sub_start_r = nh.subscribe("/right_arm/" + control_topic_right + "/start_controller", 1, &Home_state::state_right, this);
+  sub_start_l = nh.subscribe("/left_arm/" + control_topic_left + "/start_controller", 1, &Home_state::state_left, this);
 
   /*publish the start to PotentialFieldContol*/
-  ros_pub_start_left = nh.advertise<std_msgs::Bool > ("/left_arm/PotentialFieldControl/start_controller",1);
-  ros_pub_start_right = nh.advertise<std_msgs::Bool > ("/right_arm/PotentialFieldControl/start_controller",1);
+  ros_pub_start_left = nh.advertise<std_msgs::Bool > ("/left_arm/" + control_topic_left + "/start_controller",1);
+  ros_pub_start_right = nh.advertise<std_msgs::Bool > ("/right_arm/" + control_topic_right + "/start_controller",1);
 
   /*id class for msg*/
   id_class = static_cast<int>(transition_id::Vito_home);

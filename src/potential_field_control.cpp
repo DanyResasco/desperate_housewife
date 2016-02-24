@@ -121,6 +121,7 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
     tf::twistKDLToMsg(x_err_, error_id.error_);
 
     //flag to use this code with real robot
+    Eigen::MatrixXd q_instatntanea  = Eigen::MatrixXd::Zero(7,1);
 
     KDL::Twist x_err_msg;
     x_err_msg = x_err_;
@@ -214,8 +215,8 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
         {
             for (int i = 0; i < F_attractive.size(); i++)
             {
-                x_err_integral += x_err_ * period.toSec();
-                F_attractive(i) =  -parameters_.k_d(i, i) * ( x_dot_(i) -  v_limited * x_dot_d(i) ); //+        parameters_.k_i(i,i)*x_err_integral(i);
+                // x_err_integral += x_err_ * period.toSec();
+                F_attractive(i) =  -parameters_.k_d(i, i) * ( x_dot_(i) -  v_limited * x_dot_d(i) ) + parameters_.k_i(i,i)*x_err_integral(i);
             }
         }
         // computing b = J*M^-1*(c+g) - J_dot*q_dot
@@ -346,6 +347,9 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
         tau_(5) = (std::abs(tau_(5)) >= 38 * parameters_.max_tau_percentage ? std::copysign(38 * parameters_.max_tau_percentage, tau_(5)) : tau_(5));
         tau_(6) = (std::abs(tau_(6)) >= 38 * parameters_.max_tau_percentage ? std::copysign(38 * parameters_.max_tau_percentage, tau_(6)) : tau_(6));
 
+        // q_instatntanea = M_inv_ * (tau_.data - C_.data) * period.toSec();
+
+        // ROS_INFO_STREAM("Velocity : " << q_instatntanea.transpose() * 180.0 / M_PI);
 
         x_err_msg = diff(x_, x_des_int);
 

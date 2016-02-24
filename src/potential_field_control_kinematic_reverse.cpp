@@ -34,6 +34,8 @@ bool PotentialFieldControlKinematicReverse::init(hardware_interface::PositionJoi
     id_solver_.reset(new KDL::ChainDynParam(kdl_chain_, gravity_));
     fk_pos_solver_.reset(new KDL::ChainFkSolverPos_recursive(kdl_chain_));
     J_.resize(kdl_chain_.getNrOfJoints());
+    joint_des_states_filtered.resize(kdl_chain_.getNrOfJoints());
+    joint_des_states_old.resize(kdl_chain_.getNrOfJoints());
 
 
     F_repulsive = Eigen::Matrix<double, 6, 1>::Zero();
@@ -75,6 +77,7 @@ void PotentialFieldControlKinematicReverse::starting(const ros::Time& time)
         joint_msr_states_.q(i) = joint_handles_[i].getPosition();
         joint_msr_states_.qdot(i) = joint_handles_[i].getVelocity();
         joint_des_states_.q(i) = joint_msr_states_.q(i);
+        joint_des_states_old.qdot(i) = 0.0;
     }
 
     fk_pos_solver_->JntToCart(joint_msr_states_.q, x_des_);
@@ -259,11 +262,11 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
         }
 
 
-        Eigen::MatrixXd x_err_eigen_ = Eigen::MatrixXd::Zero(6,1);
-        x_err_eigen_ << x_err_(0),x_err_(1),x_err_(2),x_err_(3),x_err_(4),x_err_(5);
+        Eigen::MatrixXd x_err_eigen_ = Eigen::MatrixXd::Zero(6, 1);
+        x_err_eigen_ << x_err_(0), x_err_(1), x_err_(2), x_err_(3), x_err_(4), x_err_(5);
         int n_task = 2;
-        std::vector<Eigen::MatrixXd> qp(n_task + 1, Eigen::MatrixXd::Zero(7,1));
-        qp[n_task] = Eigen::MatrixXd::Zero(7,1);
+        std::vector<Eigen::MatrixXd> qp(n_task + 1, Eigen::MatrixXd::Zero(7, 1));
+        qp[n_task] = Eigen::MatrixXd::Zero(7, 1);
 
         // std::vector<Eigen::MatrixXd> P(n_task + 1, Eigen::MatrixXd::Identity(7, 7));
         std::vector<Eigen::MatrixXd> xp(n_task + 1);
@@ -273,11 +276,11 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
 
         std::vector<Eigen::MatrixXd> J(n_task + 1);
         J[0] = J_.data;
-        J[1] = Eigen::MatrixXd::Identity(7,7);
+        J[1] = Eigen::MatrixXd::Identity(7, 7);
 
         qp[1] = potentialEnergy( joint_msr_states_.q );
 
-        Eigen::MatrixXd Pp1= Eigen::MatrixXd::Identity(7, 7);
+        Eigen::MatrixXd Pp1 = Eigen::MatrixXd::Identity(7, 7);
         for (int i = n_task - 1 ; i >= 0; i--)
         {
             Eigen::MatrixXd JkPkp_pseudo;
@@ -287,19 +290,37 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
 
 
         // ROS_INFO_STREAM(qp[1].transpose());
+
+
         for (int i = 0; i < 7; i++)
         {
+            joint_des_states_.qdot(i) = 0.0;
             joint_des_states_.qdot(i) +=  qp[0](i);
+
+        }
+
+        for (int i = 0; i < 7; i++)
+        {
+
+            // joint_des_states_filtered.qdot(i) =  filters::exponentialSmoothing(joint_des_states_.qdot(i), joint_des_states_old.qdot(i), 0.5);
+            joint_des_states_filtered.qdot(i) = joint_des_states_.qdot(i);
+            joint_des_states_old.qdot(i) = joint_des_states_filtered.qdot(i);
         }
 
         if (parameters_.enable_obstacle_avoidance)
         {
             for (int i = 0; i < 7; i++)
             {
-                joint_des_states_.qdot(i) += vel_repulsive.data[i] ;
+                joint_des_states_filtered.qdot(i) += vel_repulsive.data[i] ;
             }
             // ROS_INFO_STREAM(vel_repulsive.data.transpose());
         }
+
+
+/// filter
+
+
+        // ROS_INFO_STREAM(vel_repulsive.data.transpose());
 
         x_err_msg = diff(x_, x_des_int);
 
@@ -307,7 +328,7 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
 
         for (unsigned int i = 0; i < joint_handles_.size(); i++)
         {
-            joint_des_states_.q(i) += period.toSec() * joint_des_states_.qdot(i);
+            joint_des_states_.q(i) += period.toSec() * joint_des_states_filtered.qdot(i);
         }
 
     }
@@ -511,7 +532,7 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveF
     Eigen::Vector3d distance_der_partial(0, 0, 1);
 
     if (distance_local <= parameters_.pf_dist_to_table )
-    {   
+    {
         force_local_object = GetFIRAS(distance_local, distance_der_partial, parameters_.pf_dist_to_table);
     }
 
@@ -810,50 +831,50 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::MaxZYDistance
         }
 
     }
-    
-        index = 1;
 
-        for (unsigned int i = 0; i < parameters_.pf_list_of_links.size() - 1; ++i)
+    index = 1;
+
+    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size() - 1; ++i)
+    {
+        KDL::Frame T;
+        const unsigned int numJoints = parameters_.pf_list_of_chains[i].getNrOfJoints();
+        KDL::JntArray q_local( numJoints );
+
+        for (unsigned j = 0; j < numJoints; ++j)
         {
-            KDL::Frame T;
-            const unsigned int numJoints = parameters_.pf_list_of_chains[i].getNrOfJoints();
-            KDL::JntArray q_local( numJoints );
-
-            for (unsigned j = 0; j < numJoints; ++j)
-            {
-                q_local(j) = q(j);
-            }
-            parameters_.pf_list_of_fk[i].JntToCart(q_local, T);
-
-            cost = T.p.data[index] * T.p.data[index];
-
-            KDL::Jacobian jac_local;
-            jac_local.resize( numJoints );
-            Eigen::Matrix<double, 1, 7> jac_local_eigen = Eigen::Matrix<double, 1, 7>::Zero();
-            jac_local_eigen.block(0, 0, 1, numJoints) = jac_local.data.block(index, 0, 1, numJoints);
-
-            Eigen::MatrixXd jac_pseudo_local_eigen;
-
-            pseudo_inverse(jac_local_eigen, jac_pseudo_local_eigen);
-
-            for (unsigned l = 0; l < 7; ++l)
-            {
-                if ( std::isnan( jac_pseudo_local_eigen(l)) )
-                {
-                    jac_pseudo_local_eigen = Eigen::Matrix<double, 7, 1>::Zero();
-                }
-            }
-
-            if ( T.p.data[index] > 0)
-            {
-                potential += jac_pseudo_local_eigen * cost;
-            }
-            else
-            {
-                potential -= jac_pseudo_local_eigen * cost;
-            }
-
+            q_local(j) = q(j);
         }
+        parameters_.pf_list_of_fk[i].JntToCart(q_local, T);
+
+        cost = T.p.data[index] * T.p.data[index];
+
+        KDL::Jacobian jac_local;
+        jac_local.resize( numJoints );
+        Eigen::Matrix<double, 1, 7> jac_local_eigen = Eigen::Matrix<double, 1, 7>::Zero();
+        jac_local_eigen.block(0, 0, 1, numJoints) = jac_local.data.block(index, 0, 1, numJoints);
+
+        Eigen::MatrixXd jac_pseudo_local_eigen;
+
+        pseudo_inverse(jac_local_eigen, jac_pseudo_local_eigen);
+
+        for (unsigned l = 0; l < 7; ++l)
+        {
+            if ( std::isnan( jac_pseudo_local_eigen(l)) )
+            {
+                jac_pseudo_local_eigen = Eigen::Matrix<double, 7, 1>::Zero();
+            }
+        }
+
+        if ( T.p.data[index] > 0)
+        {
+            potential += jac_pseudo_local_eigen * cost;
+        }
+        else
+        {
+            potential -= jac_pseudo_local_eigen * cost;
+        }
+
+    }
 
     return -parameters_.gain_null_space * potential;
 
