@@ -188,9 +188,9 @@
         </group>
 
         <!-- load the controllers in current namespace -->
-        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="joint_state_controller joint_trajectory_controller"/>
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="joint_state_controller PotentialFieldControlKinematicReverse"/>
 
-        <node name="controller_stopper" pkg="controller_manager" type="spawner" args="--stopped  PotentialFieldControl" output="screen"/>
+        <node name="controller_stopper" pkg="controller_manager" type="spawner" args="--stopped PotentialFieldControlKinematic PotentialFieldControl joint_trajectory_controller" output="screen"/>
     </group>
 
     <group ns="right_hand">

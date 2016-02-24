@@ -106,7 +106,7 @@ add_dependencies(fit_geometries ${PROJECT_NAME}_gencpp)
 target_link_libraries(fit_geometries ${catkin_LIBRARIES}  ${PCL_LIBRARIES} )
 
 
-add_library(${PROJECT_NAME} src/potential_field_control.cpp)
+add_library(${PROJECT_NAME} src/potential_field_control.cpp src/potential_field_control_kinematic.cpp src/potential_field_control_kinematic_reverse.cpp)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
@@ -130,6 +130,10 @@ target_link_libraries(test_simulated_references ${catkin_LIBRARIES} kdl_parser $
 add_executable(test_parse_list_yaml src/test_parse_list_yaml.cpp)
 add_dependencies(test_parse_list_yaml test_parse_list_yaml_gencpp ${PROJECT_NAME})
 target_link_libraries(test_parse_list_yaml ${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
+
+add_executable(init_robots src/init_robots.cpp)
+add_dependencies(init_robots init_robots_gencpp ${PROJECT_NAME})
+target_link_libraries(init_robots ${PROJECT_NAME} ${catkin_LIBRARIES})
 
 
 

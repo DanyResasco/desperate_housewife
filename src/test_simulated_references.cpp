@@ -17,7 +17,7 @@ class SimulatedReferences
 public:
   SimulatedReferences( ros::NodeHandle n_in){
     n = n_in;
-    n.param<std::string>("/reference_simulated_topic", reference_simulated_topic, "/right_arm/PotentialFieldControl/command");
+    n.param<std::string>("/reference_simulated_topic", reference_simulated_topic, "/right_arm/PotentialFieldControlKinematicReverse/command");
     pose_publisher = n.advertise< desperate_housewife::handPoseSingle >(reference_simulated_topic.c_str(), 100);
     ROS_INFO("Publishing references in: %s", reference_simulated_topic.c_str());
   };
@@ -53,12 +53,12 @@ void SimulatedReferences::goHome()
   // reference.obj = 0;
 
   double roll,pitch,yaw;
-  n.param<double>("/home_pose/x", reference.pose.position.x, -0.75022);
-  n.param<double>("/home_pose/y",  reference.pose.position.y,  0.47078);
-  n.param<double>("/home_pose/z", reference.pose.position.z, 0.74494);
-  n.param<double>("/home_pose/A_yaw", yaw,  0.334);
-  n.param<double>("/home_pose/B_pitch", pitch, -0.08650);
-  n.param<double>("/home_pose/C_roll", roll, -0.5108);
+  n.param<double>("/home/right_arm_position_x", reference.pose.position.x, -0.75022);
+  n.param<double>("/home/right_arm_position_y",  reference.pose.position.y,  0.47078);
+  n.param<double>("/home/right_arm_position_z", reference.pose.position.z, 0.74494);
+  n.param<double>("/home/right_arm_A_yaw", yaw,  0.334);
+  n.param<double>("/home/right_arm_B_pitch", pitch, -0.08650);
+  n.param<double>("/home/right_arm_C_roll", roll, -0.5108);
   KDL::Rotation Rot_matrix_r = KDL::Rotation::RPY(roll,pitch,yaw);
 
   Rot_matrix_r.GetQuaternion(reference.pose.orientation.x, reference.pose.orientation.y,

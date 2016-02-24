@@ -7,4 +7,17 @@
     </description>
   </class>
 
+  <class name="desperate_housewife/PotentialFieldControlKinematic" type="desperate_housewife::PotentialFieldControlKinematic" base_class_type="controller_interface::ControllerBase">
+    <description>
+      This is in implementation of potential field controller (Khatib)
+    </description>
+  </class>
+
+  <class name="desperate_housewife/PotentialFieldControlKinematicReverse" type="desperate_housewife::PotentialFieldControlKinematicReverse" base_class_type="controller_interface::ControllerBase">
+    <description>
+      This is in implementation of potential field controller (Khatib)
+    </description>
+  </class>
+
+
   </library>
