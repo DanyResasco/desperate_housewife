@@ -63,7 +63,7 @@ bool PotentialFieldControlKinematic::init(hardware_interface::PositionJointInter
     srv_start_controller = nh_.advertiseService("load_parameters", &PotentialFieldControlKinematic::loadParametersCallback, this);
 
     error_id.id = 10000;
-    error_id.id_arm = parameters_.id_arm;
+    // error_id.id_arm = parameters_.id_arm;
     return true;
 }
 

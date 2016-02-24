@@ -71,7 +71,7 @@ bool PotentialFieldControl::init(hardware_interface::EffortJointInterface *robot
     srv_start_controller = nh_.advertiseService("load_parameters", &PotentialFieldControl::loadParametersCallback, this);
 
     error_id.id = 10000;
-    error_id.id_arm = parameters_.id_arm;
+    // error_id.id_arm = parameters_.id_arm;
     return true;
 }
 
@@ -329,8 +329,8 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
         if (parameters_.enable_null_space)
         {
             // tau_.data += N_trans_ * task_objective_function( joint_msr_states_.q );
-            tau_.data += N_trans_ * MaxZYDistance( joint_msr_states_.q );
-            // tau_.data += N_trans_ * potentialEnergy( joint_msr_states_.q );
+            // tau_.data += N_trans_ * MaxZYDistance( joint_msr_states_.q );
+            tau_.data += N_trans_ * potentialEnergy( joint_msr_states_.q );
         }
 
         // saving J_ and phi of the last iteration

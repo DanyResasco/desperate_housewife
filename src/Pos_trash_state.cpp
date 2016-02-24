@@ -79,7 +79,6 @@ void Pos_trash::Error_info_right(const desperate_housewife::Error_msg::ConstPtr&
   tf::twistMsgToKDL (error_msg->error_, temp);
 
   id_error_msgs = error_msg->id;
-  id_arm_msg = error_msg->id_arm;
   vect_error[0] = temp;
 }
 
@@ -90,7 +89,6 @@ void Pos_trash::Error_info_left(const desperate_housewife::Error_msg::ConstPtr& 
   tf::twistMsgToKDL (error_msg->error_, temp);
 
   id_error_msgs = error_msg->id;
-  id_arm_msg = error_msg->id_arm;
   vect_error[1] = temp;
 }
 

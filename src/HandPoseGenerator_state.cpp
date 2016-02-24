@@ -118,7 +118,6 @@ void HandPoseGenerator::Error_info_right(const desperate_housewife::Error_msg::C
   tf::twistMsgToKDL (error_msg->error_, e_r);
 
   id_msgs = error_msg->id;
-  id_arm_msg = error_msg->id_arm;
   vect_error[0] = e_r;
   Arm_r = true;
 }
@@ -129,7 +128,6 @@ void HandPoseGenerator::Error_info_left(const desperate_housewife::Error_msg::Co
   tf::twistMsgToKDL (error_msg->error_, e_l);
 
   id_msgs = error_msg->id;
-  id_arm_msg = error_msg->id_arm;
   vect_error[1] = e_l;
   Arm_l = true;
 }
