@@ -139,6 +139,7 @@ void sceneFilter::new_cloud_in_stream(const sensor_msgs::PointCloud2::ConstPtr& 
       nh.getParam("/scene_filter/zmax", zmax);
       nh.getParam("/scene_filter/keep_organized", keep_organized_);
       nh.getParam("/scene_filter/table_pad", table_pad_);
+      nh.getParam("/scene_filter/erase_plane", erase_plane_);
       pcl::PassThrough<pcl::PointXYZRGBA> pass;
       if (keep_organized_)
         {

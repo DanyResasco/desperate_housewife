@@ -73,7 +73,7 @@ left_arm:
     topic_desired_reference: command
     topic_obstacle: obstacles
     time_interpolation: 3
-    max_tau_percentage: 0.5
+    max_vel_percentage: 0.5
     pf_repulsive_gain: 0.3
     pf_dist_to_obstacles: 0.15
     pf_dist_to_table: 0.15
@@ -98,8 +98,8 @@ left_arm:
     tip_name: left_hand_palm_ref_link
     topic_desired_reference: command
     topic_obstacle: obstacles
-    time_interpolation: 3
-    max_tau_percentage: 0.5
+    time_interpolation: 1
+    max_vel_percentage: 0.8
     pf_repulsive_gain: 0.3
     pf_dist_to_obstacles: 0.15
     pf_dist_to_table: 0.15

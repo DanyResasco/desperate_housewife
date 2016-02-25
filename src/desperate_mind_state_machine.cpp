@@ -22,7 +22,6 @@ Desp_state_server::Desp_state_server() : aspin(1)
 {
   aspin.start();
   init();
-  // service = node.advertiseService("state_manager", &Desp_state_server::state_machine, this);
   state_pub  = node.advertise<std_msgs::String>("state_machine_change", 5);
   loop_thread = std::thread(&Desp_state_server::loop, this);
 }
@@ -61,7 +60,6 @@ void Desp_state_server::init()
     std::make_tuple( Open_Softhand        , std::make_pair(transition::home_reset, true)             , Home                     ),
     std::make_tuple( Obj_To_Removed       , std::make_pair(transition::home_reset, true)             , Open_Softhand            ),
     std::make_tuple( Trash_Position       , std::make_pair(transition::home_reset, true)             , Open_Softhand            ),
-    /*! stay in same state untill msg doesn't arrived */
   };
 
   sm.insert(Grafo);
@@ -88,7 +86,6 @@ void Desp_state_server::loop()
 
   while (current_state->get_type() != "exit_state" && ros::ok())
   {
-    //     std::cout<<current_state->get_type()<<std::endl;
     current_state->run();
     usleep(5000); /*wait*/
 
@@ -124,7 +121,6 @@ void Desp_state_server::join()
 void Desp_state_server::reset()
 {
   std::map<state<transition>*, bool> deleted;
-  // data.reset();
   for (auto line : Grafo)
   {
     if (deleted.count(std::get<0>(line)))
@@ -139,29 +135,9 @@ void Desp_state_server::reset()
   init();
 }
 
-// bool Desp_state_server::state_manager()
-// {
-//     res.ack=true;
-
-//     // to force transitions
-
-//     if(req.command == "reset") reset();
-
-//     if(req.command == "Wait_Closed_Softhand") transition_map[transition::Wait_Closed_Softhand]=true;
-//     else if(req.command == "Wait_Open_Softhand") transition_map[transition::Wait_Open_Softhand]=true;
-//     else if(req.command == "Error_arrived") transition_map[transition::Error_arrived]=true;
-//     else if(req.command == "Grasp_Obj") transition_map[transition::Grasp_Obj]=true;
-//     else if(req.command == "Removed_Obj") transition_map[transition::Removed_Obj]=true;
-//     else if(req.command == "Overtune_table") transition_map[transition::Overtune_table]=true;
-
-//     else res.ack = false;
-
-//     return true;
-// }
 
 Desp_state_server::~Desp_state_server()
 {
   current_state = new exit_state(data);
   if (loop_thread.joinable()) join();
 }
-

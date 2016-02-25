@@ -138,7 +138,6 @@ target_link_libraries(init_robots ${PROJECT_NAME} ${catkin_LIBRARIES})
 
 
 SET( STATES_FILES
-# src/Grasp_obj_state.cpp
 src/Home_State_grafo.cpp
 src/Pos_trash_state.cpp
 src/SoftHand_close_state.cpp
@@ -148,7 +147,7 @@ src/Wait_msg_state.cpp
 src/Remove_obj_state.cpp
 src/Overtune_state.cpp
 src/HandPoseGenerator_state.cpp
-src/steady_state.cpp
+src/Steady_state.cpp
 )
 
 add_executable(test_grafo ${STATES_FILES} src/desperate_mind_state_machine.cpp src/main_grafo.cpp)

@@ -2,8 +2,8 @@
 
 SoftHand_close::SoftHand_close(const shared& m): data(m)
 {
-  // this->type=type;
 
+  /*reads the softhand information*/
   nh.param<std::string>("/right_hand/joint_states", hand_joint_position_r, "/right_hand/joint_states");
   hand_info_right = nh.subscribe(hand_joint_position_r.c_str(), 1, &SoftHand_close::HandInforRight, this);
 
@@ -16,6 +16,7 @@ SoftHand_close::SoftHand_close(const shared& m): data(m)
 
   index_sh = use_sh_sim == false ? 0 : 28;
 
+  /*send a command for closing the softhand*/
   nh.param<std::string>("/right_hand/joint_trajectory_controller/command", hand_close_right, "/right_hand/joint_trajectory_controller/command");
   hand_publisher_right = nh.advertise<trajectory_msgs::JointTrajectory>(hand_close_right.c_str(), 1000);
 
@@ -26,8 +27,9 @@ SoftHand_close::SoftHand_close(const shared& m): data(m)
   overtune_state = 0;
   home_reset = false;
 
-    srv_reset = nh.subscribe("/reset",1, &SoftHand_close::resetCallBack, this);
-  // srv_reset = nh.advertiseService("/reset", &SoftHand_close::resetCallBack, this);
+  /*to stop*/
+  srv_reset = nh.subscribe("/reset",1, &SoftHand_close::resetCallBack, this);
+
 }
 
 
