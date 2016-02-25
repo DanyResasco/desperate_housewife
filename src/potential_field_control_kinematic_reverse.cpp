@@ -55,7 +55,8 @@ bool PotentialFieldControlKinematicReverse::init(hardware_interface::PositionJoi
 
     pub_error = nh_.advertise<std_msgs::Float64MultiArray>("error", 1000);
     pub_error_id = nh_.advertise<desperate_housewife::Error_msg>("error_id", 1000);
-    pub_tau = nh_.advertise<std_msgs::Float64MultiArray>("q_commad", 1000);
+    pub_q = nh_.advertise<std_msgs::Float64MultiArray>("q_commad", 1000);
+    pub_qp = nh_.advertise<std_msgs::Float64MultiArray>("qp_commad", 1000);
     pub_pf_attractive_force = nh_.advertise<std_msgs::Float64MultiArray>("F_attractive", 1000);
     pub_pf_repulsive_forse = nh_.advertise<std_msgs::Float64MultiArray>("F_repulsive", 1000);
     pub_pf_total_force = nh_.advertise<std_msgs::Float64MultiArray>("F_total", 1000);
@@ -94,6 +95,7 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
 {
 
     std_msgs::Float64MultiArray q_msg;
+    std_msgs::Float64MultiArray qp_msg;
     std_msgs::Float64MultiArray F_repulsive_msg;
     std_msgs::Float64MultiArray F_attractive_msg;
     std_msgs::Float64MultiArray F_total_msg;
@@ -318,7 +320,31 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
         }
 
 
-/// filter
+//// Saturaion of velocities
+
+        const double deg2rad = M_PI  / 180.0;
+
+        joint_des_states_filtered.qdot(0) = (std::abs(joint_des_states_filtered.qdot(0)) >= 110.0 * deg2rad * parameters_.max_vel_percentage ? 
+                                            std::copysign(110.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(0)) 
+                                            : joint_des_states_filtered.qdot(0));
+        joint_des_states_filtered.qdot(1) = (std::abs(joint_des_states_filtered.qdot(1)) >= 110.0 * deg2rad * parameters_.max_vel_percentage ? 
+                                            std::copysign(110.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(1)) 
+                                            : joint_des_states_filtered.qdot(1));
+        joint_des_states_filtered.qdot(2) = (std::abs(joint_des_states_filtered.qdot(2)) >= 128.0 * deg2rad * parameters_.max_vel_percentage ? 
+                                            std::copysign(128.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(2)) 
+                                            : joint_des_states_filtered.qdot(2));
+        joint_des_states_filtered.qdot(3) = (std::abs(joint_des_states_filtered.qdot(3)) >= 128.0 * deg2rad * parameters_.max_vel_percentage ? 
+                                            std::copysign(128.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(3)) 
+                                            : joint_des_states_filtered.qdot(3));
+        joint_des_states_filtered.qdot(4) = (std::abs(joint_des_states_filtered.qdot(4)) >= 204.0 * deg2rad * parameters_.max_vel_percentage ? 
+                                            std::copysign(204.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(4)) 
+                                            : joint_des_states_filtered.qdot(4));
+        joint_des_states_filtered.qdot(5) = (std::abs(joint_des_states_filtered.qdot(5)) >= 184.0 * deg2rad * parameters_.max_vel_percentage ? 
+                                            std::copysign(184.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(5)) 
+                                            : joint_des_states_filtered.qdot(5));
+        joint_des_states_filtered.qdot(6) = (std::abs(joint_des_states_filtered.qdot(6)) >= 184.0 * deg2rad * parameters_.max_vel_percentage ? 
+                                            std::copysign(184.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(6)) 
+                                            : joint_des_states_filtered.qdot(6));
 
 
         // ROS_INFO_STREAM(vel_repulsive.data.transpose());
@@ -348,6 +374,7 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
     {
         joint_handles_[i].setCommand(joint_des_states_.q(i));
         q_msg.data.push_back(joint_des_states_.q(i));
+        qp_msg.data.push_back(joint_des_states_filtered.qdot(i));
     }
 
 
@@ -355,7 +382,8 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
     pub_pf_attractive_force.publish(F_attractive_msg);
     pub_pf_total_force.publish(F_total_msg);
     pub_error.publish(err_msg);
-    pub_tau.publish(q_msg);
+    pub_q.publish(q_msg);
+    pub_qp.publish(qp_msg);
 
     ros::spinOnce();
 }
@@ -619,7 +647,7 @@ void PotentialFieldControlKinematicReverse::load_parameters(ros::NodeHandle &n)
     nh_.param<std::string>("root_name", parameters_.root_name, "world");
     nh_.param<std::string>("topic_desired_reference", topic_desired_reference, "command");
     nh_.param<double>("time_interpolation", parameters_.max_time_interpolation, 1);
-    nh_.param<double>("max_tau_percentage", parameters_.max_tau_percentage, 0.5);
+    nh_.param<double>("max_vel_percentage", parameters_.max_vel_percentage, 0.5);
     nh_.param<double>("pf_repulsive_gain", parameters_.pf_repulsive_gain , 1);
     nh_.param<double>("pf_dist_to_obstacles", parameters_.pf_dist_to_obstacles , 1);
     nh_.param<double>("pf_dist_to_table", parameters_.pf_dist_to_table , 1);
@@ -637,7 +665,7 @@ void PotentialFieldControlKinematicReverse::load_parameters(ros::NodeHandle &n)
     ROS_INFO("link_tip_name: %s", parameters_.tip_name.c_str());
     ROS_INFO("link_root_name: %s", parameters_.root_name.c_str());
     ROS_INFO("time_interpolation: %f", parameters_.max_time_interpolation);
-    ROS_INFO("max_tua_percentage: %f", parameters_.max_tau_percentage);
+    ROS_INFO("max_vel_percentage: %f", parameters_.max_vel_percentage);
     ROS_INFO("pf_repulsive_gain: %f", parameters_.pf_repulsive_gain);
     ROS_INFO("pf_dist_to_obstacles: %f", parameters_.pf_dist_to_obstacles);
     ROS_INFO("pf_dist_to_table: %f", parameters_.pf_dist_to_table);

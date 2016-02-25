@@ -130,7 +130,7 @@ private:
 		Eigen::Matrix<double, 6, 6> k_i;
 		std::string root_name, tip_name;
 		double pf_dist_to_obstacles, pf_dist_to_table, pf_repulsive_gain;
-		double max_time_interpolation, max_tau_percentage, vel_limit_robot, gain_null_space;
+		double max_time_interpolation, max_vel_percentage, vel_limit_robot, gain_null_space;
 		std::vector<std::string> pf_list_of_links;
 		std::vector<KDL::Chain> pf_list_of_chains;
 		std::vector<KDL::ChainFkSolverPos_recursive> pf_list_of_fk;
@@ -140,7 +140,7 @@ private:
 	} parameters_;
 
 	std::string  topic_obstacle_avoidance, topic_desired_reference;
-	ros::Publisher pub_error, pub_tau, pub_pf_repulsive_forse, pub_pf_attractive_force, pub_pf_total_force, pub_total_wrench;
+	ros::Publisher pub_error, pub_q, pub_qp, pub_pf_repulsive_forse, pub_pf_attractive_force, pub_pf_total_force, pub_total_wrench;
 	ros::Subscriber sub_command, sub_obstacles, sub_start_controller;
 	ros::ServiceServer srv_start_controller;
 
