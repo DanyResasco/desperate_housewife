@@ -6,6 +6,8 @@ Removed_moves::Removed_moves(const shared& m):data(m)
   nh.param<std::string>("/left_arm/controller", control_topic_left, "PotentialFieldControl");
 
   // nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
+   error_topic_right = "/right_arm/" + control_topic_right + "/error_id";
+  error_topic_left = "/left_arm/" + control_topic_left + "/error_id";
   error_sub_right = nh.subscribe(error_topic_right.c_str(), 1, &Removed_moves::Error_info_right, this);
 
   // nh.param<std::string>("/left_arm/PotentialFieldControl/error_id", error_topic_left, "/left_arm/PotentialFieldControl/error_id");
@@ -115,7 +117,6 @@ void Removed_moves::run()
         if((id_class != id_error_msgs_r) && IsEqual(e_))
           {
             RemObjRight();
-
           }
         else if((id_class = id_error_msgs_r) && IsEqual(e_))
           {
