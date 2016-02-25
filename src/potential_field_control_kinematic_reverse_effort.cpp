@@ -1,4 +1,4 @@
-#include <potential_field_control_kinematic_reverse.h>
+#include <potential_field_control_kinematic_reverse_effort.h>
 #include <utils/pseudo_inversion.h>
 #include <utils/skew_symmetric.h>
 #include <ros/node_handle.h>
@@ -16,12 +16,12 @@
 
 namespace desperate_housewife
 {
-PotentialFieldControlKinematicReverse::PotentialFieldControlKinematicReverse() {}
-PotentialFieldControlKinematicReverse::~PotentialFieldControlKinematicReverse() {}
+PotentialFieldControlKinematicReverseEffort::PotentialFieldControlKinematicReverseEffort() {}
+PotentialFieldControlKinematicReverseEffort::~PotentialFieldControlKinematicReverseEffort() {}
 
-bool PotentialFieldControlKinematicReverse::init(hardware_interface::PositionJointInterface *robot, ros::NodeHandle &n)
+bool PotentialFieldControlKinematicReverseEffort::init(hardware_interface::EffortJointInterface *robot, ros::NodeHandle &n)
 {
-    KinematicChainControllerBase<hardware_interface::PositionJointInterface>::init(robot, n);
+    KinematicChainControllerBase<hardware_interface::EffortJointInterface>::init(robot, n);
     ROS_INFO("Starting controller");
     ROS_WARN("Number of segments: %d", kdl_chain_.getNrOfSegments());
 
@@ -44,12 +44,12 @@ bool PotentialFieldControlKinematicReverse::init(hardware_interface::PositionJoi
 
 
     ROS_INFO("Subscribed for desired_reference to: %s", "command");
-    sub_command = nh_.subscribe(topic_desired_reference.c_str(), 1, &PotentialFieldControlKinematicReverse::command, this);
+    sub_command = nh_.subscribe(topic_desired_reference.c_str(), 1, &PotentialFieldControlKinematicReverseEffort::command, this);
     //list of obstacles
     ROS_INFO("Subscribed for obstacle_avoidance_topic to : %s", topic_obstacle_avoidance.c_str());
-    sub_obstacles = nh_.subscribe(topic_obstacle_avoidance.c_str(), 1, &PotentialFieldControlKinematicReverse::InfoGeometry, this);
+    sub_obstacles = nh_.subscribe(topic_obstacle_avoidance.c_str(), 1, &PotentialFieldControlKinematicReverseEffort::InfoGeometry, this);
 
-    sub_start_controller = nh_.subscribe("start_controller", 1, &PotentialFieldControlKinematicReverse::startControllerCallBack, this);
+    sub_start_controller = nh_.subscribe("start_controller", 1, &PotentialFieldControlKinematicReverseEffort::startControllerCallBack, this);
 
 //callcback for setting the gains at real time
 
@@ -62,14 +62,14 @@ bool PotentialFieldControlKinematicReverse::init(hardware_interface::PositionJoi
 
     pub_total_wrench = nh_.advertise<geometry_msgs::WrenchStamped>("total_end_effector_wrench", 512);
 
-    srv_start_controller = nh_.advertiseService("load_parameters", &PotentialFieldControlKinematicReverse::loadParametersCallback, this);
+    srv_start_controller = nh_.advertiseService("load_parameters", &PotentialFieldControlKinematicReverseEffort::loadParametersCallback, this);
 
     error_id.id = 10000;
     // error_id.id_arm = parameters_.id_arm;
     return true;
 }
 
-void PotentialFieldControlKinematicReverse::starting(const ros::Time& time)
+void PotentialFieldControlKinematicReverseEffort::starting(const ros::Time& time)
 {
 
     for (unsigned int i = 0; i < joint_handles_.size(); i++)
@@ -90,7 +90,7 @@ void PotentialFieldControlKinematicReverse::starting(const ros::Time& time)
     start_controller = false;
 }
 
-void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const ros::Duration& period)
+void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, const ros::Duration& period)
 {
 
     std_msgs::Float64MultiArray q_msg;
@@ -360,7 +360,7 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
     ros::spinOnce();
 }
 
-Eigen::Matrix<double, 3, 3> PotentialFieldControlKinematicReverse::getVectorHat(Eigen::Matrix<double, 3, 1> vector_in)
+Eigen::Matrix<double, 3, 3> PotentialFieldControlKinematicReverseEffort::getVectorHat(Eigen::Matrix<double, 3, 1> vector_in)
 {
     Eigen::Matrix<double, 3, 3> vector_hat = Eigen::Matrix<double, 3, 3>::Zero();
 
@@ -370,7 +370,7 @@ Eigen::Matrix<double, 3, 3> PotentialFieldControlKinematicReverse::getVectorHat(
     return vector_hat;
 }
 
-Eigen::Matrix<double, 6, 6> PotentialFieldControlKinematicReverse::getAdjointT( KDL::Frame Frame_in)
+Eigen::Matrix<double, 6, 6> PotentialFieldControlKinematicReverseEffort::getAdjointT( KDL::Frame Frame_in)
 {
     Eigen::Matrix<double, 6, 6> Adjoint_local = Eigen::Matrix<double, 6, 6>::Zero();
     Eigen::Matrix<double, 3, 3> rotation_local(Frame_in.M.data);
@@ -383,7 +383,7 @@ Eigen::Matrix<double, 6, 6> PotentialFieldControlKinematicReverse::getAdjointT( 
     return Adjoint_local;
 }
 
-void PotentialFieldControlKinematicReverse::command(const desperate_housewife::handPoseSingle::ConstPtr& msg)
+void PotentialFieldControlKinematicReverseEffort::command(const desperate_housewife::handPoseSingle::ConstPtr& msg)
 {
 
     KDL::Frame frame_des_;
@@ -396,7 +396,7 @@ void PotentialFieldControlKinematicReverse::command(const desperate_housewife::h
 // ROS_INFO("New reference for controller");
 }
 
-void PotentialFieldControlKinematicReverse::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
+void PotentialFieldControlKinematicReverseEffort::InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg)
 {
     Object_radius.clear();
     Object_height.clear();
@@ -420,7 +420,7 @@ void PotentialFieldControlKinematicReverse::InfoGeometry(const desperate_housewi
     ROS_INFO("New environment: No of Obstacles %lu", msg->geometries.size());
 }
 
-void PotentialFieldControlKinematicReverse::PoseDesiredInterpolation(KDL::Frame frame_des_)
+void PotentialFieldControlKinematicReverseEffort::PoseDesiredInterpolation(KDL::Frame frame_des_)
 {
     if (Int == 0)
     {
@@ -454,7 +454,7 @@ void PotentialFieldControlKinematicReverse::PoseDesiredInterpolation(KDL::Frame 
     }
 }
 
-KDL::JntArray PotentialFieldControlKinematicReverse::JointLimitAvoidance(KDL::JntArray q)
+KDL::JntArray PotentialFieldControlKinematicReverseEffort::JointLimitAvoidance(KDL::JntArray q)
 {   // This function implements joint limit avoidance usung the penalty function V = \sum\limits_{i=1}^n\frac{1}{s^2} s = q_{l_1}-|q_i|
     KDL::JntArray tau_limit_avoidance(q.data.size());
     double s, potential, treshold, q_abs;
@@ -482,7 +482,7 @@ KDL::JntArray PotentialFieldControlKinematicReverse::JointLimitAvoidance(KDL::Jn
 }
 
 
-Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveForce(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height)
+Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverseEffort::GetRepulsiveForce(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height)
 {
     Eigen::Matrix<double, 6, 1> ForceAndIndex;
     ForceAndIndex =  Eigen::Matrix<double, 6, 1>::Zero();
@@ -517,7 +517,7 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveF
 // return ForceAndIndex;
 }
 
-Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveForceTable(KDL::Frame &T_in, double influence)
+Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverseEffort::GetRepulsiveForceTable(KDL::Frame &T_in, double influence)
 {
     Eigen::Matrix<double, 6, 1> force_local_object = Eigen::Matrix<double, 6, 1>::Zero();
 
@@ -543,7 +543,7 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveF
     return force_local_link;
 }
 
-Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial, double influence)
+Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverseEffort::GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial, double influence)
 {
 
     Eigen::Matrix<double, 6, 1> Force = Eigen::Matrix<double, 6, 1>::Zero();
@@ -562,7 +562,7 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetFIRAS(doub
 }
 
 
-Eigen::Vector3d PotentialFieldControlKinematicReverse::GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height)
+Eigen::Vector3d PotentialFieldControlKinematicReverseEffort::GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height)
 {
     Eigen::Matrix<double, 4, 4>  Tvo_eigen;
     Tvo_eigen = FromKdlToEigen(T_v_o);
@@ -592,7 +592,7 @@ Eigen::Vector3d PotentialFieldControlKinematicReverse::GetPartialDerivate(KDL::F
     return Der_v;
 }
 
-Eigen::Matrix<double, 4, 4>  PotentialFieldControlKinematicReverse::FromKdlToEigen(KDL::Frame &T_v_o)
+Eigen::Matrix<double, 4, 4>  PotentialFieldControlKinematicReverseEffort::FromKdlToEigen(KDL::Frame &T_v_o)
 {
     Eigen::Matrix<double, 4, 4>  Tvo_eigen;
     Tvo_eigen.row(0) << T_v_o.M.data[0], T_v_o.M.data[1], T_v_o.M.data[2], T_v_o.p.x();
@@ -602,7 +602,7 @@ Eigen::Matrix<double, 4, 4>  PotentialFieldControlKinematicReverse::FromKdlToEig
     return Tvo_eigen;
 }
 
-double PotentialFieldControlKinematicReverse::VelocityLimit(KDL::Twist x_dot_d )
+double PotentialFieldControlKinematicReverseEffort::VelocityLimit(KDL::Twist x_dot_d )
 {
 
     Eigen::Matrix<double, 3, 1> x_dot_d_local = Eigen::Matrix<double, 3, 1>::Zero();
@@ -612,7 +612,7 @@ double PotentialFieldControlKinematicReverse::VelocityLimit(KDL::Twist x_dot_d )
     return std::min(1.0, temp);
 }
 
-void PotentialFieldControlKinematicReverse::load_parameters(ros::NodeHandle &n)
+void PotentialFieldControlKinematicReverseEffort::load_parameters(ros::NodeHandle &n)
 {
     nh_.param<std::string>("topic_obstacle", topic_obstacle_avoidance, "obstacles");
     nh_.param<std::string>("tip_name", parameters_.tip_name, "end_effector");
@@ -704,7 +704,7 @@ void PotentialFieldControlKinematicReverse::load_parameters(ros::NodeHandle &n)
 }
 
 
-Eigen::MatrixXd PotentialFieldControlKinematicReverse::getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension)
+Eigen::MatrixXd PotentialFieldControlKinematicReverseEffort::getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension)
 {
     XmlRpc::XmlRpcValue my_list;
     nh_.getParam(parameter.c_str(), my_list);
@@ -718,20 +718,20 @@ Eigen::MatrixXd PotentialFieldControlKinematicReverse::getGainMatrix(std::string
     return K;
 }
 
-void PotentialFieldControlKinematicReverse::startControllerCallBack(const std_msgs::Bool::ConstPtr& msg)
+void PotentialFieldControlKinematicReverseEffort::startControllerCallBack(const std_msgs::Bool::ConstPtr& msg)
 {
     start_controller = msg->data;
     return;
 }
 
 
-bool PotentialFieldControlKinematicReverse::loadParametersCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+bool PotentialFieldControlKinematicReverseEffort::loadParametersCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
     load_parameters(nh_);
     return true;
 }
 
-Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::task_objective_function(KDL::JntArray q)
+Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverseEffort::task_objective_function(KDL::JntArray q)
 {
     double sum = 0;
     double temp;
@@ -761,7 +761,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::task_objectiv
 
 }
 
-Eigen::Matrix<double, 7, 1>  PotentialFieldControlKinematicReverse::getVelRepulsive( KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F)
+Eigen::Matrix<double, 7, 1>  PotentialFieldControlKinematicReverseEffort::getVelRepulsive( KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F)
 {
 
     KDL::Jacobian J_local;
@@ -785,7 +785,7 @@ Eigen::Matrix<double, 7, 1>  PotentialFieldControlKinematicReverse::getVelRepuls
 
 }
 
-Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::MaxZYDistance(KDL::JntArray q)
+Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverseEffort::MaxZYDistance(KDL::JntArray q)
 {
     Eigen::Matrix<double, 7, 1> potential = Eigen::Matrix<double, 7, 1>::Zero();
     double cost = 0;
@@ -882,7 +882,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::MaxZYDistance
 }
 
 
-Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::potentialEnergy(KDL::JntArray q)
+Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverseEffort::potentialEnergy(KDL::JntArray q)
 {
 
     KDL::JntArray G_local(7);
@@ -896,4 +896,4 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::potentialEner
 
 
 
-PLUGINLIB_EXPORT_CLASS(desperate_housewife::PotentialFieldControlKinematicReverse, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(desperate_housewife::PotentialFieldControlKinematicReverseEffort, controller_interface::ControllerBase)

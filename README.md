@@ -78,4 +78,4 @@ This code simulate the movements of a ball that moves within the field. For this
 
 To record a rosbag
 
-	- rosbag record -o subset  /camera/depth_registered/points /head_asus/head_asus/depth/camera_info /head_asus/head_asus/depth/image_raw /head_asus/head_asus/depth_registered/points /head_asus/head_asus/rgb/camera_info /head_asus/head_asus/rgb/image_raw /head_asus/parameter_descriptions /head_asus/parameter_updates /head_right_eye/camera_info /head_right_eye/image_raw
+	- rosbag record -o subset  /camera/depth_registered/points /head_asus/head_asus/depth/camera_info /head_asus/head_asus/depth/image_raw /head_asus/head_asus/depth_registered/points /head_asus/ ead_asus/rgb/camera_info /head_asus/head_asus/rgb/image_raw /head_asus/parameter_descriptions /head_asus/parameter_updates /head_right_eye/camera_info /head_right_eye/image_raw /head_right_eye/parameter_descriptions

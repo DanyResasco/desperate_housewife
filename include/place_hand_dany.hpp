@@ -59,15 +59,26 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   M_desired_local.col(2) << z_l, 0; /*z_cylinder*/
 
   /*takes the object on the top moved on the board*/
+
+  double DistZFull;
+  nh.param<double>("/handPose/DistZFull", DistZFull, .03 );
+  double DistZEmpty;
+  nh.param<double>("/handPose/DistZEmpty", DistZEmpty, .02 );
+  double DistZLying;
+  nh.param<double>("/handPose/DistZLying", DistZLying, .02 );
+  double DistXEmpty;
+  nh.param<double>("/handPose/DistXEmpty", DistXEmpty, .07 );
+
   if ((isLying == 0) && (isFull == 0))
   {
     Point_desired(0) = 0;
     Point_desired(1) = 0;
-    Point_desired(2) = height * 0.5 + 0.05; //0.05;
+    Point_desired(2) = height * 0.5 + DistZEmpty; //0.05;
     Point_desired(3) = 1;
 
     // ROS_INFO("cyl upright and empty");
-    double distance_softhand_obj = GetDistanceForHand(radius);
+    // double distance_softhand_obj = GetDistanceForHand(radius);
+    double distance_softhand_obj = DistXEmpty - radius;
 
     if (whichArm == 1) //left arm
     {
@@ -91,7 +102,7 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   {
     Point_desired(0) = 0;
     Point_desired(1) = 0;
-    Point_desired(2) = height * 0.5 + 0.05; //0.05;
+    Point_desired(2) = height * 0.5 + DistZFull; //0.05;
     Point_desired(3) = 1;
     // ROS_INFO("cyl upright and full");
 
@@ -106,21 +117,23 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
   {
     Point_desired(0) = T_vito_c(0, 3);
     Point_desired(1) = T_vito_c(1, 3);
-    Point_desired(2) = T_vito_c(2, 3) + radius + 0.05;
+    Point_desired(2) = T_vito_c(2, 3) + radius + DistZLying;
     Point_desired(3) = 1;
 
     ROS_DEBUG("cyl is lying");
 
     z_l = -z;
-    x_l << T_vito_c(0, 2), T_vito_c(1, 2), T_vito_c(2, 2) ;
-    y_l = z_l.cross(x_l);
+    x_l << -x.cross(z_l) ;
+    y_l = -x;
 
     T_w_h.col(0) << x_l, 0;
     T_w_h.col(1) << y_l, 0;
     T_w_h.col(2) << z_l, 0;
     T_w_h.col(3) << Point_desired;
 
-    T_w_h = T_w_h * Rot_z;
+    // T_w_h = T_w_h * Rot_z;
+
+    // ROS_INFO_STREAM("t_w_h: " << T_w_h.determinant());
   }
 
   else

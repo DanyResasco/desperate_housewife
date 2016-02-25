@@ -45,7 +45,7 @@ HandPoseGenerator::HandPoseGenerator(shared& m): data(m)
   nh.param<std::string>("/left_arm/" + control_topic_right + "/tip_name", left_hand_frame_, "left_hand_palm_ref_link");
 
   /*sends hand pose*/
-   desired_hand_pose_right_topic_ = "/right_arm/" + control_topic_right + "/command";
+  desired_hand_pose_right_topic_ = "/right_arm/" + control_topic_right + "/command";
   // std::string string_temp_right;
   // nh.param<std::string>("/right_arm/PotentialFieldControl/topic_desired_reference", string_temp_right, "command");
   // desired_hand_pose_right_topic_ = std::string("/right_arm/PotentialFieldControl/") + string_temp_right;

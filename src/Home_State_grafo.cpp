@@ -42,12 +42,12 @@ Home_state::Home_state(const shared& m):data(m)
   sub_command_start = nh.subscribe("/desperate_housewife/start_controller", 1, &Home_state::command_start, this);
 
   /*subcribe to start command for single arm*/
-  sub_start_r = nh.subscribe("/right_arm/" + control_topic_right + "/start_controller", 1, &Home_state::state_right, this);
-  sub_start_l = nh.subscribe("/left_arm/" + control_topic_left + "/start_controller", 1, &Home_state::state_left, this);
+  sub_start_r = nh.subscribe(("/right_arm/" + control_topic_right + "/start_controller").c_str(), 1, &Home_state::state_right, this);
+  sub_start_l = nh.subscribe(("/left_arm/" + control_topic_left + "/start_controller").c_str(), 1, &Home_state::state_left, this);
 
   /*publish the start to PotentialFieldContol*/
-  ros_pub_start_left = nh.advertise<std_msgs::Bool > ("/left_arm/" + control_topic_left + "/start_controller",1);
   ros_pub_start_right = nh.advertise<std_msgs::Bool > ("/right_arm/" + control_topic_right + "/start_controller",1);
+  ros_pub_start_left = nh.advertise<std_msgs::Bool > ("/left_arm/" + control_topic_left + "/start_controller",1);
 
   /*id class for msg*/
   id_class = static_cast<int>(transition_id::Vito_home);
@@ -147,6 +147,7 @@ void Home_state::command_start(const std_msgs::Bool::ConstPtr& msg)
 
 void Home_state::state_right(const std_msgs::Bool::ConstPtr& msg)
 {
+  ROS_INFO_STREAM("Message to go Home on right arm received");
   start_flag = true;
   Arm_used = 0;
 }

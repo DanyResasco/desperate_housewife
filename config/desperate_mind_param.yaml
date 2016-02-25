@@ -15,9 +15,9 @@
 
 error:
   pos:
-    x: 0.05
-    y: 0.05
-    z: 0.05
+    x: 0.03
+    y: 0.03
+    z: 0.03
   rot:
     x: 0.2
     y: 0.2
@@ -26,4 +26,9 @@ demo: 0 #  [ 0 -> Take the first graspable object avoiding obstacles, 1 -> Move/
 max_number_obj: 5
 close_hand: 0.7
 open_hand: 0.2
-SoftHandDistanceFrame: 0.10
+
+handPose:
+  DistZFull: 0.03
+  DistZEmpty: 0.02
+  DistZLying: 0.02
+  DistXEmpty: 0.07
