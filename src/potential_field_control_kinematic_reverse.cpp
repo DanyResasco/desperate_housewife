@@ -584,11 +584,13 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveF
         // T_cp_w = KDL::Frame::Identity();
         double angle_arrow =   std::atan2( V3[1], V3[0]);
         // ROS_INFO_STREAM("Angle: " << angle_arrow);
-        T_cp_w.M = T_cp_w.M * KDL::Rotation::RotZ(angle_arrow);
+        // T_cp_w.M = T_cp_w.M * KDL::Rotation::RotZ(angle_arrow);
+        T_cp_w.M = Object_pos.M * KDL::Rotation::RotZ(angle_arrow);
 
         KDL::Vector V4;
-        V4 = (V1 - V2);
-        if ( std::sqrt(V4[0]*V4[0] + V4[1]*V4[1]) >= (radius / 2.0))
+        V4 = Object_pos.M*(V1 - V2);
+
+        if ( std::sqrt(V4[0]*V4[0] + V4[1]*V4[1]) >= (radius))
         {
 
             KDL::Frame temp_frame_collision;
@@ -597,7 +599,7 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveF
             T_cp_w.p.data[2] = ClosestPoints.P2[2];
 
             temp_frame_collision = KDL::Frame::Identity();
-            temp_frame_collision.p.data[0] = radius / 2.0;
+            temp_frame_collision.p.data[0] = radius;
             T_cp_w = T_cp_w * temp_frame_collision;
 
             // DrawArrow(  V3, T_cp_w.p , 0, 0, 0 );
@@ -610,7 +612,6 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveF
         }
         else
         {
-
 
             KDL::Frame temp_frame_collision;
             T_cp_w.p.data[0] = ClosestPoints.P2[0];
@@ -626,9 +627,11 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveF
 
             double angle2 = std::atan2( V3[2], V3[1]);
             T_cp_w.M = T_cp_w.M * KDL::Rotation::RotY(-angle2);
-            normal_to_cylinder = V3;
+            // normal_to_cylinder = V3;
+            normal_to_cylinder = T_cp_w.M.UnitX();
 
         }
+        
         tf::Transform CollisionTransform;
         tf::TransformKDLToTF( T_cp_w, CollisionTransform);
         tf_desired_hand_pose.sendTransform( tf::StampedTransform( CollisionTransform, ros::Time::now(), "world", "collision_point") );
@@ -653,15 +656,16 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveF
         // T_cp_w = KDL::Frame::Identity();
         double angle_arrow =   std::atan2( V3[1], V3[0]);
         // ROS_INFO_STREAM("Angle: " << angle_arrow);
-        T_cp_w.M = T_cp_w.M * KDL::Rotation::RotZ(angle_arrow);
-        
+        // T_cp_w.M = T_cp_w.M * KDL::Rotation::RotZ(angle_arrow);
+        T_cp_w.M = Object_pos.M * KDL::Rotation::RotZ(angle_arrow);
         T_cp_w.p.data[0] = ClosestPoints.P2[0];
         T_cp_w.p.data[1] = ClosestPoints.P2[1];
         T_cp_w.p.data[2] = ClosestPoints.P2[2];
 
         KDL::Frame temp_frame_collision;
         temp_frame_collision = KDL::Frame::Identity();
-        temp_frame_collision.p.data[0] = radius / 2.0;
+        // temp_frame_collision.p.data[0] = radius / 2.0;
+        temp_frame_collision.p.data[0] = radius;
         T_cp_w = T_cp_w * temp_frame_collision;
         normal_to_cylinder = V3;
         tf::Transform CollisionTransform;

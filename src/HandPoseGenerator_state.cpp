@@ -508,7 +508,7 @@ void HandPoseGenerator::plotObstacles( desperate_housewife::fittedGeometriesArra
 
     marker_local.color.a = 1.0; // for the clearness
     // obst_name = "obstacle_" + std::to_string(i);
-    marker_local.lifetime = ros::Duration(10);
+    marker_local.lifetime = ros::Duration(100);
     tf::Transform tfGeomTRansform;
     tf::poseMsgToTF(Obstacles.geometries[i].pose, tfGeomTRansform );
     tf_geometriesTransformations_.sendTransform( tf::StampedTransform( tfGeomTRansform, ros::Time::now(), "world", "obstacle_" + std::to_string(Obstacles.geometries[i].id) ) );
