@@ -123,7 +123,7 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
     tf::twistKDLToMsg(x_err_, error_id.error_);
 
     //flag to use this code with real robot
-    Eigen::MatrixXd q_instatntanea  = Eigen::MatrixXd::Zero(7,1);
+    Eigen::MatrixXd q_instatntanea  = Eigen::MatrixXd::Zero(7, 1);
 
     KDL::Twist x_err_msg;
     x_err_msg = x_err_;
@@ -196,29 +196,26 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
         x_dot_ = J_.data * joint_msr_states_.qdot.data;
         // std::cout << x_des_ << std::endl;
         x_err_ = diff(x_, x_des_);
-        // x_err_ = diff(x_,x_now_int);
 
-        KDL::Twist x_dot_d;
-
-        x_dot_d.vel.data[0] = parameters_.k_p(0, 0) / parameters_.k_d(0, 0) * x_err_.vel.data[0];
-        x_dot_d.vel.data[1] = parameters_.k_p(1, 1) / parameters_.k_d(1, 1) * x_err_.vel.data[1];
-        x_dot_d.vel.data[2] = parameters_.k_p(2, 2) / parameters_.k_d(2, 2) * x_err_.vel.data[2];
-        x_dot_d.rot.data[0] = parameters_.k_p(3, 3) / parameters_.k_d(3, 3) * x_err_.rot.data[0];
-        x_dot_d.rot.data[1] = parameters_.k_p(4, 4) / parameters_.k_d(4, 4) * x_err_.rot.data[1];
-        x_dot_d.rot.data[2] = parameters_.k_p(5, 5) / parameters_.k_d(5, 5) * x_err_.rot.data[2];
-
-        double v_limited = VelocityLimit(x_dot_d);
-
-        //calculate the attractive filed like PID control
-        // F_attractive = Eigen::Matrix<double,6,1>::Zero();
-        x_err_integral += x_err_ * period.toSec();
 
         if (parameters_.enable_attractive_field)
         {
+            KDL::Twist x_dot_d;
+
+            x_dot_d.vel.data[0] = parameters_.k_p(0, 0) / parameters_.k_d(0, 0) * x_err_.vel.data[0];
+            x_dot_d.vel.data[1] = parameters_.k_p(1, 1) / parameters_.k_d(1, 1) * x_err_.vel.data[1];
+            x_dot_d.vel.data[2] = parameters_.k_p(2, 2) / parameters_.k_d(2, 2) * x_err_.vel.data[2];
+            x_dot_d.rot.data[0] = parameters_.k_p(3, 3) / parameters_.k_d(3, 3) * x_err_.rot.data[0];
+            x_dot_d.rot.data[1] = parameters_.k_p(4, 4) / parameters_.k_d(4, 4) * x_err_.rot.data[1];
+            x_dot_d.rot.data[2] = parameters_.k_p(5, 5) / parameters_.k_d(5, 5) * x_err_.rot.data[2];
+
+            double v_limited = VelocityLimit(x_dot_d);
+
+            x_err_integral += x_err_ * period.toSec();
             for (int i = 0; i < F_attractive.size(); i++)
             {
                 // x_err_integral += x_err_ * period.toSec();
-                F_attractive(i) =  -parameters_.k_d(i, i) * ( x_dot_(i) -  v_limited * x_dot_d(i) ) + parameters_.k_i(i,i)*x_err_integral(i);
+                F_attractive(i) =  -parameters_.k_d(i, i) * ( x_dot_(i) -  v_limited * x_dot_d(i) ) + parameters_.k_i(i, i) * x_err_integral(i);
             }
         }
         // computing b = J*M^-1*(c+g) - J_dot*q_dot
@@ -300,7 +297,7 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
             // }
             if (num_of_links_in_potential > 1.0)
             {
-                tau_repulsive.data = (1.0 / num_of_links_in_potential) * tau_repulsive.data;    
+                tau_repulsive.data = (1.0 / num_of_links_in_potential) * tau_repulsive.data;
             }
             // ROS_INFO_STREAM("Num of liks with potential: " << num_of_links_in_potential);
             tau_.data += tau_repulsive.data;
@@ -815,7 +812,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControl::MaxZYDistance(KDL::JntArray q
     double cost = 0;
 
     unsigned int index = 2;
-    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size() -1; ++i)
+    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size() - 1; ++i)
         // for (unsigned int i = 0; i < 1; ++i)
     {
         KDL::Frame T;
@@ -849,7 +846,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControl::MaxZYDistance(KDL::JntArray q
 
     index = 1;
 
-    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size() -1; ++i)
+    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size() - 1; ++i)
     {
         KDL::Frame T;
         const unsigned int numJoints = parameters_.pf_list_of_chains[i].getNrOfJoints();

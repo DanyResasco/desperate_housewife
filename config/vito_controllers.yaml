@@ -202,16 +202,15 @@ right_arm:
     tip_name: right_hand_palm_ref_link
     topic_desired_reference: command
     topic_obstacle: obstacles
-    time_interpolation: 3
-    max_vel_percentage: 0.5
-    pf_repulsive_gain: 0.3
-    pf_dist_to_obstacles: 0.15
+    time_interpolation: 2.0
+    max_vel_percentage: 0.93
+    pf_repulsive_gain_obstacles: 0.000
+    pf_repulsive_gain_table: 0.1
+    pf_dist_to_obstacles: 0.10
     pf_dist_to_table: 0.15
     vel_limit_robot: 2.0
-    k_p: [100.0, 100.0, 100.0, 100.0, 100.0, 100.0]
-    # k_d: [55.0, 55.0, 55.0, 55.0, 55.0, 55.0]
-    k_d: [15.0, 15.0, 15.0, 15.0, 15.0, 15.0]
-    # k_i: [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
+    k_p: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    k_d: [0.15, 0.15, 0.15, 0.15, 0.15, 0.15]
     k_i: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     links_with_potential_field:  ['right_arm_4_link', 'right_arm_5_link', 'right_arm_6_link', 'right_arm_7_link', 'right_hand_palm_ref_link']
     enable_joint_limits_avoidance: false
@@ -220,7 +219,6 @@ right_arm:
     enable_null_space: true
     gain_null_space: 0.2
     enable_interpolation: true
-    id_arm: 0
 
   PotentialFieldControlKinematicReverseEffort:
     type: desperate_housewife/PotentialFieldControlKinematicReverseEffort
@@ -230,15 +228,13 @@ right_arm:
     topic_obstacle: obstacles
     time_interpolation: 2.0
     max_vel_percentage: 0.93
-    # pf_repulsive_gain: 0.00025
-    pf_repulsive_gain: 0.3
+    pf_repulsive_gain_obstacles: 0.00025
+    pf_repulsive_gain_table: 0.3
     pf_dist_to_obstacles: 0.10
     pf_dist_to_table: 0.15
     vel_limit_robot: 2.0
     k_p: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-    # k_d: [55.0, 55.0, 55.0, 55.0, 55.0, 55.0]
-    k_d: [15.0, 15.0, 15.0, 15.0, 15.0, 15.0]
-    # k_i: [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
+    k_d: [0.15, 0.15, 0.15, 0.15, 0.15, 0.15]
     k_i: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     links_with_potential_field:  ['right_arm_4_link', 'right_arm_5_link', 'right_arm_6_link', 'right_arm_7_link', 'right_hand_palm_ref_link']
     enable_joint_limits_avoidance: false
@@ -247,7 +243,6 @@ right_arm:
     enable_null_space: true
     gain_null_space: 0.2
     enable_interpolation: true
-    id_arm: 0
 
   # PotentialFieldControlKinematicReverseEffort:
   #   type: desperate_housewife/PotentialFieldControlKinematicReverseEffort

@@ -56,7 +56,7 @@ public:
 	void update(const ros::Time& time, const ros::Duration& period);
 	void command(const desperate_housewife::handPoseSingle::ConstPtr& msg);
 	void load_parameters(ros::NodeHandle &n);
-	Eigen::Matrix<double, 6, 1> GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial , double influence);
+	Eigen::Matrix<double, 6, 1> GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial , double influence, double gain = 1.0);
 	Eigen::Matrix<double, 6, 1> GetRepulsiveForce(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height);
 
 
@@ -129,7 +129,7 @@ private:
 		Eigen::Matrix<double, 6, 6> k_d;
 		Eigen::Matrix<double, 6, 6> k_i;
 		std::string root_name, tip_name;
-		double pf_dist_to_obstacles, pf_dist_to_table, pf_repulsive_gain;
+		double pf_dist_to_obstacles, pf_dist_to_table, pf_repulsive_gain_obstacles, pf_repulsive_gain_table;
 		double max_time_interpolation, max_vel_percentage, vel_limit_robot, gain_null_space;
 		std::vector<std::string> pf_list_of_links;
 		std::vector<KDL::Chain> pf_list_of_chains;

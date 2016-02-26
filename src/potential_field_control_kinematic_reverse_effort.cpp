@@ -22,7 +22,7 @@ PotentialFieldControlKinematicReverseEffort::~PotentialFieldControlKinematicReve
 bool PotentialFieldControlKinematicReverseEffort::init(hardware_interface::EffortJointInterface *robot, ros::NodeHandle &n)
 {
     KinematicChainControllerBase<hardware_interface::EffortJointInterface>::init(robot, n);
-    ROS_INFO("Starting controller");
+   ROS_INFO("Starting controller");
     ROS_WARN("Number of segments: %d", kdl_chain_.getNrOfSegments());
 
     // for switch the hand_desired
@@ -224,69 +224,58 @@ void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, 
                 vel_repulsive.data = (1.0 / num_of_links_in_potential) * vel_repulsive.data;
             }
 
-            // ROS_INFO_STREAM( vel_repulsive.data.transpose() );
+            // ROS_INFO_STREAM( vel_repulsive.data );
 
         }
 
-        // F_total = (F_attractive + F_repulsive);
-
-        // Eigen::Matrix<double, 6, 1> F_to_plot  = getAdjointT( x_.Inverse() ) * (F_total);
-
-        // geometry_msgs::WrenchStamped total_repulsive_wrench_end_efector;
-        // total_repulsive_wrench_end_efector.header.frame_id = parameters_.tip_name.c_str();
-        // total_repulsive_wrench_end_efector.header.stamp = ros::Time::now();
-        // total_repulsive_wrench_end_efector.wrench.force.x = F_to_plot(0);
-        // total_repulsive_wrench_end_efector.wrench.force.y = F_to_plot(1);
-        // total_repulsive_wrench_end_efector.wrench.force.z = F_to_plot(2);
-        // total_repulsive_wrench_end_efector.wrench.torque.x = F_to_plot(3);
-        // total_repulsive_wrench_end_efector.wrench.torque.y = F_to_plot(4);
-        // total_repulsive_wrench_end_efector.wrench.torque.z = F_to_plot(5);
-        // pub_total_wrench.publish(total_repulsive_wrench_end_efector);
-
-
-
-        Eigen::MatrixXd J_pinv_n;
-        // JacobiSVD<MatrixXd>::SingularValuesType sing_vals_;
-        pseudo_inverse(J_.data, J_pinv_n);
-
-        Eigen::Matrix<double, 7, 7> N_trans_k = Eigen::Matrix<double, 7, 7>::Zero();
-        N_trans_k = (Eigen::Matrix<double, 7, 7>::Identity() - J_pinv_n * J_.data);
-        Eigen::Matrix<double, 7, 1> J_null = Eigen::Matrix<double, 7, 1>::Zero();
-        J_null =  N_trans_k * MaxZYDistance( joint_msr_states_.q );
-
-        for (int i = 0; i < J_pinv_n.rows(); i++)
+         if (parameters_.enable_attractive_field)
         {
-            joint_des_states_.qdot(i) = 0.0;
-            for (int k = 0; k < J_pinv_n.cols(); k++)
+            KDL::Twist x_dot_d;
+
+            x_dot_d.vel.data[0] = parameters_.k_p(0, 0) / parameters_.k_d(0, 0) * x_err_.vel.data[0];
+            x_dot_d.vel.data[1] = parameters_.k_p(1, 1) / parameters_.k_d(1, 1) * x_err_.vel.data[1];
+            x_dot_d.vel.data[2] = parameters_.k_p(2, 2) / parameters_.k_d(2, 2) * x_err_.vel.data[2];
+            x_dot_d.rot.data[0] = parameters_.k_p(3, 3) / parameters_.k_d(3, 3) * x_err_.rot.data[0];
+            x_dot_d.rot.data[1] = parameters_.k_p(4, 4) / parameters_.k_d(4, 4) * x_err_.rot.data[1];
+            x_dot_d.rot.data[2] = parameters_.k_p(5, 5) / parameters_.k_d(5, 5) * x_err_.rot.data[2];
+
+            double v_limited = VelocityLimit(x_dot_d);
+
+            x_err_integral += x_err_ * period.toSec();
+            for (int i = 0; i < F_attractive.size(); i++)
             {
-                joint_des_states_.qdot(i) += J_pinv_n(i, k) * x_err_(k); //removed scaling factor of .7
+                F_attractive(i) =  -parameters_.k_d(i, i) * ( x_dot_(i) -  v_limited * x_dot_d(i) ) + parameters_.k_i(i, i) * x_err_integral(i);
+                // F_attractive(i) =  parameters_.k_p(i, i) * x_err_(i);
             }
-
         }
-
 
         Eigen::MatrixXd x_err_eigen_ = Eigen::MatrixXd::Zero(6, 1);
-        x_err_eigen_ << parameters_.k_p(0,0) * x_err_(0),
-                        parameters_.k_p(1,1) * x_err_(1),
-                        parameters_.k_p(2,2) * x_err_(2),
-                        parameters_.k_p(3,3) * x_err_(3),
-                        parameters_.k_p(4,4) * x_err_(4),
-                        parameters_.k_p(5,5) * x_err_(5);
+        // x_err_eigen_ << parameters_.k_p(0, 0) * x_err_(0),
+        //              parameters_.k_p(1, 1) * x_err_(1),
+        //              parameters_.k_p(2, 2) * x_err_(2),
+        //              parameters_.k_p(3, 3) * x_err_(3),
+        //              parameters_.k_p(4, 4) * x_err_(4),
+        //              parameters_.k_p(5, 5) * x_err_(5);
+
+
+        x_err_eigen_ = F_attractive;
+
         int n_task = 2;
         std::vector<Eigen::MatrixXd> qp(n_task + 1, Eigen::MatrixXd::Zero(7, 1));
         qp[n_task] = Eigen::MatrixXd::Zero(7, 1);
 
-        // std::vector<Eigen::MatrixXd> P(n_task + 1, Eigen::MatrixXd::Identity(7, 7));
         std::vector<Eigen::MatrixXd> xp(n_task + 1);
+
+        Eigen::MatrixXd secondTask = potentialEnergy( joint_msr_states_.q );
         xp[0] = x_err_eigen_;
-        xp[1] = potentialEnergy( joint_msr_states_.q );
+        xp[1] = secondTask;
 
 
         std::vector<Eigen::MatrixXd> J(n_task + 1);
         J[0] = J_.data;
         J[1] = Eigen::MatrixXd::Identity(7, 7);
 
-        qp[1] = potentialEnergy( joint_msr_states_.q );
+        qp[1] = secondTask;
 
         Eigen::MatrixXd Pp1 = Eigen::MatrixXd::Identity(7, 7);
         for (int i = n_task - 1 ; i >= 0; i--)
@@ -321,7 +310,11 @@ void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, 
             {
                 joint_des_states_filtered.qdot(i) += vel_repulsive.data[i] ;
             }
-            // ROS_INFO_STREAM(vel_repulsive.data.transpose());
+            if ( vel_repulsive.data.norm() != 0.0 )
+            {
+                ROS_INFO_STREAM(vel_repulsive.data.transpose());    
+            }
+            
         }
 
 
@@ -329,27 +322,27 @@ void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, 
 
         const double deg2rad = M_PI  / 180.0;
 
-        joint_des_states_filtered.qdot(0) = (std::abs(joint_des_states_filtered.qdot(0)) >= 110.0 * deg2rad * parameters_.max_vel_percentage ?
-                                             std::copysign(110.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(0))
-                                             : joint_des_states_filtered.qdot(0));
-        joint_des_states_filtered.qdot(1) = (std::abs(joint_des_states_filtered.qdot(1)) >= 110.0 * deg2rad * parameters_.max_vel_percentage ?
-                                             std::copysign(110.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(1))
-                                             : joint_des_states_filtered.qdot(1));
-        joint_des_states_filtered.qdot(2) = (std::abs(joint_des_states_filtered.qdot(2)) >= 128.0 * deg2rad * parameters_.max_vel_percentage ?
-                                             std::copysign(128.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(2))
-                                             : joint_des_states_filtered.qdot(2));
-        joint_des_states_filtered.qdot(3) = (std::abs(joint_des_states_filtered.qdot(3)) >= 128.0 * deg2rad * parameters_.max_vel_percentage ?
-                                             std::copysign(128.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(3))
-                                             : joint_des_states_filtered.qdot(3));
-        joint_des_states_filtered.qdot(4) = (std::abs(joint_des_states_filtered.qdot(4)) >= 204.0 * deg2rad * parameters_.max_vel_percentage ?
-                                             std::copysign(204.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(4))
-                                             : joint_des_states_filtered.qdot(4));
-        joint_des_states_filtered.qdot(5) = (std::abs(joint_des_states_filtered.qdot(5)) >= 184.0 * deg2rad * parameters_.max_vel_percentage ?
-                                             std::copysign(184.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(5))
-                                             : joint_des_states_filtered.qdot(5));
-        joint_des_states_filtered.qdot(6) = (std::abs(joint_des_states_filtered.qdot(6)) >= 184.0 * deg2rad * parameters_.max_vel_percentage ?
-                                             std::copysign(184.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(6))
-                                             : joint_des_states_filtered.qdot(6));
+        joint_des_states_filtered.qdot(0) = (std::abs(joint_des_states_filtered.qdot(0)) >= 110.0 * deg2rad * parameters_.max_vel_percentage ? 
+                                            std::copysign(110.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(0)) 
+                                            : joint_des_states_filtered.qdot(0));
+        joint_des_states_filtered.qdot(1) = (std::abs(joint_des_states_filtered.qdot(1)) >= 110.0 * deg2rad * parameters_.max_vel_percentage ? 
+                                            std::copysign(110.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(1)) 
+                                            : joint_des_states_filtered.qdot(1));
+        joint_des_states_filtered.qdot(2) = (std::abs(joint_des_states_filtered.qdot(2)) >= 128.0 * deg2rad * parameters_.max_vel_percentage ? 
+                                            std::copysign(128.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(2)) 
+                                            : joint_des_states_filtered.qdot(2));
+        joint_des_states_filtered.qdot(3) = (std::abs(joint_des_states_filtered.qdot(3)) >= 128.0 * deg2rad * parameters_.max_vel_percentage ? 
+                                            std::copysign(128.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(3)) 
+                                            : joint_des_states_filtered.qdot(3));
+        joint_des_states_filtered.qdot(4) = (std::abs(joint_des_states_filtered.qdot(4)) >= 204.0 * deg2rad * parameters_.max_vel_percentage ? 
+                                            std::copysign(204.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(4)) 
+                                            : joint_des_states_filtered.qdot(4));
+        joint_des_states_filtered.qdot(5) = (std::abs(joint_des_states_filtered.qdot(5)) >= 184.0 * deg2rad * parameters_.max_vel_percentage ? 
+                                            std::copysign(184.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(5)) 
+                                            : joint_des_states_filtered.qdot(5));
+        joint_des_states_filtered.qdot(6) = (std::abs(joint_des_states_filtered.qdot(6)) >= 184.0 * deg2rad * parameters_.max_vel_percentage ? 
+                                            std::copysign(184.0 * deg2rad * parameters_.max_vel_percentage, joint_des_states_filtered.qdot(6)) 
+                                            : joint_des_states_filtered.qdot(6));
 
 
         // ROS_INFO_STREAM(vel_repulsive.data.transpose());
@@ -363,30 +356,7 @@ void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, 
             joint_des_states_.q(i) += period.toSec() * joint_des_states_filtered.qdot(i);
         }
 
-        joint_des_states_.q(0) = (std::abs(joint_des_states_.q(0)) >= 167.0 * deg2rad ?
-                                  std::copysign(167.0 * deg2rad, joint_des_states_.q(0))
-                                  : joint_des_states_.q(0));
-        joint_des_states_.q(1) = (std::abs(joint_des_states_.q(1)) >= 117.0 * deg2rad ?
-                                  std::copysign(117.0 * deg2rad, joint_des_states_.q(1))
-                                  : joint_des_states_.q(1));
-        joint_des_states_.q(2) = (std::abs(joint_des_states_.q(2)) >= 167.0 * deg2rad ?
-                                  std::copysign(167.0 * deg2rad, joint_des_states_.q(2))
-                                  : joint_des_states_.q(2));
-        joint_des_states_.q(3) = (std::abs(joint_des_states_.q(3)) >= 117.0 * deg2rad ?
-                                  std::copysign(117.0 * deg2rad, joint_des_states_.q(3))
-                                  : joint_des_states_.q(3));
-        joint_des_states_.q(4) = (std::abs(joint_des_states_.q(4)) >= 167.0 * deg2rad ?
-                                  std::copysign(167.0 * deg2rad, joint_des_states_.q(4))
-                                  : joint_des_states_.q(4));
-        joint_des_states_.q(5) = (std::abs(joint_des_states_.q(5)) >= 117.0 * deg2rad ?
-                                  std::copysign(117.0 * deg2rad, joint_des_states_.q(5))
-                                  : joint_des_states_.q(5));
-        joint_des_states_.q(6) = (std::abs(joint_des_states_.q(6)) >= 167.0 * deg2rad ?
-                                  std::copysign(167.0 * deg2rad, joint_des_states_.q(6))
-                                  : joint_des_states_.q(6));
-
     }
-
 
     pub_error_id.publish( error_id );
 
@@ -556,7 +526,7 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverseEffort::GetRepu
 // ROS_INFO_STREAM("There is a collision ");
 // ROS_INFO_STREAM("Distance: " << distance << "Influence: " << influence);
         Eigen::Vector3d distance_der_partial = GetPartialDerivate(Object_pos, T_in.p, radius, height);
-        ForceAndIndex = GetFIRAS(distance, distance_der_partial, influence);
+        ForceAndIndex = GetFIRAS(distance, distance_der_partial, influence, parameters_.pf_repulsive_gain_obstacles);
 // ROS_INFO_STREAM("Force: " << std::endl << ForceAndIndex);
     }
 // else
@@ -590,7 +560,7 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverseEffort::GetRepu
 
     if (distance_local <= parameters_.pf_dist_to_table )
     {
-        force_local_object = GetFIRAS(distance_local, distance_der_partial, parameters_.pf_dist_to_table);
+        force_local_object = GetFIRAS(distance_local, distance_der_partial, parameters_.pf_dist_to_table, parameters_.pf_repulsive_gain_table);
     }
 
     Eigen::Matrix<double, 6, 1> force_local_link = Eigen::Matrix<double, 6, 1>::Zero();
@@ -599,12 +569,11 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverseEffort::GetRepu
     return force_local_link;
 }
 
-Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverseEffort::GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial, double influence)
+Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverseEffort::GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial, double influence, double gain)
 {
 
     Eigen::Matrix<double, 6, 1> Force = Eigen::Matrix<double, 6, 1>::Zero();
-// double V = parameters_.pf_repulsive_gain/(min_distance * min_distance); // this works
-    double V = parameters_.pf_repulsive_gain * ( (1.0 / min_distance) -
+    double V = gain * ( (1.0 / min_distance) -
                (1.0 / influence) )  * (1.0 / (min_distance * min_distance));
     Force(0) = V * distance_der_partial[0];
     Force(1) = V * distance_der_partial[1];
@@ -676,8 +645,9 @@ void PotentialFieldControlKinematicReverseEffort::load_parameters(ros::NodeHandl
     nh_.param<std::string>("topic_desired_reference", topic_desired_reference, "command");
     nh_.param<double>("time_interpolation", parameters_.max_time_interpolation, 1);
     nh_.param<double>("max_vel_percentage", parameters_.max_vel_percentage, 0.5);
-    nh_.param<double>("pf_repulsive_gain", parameters_.pf_repulsive_gain , 1);
-    nh_.param<double>("pf_dist_to_obstacles", parameters_.pf_dist_to_obstacles , 1);
+    nh_.param<double>("pf_repulsive_gain_obstacles", parameters_.pf_repulsive_gain_obstacles , 1.0);
+    nh_.param<double>("pf_repulsive_gain_table", parameters_.pf_repulsive_gain_table , 1.0);
+    nh_.param<double>("pf_dist_to_obstacles", parameters_.pf_dist_to_obstacles , 1.0);
     nh_.param<double>("pf_dist_to_table", parameters_.pf_dist_to_table , 1);
     nh_.param<double>("vel_limit_robot", parameters_.vel_limit_robot , 0.5);
     nh_.param<double>("gain_null_space", parameters_.gain_null_space , 1.0);
@@ -694,7 +664,8 @@ void PotentialFieldControlKinematicReverseEffort::load_parameters(ros::NodeHandl
     ROS_INFO("link_root_name: %s", parameters_.root_name.c_str());
     ROS_INFO("time_interpolation: %f", parameters_.max_time_interpolation);
     ROS_INFO("max_vel_percentage: %f", parameters_.max_vel_percentage);
-    ROS_INFO("pf_repulsive_gain: %f", parameters_.pf_repulsive_gain);
+    ROS_INFO("pf_repulsive_gain_obstacles: %f", parameters_.pf_repulsive_gain_obstacles);
+    ROS_INFO("pf_repulsive_gain_table: %f", parameters_.pf_repulsive_gain_table);
     ROS_INFO("pf_dist_to_obstacles: %f", parameters_.pf_dist_to_obstacles);
     ROS_INFO("pf_dist_to_table: %f", parameters_.pf_dist_to_table);
     ROS_INFO("vel_limit_robot: %f", parameters_.vel_limit_robot);
