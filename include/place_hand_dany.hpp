@@ -287,6 +287,7 @@ void HandPoseGenerator::plotLine(int cyl_nbr , tf::StampedTransform hand_pose)
   line_list.color.g = 0.0;
   line_list.color.b = 0.0;
   line_list.color.a = 1.0;
+  line_list.lifetime = ros::Duration(2);
   geometry_msgs::Point p1;
   p1.x = 0;
   p1.y = 0;

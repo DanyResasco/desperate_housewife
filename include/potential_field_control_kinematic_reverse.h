@@ -5,6 +5,7 @@
 #include <lwr_controllers/PIDKinematicChainControllerBase.h>
 #include <desperate_housewife/handPoseSingle.h>
 #include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <std_msgs/Bool.h>
 
@@ -38,6 +39,7 @@
 
 #include <trajectory_msgs/JointTrajectory.h>
 
+#include "distance_between_lines.h"
 namespace desperate_housewife
 {
 
@@ -143,13 +145,19 @@ private:
 	ros::Publisher pub_error, pub_q, pub_qp, pub_pf_repulsive_forse, pub_pf_attractive_force, pub_pf_total_force, pub_total_wrench;
 	ros::Subscriber sub_command, sub_obstacles, sub_start_controller;
 	ros::ServiceServer srv_start_controller;
+	tf::TransformBroadcaster tf_desired_hand_pose;
 
 	ros::Publisher pub_error_id;
+	ros::Publisher collisions_lines_pub, arrows_pub;
 	desperate_housewife::Error_msg error_id;
 
 	bool start_controller;
 
 	Eigen::MatrixXd F_repulsive, F_attractive, F_total;
+
+	visualization_msgs::MarkerArray lines_total;
+	visualization_msgs::MarkerArray arrows_total;
+	int id_global;
 
 	/** Function: task_objective_function
 	* input: position
@@ -263,6 +271,11 @@ private:
 	double VelocityLimit(KDL::Twist x_dot_d );
 	Eigen::Matrix<double, 7, 1> potentialEnergy(KDL::JntArray q);
 	Eigen::Matrix<double, 4, 4>  FromKdlToEigen(KDL::Frame &T_v_o);
+	void plotline(LineCollisions::Line Line_local, float r = 0.0, float g = 1.0, float b = 0.0, int id = 0, int type = visualization_msgs::Marker::LINE_LIST);
+
+
+	Eigen::Quaterniond RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point);
+	void DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point, int K = 0, double Fmin = 0, double Fmax = 0);
 
 };
 
