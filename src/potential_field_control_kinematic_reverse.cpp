@@ -316,7 +316,7 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
             {
                 joint_des_states_filtered.qdot(i) += vel_repulsive.data[i] ;
             }
-            ROS_INFO_STREAM(vel_repulsive.data.transpose());
+            // ROS_INFO_STREAM(vel_repulsive.data.transpose());
         }
 
 
