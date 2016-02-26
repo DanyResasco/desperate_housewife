@@ -83,7 +83,7 @@ private:
 
 	// KDL::JntArray Kp_,Kd_,Ki_;	/*!gains*/
 
-	KDL::JntArray tau_;	/*!tau*/
+	KDL::JntArray tau_, tau_prev_;	/*!tau*/
 
 	KDL::JntSpaceInertiaMatrix M_;	/*! intertia matrix*/
 	KDL::JntArray C_;	/*! coriolis*/

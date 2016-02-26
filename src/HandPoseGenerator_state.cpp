@@ -16,10 +16,10 @@ HandPoseGenerator::HandPoseGenerator(shared& m): data(m)
   stream_subscriber_ = nh.subscribe(geometries_topic_.c_str(), 1, &HandPoseGenerator::HandPoseGeneratorCallback, this);
 
   /*sends obstacle informations*/
-  obstacles_topic_right = "/right_arm/" + control_topic_right + "/topic_obstacle"; 
+  obstacles_topic_right = "/right_arm/" + control_topic_right + "/obstacles"; 
   obstacles_publisher_right = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_right.c_str(), 1);
 
-  obstacles_topic_left = "/left_arm/" + control_topic_left + "/topic_obstacle";
+  obstacles_topic_left = "/left_arm/" + control_topic_left + "/obstacles";
   obstacles_publisher_left = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_left.c_str(), 1);
 
   /*sends information about the remove or grasp objects */

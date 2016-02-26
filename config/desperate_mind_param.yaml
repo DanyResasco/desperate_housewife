@@ -15,9 +15,9 @@
 
 error:
   pos:
-    x: 0.03
-    y: 0.03
-    z: 0.03
+    x: 0.02
+    y: 0.02
+    z: 0.02
   rot:
     x: 0.2
     y: 0.2
@@ -28,7 +28,7 @@ close_hand: 0.7
 open_hand: 0.2
 
 handPose:
-  DistZFull: 0.03
+  DistZFull: 0.035
   DistZEmpty: 0.02
   DistZLying: 0.02
   DistXEmpty: 0.07

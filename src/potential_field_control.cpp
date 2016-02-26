@@ -36,6 +36,7 @@ bool PotentialFieldControl::init(hardware_interface::EffortJointInterface *robot
 
     // qdot_last_.resize(kdl_chain_.getNrOfJoints());
     tau_.resize(kdl_chain_.getNrOfJoints());
+    tau_prev_.resize(kdl_chain_.getNrOfJoints());
     J_.resize(kdl_chain_.getNrOfJoints());
     J_dot_.resize(kdl_chain_.getNrOfJoints());
     J_last_.resize(kdl_chain_.getNrOfJoints());
@@ -93,6 +94,7 @@ void PotentialFieldControl::starting(const ros::Time& time)
 
     SetToZero(x_err_integral);
     SetToZero(x_err_);
+    SetToZero(tau_prev_);
     x_err_.vel.data[0] = 10000.0;
     start_controller = false;
 }
@@ -334,6 +336,11 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
             tau_.data += N_trans_ * potentialEnergy( joint_msr_states_.q );
         }
 
+        for (unsigned int j = 0; j < joint_handles_.size(); j++)
+        {
+            tau_(j) = filters::exponentialSmoothing(tau_(j), tau_prev_(j), 0.4);
+            tau_prev_(j) = tau_(j);
+        }
         // saving J_ and phi of the last iteration
         J_last_ = J_;
         phi_last_ = phi_;

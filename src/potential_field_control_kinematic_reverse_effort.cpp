@@ -224,7 +224,7 @@ void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, 
                 vel_repulsive.data = (1.0 / num_of_links_in_potential) * vel_repulsive.data;
             }
 
-            // ROS_INFO_STREAM( vel_repulsive.data );
+            // ROS_INFO_STREAM( vel_repulsive.data.transpose() );
 
         }
 
@@ -266,7 +266,12 @@ void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, 
 
 
         Eigen::MatrixXd x_err_eigen_ = Eigen::MatrixXd::Zero(6, 1);
-        x_err_eigen_ << x_err_(0), x_err_(1), x_err_(2), x_err_(3), x_err_(4), x_err_(5);
+        x_err_eigen_ << parameters_.k_p(0,0) * x_err_(0),
+                        parameters_.k_p(1,1) * x_err_(1),
+                        parameters_.k_p(2,2) * x_err_(2),
+                        parameters_.k_p(3,3) * x_err_(3),
+                        parameters_.k_p(4,4) * x_err_(4),
+                        parameters_.k_p(5,5) * x_err_(5);
         int n_task = 2;
         std::vector<Eigen::MatrixXd> qp(n_task + 1, Eigen::MatrixXd::Zero(7, 1));
         qp[n_task] = Eigen::MatrixXd::Zero(7, 1);
@@ -358,26 +363,26 @@ void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, 
             joint_des_states_.q(i) += period.toSec() * joint_des_states_filtered.qdot(i);
         }
 
-        joint_des_states_.q(0) = (std::abs(joint_des_states_.q(0)) >= 169.0 * deg2rad ?
-                                  std::copysign(169.0 * deg2rad, joint_des_states_.q(0))
+        joint_des_states_.q(0) = (std::abs(joint_des_states_.q(0)) >= 167.0 * deg2rad ?
+                                  std::copysign(167.0 * deg2rad, joint_des_states_.q(0))
                                   : joint_des_states_.q(0));
-        joint_des_states_.q(1) = (std::abs(joint_des_states_.q(1)) >= 119.0 * deg2rad ?
-                                  std::copysign(119.0 * deg2rad, joint_des_states_.q(1))
+        joint_des_states_.q(1) = (std::abs(joint_des_states_.q(1)) >= 117.0 * deg2rad ?
+                                  std::copysign(117.0 * deg2rad, joint_des_states_.q(1))
                                   : joint_des_states_.q(1));
-        joint_des_states_.q(2) = (std::abs(joint_des_states_.q(2)) >= 169.0 * deg2rad ?
-                                  std::copysign(169.0 * deg2rad, joint_des_states_.q(2))
+        joint_des_states_.q(2) = (std::abs(joint_des_states_.q(2)) >= 167.0 * deg2rad ?
+                                  std::copysign(167.0 * deg2rad, joint_des_states_.q(2))
                                   : joint_des_states_.q(2));
-        joint_des_states_.q(3) = (std::abs(joint_des_states_.q(3)) >= 119.0 * deg2rad ?
-                                  std::copysign(119.0 * deg2rad, joint_des_states_.q(3))
+        joint_des_states_.q(3) = (std::abs(joint_des_states_.q(3)) >= 117.0 * deg2rad ?
+                                  std::copysign(117.0 * deg2rad, joint_des_states_.q(3))
                                   : joint_des_states_.q(3));
-        joint_des_states_.q(4) = (std::abs(joint_des_states_.q(4)) >= 169.0 * deg2rad ?
-                                  std::copysign(169.0 * deg2rad, joint_des_states_.q(4))
+        joint_des_states_.q(4) = (std::abs(joint_des_states_.q(4)) >= 167.0 * deg2rad ?
+                                  std::copysign(167.0 * deg2rad, joint_des_states_.q(4))
                                   : joint_des_states_.q(4));
-        joint_des_states_.q(5) = (std::abs(joint_des_states_.q(5)) >= 119.0 * deg2rad ?
-                                  std::copysign(119.0 * deg2rad, joint_des_states_.q(5))
+        joint_des_states_.q(5) = (std::abs(joint_des_states_.q(5)) >= 117.0 * deg2rad ?
+                                  std::copysign(117.0 * deg2rad, joint_des_states_.q(5))
                                   : joint_des_states_.q(5));
-        joint_des_states_.q(6) = (std::abs(joint_des_states_.q(6)) >= 169.0 * deg2rad ?
-                                  std::copysign(169.0 * deg2rad, joint_des_states_.q(6))
+        joint_des_states_.q(6) = (std::abs(joint_des_states_.q(6)) >= 167.0 * deg2rad ?
+                                  std::copysign(167.0 * deg2rad, joint_des_states_.q(6))
                                   : joint_des_states_.q(6));
 
     }
