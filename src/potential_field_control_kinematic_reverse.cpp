@@ -195,7 +195,7 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
                     // double influence_local = Object_radius[k] +  parameters_.pf_dist_to_obstacles;
                     double influence_local = parameters_.pf_dist_to_obstacles;
                     Eigen::Matrix<double, 6, 1> F_obj_local = Eigen::Matrix<double, 6, 1>::Zero();
-                    F_obj_local = GetRepulsiveForceObjects(fk_chain, influence_local, Object_position[k], Object_radius[k], Object_height[k] );
+                    F_obj_local = getRepulsiveForceObjects(fk_chain, influence_local, Object_position[k], Object_radius[k], Object_height[k] );
                     F_obj = F_obj + F_obj_local;
                     if (F_obj_local.norm() != 0.0)
                     {
@@ -210,7 +210,7 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
 
 
 
-                F_table = GetRepulsiveForceTable(fk_chain, parameters_.pf_dist_to_table );
+                F_table = getRepulsiveForceTable(fk_chain, parameters_.pf_dist_to_table );
                 if (F_table.norm() != 0.0)
                 {
                     num_of_links_in_potential = num_of_links_in_potential + 1.0;
@@ -247,7 +247,7 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
             x_dot_d.rot.data[1] = parameters_.k_p(4, 4) / parameters_.k_d(4, 4) * x_err_.rot.data[1];
             x_dot_d.rot.data[2] = parameters_.k_p(5, 5) / parameters_.k_d(5, 5) * x_err_.rot.data[2];
 
-            double v_limited = VelocityLimit(x_dot_d);
+            double v_limited = VelocityLimit(x_dot_d, parameters_.vel_limit_robot);
 
             x_err_integral += x_err_ * period.toSec();
             for (int i = 0; i < F_attractive.size(); i++)
@@ -393,56 +393,8 @@ void PotentialFieldControlKinematicReverse::InfoGeometry(const desperate_housewi
     ROS_INFO("New environment: No of Obstacles %lu", msg->geometries.size());
 }
 
-// void PotentialFieldControlKinematicReverse::PoseDesiredInterpolation(KDL::Frame frame_des_)
-// {
-//     // if (Int == 0)
-//     // {
-//     // x_des_int = frame_des_;
-//     // // x_des_ = x_des_int;
-//     // fk_pos_solver_->JntToCart(joint_msr_states_.q, x_now_int);
-//     // Int = 1;
-//     // // time for slerp interpolation
-//     // Time = 0;
-//     // time_inter = 0;
-//     // SetToZero(x_err_last);
-//     // }
 
-//     // else
-//     // {
-//     // new pose
-
-//     // }
-// }
-
-KDL::JntArray PotentialFieldControlKinematicReverse::JointLimitAvoidance(KDL::JntArray q)
-{   // This function implements joint limit avoidance usung the penalty function V = \sum\limits_{i=1}^n\frac{1}{s^2} s = q_{l_1}-|q_i|
-    KDL::JntArray tau_limit_avoidance(q.data.size());
-    double s, potential, treshold, q_abs;
-
-    for (unsigned int i = 0; i < q.data.size(); i++)
-    {
-        treshold = 5.0 * M_PI / 180.0;
-        q_abs = std::fabs(q.data[i]);
-        s = joint_limits_.max(i) - q_abs;
-
-
-        if (  s < treshold )
-        {
-            ROS_WARN("Joint limit %d", i);
-            potential = 0.5 * std::pow((1 / s - 1 / treshold), 2);
-            tau_limit_avoidance.data[i] = - parameters_.gain_null_space * KDL::sign(q.data[i]) * potential;
-        }
-        else
-        {
-            tau_limit_avoidance(i) = 0.0;
-        }
-    }
-
-    return tau_limit_avoidance;
-}
-
-
-Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveForceObjects(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height)
+Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::getRepulsiveForceObjects(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height)
 {
     Eigen::Matrix<double, 6, 1> ForceAndIndex;
     ForceAndIndex =  Eigen::Matrix<double, 6, 1>::Zero();
@@ -479,7 +431,9 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveF
     }
 
 
-    Eigen::Matrix<double, 6, 1> force_local_link = Eigen::Matrix<double, 6, 1>::Zero();
+    Eigen::Matrix<double, 6
+
+    , 1> force_local_link = Eigen::Matrix<double, 6, 1>::Zero();
     force_local_link = getAdjointT( T_in.Inverse() * Object_pos) * ForceAndIndex;
 
     tf::Transform CollisionTransform;
@@ -490,7 +444,7 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveF
 
 }
 
-Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveForceTable(KDL::Frame &T_in, double influence)
+Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::getRepulsiveForceTable(KDL::Frame &T_in, double influence)
 {
     Eigen::Matrix<double, 6, 1> force_local_object = Eigen::Matrix<double, 6, 1>::Zero();
 
@@ -533,16 +487,6 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetFIRAS(doub
     return Force;
 }
 
-
-double PotentialFieldControlKinematicReverse::VelocityLimit(KDL::Twist x_dot_d )
-{
-
-    Eigen::Matrix<double, 3, 1> x_dot_d_local = Eigen::Matrix<double, 3, 1>::Zero();
-    x_dot_d_local << x_dot_d.vel.data[0], x_dot_d.vel.data[1], x_dot_d.vel.data[2];
-    double temp = parameters_.vel_limit_robot / std::sqrt(x_dot_d_local.transpose() * x_dot_d_local);
-
-    return std::min(1.0, temp);
-}
 
 void PotentialFieldControlKinematicReverse::load_parameters(ros::NodeHandle &n)
 {
@@ -705,6 +649,32 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::potentialEner
     return parameters_.gain_null_space * G_local.data ;
 }
 
+Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::JointLimitAvoidance(KDL::JntArray q, double gain)
+{   // This function implements joint limit avoidance usung the penalty function V = \sum\limits_{i=1}^n\frac{1}{s^2} s = q_{l_1}-|q_i|
+    Eigen::Matrix<double, 7, 1> tau_limit_avoidance = Eigen::Matrix<double, 7, 1>::Zero();
+    double s, potential, treshold, q_abs;
+
+    for (unsigned int i = 0; i < q.data.size(); i++)
+    {
+        treshold = 5.0 * M_PI / 180.0;
+        q_abs = std::fabs(q.data[i]);
+        s = joint_limits_.max(i) - q_abs;
+
+
+        if (  s < treshold )
+        {
+            ROS_WARN("Joint limit %d", i);
+            potential = 0.5 * std::pow((1 / s - 1 / treshold), 2);
+            tau_limit_avoidance(i) = - gain *  KDL::sign(q.data[i]) * potential;
+        }
+        else
+        {
+            tau_limit_avoidance(i) = 0.0;
+        }
+    }
+
+    return tau_limit_avoidance;
+}
 
 
 }

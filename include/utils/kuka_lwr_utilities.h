@@ -153,6 +153,14 @@ void inline getClosestPointstoCylinder( KDL::Frame T_link_object, KDL::Frame &T_
 
 }
 
+double inline VelocityLimit(KDL::Twist x_dot_d, double limit = 1.0)
+{
+    Eigen::Matrix<double, 3, 1> x_dot_d_local = Eigen::Matrix<double, 3, 1>::Zero();
+    x_dot_d_local << x_dot_d.vel.data[0], x_dot_d.vel.data[1], x_dot_d.vel.data[2];
+    double temp = limit / std::sqrt(x_dot_d_local.transpose() * x_dot_d_local);
+
+    return std::min(1.0, temp);
+}
 
 
 

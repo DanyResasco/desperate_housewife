@@ -191,16 +191,17 @@ private:
 	*/
 	// std::pair<Eigen::Matrix<double,6,1>, double> RepulsiveWithTable(std::vector<double> distance_local_obj);
 	Eigen::Matrix<double, 6, 1> GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial , double influence, double gain = 1.0);
-	Eigen::Matrix<double, 6, 1> GetRepulsiveForceObjects(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height);
-	Eigen::Matrix<double, 7, 1> RepulsiveWithTable();
-	Eigen::Matrix<double, 7, 1> GetRepulsiveWithObstacle();
+	Eigen::Matrix<double, 6, 1> getRepulsiveForceObjects(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height);
+	Eigen::Matrix<double, 6, 1> getRepulsiveForceTable(KDL::Frame &T_in, double influence);
+
+
+	// Eigen::Matrix<double, 7, 1> JointRepulsiveWithTable();
+	// Eigen::Matrix<double, 7, 1> JointRepulsiveWithObstacle();
 	Eigen::Matrix<double, 7, 1> getVelRepulsive(KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F);
-	Eigen::Matrix<double, 6, 1> GetRepulsiveForceTable(KDL::Frame &T_in, double influence);
 	Eigen::Matrix<double, 7, 1> task_objective_function(KDL::JntArray q);
 	Eigen::Matrix<double, 7, 1> MaxZYDistance(KDL::JntArray q);
-	double VelocityLimit(KDL::Twist x_dot_d );
 	Eigen::Matrix<double, 7, 1> potentialEnergy(KDL::JntArray q);
-	KDL::JntArray JointLimitAvoidance(KDL::JntArray q);
+	Eigen::Matrix<double, 7, 1> JointLimitAvoidance(KDL::JntArray q, double gain = 1.0);
 	// Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension = 6);
 
 
