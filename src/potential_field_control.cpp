@@ -613,8 +613,8 @@ Eigen::Vector3d PotentialFieldControl::GetPartialDerivate(KDL::Frame &T_v_o, KDL
 
     Eigen::Vector3d Der_v;
     Eigen::Vector4d partial_temp;
-    // partial_temp = Tvo_eigen*distance_der_partial;
-    partial_temp = distance_der_partial;
+    partial_temp = Tvo_eigen*distance_der_partial;
+
     Der_v[0] = partial_temp[0];
     Der_v[1] = partial_temp[1];
     Der_v[2] = partial_temp[2];

@@ -58,7 +58,12 @@ public:
 	Eigen::Matrix<double, 6, 1> GetRepulsiveForce(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height);
 	// void setTreshold(double tresholdin){treshold_influence=tresholdin;}
 	// void setNi(double Niin){Ni_=Niin;}
-
+	/** Function: GetPartialDerivate
+	* input: object frame, link position, object radius and height
+	* output: object derivate
+	* Description: calculates the object derivate in cylinder frame
+	*/
+	Eigen::Vector3d GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height);
 private:
 	// ros::Subscriber sub_command_, sub_command_start;
 	// ros::Publisher pub_error_,  pub_tau_;
@@ -261,12 +266,12 @@ private:
 	*/
 	void PoseDesiredInterpolation(KDL::Frame frame_des_);
 
-	/** Function: GetPartialDerivate
-	* input: object frame, link position, object radius and height
-	* output: object derivate
-	* Description: calculates the object derivate in cylinder frame
-	*/
-	Eigen::Vector3d GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height);
+	// * Function: GetPartialDerivate
+	// * input: object frame, link position, object radius and height
+	// * output: object derivate
+	// * Description: calculates the object derivate in cylinder frame
+	
+	// Eigen::Vector3d GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height);
 
 	/** Function: GetFIRAS
 	* input: min distance, object derivate, influence of repulsive field
