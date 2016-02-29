@@ -42,10 +42,11 @@
 #include "distance_between_lines.h"
 #include "utils/kuka_lwr_utilities.h"
 #include "utils/ros_desperate_housewife_utilities.h"
+
 namespace desperate_housewife
 {
 
-static int Int(0);
+// static int Int(0);
 
 class PotentialFieldControlKinematicReverse: public controller_interface::KinematicChainControllerBase<hardware_interface::PositionJointInterface>
 {
@@ -59,9 +60,6 @@ public:
 	void starting(const ros::Time& time);
 	void update(const ros::Time& time, const ros::Duration& period);
 	void command(const desperate_housewife::handPoseSingle::ConstPtr& msg);
-	void load_parameters(ros::NodeHandle &n);
-	Eigen::Matrix<double, 6, 1> GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial , double influence, double gain = 1.0);
-	Eigen::Matrix<double, 6, 1> GetRepulsiveForceObjects(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height);
 
 
 private:
@@ -95,7 +93,7 @@ private:
 	std::vector<KDL::Frame> Object_position;
 
 	KDL::JntArrayAcc joint_des_states_filtered, joint_des_states_old;
-	
+
 
 
 	ros::Publisher pub_right_arm;
@@ -116,8 +114,8 @@ private:
 		double a;
 	} quat_curr_, quat_des_, quat_now, q_e_c_des, q_e_now;
 
-	Eigen::Matrix<double,3,3> skew_;
-		KDL::Vector v_temp_;
+	Eigen::Matrix<double, 3, 3> skew_;
+	KDL::Vector v_temp_;
 
 	tf::Quaternion quat_tf;
 	// double percentage;
@@ -180,6 +178,10 @@ private:
 	* input: desperate message with obstacle information
 	* Description: callback that save the obstacle position
 	*/
+
+	void load_parameters(ros::NodeHandle &n);
+	void startControllerCallBack(const std_msgs::Bool::ConstPtr& msg);
+	bool loadParametersCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 	void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
 
 	/** Function: RepulsiveWithTable
@@ -188,10 +190,21 @@ private:
 	* Description: this function calculates the repulsive force between robot arm and table
 	*/
 	// std::pair<Eigen::Matrix<double,6,1>, double> RepulsiveWithTable(std::vector<double> distance_local_obj);
+	Eigen::Matrix<double, 6, 1> GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial , double influence, double gain = 1.0);
+	Eigen::Matrix<double, 6, 1> GetRepulsiveForceObjects(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height);
 	Eigen::Matrix<double, 7, 1> RepulsiveWithTable();
+	Eigen::Matrix<double, 7, 1> GetRepulsiveWithObstacle();
+	Eigen::Matrix<double, 7, 1> getVelRepulsive(KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F);
+	Eigen::Matrix<double, 6, 1> GetRepulsiveForceTable(KDL::Frame &T_in, double influence);
+	Eigen::Matrix<double, 7, 1> task_objective_function(KDL::JntArray q);
+	Eigen::Matrix<double, 7, 1> MaxZYDistance(KDL::JntArray q);
+	double VelocityLimit(KDL::Twist x_dot_d );
+	Eigen::Matrix<double, 7, 1> potentialEnergy(KDL::JntArray q);
+	KDL::JntArray JointLimitAvoidance(KDL::JntArray q);
+	// Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension = 6);
 
-	Eigen::Matrix<double, 7, 1>  GetRepulsiveWithObstacle();
-	Eigen::Matrix<double, 7, 1>  getVelRepulsive(KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F);
+
+
 
 
 	/** Caalback: InfoOBj
@@ -217,7 +230,7 @@ private:
 	* input: desired pose
 	* Description: this function save the position of endeffector, desired pose, and updaes interpolate times when msg arrived
 	*/
-	void PoseDesiredInterpolation(KDL::Frame frame_des_);
+	// void PoseDesiredInterpolation(KDL::Frame frame_des_);
 
 	/** Function: GetPartialDerivate
 	* input: object frame, link position, object radius and height
@@ -260,17 +273,7 @@ private:
 	*/
 
 	// Eigen::Matrix<double, 6, 6> getAdjointT( KDL::Frame Frame_in);
-	Eigen::Matrix<double, 6, 1> GetRepulsiveForceTable(KDL::Frame &T_in, double influence);
-	KDL::JntArray JointLimitAvoidance(KDL::JntArray q);
-	// Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension = 6);
-	void startControllerCallBack(const std_msgs::Bool::ConstPtr& msg);
 
-	bool loadParametersCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
-
-	Eigen::Matrix<double, 7, 1> task_objective_function(KDL::JntArray q);
-	Eigen::Matrix<double, 7, 1> MaxZYDistance(KDL::JntArray q);
-	double VelocityLimit(KDL::Twist x_dot_d );
-	Eigen::Matrix<double, 7, 1> potentialEnergy(KDL::JntArray q);
 	// Eigen::Matrix<double, 4, 4>  FromKdlToEigen(KDL::Frame &T_v_o);
 	// void plotline(LineCollisions::Line Line_local, float r = 0.0, float g = 1.0, float b = 0.0, int id = 0, int type = visualization_msgs::Marker::LINE_LIST);
 

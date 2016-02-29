@@ -355,7 +355,23 @@ void PotentialFieldControlKinematicReverse::command(const desperate_housewife::h
 {
     KDL::Frame frame_des_;
     tf::poseMsgToKDL(msg->pose, frame_des_);
-    PoseDesiredInterpolation(frame_des_);
+
+
+    if (!Equal(frame_des_, x_des_int, 0.05))
+    {
+        // update desired frame;
+        // F_attractive_last = F_attractive;
+        x_des_int = frame_des_;
+        // update robot position
+        fk_pos_solver_->JntToCart(joint_msr_states_.q, x_now_int);
+        // time update
+        time_inter = 0;
+        Time = 0;
+        // switch_trajectory = true;
+        x_err_last = x_err_;
+        SetToZero(x_err_integral);
+    }
+
     error_id.id = msg->id;
 }
 
@@ -377,39 +393,26 @@ void PotentialFieldControlKinematicReverse::InfoGeometry(const desperate_housewi
     ROS_INFO("New environment: No of Obstacles %lu", msg->geometries.size());
 }
 
-void PotentialFieldControlKinematicReverse::PoseDesiredInterpolation(KDL::Frame frame_des_)
-{
-    // if (Int == 0)
-    // {
-        // x_des_int = frame_des_;
-        // // x_des_ = x_des_int;
-        // fk_pos_solver_->JntToCart(joint_msr_states_.q, x_now_int);
-        // Int = 1;
-        // // time for slerp interpolation
-        // Time = 0;
-        // time_inter = 0;
-        // SetToZero(x_err_last);
-    // }
+// void PotentialFieldControlKinematicReverse::PoseDesiredInterpolation(KDL::Frame frame_des_)
+// {
+//     // if (Int == 0)
+//     // {
+//     // x_des_int = frame_des_;
+//     // // x_des_ = x_des_int;
+//     // fk_pos_solver_->JntToCart(joint_msr_states_.q, x_now_int);
+//     // Int = 1;
+//     // // time for slerp interpolation
+//     // Time = 0;
+//     // time_inter = 0;
+//     // SetToZero(x_err_last);
+//     // }
 
-    // else
-    // {
-        // new pose
-        if (!Equal(frame_des_, x_des_int, 0.05))
-        {
-            // update desired frame;
-            // F_attractive_last = F_attractive;
-            x_des_int = frame_des_;
-            // update robot position
-            fk_pos_solver_->JntToCart(joint_msr_states_.q, x_now_int);
-            // time update
-            time_inter = 0;
-            Time = 0;
-            // switch_trajectory = true;
-            x_err_last = x_err_;
-            SetToZero(x_err_integral);
-        }
-    // }
-}
+//     // else
+//     // {
+//     // new pose
+
+//     // }
+// }
 
 KDL::JntArray PotentialFieldControlKinematicReverse::JointLimitAvoidance(KDL::JntArray q)
 {   // This function implements joint limit avoidance usung the penalty function V = \sum\limits_{i=1}^n\frac{1}{s^2} s = q_{l_1}-|q_i|
