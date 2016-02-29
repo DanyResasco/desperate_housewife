@@ -92,33 +92,32 @@ void sendObj::obst(const std_msgs::Float64MultiArray::ConstPtr &msg)
       fittedGeometriesSingleMsg.pose.position.x = msg->data[0+p];
       fittedGeometriesSingleMsg.pose.position.y =  msg->data[1+p];
       fittedGeometriesSingleMsg.pose.position.z = msg->data[2+p];
-
-      KDL::Rotation Rx = KDL::Rotation::RotX(-30.0*M_PI/180.0);
-
-      Eigen::Matrix3d transformation_ ;
-
-      transformation_ <<  Rx.data[0], Rx.data[1], Rx.data[2],
-                          Rx.data[3], Rx.data[4], Rx.data[5],
-                          Rx.data[6], Rx.data[7], Rx.data[8];
+      double angle = msg->data[3+p];
+      KDL::Rotation transformation_ = KDL::Rotation::RotX(angle*M_PI/180.0);
+      transformation_.GetQuaternion(fittedGeometriesSingleMsg.pose.orientation.x, fittedGeometriesSingleMsg.pose.orientation.y,
+                                 fittedGeometriesSingleMsg.pose.orientation.z, fittedGeometriesSingleMsg.pose.orientation.w );
+      // Eigen::Vector3d pos_obj(msg->data[0+p], msg->data[1+p], msg->data[2+p]);
+      // transformation_.row(0) << 1,0,0;
       // transformation_.row(1) << 0,1,0;
       // transformation_.row(2) << 0,0,1;
-      Eigen::Quaterniond quat_eigen_hand(transformation_);
-      fittedGeometriesSingleMsg.pose.orientation.x = quat_eigen_hand.x();
-      fittedGeometriesSingleMsg.pose.orientation.y = quat_eigen_hand.y();
-      fittedGeometriesSingleMsg.pose.orientation.z = quat_eigen_hand.z();
-      fittedGeometriesSingleMsg.pose.orientation.w = quat_eigen_hand.w();
+      // Eigen::Quaterniond quat_eigen_hand(transformation_);
+      // fittedGeometriesSingleMsg.pose.orientation.x = quat_eigen_hand.x();
+      // fittedGeometriesSingleMsg.pose.orientation.y = quat_eigen_hand.y();
+      // fittedGeometriesSingleMsg.pose.orientation.z = quat_eigen_hand.z();
+      // fittedGeometriesSingleMsg.pose.orientation.w = quat_eigen_hand.w();
       std::vector<double> geom_info;
-      geom_info.push_back(msg->data[3+p]);
       geom_info.push_back(msg->data[4+p]);
-      geom_radius.push_back(msg->data[3+p]);
-      geom_height.push_back(msg->data[4+p]);
+      geom_info.push_back(msg->data[5+p]);
+      geom_radius.push_back(msg->data[4+p]);
+      geom_height.push_back(msg->data[5+p]);
+
       for(unsigned int j=0; j< geom_info.size();j++)
-        {
+      {
           fittedGeometriesSingleMsg.info.push_back(geom_info[j]);
-        }
+      }
 
       fittedGeometriesArrayMsg.geometries.push_back( fittedGeometriesSingleMsg );
-      p += 5;
+      p += 6;
       KDL::Frame frame_obj;
       tf::poseMsgToKDL(fittedGeometriesSingleMsg.pose, frame_obj);
       vect_obst.push_back(frame_obj);
@@ -154,8 +153,8 @@ void sendObj::generateMarkerMessages( std::vector<KDL::Frame> &Obj_pose, std::ve
       marker.pose.orientation.z = z;
       marker.pose.orientation.w = w;
 
-      marker.scale.x = radius[i];
-      marker.scale.y = radius[i];
+      marker.scale.x = radius[i]*2;
+      marker.scale.y = radius[i]*2;
       marker.scale.z = height[i];
 
       marker.color.a = 1.0; // for the clearness

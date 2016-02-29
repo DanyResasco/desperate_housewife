@@ -62,7 +62,7 @@ To test potential field:
 
 	- roslaunch desperate_housewife test_send_obst.launch  (sends only upright cylinder)
 	
-	- To send only upright cylinder: rostopic pub  -1 /send_obst std_msgs/Float64MultiArray " data: [Pos_ost_1_x, Pos_ost_1_y, Ps_ost_1_z, radius_1, height_1, Pos_ost_2_x, Pos_ost_2_y, Pos_ost_2_z, radius_2, height_2] "
+	- To send only upright cylinder: rostopic pub  -1 /send_obst std_msgs/Float64MultiArray " data: [Pos_ost_1_x, Pos_ost_1_y, Ps_ost_1_z, angle1,radius_1, height_1, Pos_ost_2_x, Pos_ost_2_y, Pos_ost_2_z, angle2,radius_2, height_2] "
 
 	- To any tipe of cylinder sends: rostopic pub  -1 /PotentialFieldControl/obstacle_list desperate_housewife/fittedGeometriesArray 
 
