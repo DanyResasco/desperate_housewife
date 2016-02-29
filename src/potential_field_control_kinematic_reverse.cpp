@@ -534,19 +534,14 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveF
     KDL::Frame T_link_object = ( T_in.Inverse() * Object_pos ).Inverse();
 
     KDL::Frame T_CollisionPoint;
-    double distance_to_CollisionPoint = 0.0;
-    double *Ptr_distance_to_CollisionPoint = &distance_to_CollisionPoint;
+    double distance_to_CollisionPoint = 1000.0;
+    // double *Ptr_distance_to_CollisionPoint = &distance_to_CollisionPoint;
 
-    getClosestPointstoCylinder( T_link_object, T_CollisionPoint, Ptr_distance_to_CollisionPoint, radius, height);
+    getClosestPointstoCylinder( T_link_object, T_CollisionPoint, radius, height);
 
-    ROS_INFO_STREAM("distance: " <<  distance_to_CollisionPoint);
+    T_CollisionPoint = Object_pos * T_CollisionPoint;
 
-
-    // KDL::Vector distance_vector;
-    // distance_vector = T_in.p - Object_pos.p;
-    // distance = distance_vector.Norm();
-    // std::cout<<"distance: "<<distance<<std::endl;
-    // std::cout<<"influence: "<<influence<<std::endl;
+    // ROS_INFO_STREAM("distance: " <<  (T_in.p - T_CollisionPoint.p).Norm() );
 
     double distance = distance_to_CollisionPoint;
     Eigen::Vector3d Nolmal_to_Cylinder;
@@ -556,7 +551,7 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveF
     DrawArrow(  Nolmal_to_Cylinder_kdl, T_CollisionPoint.p , 0, 0, 0 );
 
     LineCollisions::Point Point1(T_in.p.x(), T_in.p.y(), T_in.p.z());
-    LineCollisions::Point Point2(T_CollisionPoint.p.x(), T_CollisionPoint.p.y(), T_CollisionPoint.p.z()); 
+    LineCollisions::Point Point2(T_CollisionPoint.p.x(), T_CollisionPoint.p.y(), T_CollisionPoint.p.z());
     LineCollisions::Line ClosestPoints(Point1, Point2);
 
     if ( distance <= influence)
@@ -1058,11 +1053,9 @@ Eigen::Quaterniond PotentialFieldControlKinematicReverse::RotationMarker(KDL::Ve
 
 }
 
-void PotentialFieldControlKinematicReverse::getClosestPointstoCylinder( KDL::Frame T_link_object, KDL::Frame &T_CollisionPoint, double *Ptr_distance_to_T_CollisionPoint, double radius, double height)
+
+void PotentialFieldControlKinematicReverse::getClosestPointstoCylinder( KDL::Frame T_link_object, KDL::Frame &T_CollisionPoint, double radius, double height)
 {
-
-
-    // double distance;
 
     LineCollisions LineCollisionsLocal;
 
@@ -1080,99 +1073,76 @@ void PotentialFieldControlKinematicReverse::getClosestPointstoCylinder( KDL::Fra
 
     KDL::Rotation Rot_to_collision_point;
     KDL::Vector collision_point;
-    
+
+    KDL::Vector V1(ClosestPoints.P1[0], ClosestPoints.P1[1], ClosestPoints.P1[2]);
+    KDL::Vector V2(ClosestPoints.P2[0], ClosestPoints.P2[1], ClosestPoints.P2[2]);
+    KDL::Vector V3;
+    V3  = (V1 - V2);
+    KDL::Frame pos_final;
+
     if ( (ClosestPoints.P2 == Point4) || (ClosestPoints.P2 == Point3) )
     {
-         ROS_INFO_STREAM("The closest point is on the cylindrical face");
-       /* // ROS_INFO_STREAM("The distance is: " << radius - distance);
-        // ROS_INFO_STREAM("Normal is: " << (ClosestPoints.P2 - ClosestPoints.P1).normalized().transpose() );
-        KDL::Vector V1(ClosestPoints.P1[0], ClosestPoints.P1[1], ClosestPoints.P1[2]);
-        KDL::Vector V2(ClosestPoints.P2[0], ClosestPoints.P2[1], ClosestPoints.P2[2]);
-        KDL::Vector V3;
-        V3  = (V1 - V2) / (V1 - V2).Norm();
 
-        // KDL::Frame T_cp_w;
-        KDL::Vector VY(1, 0, 0);
-        // T_cp_w = KDL::Frame::Identity();
-
-        // KDL::Vector VY(1, 0, 0);
-        // T_cp_w = KDL::Frame::Identity();
-        double angle_arrow =   std::atan2( V3[1], V3[0]);
-        // ROS_INFO_STREAM("Angle: " << angle_arrow);
-        // T_cp_w.M = T_cp_w.M * KDL::Rotation::RotZ(angle_arrow);
-        T_cp_w.M = Object_pos.M * KDL::Rotation::RotZ(angle_arrow);
-
-        KDL::Vector V4;
-        V4 = Object_pos.M*(V1 - V2);
-
-        if ( std::sqrt(V4[0]*V4[0] + V4[1]*V4[1]) >= (radius))
+        double pos_on_plane = KDL::Vector( (V2 - V1).data[0], (V2 - V1).data[1], 0.0 ).Norm();
+        KDL::Vector V4( V3.data[0], V3.data[1], 0.0 );
+        double angle = 0.0;
+        KDL::Vector collision_point_on_line(ClosestPoints.P2[0], ClosestPoints.P2[1], ClosestPoints.P2[2] );
+        if (pos_on_plane >= radius )
         {
 
-            KDL::Frame temp_frame_collision;
-            T_cp_w.p.data[0] = ClosestPoints.P2[0];
-            T_cp_w.p.data[1] = ClosestPoints.P2[1];
-            T_cp_w.p.data[2] = ClosestPoints.P2[2];
+            KDL::Vector Uz(V4 / V4.Norm() );
+            KDL::Vector Ux(0.0, 0.0, 1.0);
+            Rot_to_collision_point = KDL::Rotation(Ux, Uz * Ux, Uz);
+            pos_final = KDL::Frame( Rot_to_collision_point, collision_point_on_line) *
+                        KDL::Frame( KDL::Rotation::RotX(0.0), KDL::Vector( 0.0 , 0.0, radius) );
+            KDL::Vector V5;
+            V5 = (T_link_object.Inverse() * pos_final).Inverse().p;
+            V5 = V5 /  V5.Norm();
+            angle = std::atan2(V5.x(), V5.z());
+            collision_point = pos_final.p;
 
-            temp_frame_collision = KDL::Frame::Identity();
-            temp_frame_collision.p.data[0] = radius;
-            T_cp_w = T_cp_w * temp_frame_collision;
-
-            // DrawArrow(  V3, T_cp_w.p , 0, 0, 0 );
-            // ROS_INFO_STREAM("The clsest point is on the border");
-
-            double angle2 = std::atan2( V3[2], V3[1]);
-            T_cp_w.M = T_cp_w.M * KDL::Rotation::RotY(-angle2);
-            normal_to_cylinder = V3;
-
+            Rot_to_collision_point = Rot_to_collision_point * KDL::Rotation::RotY( angle );
         }
         else
         {
+            KDL::Vector Ux;
+            KDL::Vector Uz;
+            Ux = ( V4 / V4.Norm() );
+            Uz = KDL::Vector(0.0, 0.0, 1.0);
+            if ( ClosestPoints.P2 == Point4 )
+            {
+                Uz = KDL::Vector(0.0, 0.0, -1.0);
+            }
+            Rot_to_collision_point = KDL::Rotation(Ux, Uz * Ux, Uz);
+            KDL::Frame pos_final;
+            pos_final = KDL::Frame( Rot_to_collision_point, collision_point_on_line) *
+                        KDL::Frame( KDL::Rotation::RotX(0.0), KDL::Vector(pos_on_plane, 0.0, 0.0) );
+            collision_point = pos_final.p;
 
-            KDL::Frame temp_frame_collision;
-            T_cp_w.p.data[0] = ClosestPoints.P2[0];
-            T_cp_w.p.data[1] = ClosestPoints.P2[1];
-            T_cp_w.p.data[2] = ClosestPoints.P2[2];
-
-            temp_frame_collision = KDL::Frame::Identity();
-            temp_frame_collision.p.data[0] = std::sqrt(V4[0] * V4[0] + V4[1] * V4[1]);
-            T_cp_w = T_cp_w * temp_frame_collision;
-
-            // DrawArrow(  V3, T_cp_w.p , 0, 0, 0 );
-            // ROS_INFO_STREAM("The clsest point is not on the border");
-
-            double angle2 = std::atan2( V3[2], V3[1]);
-            T_cp_w.M = T_cp_w.M * KDL::Rotation::RotY(-angle2);
-            // normal_to_cylinder = V3;
-            normal_to_cylinder = T_cp_w.M.UnitX();
-
-        }*/
-        
+        }
 
     }
     else
     {
-        ROS_INFO_STREAM("Collision Point on the cylindrical face");
-        KDL::Vector V1(ClosestPoints.P1[0], ClosestPoints.P1[1], ClosestPoints.P1[2]);
-        KDL::Vector V2(ClosestPoints.P2[0], ClosestPoints.P2[1], ClosestPoints.P2[2]);
-        KDL::Vector V3;
-        V3  = (V1 - V2) / (V1 - V2).Norm();
+        // ROS_INFO_STREAM("Collision Point on the cylindrical face");
 
-        
-        KDL::Vector Uz(V3);
-        KDL::Vector Ux(0.0,0.0,1.0);
-        Rot_to_collision_point = KDL::Rotation(Ux, Uz*Ux, Uz);
-        collision_point = KDL::Vector(0.0, 0.0, radius);
+        KDL::Vector Uz(V3 / V3.Norm() );
+        KDL::Vector Ux(0.0, 0.0, 1.0);
+        Rot_to_collision_point = KDL::Rotation(Ux, Uz * Ux, Uz);
+        KDL::Vector collision_point_on_line(ClosestPoints.P2[0], ClosestPoints.P2[1], ClosestPoints.P2[2] );
+        // KDL::Frame pos_final;
+        pos_final = KDL::Frame( Rot_to_collision_point, collision_point_on_line) *
+                    KDL::Frame( KDL::Rotation::RotX(0.0), KDL::Vector(0.0, 0.0, radius) );
+        collision_point = pos_final.p;
 
     }
     T_CollisionPoint.M = Rot_to_collision_point;
-    T_CollisionPoint.p = T_CollisionPoint.M * collision_point;
+    T_CollisionPoint.p = collision_point;
     LineCollisions::Point Point5( T_CollisionPoint.p.x(), T_CollisionPoint.p.y(), T_CollisionPoint.p.x() );
-    *Ptr_distance_to_T_CollisionPoint = LineCollisions::Line(Point1, Point5).norm;
-    // *Ptr_distance_to_T_CollisionPoint = 5.0;
+
 
 
 }
-
 
 }
 

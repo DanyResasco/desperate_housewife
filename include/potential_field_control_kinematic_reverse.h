@@ -276,7 +276,7 @@ private:
 
 	Eigen::Quaterniond RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point);
 	void DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point, int K = 0, double Fmin = 0, double Fmax = 0);
-	void getClosestPointstoCylinder( KDL::Frame T_link_object, KDL::Frame &T_CollisionPoint, double *distance_to_T_CollisionPoint, double radius, double height);
+	void getClosestPointstoCylinder( KDL::Frame T_link_object, KDL::Frame &T_CollisionPoint, double radius, double height);
 
 };
 

@@ -69,10 +69,11 @@ sendObj::sendObj()
 {
   std::string control_topic_right;
   nh.param<std::string>("/right_arm/controller", control_topic_right, "PotentialFieldControl");
-  ROS_INFO_STREAM("control_topic_right: "<<control_topic_right.c_str());
+  
   sub_grid_ = nh.subscribe("send_obst", 1, &sendObj::obst, this);
 
   obstacles_topic_right = "/right_arm/" + control_topic_right + "/obstacles"; 
+  ROS_INFO_STREAM("control_topic_right: "<<obstacles_topic_right.c_str());
   geometries_publisher_ = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_right.c_str(), 1);
 
   // nh.param<std::string>("obstacles_to_pub", obstacles_topic_right, "obstacles");
