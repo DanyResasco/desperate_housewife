@@ -1,6 +1,7 @@
 
 #include "distance_between_lines.h"
 
+
 LineCollisions::Line LineCollisions::getClosestPoints(LineCollisions::
   Line line1, LineCollisions::Line line2)
 {

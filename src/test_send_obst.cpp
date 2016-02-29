@@ -92,9 +92,14 @@ void sendObj::obst(const std_msgs::Float64MultiArray::ConstPtr &msg)
       fittedGeometriesSingleMsg.pose.position.x = msg->data[0+p];
       fittedGeometriesSingleMsg.pose.position.y =  msg->data[1+p];
       fittedGeometriesSingleMsg.pose.position.z = msg->data[2+p];
-      Eigen::Matrix3d transformation_ = KDL::Rotation::RotX(30.0*M_PI/180.0);
 
-      // transformation_.row(0) << 1,0,0;
+      KDL::Rotation Rx = KDL::Rotation::RotX(-30.0*M_PI/180.0);
+
+      Eigen::Matrix3d transformation_ ;
+
+      transformation_ <<  Rx.data[0], Rx.data[1], Rx.data[2],
+                          Rx.data[3], Rx.data[4], Rx.data[5],
+                          Rx.data[6], Rx.data[7], Rx.data[8];
       // transformation_.row(1) << 0,1,0;
       // transformation_.row(2) << 0,0,1;
       Eigen::Quaterniond quat_eigen_hand(transformation_);
