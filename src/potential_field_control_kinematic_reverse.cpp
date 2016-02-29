@@ -534,16 +534,14 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveF
     KDL::Frame T_link_object = ( T_in.Inverse() * Object_pos ).Inverse();
 
     KDL::Frame T_CollisionPoint;
-    double distance_to_CollisionPoint = 1000.0;
-    // double *Ptr_distance_to_CollisionPoint = &distance_to_CollisionPoint;
 
     getClosestPointstoCylinder( T_link_object, T_CollisionPoint, radius, height);
 
     T_CollisionPoint = Object_pos * T_CollisionPoint;
 
-    // ROS_INFO_STREAM("distance: " <<  (T_in.p - T_CollisionPoint.p).Norm() );
 
-    double distance = distance_to_CollisionPoint;
+    double distance = (T_in.p - T_CollisionPoint.p).Norm();
+
     Eigen::Vector3d Nolmal_to_Cylinder;
     Nolmal_to_Cylinder << T_CollisionPoint.M.UnitZ().data[0], T_CollisionPoint.M.UnitZ().data[1], T_CollisionPoint.M.UnitZ().data[2];
 
@@ -556,26 +554,17 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetRepulsiveF
 
     if ( distance <= influence)
     {
-        // ROS_INFO_STREAM("There is a collision ");
-        // ROS_INFO_STREAM("Distance: " << distance << "Influence: " << influence);
         plotline(ClosestPoints, 1.0, 0.0, 0.0);
-        // Eigen::Vector3d Nolmal_to_Cylinder = GetPartialDerivate(Object_pos, T_in.p, radius, height);
-
         ForceAndIndex = GetFIRAS(distance, Nolmal_to_Cylinder, influence, parameters_.pf_repulsive_gain_obstacles);
     }
     else
     {
         plotline(ClosestPoints);
     }
-    // else
-    // {
-    // ROS_INFO_STREAM("There is not a collision ");
-    // ROS_INFO_STREAM("Distance: " << distance << " Influence: " << influence);
-    // }
 
-    tf::Transform CollisionTransform;
-    tf::TransformKDLToTF( T_CollisionPoint, CollisionTransform);
-    tf_desired_hand_pose.sendTransform( tf::StampedTransform( CollisionTransform, ros::Time::now(), "world", "collision_point") );
+    // tf::Transform CollisionTransform;
+    // tf::TransformKDLToTF( T_CollisionPoint, CollisionTransform);
+    // tf_desired_hand_pose.sendTransform( tf::StampedTransform( CollisionTransform, ros::Time::now(), "world", "collision_point") );
 
     Eigen::Matrix<double, 6, 1> force_local_link = Eigen::Matrix<double, 6, 1>::Zero();
     force_local_link = getAdjointT( T_in.Inverse() * Object_pos) * ForceAndIndex;
@@ -837,21 +826,15 @@ Eigen::Matrix<double, 7, 1>  PotentialFieldControlKinematicReverse::getVelRepuls
     J_local.resize(7);
     J_local.data = J.data;
 
-    // ROS_INFO_STREAM("Jin: " << J.data);
-    // ROS_INFO_STREAM("Jout: " << J_local.data);
-
     for (unsigned int i = 6; i > n_joint - 1; i--)
     {
         J_local.setColumn(i, KDL::Twist::Zero());
     }
 
-    // JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
     Eigen::MatrixXd J_pinv_n;
     pseudo_inverse(J_local.data, J_pinv_n);
 
     return J_pinv_n * F;
-    // return Eigen::Matrix<double, 7, 1>::Zero();
-
 }
 
 Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::MaxZYDistance(KDL::JntArray q)
@@ -861,7 +844,6 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::MaxZYDistance
 
     unsigned int index = 2;
     for (unsigned int i = 0; i < parameters_.pf_list_of_links.size() - 1; ++i)
-// for (unsigned int i = 0; i < 1; ++i)
     {
         KDL::Frame T;
         const unsigned int numJoints = parameters_.pf_list_of_chains[i].getNrOfJoints();
@@ -947,22 +929,18 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::MaxZYDistance
     }
 
     return -parameters_.gain_null_space * potential;
-
 }
 
 
 Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::potentialEnergy(KDL::JntArray q)
 {
-
     KDL::JntArray G_local(7);
     id_solver_->JntToGravity(joint_msr_states_.q, G_local);
 
     return parameters_.gain_null_space * G_local.data ;
-
 }
 
 void PotentialFieldControlKinematicReverse::plotline(LineCollisions::Line Line_local, float r, float g, float b, int id, int type)
-// (LineCollisions::Line Line_local, float r = 1.0, float g = 1.0, float b = 1.0, int id = 0, int type = visualization_msgs::Marker::LINE_LIST)
 {
     visualization_msgs::Marker line_list;
     line_list.header.frame_id = "world";
@@ -1050,7 +1028,6 @@ Eigen::Quaterniond PotentialFieldControlKinematicReverse::RotationMarker(KDL::Ve
     Eigen::Quaterniond quat_eigen_hand(transformation_);
 
     return quat_eigen_hand.normalized();
-
 }
 
 
@@ -1130,7 +1107,6 @@ void PotentialFieldControlKinematicReverse::getClosestPointstoCylinder( KDL::Fra
         KDL::Vector Ux(0.0, 0.0, 1.0);
         Rot_to_collision_point = KDL::Rotation(Ux, Uz * Ux, Uz);
         KDL::Vector collision_point_on_line(ClosestPoints.P2[0], ClosestPoints.P2[1], ClosestPoints.P2[2] );
-        // KDL::Frame pos_final;
         pos_final = KDL::Frame( Rot_to_collision_point, collision_point_on_line) *
                     KDL::Frame( KDL::Rotation::RotX(0.0), KDL::Vector(0.0, 0.0, radius) );
         collision_point = pos_final.p;
@@ -1139,9 +1115,6 @@ void PotentialFieldControlKinematicReverse::getClosestPointstoCylinder( KDL::Fra
     T_CollisionPoint.M = Rot_to_collision_point;
     T_CollisionPoint.p = collision_point;
     LineCollisions::Point Point5( T_CollisionPoint.p.x(), T_CollisionPoint.p.y(), T_CollisionPoint.p.x() );
-
-
-
 }
 
 }

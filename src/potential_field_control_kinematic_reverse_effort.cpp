@@ -22,7 +22,7 @@ PotentialFieldControlKinematicReverseEffort::~PotentialFieldControlKinematicReve
 bool PotentialFieldControlKinematicReverseEffort::init(hardware_interface::EffortJointInterface *robot, ros::NodeHandle &n)
 {
     KinematicChainControllerBase<hardware_interface::EffortJointInterface>::init(robot, n);
-    ROS_INFO("Starting controller");
+   ROS_INFO("Starting controller");
     ROS_WARN("Number of segments: %d", kdl_chain_.getNrOfSegments());
 
     // for switch the hand_desired
@@ -66,6 +66,7 @@ bool PotentialFieldControlKinematicReverseEffort::init(hardware_interface::Effor
     srv_start_controller = nh_.advertiseService("load_parameters", &PotentialFieldControlKinematicReverseEffort::loadParametersCallback, this);
 
     collisions_lines_pub = nh_.advertise<visualization_msgs::MarkerArray>("collision_lines", 1);
+    arrows_pub = nh_.advertise<visualization_msgs::MarkerArray>("collision_arrows", 1);
 
     error_id.id = 10000;
     // error_id.id_arm = parameters_.id_arm;
@@ -165,6 +166,7 @@ void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, 
         if (parameters_.enable_obstacle_avoidance)
         {
             lines_total.markers.clear();
+            arrows_total.markers.clear();
             id_global = 0;
             double num_of_links_in_potential = 0.0;
 // ROS_INFO_STREAM("In obstacle ovoidance");
@@ -191,8 +193,8 @@ void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, 
 
                 for (unsigned int k = 0; k < Object_position.size(); ++k)
                 {
-                    double influence_local = Object_radius[k] +  parameters_.pf_dist_to_obstacles;
-                    // double influence_local = parameters_.pf_dist_to_obstacles;
+                    // double influence_local = Object_radius[k] +  parameters_.pf_dist_to_obstacles;
+                    double influence_local = parameters_.pf_dist_to_obstacles;
                     Eigen::Matrix<double, 6, 1> F_obj_local = Eigen::Matrix<double, 6, 1>::Zero();
                     F_obj_local = GetRepulsiveForce(fk_chain, influence_local, Object_position[k], Object_radius[k], Object_height[k] );
                     F_obj = F_obj + F_obj_local;
@@ -220,6 +222,7 @@ void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, 
 
                 vel_repulsive.data += getVelRepulsive( J_, parameters_.pf_list_of_chains[i].getNrOfJoints(), (F_table_base_link + F_obj_base_link) );
                 collisions_lines_pub.publish(lines_total);
+                arrows_pub.publish(arrows_total);
 
 
             }
@@ -234,8 +237,8 @@ void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, 
 
             if ( vel_repulsive.data.norm() != 0.0 )
             {
-                ROS_INFO_STREAM( vel_repulsive.data.transpose() );
-                ROS_INFO_STREAM( "num_of_links_in_potential: " << num_of_links_in_potential);
+                // ROS_INFO_STREAM( vel_repulsive.data.transpose() );
+                // ROS_INFO_STREAM( "num_of_links_in_potential: " << num_of_links_in_potential);
             }
 
 
@@ -447,10 +450,10 @@ void PotentialFieldControlKinematicReverseEffort::InfoGeometry(const desperate_h
     for (unsigned int i = 0; i < msg->geometries.size(); i++)
     {
         KDL::Frame frame_obj;
-    // radius
+        // radius
         Object_radius.push_back(msg->geometries[i].info[0]);
-    // std::cout<<" Object_radius[i]: "<<Object_radius[i]<<std::endl;
-    // height
+        // std::cout<<" Object_radius[i]: "<<Object_radius[i]<<std::endl;
+        // height
         Object_height.push_back(msg->geometries[i].info[1]);
 
         tf::poseMsgToKDL(msg->geometries[i].pose, frame_obj);
@@ -465,10 +468,10 @@ void PotentialFieldControlKinematicReverseEffort::PoseDesiredInterpolation(KDL::
     if (Int == 0)
     {
         x_des_int = frame_des_;
-    // x_des_ = x_des_int;
+        // x_des_ = x_des_int;
         fk_pos_solver_->JntToCart(joint_msr_states_.q, x_now_int);
         Int = 1;
-    // time for slerp interpolation
+        // time for slerp interpolation
         Time = 0;
         time_inter = 0;
         SetToZero(x_err_last);
@@ -476,18 +479,18 @@ void PotentialFieldControlKinematicReverseEffort::PoseDesiredInterpolation(KDL::
 
     else
     {
-    // new pose
+        // new pose
         if (!Equal(frame_des_, x_des_int, 0.05))
         {
-    // update desired frame;
-    // F_attractive_last = F_attractive;
+            // update desired frame;
+            // F_attractive_last = F_attractive;
             x_des_int = frame_des_;
-    // update robot position
+            // update robot position
             fk_pos_solver_->JntToCart(joint_msr_states_.q, x_now_int);
-    // time update
+            // time update
             time_inter = 0;
             Time = 0;
-    // switch_trajectory = true;
+            // switch_trajectory = true;
             x_err_last = x_err_;
             SetToZero(x_err_integral);
         }
@@ -527,63 +530,40 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverseEffort::GetRepu
     Eigen::Matrix<double, 6, 1> ForceAndIndex;
     ForceAndIndex =  Eigen::Matrix<double, 6, 1>::Zero();
 
-    double distance;
+    KDL::Frame T_link_object = ( T_in.Inverse() * Object_pos ).Inverse();
 
-    LineCollisions LineCollisionsLocal;
+    KDL::Frame T_CollisionPoint;
+
+    getClosestPointstoCylinder( T_link_object, T_CollisionPoint, radius, height);
+
+    T_CollisionPoint = Object_pos * T_CollisionPoint;
+
+
+    double distance = (T_in.p - T_CollisionPoint.p).Norm();
+
+    Eigen::Vector3d Nolmal_to_Cylinder;
+    Nolmal_to_Cylinder << T_CollisionPoint.M.UnitZ().data[0], T_CollisionPoint.M.UnitZ().data[1], T_CollisionPoint.M.UnitZ().data[2];
+
+    KDL::Vector Nolmal_to_Cylinder_kdl = T_CollisionPoint.M.UnitZ();
+    DrawArrow(  Nolmal_to_Cylinder_kdl, T_CollisionPoint.p , 0, 0, 0 );
 
     LineCollisions::Point Point1(T_in.p.x(), T_in.p.y(), T_in.p.z());
-    LineCollisions::Point Point2(T_in.p.x() + .001, T_in.p.y() + .001, T_in.p.z() + .001);
-
-    KDL::Frame temp_frame;
-    temp_frame = KDL::Frame::Identity();
-    temp_frame.p.data[0] = 0;
-    temp_frame.p.data[1] = 0;
-    temp_frame.p.data[2] = height / 2.0;
-
-    KDL::Frame p1_cyl_line = Object_pos * temp_frame;
-
-    LineCollisions::Point Point3(p1_cyl_line.p.x(), p1_cyl_line.p.y(), p1_cyl_line.p.z() );
-
-    temp_frame = KDL::Frame::Identity();
-    temp_frame.p.data[0] = 0;
-    temp_frame.p.data[1] = 0;
-    temp_frame.p.data[2] = -height / 2.0;
-    p1_cyl_line = Object_pos * temp_frame;
-
-    LineCollisions::Point Point4(p1_cyl_line.p.x(), p1_cyl_line.p.y(), p1_cyl_line.p.z());
-
-    LineCollisions::Line Line1(Point1, Point2);
-    LineCollisions::Line Line2(Point3, Point4);
-    LineCollisions::Line ClosestPoints;
-
-    ClosestPoints = LineCollisionsLocal.getClosestPoints(Line1, Line2);
-    distance = ClosestPoints.norm;
-
-    // KDL::Vector distance_vector;
-    // distance_vector = T_in.p - Object_pos.p;
-    // distance = distance_vector.Norm();
-    // std::cout<<"distance: "<<distance<<std::endl;
-    // std::cout<<"influence: "<<influence<<std::endl;
-
+    LineCollisions::Point Point2(T_CollisionPoint.p.x(), T_CollisionPoint.p.y(), T_CollisionPoint.p.z());
+    LineCollisions::Line ClosestPoints(Point1, Point2);
 
     if ( distance <= influence)
     {
-        // ROS_INFO_STREAM("There is a collision ");
-    // ROS_INFO_STREAM("Distance: " << distance << "Influence: " << influence);
         plotline(ClosestPoints, 1.0, 0.0, 0.0);
-        Eigen::Vector3d distance_der_partial = GetPartialDerivate(Object_pos, T_in.p, radius, height);
-        ForceAndIndex = GetFIRAS(distance, distance_der_partial, influence, parameters_.pf_repulsive_gain_obstacles);
-    // ROS_INFO_STREAM("Force: " << std::endl << ForceAndIndex);
+        ForceAndIndex = GetFIRAS(distance, Nolmal_to_Cylinder, influence, parameters_.pf_repulsive_gain_obstacles);
     }
     else
     {
         plotline(ClosestPoints);
     }
-    // else
-    // {
-    // ROS_INFO_STREAM("There is not a collision ");
-    // ROS_INFO_STREAM("Distance: " << distance << " Influence: " << influence);
-    // }
+
+    // tf::Transform CollisionTransform;
+    // tf::TransformKDLToTF( T_CollisionPoint, CollisionTransform);
+    // tf_desired_hand_pose.sendTransform( tf::StampedTransform( CollisionTransform, ros::Time::now(), "world", "collision_point") );
 
     Eigen::Matrix<double, 6, 1> force_local_link = Eigen::Matrix<double, 6, 1>::Zero();
     force_local_link = getAdjointT( T_in.Inverse() * Object_pos) * ForceAndIndex;
@@ -664,7 +644,7 @@ Eigen::Vector3d PotentialFieldControlKinematicReverseEffort::GetPartialDerivate(
     Der_v[1] = partial_temp[1];
     Der_v[2] = partial_temp[2];
 
-    return Der_v;
+    return Der_v.normalized();
 }
 
 Eigen::Matrix<double, 4, 4>  PotentialFieldControlKinematicReverseEffort::FromKdlToEigen(KDL::Frame &T_v_o)
@@ -821,7 +801,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverseEffort::task_ob
     for (int i = 0; i < N; i++)
     {
         temp = weights(i) * ((q(i) - joint_limits_.center(i)) / (joint_limits_.max(i) - joint_limits_.min(i)));
-    // sum += temp*temp;
+        // sum += temp*temp;
         sum += temp;
     }
 
@@ -845,21 +825,15 @@ Eigen::Matrix<double, 7, 1>  PotentialFieldControlKinematicReverseEffort::getVel
     J_local.resize(7);
     J_local.data = J.data;
 
-    // ROS_INFO_STREAM("Jin: " << J.data);
-    // ROS_INFO_STREAM("Jout: " << J_local.data);
-
     for (unsigned int i = 6; i > n_joint - 1; i--)
     {
         J_local.setColumn(i, KDL::Twist::Zero());
     }
 
-    // JacobiSVD<MatrixXd>::SingularValuesType sing_vals_2;
     Eigen::MatrixXd J_pinv_n;
     pseudo_inverse(J_local.data, J_pinv_n);
 
     return J_pinv_n * F;
-    // return Eigen::Matrix<double, 7, 1>::Zero();
-
 }
 
 Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverseEffort::MaxZYDistance(KDL::JntArray q)
@@ -869,7 +843,6 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverseEffort::MaxZYDi
 
     unsigned int index = 2;
     for (unsigned int i = 0; i < parameters_.pf_list_of_links.size() - 1; ++i)
-// for (unsigned int i = 0; i < 1; ++i)
     {
         KDL::Frame T;
         const unsigned int numJoints = parameters_.pf_list_of_chains[i].getNrOfJoints();
@@ -955,22 +928,18 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverseEffort::MaxZYDi
     }
 
     return -parameters_.gain_null_space * potential;
-
 }
 
 
 Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverseEffort::potentialEnergy(KDL::JntArray q)
 {
-
     KDL::JntArray G_local(7);
     id_solver_->JntToGravity(joint_msr_states_.q, G_local);
 
     return parameters_.gain_null_space * G_local.data ;
-
 }
 
 void PotentialFieldControlKinematicReverseEffort::plotline(LineCollisions::Line Line_local, float r, float g, float b, int id, int type)
-// (LineCollisions::Line Line_local, float r = 1.0, float g = 1.0, float b = 1.0, int id = 0, int type = visualization_msgs::Marker::LINE_LIST)
 {
     visualization_msgs::Marker line_list;
     line_list.header.frame_id = "world";
@@ -1000,8 +969,156 @@ void PotentialFieldControlKinematicReverseEffort::plotline(LineCollisions::Line 
     lines_total.markers.push_back(line_list);
 }
 
+
+
+void PotentialFieldControlKinematicReverseEffort::DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point, int K, double Fmin, double Fmax )
+{
+    // std::cout<<"disegno"<<std::endl;
+
+    int32_t shape = visualization_msgs::Marker::ARROW;
+    visualization_msgs::Marker marker;
+
+    // Set the frame ID and timestamp.  See the TF tutorials for information on these.
+    marker.header.frame_id = "world";
+    marker.header.stamp = ros::Time::now();
+    // marker.ns = "basic_shapes";
+    marker.id = id_global;
+    marker.type = shape;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose.position.x = gridspace_point.x();
+    marker.pose.position.y = gridspace_point.y();
+    marker.pose.position.z = gridspace_point.z();
+
+    Eigen::Quaterniond quat;
+    quat =  RotationMarker(gridspace_Force, gridspace_point);
+
+    marker.pose.orientation.x = quat.x();
+    marker.pose.orientation.y = quat.y();
+    marker.pose.orientation.z = quat.z();
+    marker.pose.orientation.w = quat.w();
+
+    marker.scale.x = 0.1;
+    marker.scale.y = 0.02;
+    marker.scale.z = 0.02;
+
+    // ROS_INFO("marker %d, r = %f", K, ((gridspace_Force.Norm()-Fmin)/(Fmax-Fmin)) );
+    marker.color.r = 0.0;
+    marker.color.g = 1.0;
+    marker.color.b = 0.0;
+    marker.color.a = 1;
+    marker.lifetime = ros::Duration(1);
+
+    arrows_total.markers.push_back(marker);
+}
+
+Eigen::Quaterniond PotentialFieldControlKinematicReverseEffort::RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point)
+{
+
+    Eigen::Vector3d  x(1, 0, 0);
+    Eigen::Vector3d Force_eigen(ris_Force.x(), ris_Force.y(), ris_Force.z());
+    // double pi = 3.14159264;
+    double angle = std::acos( (x.dot(Force_eigen)) / (x.norm() * Force_eigen.norm()));
+    // std::cout<<"angle: "<<angle<<std::endl;
+    Eigen::Matrix3d transformation_ = Eigen::Matrix3d::Identity();
+    Eigen::Vector3d axis(0, 0, 0);
+    axis = (x.cross(Force_eigen)) / (x.cross(Force_eigen)).norm();
+    transformation_ = Eigen::AngleAxisd(angle, axis);
+
+    Eigen::Quaterniond quat_eigen_hand(transformation_);
+
+    return quat_eigen_hand.normalized();
+}
+
+
+void PotentialFieldControlKinematicReverseEffort::getClosestPointstoCylinder( KDL::Frame T_link_object, KDL::Frame &T_CollisionPoint, double radius, double height)
+{
+
+    LineCollisions LineCollisionsLocal;
+
+    LineCollisions::Point Point1(T_link_object.p.x(), T_link_object.p.y(), T_link_object.p.z());
+    LineCollisions::Point Point2(T_link_object.p.x() + .001, T_link_object.p.y() + .001, T_link_object.p.z() + .001);
+
+    LineCollisions::Point Point3(0.0, 0.0, height / 2.0);
+    LineCollisions::Point Point4(0.0, 0.0, -height / 2.0);
+
+    LineCollisions::Line Line1(Point1, Point2);
+    LineCollisions::Line Line2(Point3, Point4);
+    LineCollisions::Line ClosestPoints;
+
+    ClosestPoints = LineCollisionsLocal.getClosestPoints(Line1, Line2);
+
+    KDL::Rotation Rot_to_collision_point;
+    KDL::Vector collision_point;
+
+    KDL::Vector V1(ClosestPoints.P1[0], ClosestPoints.P1[1], ClosestPoints.P1[2]);
+    KDL::Vector V2(ClosestPoints.P2[0], ClosestPoints.P2[1], ClosestPoints.P2[2]);
+    KDL::Vector V3;
+    V3  = (V1 - V2);
+    KDL::Frame pos_final;
+
+    if ( (ClosestPoints.P2 == Point4) || (ClosestPoints.P2 == Point3) )
+    {
+
+        double pos_on_plane = KDL::Vector( (V2 - V1).data[0], (V2 - V1).data[1], 0.0 ).Norm();
+        KDL::Vector V4( V3.data[0], V3.data[1], 0.0 );
+        double angle = 0.0;
+        KDL::Vector collision_point_on_line(ClosestPoints.P2[0], ClosestPoints.P2[1], ClosestPoints.P2[2] );
+        if (pos_on_plane >= radius )
+        {
+
+            KDL::Vector Uz(V4 / V4.Norm() );
+            KDL::Vector Ux(0.0, 0.0, 1.0);
+            Rot_to_collision_point = KDL::Rotation(Ux, Uz * Ux, Uz);
+            pos_final = KDL::Frame( Rot_to_collision_point, collision_point_on_line) *
+                        KDL::Frame( KDL::Rotation::RotX(0.0), KDL::Vector( 0.0 , 0.0, radius) );
+            KDL::Vector V5;
+            V5 = (T_link_object.Inverse() * pos_final).Inverse().p;
+            V5 = V5 /  V5.Norm();
+            angle = std::atan2(V5.x(), V5.z());
+            collision_point = pos_final.p;
+
+            Rot_to_collision_point = Rot_to_collision_point * KDL::Rotation::RotY( angle );
+        }
+        else
+        {
+            KDL::Vector Ux;
+            KDL::Vector Uz;
+            Ux = ( V4 / V4.Norm() );
+            Uz = KDL::Vector(0.0, 0.0, 1.0);
+            if ( ClosestPoints.P2 == Point4 )
+            {
+                Uz = KDL::Vector(0.0, 0.0, -1.0);
+            }
+            Rot_to_collision_point = KDL::Rotation(Ux, Uz * Ux, Uz);
+            KDL::Frame pos_final;
+            pos_final = KDL::Frame( Rot_to_collision_point, collision_point_on_line) *
+                        KDL::Frame( KDL::Rotation::RotX(0.0), KDL::Vector(pos_on_plane, 0.0, 0.0) );
+            collision_point = pos_final.p;
+
+        }
+
+    }
+    else
+    {
+        // ROS_INFO_STREAM("Collision Point on the cylindrical face");
+
+        KDL::Vector Uz(V3 / V3.Norm() );
+        KDL::Vector Ux(0.0, 0.0, 1.0);
+        Rot_to_collision_point = KDL::Rotation(Ux, Uz * Ux, Uz);
+        KDL::Vector collision_point_on_line(ClosestPoints.P2[0], ClosestPoints.P2[1], ClosestPoints.P2[2] );
+        pos_final = KDL::Frame( Rot_to_collision_point, collision_point_on_line) *
+                    KDL::Frame( KDL::Rotation::RotX(0.0), KDL::Vector(0.0, 0.0, radius) );
+        collision_point = pos_final.p;
+
+    }
+    T_CollisionPoint.M = Rot_to_collision_point;
+    T_CollisionPoint.p = collision_point;
+    LineCollisions::Point Point5( T_CollisionPoint.p.x(), T_CollisionPoint.p.y(), T_CollisionPoint.p.x() );
+}
+
 }
 
 
 
 PLUGINLIB_EXPORT_CLASS(desperate_housewife::PotentialFieldControlKinematicReverseEffort, controller_interface::ControllerBase)
+
