@@ -82,13 +82,13 @@ Visualization Manager:
       Use rainbow: true
       Value: true
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /BasicGeometriesNode/markers
       Name: Marker
       Namespaces:
-        "": true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/TF
       Enabled: true
       Frame Timeout: 15
@@ -104,8 +104,6 @@ Visualization Manager:
           Value: false
         camera_rgb_optical_frame:
           Value: false
-        collision_point:
-          Value: true
         head_asus/camera_depth_frame:
           Value: false
         head_asus/camera_depth_optical_frame:
@@ -250,20 +248,12 @@ Visualization Manager:
           Value: false
         left_hand_thumb_proximal_link:
           Value: false
-        new_desired_pose:
-          Value: true
         object_0:
           Value: false
-        object_1:
-          Value: false
-        object_2:
-          Value: true
         obstacle_0:
-          Value: true
-        obstacle_1:
-          Value: true
+          Value: false
         pose_desired:
-          Value: true
+          Value: false
         right_arm_1_link:
           Value: false
         right_arm_1_link_dummy:
@@ -386,6 +376,8 @@ Visualization Manager:
           Value: false
         torso_link:
           Value: false
+        trash_robot_right:
+          Value: false
         vito_anchor:
           Value: false
         workbench_leg_0_link:
@@ -413,23 +405,15 @@ Visualization Manager:
           camera_rgb_frame:
             camera_rgb_optical_frame:
               world:
-                collision_point:
-                  {}
                 home_robot_right:
-                  {}
-                new_desired_pose:
                   {}
                 object_0:
                   {}
-                object_1:
-                  {}
-                object_2:
-                  {}
                 obstacle_0:
                   {}
-                obstacle_1:
-                  {}
                 pose_desired:
+                  {}
+                trash_robot_right:
                   {}
                 vito_anchor:
                   head_base_link:
@@ -1289,7 +1273,7 @@ Visualization Manager:
       Marker Topic: /right_arm/PotentialFieldControlKinematicReverse/collision_lines
       Name: MarkerArray
       Namespaces:
-        "": true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -1297,7 +1281,7 @@ Visualization Manager:
       Marker Topic: /right_arm/PotentialFieldControlKinematicReverse/collision_arrows
       Name: MarkerArray
       Namespaces:
-        "": true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker

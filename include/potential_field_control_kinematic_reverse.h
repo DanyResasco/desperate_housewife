@@ -40,6 +40,8 @@
 #include <trajectory_msgs/JointTrajectory.h>
 
 #include "distance_between_lines.h"
+#include "utils/kuka_lwr_utilities.h"
+#include "utils/ros_desperate_housewife_utilities.h"
 namespace desperate_housewife
 {
 
@@ -59,7 +61,7 @@ public:
 	void command(const desperate_housewife::handPoseSingle::ConstPtr& msg);
 	void load_parameters(ros::NodeHandle &n);
 	Eigen::Matrix<double, 6, 1> GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial , double influence, double gain = 1.0);
-	Eigen::Matrix<double, 6, 1> GetRepulsiveForce(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height);
+	Eigen::Matrix<double, 6, 1> GetRepulsiveForceObjects(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height);
 
 
 private:
@@ -222,7 +224,7 @@ private:
 	* output: object derivate
 	* Description: calculates the object derivate in cylinder frame
 	*/
-	Eigen::Vector3d GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height);
+	// Eigen::Vector3d GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height);
 
 	/** Function: GetFIRAS
 	* input: min distance, object derivate, influence of repulsive field
@@ -236,7 +238,7 @@ private:
 	* output: vector with data[0] information if there is a link with distance minor tha influnce, data[1] the minor distance, data[2] index of vector
 	* Description: return the minor distance from a input vector
 	*/
-	std::vector<double> GetMinDistance(std::vector<double> distance_local_obj,  double influence );
+	// std::vector<double> GetMinDistance(std::vector<double> distance_local_obj,  double influence );
 
 	/** Function: GetRepulsiveForce
 	* input: vector with the interested point, object position, influence of repulsive field, object radius and height
@@ -257,11 +259,10 @@ private:
 	* Description: functions tha call the funciont for calculates the repulsive forces
 	*/
 
-	Eigen::Matrix<double, 6, 6> getAdjointT( KDL::Frame Frame_in);
-	Eigen::Matrix<double, 3, 3> getVectorHat(Eigen::Matrix<double, 3, 1> vector_in);
+	// Eigen::Matrix<double, 6, 6> getAdjointT( KDL::Frame Frame_in);
 	Eigen::Matrix<double, 6, 1> GetRepulsiveForceTable(KDL::Frame &T_in, double influence);
 	KDL::JntArray JointLimitAvoidance(KDL::JntArray q);
-	Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension = 6);
+	// Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension = 6);
 	void startControllerCallBack(const std_msgs::Bool::ConstPtr& msg);
 
 	bool loadParametersCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
@@ -270,13 +271,12 @@ private:
 	Eigen::Matrix<double, 7, 1> MaxZYDistance(KDL::JntArray q);
 	double VelocityLimit(KDL::Twist x_dot_d );
 	Eigen::Matrix<double, 7, 1> potentialEnergy(KDL::JntArray q);
-	Eigen::Matrix<double, 4, 4>  FromKdlToEigen(KDL::Frame &T_v_o);
-	void plotline(LineCollisions::Line Line_local, float r = 0.0, float g = 1.0, float b = 0.0, int id = 0, int type = visualization_msgs::Marker::LINE_LIST);
+	// Eigen::Matrix<double, 4, 4>  FromKdlToEigen(KDL::Frame &T_v_o);
+	// void plotline(LineCollisions::Line Line_local, float r = 0.0, float g = 1.0, float b = 0.0, int id = 0, int type = visualization_msgs::Marker::LINE_LIST);
 
 
-	Eigen::Quaterniond RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point);
-	void DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point, int K = 0, double Fmin = 0, double Fmax = 0);
-	void getClosestPointstoCylinder( KDL::Frame T_link_object, KDL::Frame &T_CollisionPoint, double radius, double height);
+	// Eigen::Quaterniond RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point);
+	// void DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point, int K = 0, double Fmin = 0, double Fmax = 0);
 
 };
 
