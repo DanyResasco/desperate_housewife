@@ -6,59 +6,54 @@
 #include <Eigen/Core>
 #include "distance_between_lines.h"
 
-inline void saurateJointPositions( KDL::JntArray &q, double soft_limit)
+inline void saturateJointPositions( KDL::JntArray &q, double soft_limit = 2.0 * M_PI / 180.0 )
 {
 
     const double deg2rad = M_PI  / 180.0;
-    q(0) = (std::abs(q(0)) >= ((170.0 * deg2rad) - soft_limit) ?
-            std::copysign( ((170.0 * deg2rad) - soft_limit), q(0))
-            : q(0));
-    q(1) = (std::abs(q(1)) >= ((120.0 * deg2rad) - soft_limit) ?
-            std::copysign(((120.0 * deg2rad) - soft_limit), q(1))
-            : q(1));
-    q(2) = (std::abs(q(2)) >= ((170.0 * deg2rad) - soft_limit) ?
-            std::copysign(((170.0 * deg2rad) - soft_limit), q(2))
-            : q(2));
-    q(3) = (std::abs(q(3)) >= ((120.0 * deg2rad) - soft_limit) ?
-            std::copysign(((120.0 * deg2rad) - soft_limit), q(3))
-            : q(3));
-    q(4) = (std::abs(q(4)) >= ((170.0 * deg2rad) - soft_limit) ?
-            std::copysign(((170.0 * deg2rad) - soft_limit), q(4))
-            : q(4));
-    q(5) = (std::abs(q(5)) >= ((120.0 * deg2rad) - soft_limit) ?
-            std::copysign(((120.0 * deg2rad) - soft_limit), q(5))
-            : q(5));
-    q(6) = (std::abs(q(6)) >=  ((170.0 * deg2rad) - soft_limit) ?
-            std::copysign( ((170.0 * deg2rad) - soft_limit), q(6))
-            : q(6));
+
+    std::vector<double> pos_limit;
+    pos_limit.push_back ( (170.0 * deg2rad) - soft_limit );
+    pos_limit.push_back ( (120.0 * deg2rad) - soft_limit );
+    pos_limit.push_back ( (170.0 * deg2rad) - soft_limit );
+    pos_limit.push_back ( (120.0 * deg2rad) - soft_limit );
+    pos_limit.push_back ( (170.0 * deg2rad) - soft_limit );
+    pos_limit.push_back ( (120.0 * deg2rad) - soft_limit );
+    pos_limit.push_back ( (170.0 * deg2rad) - soft_limit );
+
+
+
+    for (unsigned i = 0; i < q.rows(); ++i) {
+        if ( std::abs(q(i)) >= pos_limit[i] )
+        {
+            q(i) = std::copysign(pos_limit[i], q(i));
+            // std::cout << "Joint Position Limit on Joint: " << i  << " set to: " << q(i) << " (rad)" << std::endl;
+        }
+    }
+
 }
 
-inline void saurateJointVelocities( KDL::JntArray &qp, double percentage = 0.7)
+inline void saturateJointVelocities( KDL::JntArray &qp, double percentage = 0.7)
 {
 
     const double deg2rad = M_PI  / 180.0;
 
-    qp(0) = (std::abs(qp(0)) >= 110.0 * deg2rad * percentage ?
-                                         std::copysign(110.0 * deg2rad * percentage, qp(0))
-                                         : qp(0));
-    qp(1) = (std::abs(qp(1)) >= 110.0 * deg2rad * percentage ?
-                                         std::copysign(110.0 * deg2rad * percentage, qp(1))
-                                         : qp(1));
-    qp(2) = (std::abs(qp(2)) >= 128.0 * deg2rad * percentage ?
-                                         std::copysign(128.0 * deg2rad * percentage, qp(2))
-                                         : qp(2));
-    qp(3) = (std::abs(qp(3)) >= 128.0 * deg2rad * percentage ?
-                                         std::copysign(128.0 * deg2rad * percentage, qp(3))
-                                         : qp(3));
-    qp(4) = (std::abs(qp(4)) >= 204.0 * deg2rad * percentage ?
-                                         std::copysign(204.0 * deg2rad * percentage, qp(4))
-                                         : qp(4));
-    qp(5) = (std::abs(qp(5)) >= 184.0 * deg2rad * percentage ?
-                                         std::copysign(184.0 * deg2rad * percentage, qp(5))
-                                         : qp(5));
-    qp(6) = (std::abs(qp(6)) >= 184.0 * deg2rad * percentage ?
-                                         std::copysign(184.0 * deg2rad * percentage, qp(6))
-                                         : qp(6));
+    std::vector<double> vel_limits;
+    vel_limits.push_back (110.0 * deg2rad * percentage);
+    vel_limits.push_back (110.0 * deg2rad * percentage);
+    vel_limits.push_back (128.0 * deg2rad * percentage);
+    vel_limits.push_back (128.0 * deg2rad * percentage);
+    vel_limits.push_back (204.0 * deg2rad * percentage);
+    vel_limits.push_back (184.0 * deg2rad * percentage);
+    vel_limits.push_back (184.0 * deg2rad * percentage);
+
+    for (unsigned i = 0; i < qp.rows(); ++i) {
+        if ( std::abs(qp(i)) >= vel_limits[i] )
+        {
+            qp(i) = std::copysign(vel_limits[i], qp(i));
+            // std::cout << "Joint Speed Limit on Joint: " << i << " set to: " << qp(i) * (1.0 / deg2rad) << std::endl;
+        }
+    }
+
 }
 
 
@@ -109,12 +104,12 @@ void inline getClosestPointstoCylinder( KDL::Frame T_link_object, KDL::Frame &T_
     KDL::Frame pos_final;
     KDL::Vector collision_point_on_line(ClosestPoints.P2[0], ClosestPoints.P2[1], ClosestPoints.P2[2] );
     if ( (ClosestPoints.P2 == Point4) || (ClosestPoints.P2 == Point3) )
-    {   // The point is on one of the planar face 
+    {   // The point is on one of the planar face
 
         KDL::Vector V4( V3.x(), V3.y(), 0.0  );
         double pos_on_plane = V4.Norm();
         if (pos_on_plane >= radius )
-        { // The point is on the border
+        {   // The point is on the border
             KDL::Vector Uz(V4 / V4.Norm() );
             KDL::Vector Ux(0.0, 0.0, 1.0);
             pos_final = KDL::Frame( KDL::Rotation(Ux, Uz * Ux, Uz), collision_point_on_line) *
@@ -159,10 +154,26 @@ double inline VelocityLimit(KDL::Twist x_dot_d, double limit = 1.0)
     x_dot_d_local << x_dot_d.vel.data[0], x_dot_d.vel.data[1], x_dot_d.vel.data[2];
     double temp = limit / std::sqrt(x_dot_d_local.transpose() * x_dot_d_local);
 
+    if (std::isnan( temp ) ) {
+        temp = 1.0;
+        std::cout << "velocity limit is NAN" << std::endl;
+    }
+
     return std::min(1.0, temp);
 }
 
+inline bool checkStatesforNan( KDL::JntArray &q)
+{
 
+    for (unsigned int i = 0; i < q.rows(); ++i) {
+        if (std::isnan(q(i)))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 
 #endif

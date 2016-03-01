@@ -75,9 +75,7 @@ private:
 	KDL::Frame x_des_int;	/*!desired pose*/
 	KDL::Frame x_now_int; /*!position robot for interpolate*/
 
-	KDL::Twist x_err_, x_err_last;	/*!error*/
-
-	// KDL::JntArray Kp_,Kd_,Ki_;	/*!gains*/
+	KDL::Twist x_err_, x_err_last, x_err_integral;	/*!error*/
 
 	KDL::Jacobian J_;	/*!Jacobian J(q)*/
 
@@ -86,8 +84,6 @@ private:
 	boost::scoped_ptr<KDL::ChainDynParam> id_solver_;
 	boost::scoped_ptr<KDL::ChainFkSolverPos_recursive> fk_pos_solver_;
 
-
-	// ros::Subscriber obstacles_subscribe_, obstacles_remove_sub, sub_gains_;
 	std::vector<double> Object_radius;
 	std::vector<double> Object_height;
 	std::vector<KDL::Frame> Object_position;
@@ -96,15 +92,9 @@ private:
 
 
 
-	ros::Publisher pub_right_arm;
-	trajectory_msgs::JointTrajectory right_robot_msgs;
+	// ros::Publisher pub_right_arm;
+	// trajectory_msgs::JointTrajectory right_robot_msgs;
 
-
-
-
-
-	double time_inter; /*!time to interpolate*/
-	// double T_des; /*!time desired to interpolate*/
 	/*! int Int = 0;*/
 	tfScalar Time;
 
@@ -120,9 +110,7 @@ private:
 	tf::Quaternion quat_tf;
 	// double percentage;
 
-	double Time_traj, Time_traj_rep;
-
-	KDL::Twist x_err_integral;
+	double Time_traj, Time_traj_rep, time_inter;
 
 
 	struct parameters
@@ -194,14 +182,13 @@ private:
 	Eigen::Matrix<double, 6, 1> getRepulsiveForceObjects(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height);
 	Eigen::Matrix<double, 6, 1> getRepulsiveForceTable(KDL::Frame &T_in, double influence);
 
-
 	// Eigen::Matrix<double, 7, 1> JointRepulsiveWithTable();
 	// Eigen::Matrix<double, 7, 1> JointRepulsiveWithObstacle();
-	Eigen::Matrix<double, 7, 1> getVelRepulsive(KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F);
-	Eigen::Matrix<double, 7, 1> task_objective_function(KDL::JntArray q);
-	Eigen::Matrix<double, 7, 1> MaxZYDistance(KDL::JntArray q);
-	Eigen::Matrix<double, 7, 1> potentialEnergy(KDL::JntArray q);
-	Eigen::Matrix<double, 7, 1> JointLimitAvoidance(KDL::JntArray q, double gain = 1.0);
+	Eigen::Matrix<double, 7, 1> getRepulsiveJointVelocity(KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F);
+	Eigen::Matrix<double, 7, 1> CF_JS_CentralJointAngles(KDL::JntArray q);
+	Eigen::Matrix<double, 7, 1> CF_JS_maxZYDistance(KDL::JntArray q);
+	Eigen::Matrix<double, 7, 1> CF_JS_PotentialEnergy(KDL::JntArray q);
+	Eigen::Matrix<double, 7, 1> CF_JS_JointLimitAvoidance(KDL::JntArray q, double gain = 1.0);
 	// Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension = 6);
 
 

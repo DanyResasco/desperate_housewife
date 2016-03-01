@@ -26,6 +26,10 @@ bool PotentialFieldControlKinematicReverse::init(hardware_interface::PositionJoi
     ROS_INFO("Starting controller");
     ROS_WARN("Number of segments: %d", kdl_chain_.getNrOfSegments());
 
+    parameters_.k_p = Eigen::Matrix<double, 6, 6>::Zero();
+    parameters_.k_d = Eigen::Matrix<double, 6, 6>::Zero();
+    parameters_.k_i = Eigen::Matrix<double, 6, 6>::Zero();
+
     // for switch the hand_desired
     start_controller = false;
     load_parameters(n);
@@ -219,7 +223,7 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
                 F_table_base_link = Adjoint * F_table;
                 F_table_base_total += F_table_base_link;
 
-                vel_repulsive.data += getVelRepulsive( J_, parameters_.pf_list_of_chains[i].getNrOfJoints(), (F_table_base_link + F_obj_base_link) );
+                vel_repulsive.data += getRepulsiveJointVelocity( J_, parameters_.pf_list_of_chains[i].getNrOfJoints(), (F_table_base_link + F_obj_base_link) );
                 collisions_lines_pub.publish(lines_total);
                 arrows_pub.publish(arrows_total);
 
@@ -236,10 +240,10 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
 
         }
 
+
         if (parameters_.enable_attractive_field)
         {
             KDL::Twist x_dot_d;
-
             x_dot_d.vel.data[0] = parameters_.k_p(0, 0) / parameters_.k_d(0, 0) * x_err_.vel.data[0];
             x_dot_d.vel.data[1] = parameters_.k_p(1, 1) / parameters_.k_d(1, 1) * x_err_.vel.data[1];
             x_dot_d.vel.data[2] = parameters_.k_p(2, 2) / parameters_.k_d(2, 2) * x_err_.vel.data[2];
@@ -267,7 +271,8 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
 
         std::vector<Eigen::MatrixXd> xp(n_task + 1);
 
-        Eigen::MatrixXd secondTask = potentialEnergy( joint_msr_states_.q );
+        // Eigen::MatrixXd secondTask = Eigen::MatrixXd::Zero(7,1);
+        Eigen::MatrixXd secondTask = CF_JS_PotentialEnergy( joint_msr_states_.q );
         xp[0] = x_err_eigen_;
         xp[1] = secondTask;
 
@@ -307,18 +312,21 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
             }
         }
 
-        saurateJointVelocities( joint_des_states_filtered.qdot, parameters_.max_vel_percentage);
+
+        saturateJointVelocities( joint_des_states_filtered.qdot, parameters_.max_vel_percentage);
 
         x_err_msg = diff(x_, x_des_int);
 
         tf::twistKDLToMsg(x_err_msg, error_id.error_);
+
 
         for (unsigned int i = 0; i < joint_handles_.size(); i++)
         {
             joint_des_states_.q(i) += period.toSec() * joint_des_states_filtered.qdot(i);
         }
 
-        saurateJointPositions( joint_des_states_.q, 2.0 * M_PI / 180.0 );
+
+        saturateJointPositions( joint_des_states_.q, 2.0 * M_PI / 180.0 );
 
 
     }
@@ -437,7 +445,7 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::getRepulsiveF
     force_local_link = getAdjointT( T_in.Inverse() * Object_pos) * ForceAndIndex;
 
     tf::Transform CollisionTransform;
-    tf::TransformKDLToTF( T_CollisionPoint, CollisionTransform);
+    tf::transformKDLToTF( T_CollisionPoint, CollisionTransform);
     tf_desired_hand_pose.sendTransform( tf::StampedTransform( CollisionTransform, ros::Time::now(), "world", "collision_point") );
 
     return force_local_link;
@@ -566,9 +574,6 @@ void PotentialFieldControlKinematicReverse::load_parameters(ros::NodeHandle &n)
         }
     }
 
-    parameters_.k_p = Eigen::Matrix<double, 6, 6>::Zero();
-    parameters_.k_d = Eigen::Matrix<double, 6, 6>::Zero();
-    parameters_.k_i = Eigen::Matrix<double, 6, 6>::Zero();
     parameters_.k_p = getGainMatrix(std::string("k_p"), n, 6);
     parameters_.k_d = getGainMatrix(std::string("k_d"), n, 6);
     parameters_.k_i = getGainMatrix(std::string("k_i"), n, 6);
@@ -595,7 +600,7 @@ bool PotentialFieldControlKinematicReverse::loadParametersCallback(std_srvs::Emp
     return true;
 }
 
-Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::task_objective_function(KDL::JntArray q)
+Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::CF_JS_CentralJointAngles(KDL::JntArray q)
 {
     double sum = 0;
     double temp;
@@ -623,7 +628,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::task_objectiv
 
 }
 
-Eigen::Matrix<double, 7, 1>  PotentialFieldControlKinematicReverse::getVelRepulsive( KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F)
+Eigen::Matrix<double, 7, 1>  PotentialFieldControlKinematicReverse::getRepulsiveJointVelocity( KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F)
 {
 
     KDL::Jacobian J_local;
@@ -641,7 +646,7 @@ Eigen::Matrix<double, 7, 1>  PotentialFieldControlKinematicReverse::getVelRepuls
     return J_pinv_n * F;
 }
 
-Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::potentialEnergy(KDL::JntArray q)
+Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::CF_JS_PotentialEnergy(KDL::JntArray q)
 {
     KDL::JntArray G_local(7);
     id_solver_->JntToGravity(joint_msr_states_.q, G_local);
@@ -649,7 +654,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::potentialEner
     return parameters_.gain_null_space * G_local.data ;
 }
 
-Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::JointLimitAvoidance(KDL::JntArray q, double gain)
+Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::CF_JS_JointLimitAvoidance(KDL::JntArray q, double gain)
 {   // This function implements joint limit avoidance usung the penalty function V = \sum\limits_{i=1}^n\frac{1}{s^2} s = q_{l_1}-|q_i|
     Eigen::Matrix<double, 7, 1> tau_limit_avoidance = Eigen::Matrix<double, 7, 1>::Zero();
     double s, potential, treshold, q_abs;

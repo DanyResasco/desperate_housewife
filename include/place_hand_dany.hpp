@@ -79,19 +79,19 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
     if (whichArm == 1) //left arm
     {
-      Point_desired(1) = T_vito_c(1,3) -radius - distance_softhand_obj; /*along the y vito's axis*/
+      Point_desired(1) = T_vito_c(1, 3) - radius - distance_softhand_obj; /*along the y vito's axis*/
       ROS_DEBUG("Not Lying, Empty, left Arm, ");
     }
 
     else
     {
-      // Point_desired(0) =  radius + distance_softhand_obj;  
-      Point_desired(1) = T_vito_c(1,3) + radius + distance_softhand_obj;  
+      // Point_desired(0) =  radius + distance_softhand_obj;
+      Point_desired(1) = T_vito_c(1, 3) + radius + distance_softhand_obj;
       ROS_DEBUG("Not Lying, Empty, right Arm, ");
     }
 
-    Point_desired(0) = T_vito_c(0,3);
-    Point_desired(2) = T_vito_c(2,3) + height * 0.5 + DistZEmpty; //0.05;
+    Point_desired(0) = T_vito_c(0, 3);
+    Point_desired(2) = T_vito_c(2, 3) + height * 0.5 + DistZEmpty; //0.05;
     Point_desired(3) = 1;
 
     T_w_h.col(3) << Point_desired;
@@ -104,13 +104,13 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
     T_w_h = T_vito_c * M_desired_local * Rot_z;
 
-    Point_desired(0) = T_vito_c(0,3);
-    Point_desired(1) = T_vito_c(1,3);
-    Point_desired(2) = T_vito_c(2,3) + height * 0.5 + DistZFull; //0.05;
+    Point_desired(0) = T_vito_c(0, 3);
+    Point_desired(1) = T_vito_c(1, 3);
+    Point_desired(2) = T_vito_c(2, 3) + height * 0.5 + DistZFull; //0.05;
     Point_desired(3) = 1;
 
     T_w_h.col(3) << Point_desired;
-   
+
     ROS_DEBUG("Not Lying, full");
   }
 
@@ -207,11 +207,18 @@ int HandPoseGenerator::whichArm( int cyl_nbr )
 
   tf::StampedTransform hand_r_object, hand_l_object, pose_to_project;
 
-  listener_info.waitForTransform("object_" + std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
-  listener_info.lookupTransform("object_" + std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time(0), hand_r_object);
+  try
+  {
+    listener_info.waitForTransform("object_" + std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
+    listener_info.lookupTransform("object_" + std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time(0), hand_r_object);
 
-  listener_info.waitForTransform("object_" + std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
-  listener_info.lookupTransform("object_" + std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time(0), hand_l_object);
+    listener_info.waitForTransform("object_" + std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
+    listener_info.lookupTransform("object_" + std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time(0), hand_l_object);
+  }
+  catch (tf::TransformException& ex)
+  {
+    ROS_ERROR("%s", ex.what());
+  }
 
 
   switch (arm_active)

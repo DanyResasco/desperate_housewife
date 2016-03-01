@@ -26,6 +26,10 @@ bool PotentialFieldControlKinematicReverseEffort::init(hardware_interface::Effor
     ROS_INFO("Starting controller");
     ROS_WARN("Number of segments: %d", kdl_chain_.getNrOfSegments());
 
+    parameters_.k_p = Eigen::Matrix<double, 6, 6>::Zero();
+    parameters_.k_d = Eigen::Matrix<double, 6, 6>::Zero();
+    parameters_.k_i = Eigen::Matrix<double, 6, 6>::Zero();
+
     // for switch the hand_desired
     start_controller = false;
     load_parameters(n);
@@ -219,7 +223,7 @@ void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, 
                 F_table_base_link = Adjoint * F_table;
                 F_table_base_total += F_table_base_link;
 
-                vel_repulsive.data += getVelRepulsive( J_, parameters_.pf_list_of_chains[i].getNrOfJoints(), (F_table_base_link + F_obj_base_link) );
+                vel_repulsive.data += getRepulsiveJointVelocity( J_, parameters_.pf_list_of_chains[i].getNrOfJoints(), (F_table_base_link + F_obj_base_link) );
                 collisions_lines_pub.publish(lines_total);
                 arrows_pub.publish(arrows_total);
 
@@ -267,7 +271,7 @@ void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, 
 
         std::vector<Eigen::MatrixXd> xp(n_task + 1);
 
-        Eigen::MatrixXd secondTask = potentialEnergy( joint_msr_states_.q );
+        Eigen::MatrixXd secondTask = CF_JS_PotentialEnergy( joint_msr_states_.q );
         xp[0] = x_err_eigen_;
         xp[1] = secondTask;
 
@@ -307,7 +311,7 @@ void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, 
             }
         }
 
-        saurateJointVelocities( joint_des_states_filtered.qdot, parameters_.max_vel_percentage);
+        saturateJointVelocities( joint_des_states_filtered.qdot, parameters_.max_vel_percentage);
 
         x_err_msg = diff(x_, x_des_int);
 
@@ -318,7 +322,12 @@ void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, 
             joint_des_states_.q(i) += period.toSec() * joint_des_states_filtered.qdot(i);
         }
 
-        saurateJointPositions( joint_des_states_.q, 2.0 * M_PI / 180.0 );
+
+        // for (unsigned i = 0; i < joint_des_states_filtered.qdot.rows(); ++i) {
+        //     ROS_INFO_STREAM("JV: " << joint_des_states_filtered.qdot.data.transpose() * 180.0 / M_PI);
+        // }
+
+        saturateJointPositions( joint_des_states_.q, 2.0 * M_PI / 180.0 );
 
 
     }
@@ -437,7 +446,7 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverseEffort::getRepu
     force_local_link = getAdjointT( T_in.Inverse() * Object_pos) * ForceAndIndex;
 
     tf::Transform CollisionTransform;
-    tf::TransformKDLToTF( T_CollisionPoint, CollisionTransform);
+    tf::transformKDLToTF( T_CollisionPoint, CollisionTransform);
     tf_desired_hand_pose.sendTransform( tf::StampedTransform( CollisionTransform, ros::Time::now(), "world", "collision_point") );
 
     return force_local_link;
@@ -494,7 +503,7 @@ void PotentialFieldControlKinematicReverseEffort::load_parameters(ros::NodeHandl
     nh_.param<std::string>("tip_name", parameters_.tip_name, "end_effector");
     nh_.param<std::string>("root_name", parameters_.root_name, "world");
     nh_.param<std::string>("topic_desired_reference", topic_desired_reference, "command");
-    nh_.param<double>("time_interpolation", parameters_.max_time_interpolation, 1);
+    nh_.param<double>("time_interpolation", parameters_.max_time_interpolation, 2.0);
     nh_.param<double>("max_vel_percentage", parameters_.max_vel_percentage, 0.5);
     nh_.param<double>("pf_repulsive_gain_obstacles", parameters_.pf_repulsive_gain_obstacles , 1.0);
     nh_.param<double>("pf_repulsive_gain_table", parameters_.pf_repulsive_gain_table , 1.0);
@@ -566,9 +575,6 @@ void PotentialFieldControlKinematicReverseEffort::load_parameters(ros::NodeHandl
         }
     }
 
-    parameters_.k_p = Eigen::Matrix<double, 6, 6>::Zero();
-    parameters_.k_d = Eigen::Matrix<double, 6, 6>::Zero();
-    parameters_.k_i = Eigen::Matrix<double, 6, 6>::Zero();
     parameters_.k_p = getGainMatrix(std::string("k_p"), n, 6);
     parameters_.k_d = getGainMatrix(std::string("k_d"), n, 6);
     parameters_.k_i = getGainMatrix(std::string("k_i"), n, 6);
@@ -595,7 +601,7 @@ bool PotentialFieldControlKinematicReverseEffort::loadParametersCallback(std_srv
     return true;
 }
 
-Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverseEffort::task_objective_function(KDL::JntArray q)
+Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverseEffort::CF_JS_CentralJointAngles(KDL::JntArray q)
 {
     double sum = 0;
     double temp;
@@ -623,7 +629,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverseEffort::task_ob
 
 }
 
-Eigen::Matrix<double, 7, 1>  PotentialFieldControlKinematicReverseEffort::getVelRepulsive( KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F)
+Eigen::Matrix<double, 7, 1>  PotentialFieldControlKinematicReverseEffort::getRepulsiveJointVelocity( KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F)
 {
 
     KDL::Jacobian J_local;
@@ -641,7 +647,7 @@ Eigen::Matrix<double, 7, 1>  PotentialFieldControlKinematicReverseEffort::getVel
     return J_pinv_n * F;
 }
 
-Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverseEffort::potentialEnergy(KDL::JntArray q)
+Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverseEffort::CF_JS_PotentialEnergy(KDL::JntArray q)
 {
     KDL::JntArray G_local(7);
     id_solver_->JntToGravity(joint_msr_states_.q, G_local);
@@ -649,7 +655,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverseEffort::potenti
     return parameters_.gain_null_space * G_local.data ;
 }
 
-Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverseEffort::JointLimitAvoidance(KDL::JntArray q, double gain)
+Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverseEffort::CF_JS_JointLimitAvoidance(KDL::JntArray q, double gain)
 {   // This function implements joint limit avoidance usung the penalty function V = \sum\limits_{i=1}^n\frac{1}{s^2} s = q_{l_1}-|q_i|
     Eigen::Matrix<double, 7, 1> tau_limit_avoidance = Eigen::Matrix<double, 7, 1>::Zero();
     double s, potential, treshold, q_abs;
