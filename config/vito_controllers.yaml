@@ -73,7 +73,7 @@ left_arm:
     topic_desired_reference: command
     topic_obstacle: obstacles
     time_interpolation: 1.0
-    max_vel_percentage: 0.95
+    max_vel_percentage: 0.70
     pf_repulsive_gain_obstacles: 0.001
     pf_repulsive_gain_table: 0.001
     pf_dist_to_obstacles: 0.1
@@ -97,22 +97,23 @@ left_arm:
     topic_desired_reference: command
     topic_obstacle: obstacles
     time_interpolation: 3.0
-    max_vel_percentage: 0.5
+    max_vel_percentage: 0.70
     pf_repulsive_gain_obstacles: 0.001
     pf_repulsive_gain_table: 0.001
-    pf_dist_to_obstacles: 0.1
+    pf_dist_to_obstacles: 0.20
     pf_dist_to_table: 0.15
-    vel_limit_robot: 5.0
-    k_p: [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
-    k_d: [0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
+    vel_limit_robot: 4.0
+    k_p: [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]
+    k_d: [0.15, 0.15, 0.15, 0.15, 0.15, 0.15]
     k_i: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    links_with_potential_field:  ['left_arm_4_link', 'left_arm_5_link', 'left_arm_6_link', 'left_arm_7_link', 'left_hand_palm_ref_link']
+    # links_with_potential_field:  ['left_arm_4_link', 'left_arm_5_link', 'left_arm_6_link', 'left_arm_7_link', 'left_hand_palm_ref_link']
+    links_with_potential_field:  ['left_arm_6_link', 'left_arm_7_link']
     enable_joint_limits_avoidance: false
     enable_obstacle_avoidance: true
     enable_attractive_field: true
     enable_null_space: true
     gain_null_space: 0.2
-    enable_interpolation: true
+    enable_interpolation: false
 
 
 
@@ -198,23 +199,24 @@ right_arm:
     tip_name: right_hand_palm_ref_link
     topic_desired_reference: command
     topic_obstacle: obstacles
-    time_interpolation: 1.0
-    max_vel_percentage: 0.90
+    time_interpolation: 3.0
+    max_vel_percentage: 0.70
     pf_repulsive_gain_obstacles: 0.001
     pf_repulsive_gain_table: 0.001
-    pf_dist_to_obstacles: 0.1
+    pf_dist_to_obstacles: 0.15
     pf_dist_to_table: 0.15
-    vel_limit_robot: 5.0
-    k_p: [3.0, 3.0, 3.0, 3.0, 3.0, 3.0]
+    vel_limit_robot: 4.0
+    k_p: [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]
     k_d: [0.15, 0.15, 0.15, 0.15, 0.15, 0.15]
     k_i: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    links_with_potential_field:  ['right_arm_4_link', 'right_arm_5_link', 'right_arm_6_link', 'right_arm_7_link', 'right_hand_palm_ref_link']
+    # links_with_potential_field:  ['right_arm_4_link', 'right_arm_5_link', 'right_arm_6_link', 'right_arm_7_link', 'right_hand_palm_ref_link']
+    links_with_potential_field:  ['right_arm_6_link']
     enable_joint_limits_avoidance: false
-    enable_obstacle_avoidance: false
+    enable_obstacle_avoidance: true
     enable_attractive_field: true
-    enable_null_space: false
+    enable_null_space: true
     gain_null_space: 0.2
-    enable_interpolation: false
+    enable_interpolation: true
 
   PotentialFieldControlKinematicReverseEffort:
     type: desperate_housewife/PotentialFieldControlKinematicReverseEffort
@@ -223,16 +225,17 @@ right_arm:
     topic_desired_reference: command
     topic_obstacle: obstacles
     time_interpolation: 3.0
-    max_vel_percentage: 0.95
+    max_vel_percentage: 0.70
     pf_repulsive_gain_obstacles: 0.001
     pf_repulsive_gain_table: 0.001
-    pf_dist_to_obstacles: 0.1
+    pf_dist_to_obstacles: 0.20
     pf_dist_to_table: 0.15
     vel_limit_robot: 4.0
     k_p: [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]
     k_d: [0.15, 0.15, 0.15, 0.15, 0.15, 0.15]
     k_i: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    links_with_potential_field:  ['right_arm_4_link', 'right_arm_5_link', 'right_arm_6_link', 'right_arm_7_link', 'right_hand_palm_ref_link']
+    # links_with_potential_field:  ['right_arm_4_link', 'right_arm_5_link', 'right_arm_6_link', 'right_arm_7_link', 'right_hand_palm_ref_link']
+    links_with_potential_field:  ['right_arm_6_link', 'right_arm_7_link']
     enable_joint_limits_avoidance: false
     enable_obstacle_avoidance: true
     enable_attractive_field: true

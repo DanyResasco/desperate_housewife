@@ -108,7 +108,7 @@ void Home_state::Error_info_right(const desperate_housewife::Error_msg::ConstPtr
   KDL::Twist e_right;
   tf::twistMsgToKDL (error_msg->error_, e_right);
   id_error_msgs = error_msg->id;
-  Arm_used = 0;
+  // Arm_used = 0;
   vect_error[0] = e_right;
   // std::cout<<"error: "<<error_msg->data[0]<<error_msg->data[1]<<error_msg->data[2]<<std::endl;
 }
@@ -119,7 +119,7 @@ void Home_state::Error_info_left(const desperate_housewife::Error_msg::ConstPtr&
   tf::twistMsgToKDL (error_msg->error_, e_left);
 
   id_error_msgs = error_msg->id;
-  Arm_used = 1;
+  // Arm_used = 1;
   vect_error[1] = e_left;
   // std::cout<<"error: "<<error_msg->data[0]<<error_msg->data[1]<<error_msg->data[2]<<std::endl;
 }
@@ -152,6 +152,7 @@ void Home_state::reset()
 {
   id_error_msgs = 100;
   finish = false;
+  // Arm_used =  data.arm_to_use;
 }
 
 
@@ -194,9 +195,9 @@ void Home_state::run()
         finish = true;
 
       else if ((id_class != id_error_msgs) && (IsEqual(e_)))
-        {
-          switch(data.arm_to_use)
-            {
+      {
+          switch(Arm_used)
+          {
             case 0: /*use only the righ arm*/
               {
                 SendHomeRobot_right();
@@ -217,8 +218,9 @@ void Home_state::run()
 
                 break;
               }
-            }
-        }
+          }
+      }
+      Arm_used = data.arm_to_use;
 
 
     }

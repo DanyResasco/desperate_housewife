@@ -419,9 +419,15 @@ Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::getRepulsiveF
     double distance = (T_in.p - T_CollisionPoint.p).Norm();
 
     Eigen::Vector3d Nolmal_to_Cylinder;
-    Nolmal_to_Cylinder << T_CollisionPoint.M.UnitZ().data[0], T_CollisionPoint.M.UnitZ().data[1], T_CollisionPoint.M.UnitZ().data[2];
+    KDL::Vector Nolmal_to_Cylinder_kdl;
+    // Nolmal_to_Cylinder << T_CollisionPoint.M.UnitZ().data[0], T_CollisionPoint.M.UnitZ().data[1], T_CollisionPoint.M.UnitZ().data[2];
+    // Nolmal_to_Cylinder_kdl = T_CollisionPoint.M.UnitZ();
 
-    KDL::Vector Nolmal_to_Cylinder_kdl = T_CollisionPoint.M.UnitZ();
+    Nolmal_to_Cylinder = GetPartialDerivate(Object_pos, T_CollisionPoint.p, radius, height);
+    Nolmal_to_Cylinder_kdl.data[0] = Nolmal_to_Cylinder[0];
+    Nolmal_to_Cylinder_kdl.data[1] = Nolmal_to_Cylinder[1];
+    Nolmal_to_Cylinder_kdl.data[2] = Nolmal_to_Cylinder[2];
+    
     arrows_total.markers.push_back(Force2MarkerArrow(  Nolmal_to_Cylinder_kdl, T_CollisionPoint.p, id_global));
 
     LineCollisions::Point Point1(T_in.p.x(), T_in.p.y(), T_in.p.z());
@@ -679,6 +685,36 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::CF_JS_JointLi
     }
 
     return tau_limit_avoidance;
+}
+
+Eigen::Vector3d PotentialFieldControlKinematicReverse::GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height)
+{
+    Eigen::Matrix<double, 4, 4>  Tvo_eigen;
+    Tvo_eigen = FromKdlToEigen(T_v_o);
+    Eigen::Vector4d Point_v_eigen(Point_v.x(), Point_v.y(), Point_v.z(), 1);
+
+    Eigen::Vector4d Point_o;
+    Point_o = Tvo_eigen.inverse() * Point_v_eigen;
+    double n = 2; // n as in the paper should be in 4 but considering the shortest distance to obstacles. Here this is not being considered :( TODO
+
+    Eigen::Vector4d distance_der_partial(0, 0, 0, 0);
+// distance_der_partial = x^2/radius + y^2 / radius + 2*(z^2n) /l
+    distance_der_partial[0] = (Point_o[0] * 2) / radius ;
+    distance_der_partial[1] = (Point_o[1] * 2) / radius ;
+    distance_der_partial[2] = (std::pow((Point_o[2] * 2 / height), (2 * n - 1)) * (2 * n) ); //n=4
+//n=1
+// distance_der_partial[2] = (Point_o[2]*4) / height ;
+    distance_der_partial[3] = 0;
+
+    Eigen::Vector3d Der_v;
+    Eigen::Vector4d partial_temp;
+    partial_temp = Tvo_eigen * distance_der_partial;
+    partial_temp = partial_temp.normalized();
+    Der_v[0] = partial_temp[0];
+    Der_v[1] = partial_temp[1];
+    Der_v[2] = partial_temp[2];
+
+    return Der_v;
 }
 
 

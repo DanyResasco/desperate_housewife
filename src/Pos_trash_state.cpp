@@ -80,6 +80,7 @@ void Pos_trash::Error_info_left(const desperate_housewife::Error_msg::ConstPtr& 
 
   id_error_msgs = error_msg->id;
   vect_error[1] = temp;
+  // ROS_INFO("ERROR LEFT");
 }
 
 
@@ -121,7 +122,7 @@ void Pos_trash::run()
 
   else if((id_class == id_error_msgs) && (IsEqual(e_)))
     {
-      // std::cout<<"same id and error is equal"<<std::endl;
+      ROS_INFO("same id and error is equal");
       finish = true;
     }
 

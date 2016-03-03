@@ -207,18 +207,18 @@ int HandPoseGenerator::whichArm( int cyl_nbr )
 
   tf::StampedTransform hand_r_object, hand_l_object, pose_to_project;
 
-  try
-  {
+  // try
+  // {
     listener_info.waitForTransform("object_" + std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
     listener_info.lookupTransform("object_" + std::to_string(cyl_nbr), right_hand_frame_.c_str(), ros::Time(0), hand_r_object);
 
     listener_info.waitForTransform("object_" + std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time::now(), ros::Duration(1));
     listener_info.lookupTransform("object_" + std::to_string(cyl_nbr), left_hand_frame_.c_str(), ros::Time(0), hand_l_object);
-  }
-  catch (tf::TransformException& ex)
-  {
-    ROS_ERROR("%s", ex.what());
-  }
+  // }
+  // catch (tf::TransformException& ex)
+  // {
+  //   ROS_ERROR("%s", ex.what());
+  // }
 
 
   switch (arm_active)

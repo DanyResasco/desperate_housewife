@@ -285,6 +285,7 @@ void HandPoseGenerator::run()
 desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( desperate_housewife::fittedGeometriesSingle geometry, int cyl_nbr )
 {
   desperate_housewife::handPoseSingle hand_pose_local;
+  hand_pose_local.id = id_class;
   hand_pose_local.whichArm = whichArm(  geometry.id);
   hand_pose_local.pose = placeHand( geometry, hand_pose_local.whichArm );
   hand_pose_local.isGraspable = true;
@@ -295,8 +296,8 @@ desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( despera
 bool HandPoseGenerator::isGeometryGraspable ( desperate_housewife::fittedGeometriesSingle geometry )
 {
   /*comparision between ration and treshold and cylinder radius with another threshold*/
-  // if ( (geometry.info[geometry.info.size() - 1] >= 55) && (geometry.info[0] < 0.10))
-  if ( geometry.info[0] < 0.10 )
+  if ( (geometry.info[geometry.info.size() - 1] >= 55) && (geometry.info[0] < 0.10))
+  // if ( geometry.info[0] < 0.10 )
   {
     return true;
   }
@@ -362,7 +363,9 @@ void HandPoseGenerator::DesperateDemo0( std::vector<desperate_housewife::fittedG
     }
 
   }
-  DesiredHandPose.id = id_class;
+
+  // DesiredHandPose.id = id_class;
+
   if (graspable_object_exist)
   {
     data.arm_to_use = DesiredHandPose.whichArm;
@@ -414,7 +417,7 @@ void HandPoseGenerator::DesperateDemo0( std::vector<desperate_housewife::fittedG
 
     else /*right arm*/
     {
-      DesiredHandPose.id = id_class;
+      // DesiredHandPose.id = id_class;
       desired_hand_publisher_right.publish( DesiredHandPose );
       index_grasp = obstaclesMsg_local.geometries[0].id;
       obstaclesMsg_local.geometries.erase(obstaclesMsg_local.geometries.begin());
@@ -508,7 +511,7 @@ void HandPoseGenerator::plotObstacles( desperate_housewife::fittedGeometriesArra
 
     marker_local.color.a = 1.0; // for the clearness
     // obst_name = "obstacle_" + std::to_string(i);
-    marker_local.lifetime = ros::Duration(100);
+    marker_local.lifetime = ros::Duration(1);
     tf::Transform tfGeomTRansform;
     tf::poseMsgToTF(Obstacles.geometries[i].pose, tfGeomTRansform );
     tf_geometriesTransformations_.sendTransform( tf::StampedTransform( tfGeomTRansform, ros::Time::now(), "world", "obstacle_" + std::to_string(Obstacles.geometries[i].id) ) );
