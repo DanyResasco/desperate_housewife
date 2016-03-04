@@ -146,7 +146,7 @@
         <!-- load the controllers in current namespace -->
         <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="joint_state_controller joint_trajectory_controller"/>
 
-        <node name="controller_stopper" pkg="controller_manager" type="spawner" args="--stopped  PotentialFieldControlKinematic PotentialFieldControl  PotentialFieldControlKinematicReverse PotentialFieldControlKinematicReverseEffort" output="screen"/>
+        <node name="controller_stopper" pkg="controller_manager" type="spawner" args="--stopped PotentialFieldControlKinematicReverse PotentialFieldControlKinematicReverseEffort" output="screen"/>
 
     </group>
     
@@ -192,7 +192,7 @@
         <!-- load the controllers in current namespace -->
         <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="joint_state_controller joint_trajectory_controller"/>
 
-        <node name="controller_stopper" pkg="controller_manager" type="spawner" args="--stopped  PotentialFieldControlKinematic PotentialFieldControl  PotentialFieldControlKinematicReverse PotentialFieldControlKinematicReverseEffort" output="screen"/>
+        <node name="controller_stopper" pkg="controller_manager" type="spawner" args="--stopped PotentialFieldControlKinematicReverse PotentialFieldControlKinematicReverseEffort" output="screen"/>
 
 
     </group>

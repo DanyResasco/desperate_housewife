@@ -297,7 +297,6 @@ bool HandPoseGenerator::isGeometryGraspable ( desperate_housewife::fittedGeometr
 {
   /*comparision between ration and treshold and cylinder radius with another threshold*/
   if ( (geometry.info[geometry.info.size() - 1] >= 55) && (geometry.info[0] < 0.10))
-  // if ( geometry.info[0] < 0.10 )
   {
     return true;
   }
@@ -364,8 +363,6 @@ void HandPoseGenerator::DesperateDemo0( std::vector<desperate_housewife::fittedG
 
   }
 
-  // DesiredHandPose.id = id_class;
-
   if (graspable_object_exist)
   {
     data.arm_to_use = DesiredHandPose.whichArm;
@@ -376,16 +373,14 @@ void HandPoseGenerator::DesperateDemo0( std::vector<desperate_housewife::fittedG
       desired_hand_publisher_left.publish( DesiredHandPose );
       obstacles_publisher_left.publish(obstaclesMsg);
       ROS_INFO_STREAM("There is a graspable object, No. objects in obstaclesMsg: " << obstaclesMsg.geometries.size() );
-      // finish = false;
     }
 
     else /*right arm*/
     {
-      // DesiredHandPose.id = id_class;
       desired_hand_publisher_right.publish( DesiredHandPose );
       obstacles_publisher_right.publish(obstaclesMsg);
-      // finish = false;
     }
+
     pub_aux_graspable_object.publish(grapableObjectMsg);
     pub_aux_obstacles.publish(obstaclesMsg);
     obstaclesMsg.geometries.push_back(grapableObjectMsg);
@@ -394,7 +389,6 @@ void HandPoseGenerator::DesperateDemo0( std::vector<desperate_housewife::fittedG
   else
   {
     ObjorObst = 1;
-    // DesiredHandPose.id = id_class;
     DesiredHandPose = generateHandPose( obstaclesMsg.geometries[0], obstaclesMsg.geometries[0].id );
     DesiredHandPose.pose = ObstacleReject( obstaclesMsg.geometries[0], DesiredHandPose.whichArm);
 
@@ -402,32 +396,28 @@ void HandPoseGenerator::DesperateDemo0( std::vector<desperate_housewife::fittedG
     obstaclesMsg_local.geometries.clear();
     obstaclesMsg_local = obstaclesMsg;
 
-
     data.arm_to_use = DesiredHandPose.whichArm;
 
     if (DesiredHandPose.whichArm == 1) /*left arm*/
     {
-      // DesiredHandPose.id = id_class;
       desired_hand_publisher_left.publish( DesiredHandPose );
       index_grasp = obstaclesMsg_local.geometries[0].id;
       obstaclesMsg_local.geometries.erase(obstaclesMsg_local.geometries.begin());
       obstacles_publisher_left.publish(obstaclesMsg_local);
-      // finish = false;
     }
 
     else /*right arm*/
     {
-      // DesiredHandPose.id = id_class;
       desired_hand_publisher_right.publish( DesiredHandPose );
       index_grasp = obstaclesMsg_local.geometries[0].id;
       obstaclesMsg_local.geometries.erase(obstaclesMsg_local.geometries.begin());
       obstacles_publisher_right.publish(obstaclesMsg_local);
-
     }
+
     pub_aux_obstacles.publish(obstaclesMsg);
     plotObstacles(obstaclesMsg, index_grasp);
-
   }
+
   finish = false;
   ROS_INFO_STREAM((graspable_object_exist ? "There is" : "There is not") << " a graspable object" );
 }
@@ -468,8 +458,6 @@ void  HandPoseGenerator::DesperateDemo1(std::vector<desperate_housewife::fittedG
 
 
   plotObstacles(obstaclesMsg, cyl_[0].id);
-
-
 }
 
 
@@ -510,18 +498,15 @@ void HandPoseGenerator::plotObstacles( desperate_housewife::fittedGeometriesArra
     }
 
     marker_local.color.a = 1.0; // for the clearness
-    // obst_name = "obstacle_" + std::to_string(i);
-    marker_local.lifetime = ros::Duration(1);
+    marker_local.lifetime = ros::Duration(5);
     tf::Transform tfGeomTRansform;
     tf::poseMsgToTF(Obstacles.geometries[i].pose, tfGeomTRansform );
     tf_geometriesTransformations_.sendTransform( tf::StampedTransform( tfGeomTRansform, ros::Time::now(), "world", "obstacle_" + std::to_string(Obstacles.geometries[i].id) ) );
     marker_total.markers.push_back(marker_local);
-
   }
 
 
   marker_publisher_.publish(marker_total);
-
 }
 
 void HandPoseGenerator::resetCallBack(const std_msgs::Bool::ConstPtr msg)
@@ -530,7 +515,6 @@ void HandPoseGenerator::resetCallBack(const std_msgs::Bool::ConstPtr msg)
   home_reset = msg->data;
   finish = true;
   failed = false;
-  // return true;
 }
 
 
@@ -540,16 +524,3 @@ void HandPoseGenerator::reset()
   finish = false;
   failed = false;
 }
-
-
-
-
-
-// bool HandPoseGenerator::resetCallBack(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
-// {
-//   ROS_INFO("HandPoseGenerator::Reset called");
-//   home_reset = true;
-//   finish = true;
-//   failed = false;
-//   return true;
-// }

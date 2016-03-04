@@ -252,10 +252,6 @@ void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, 
             x_dot_d.rot.data[2] = parameters_.k_p(5, 5) / parameters_.k_d(5, 5) * x_err_.rot.data[2];
 
             double v_limited = VelocityLimit(x_dot_d, parameters_.vel_limit_robot);
-            if (std::isnan( v_limited ) )
-            {
-                std::cout << "velocity limit is NAN" << std::endl;
-            }
 
             x_err_integral += x_err_ * period.toSec();
             for (int i = 0; i < F_attractive.size(); i++)
@@ -331,7 +327,7 @@ void PotentialFieldControlKinematicReverseEffort::update(const ros::Time& time, 
         //     ROS_INFO_STREAM("JV: " << joint_des_states_filtered.qdot.data.transpose() * 180.0 / M_PI);
         // }
 
-        saturateJointPositions( joint_des_states_.q, 2.0 * M_PI / 180.0 );
+        saturateJointPositions( joint_des_states_.q, 1.0 * M_PI / 180.0 );
 
 
     }

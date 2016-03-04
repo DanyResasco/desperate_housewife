@@ -1,14 +1,14 @@
 #include <Home_state.h>
 // #include <check_error.hpp>
 
-Home_state::Home_state(const shared& m):data(m)
+Home_state::Home_state(const shared& m): data(m)
 {
 
   nh.param<std::string>("/right_arm/controller", control_topic_right, "PotentialFieldControl");
   nh.param<std::string>("/left_arm/controller", control_topic_left, "PotentialFieldControl");
 
-  ROS_INFO_STREAM("**** control_topic_right: "<< control_topic_right.c_str() );
-  
+  ROS_INFO_STREAM("**** control_topic_right: " << control_topic_right.c_str() );
+
   /*reads the error*/
   error_topic_right = "/right_arm/" + control_topic_right + "/error_id";
   error_sub_right = nh.subscribe(error_topic_right.c_str(), 1, &Home_state::Error_info_right, this);
@@ -19,11 +19,11 @@ Home_state::Home_state(const shared& m):data(m)
 
   /*sends a hand pose*/
   desired_hand_right_pose_topic_ = "/right_arm/" + control_topic_right + "/command";
-  desired_hand_right_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_right_pose_topic_.c_str(),1);
+  desired_hand_right_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_right_pose_topic_.c_str(), 1);
 
 
   desired_hand_left_pose_topic_ = "/left_arm/" + control_topic_left + "/command";
-  desired_hand_left_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_left_pose_topic_.c_str(),1);
+  desired_hand_left_pose_publisher_ = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_left_pose_topic_.c_str(), 1);
 
 
   nh.param<std::string>("/right_arm/" + control_topic_right + "/root_name", base_frame_, "world");
@@ -36,8 +36,8 @@ Home_state::Home_state(const shared& m):data(m)
   sub_start_l = nh.subscribe(("/left_arm/" + control_topic_left + "/start_controller").c_str(), 1, &Home_state::state_left, this);
 
   /*publish the start to PotentialFieldContol*/
-  ros_pub_start_right = nh.advertise<std_msgs::Bool > ("/right_arm/" + control_topic_right + "/start_controller",1);
-  ros_pub_start_left = nh.advertise<std_msgs::Bool > ("/left_arm/" + control_topic_left + "/start_controller",1);
+  ros_pub_start_right = nh.advertise<std_msgs::Bool > ("/right_arm/" + control_topic_right + "/start_controller", 1);
+  ros_pub_start_left = nh.advertise<std_msgs::Bool > ("/left_arm/" + control_topic_left + "/start_controller", 1);
 
   /*id class for msg*/
   id_class = static_cast<int>(transition_id::Vito_home);
@@ -49,12 +49,12 @@ Home_state::Home_state(const shared& m):data(m)
   vect_error[1] = TEMP;
 
   /*treshold error*/
-  nh.param<double>("/error/pos/x",x,0.01);
-  nh.param<double>("/error/pos/y",y,0.01);
-  nh.param<double>("/error/pos/z",z,0.01);
-  nh.param<double>("/error/rot/x",rotx,0.01);
-  nh.param<double>("/error/rot/y",roty,0.01);
-  nh.param<double>("/error/rot/z",rotz,0.01);
+  nh.param<double>("/error/pos/x", x, 0.01);
+  nh.param<double>("/error/pos/y", y, 0.01);
+  nh.param<double>("/error/pos/z", z, 0.01);
+  nh.param<double>("/error/rot/x", rotx, 0.01);
+  nh.param<double>("/error/rot/y", roty, 0.01);
+  nh.param<double>("/error/rot/z", rotz, 0.01);
 
   KDL::Vector vel;
   KDL::Vector rot;
@@ -69,6 +69,9 @@ Home_state::Home_state(const shared& m):data(m)
 
   finish = false;
   start_flag = false;
+  both_arm_use = false;
+  id_error_msgs = 1000;
+
 }
 
 bool Home_state::IsEqual(KDL::Twist E_pf)
@@ -89,17 +92,17 @@ bool Home_state::IsEqual(KDL::Twist E_pf)
         (E_pf_abs.rot.data[0] < E_t.rot.data[0]) &&
         (E_pf_abs.rot.data[1] < E_t.rot.data[1]) &&
         (E_pf_abs.rot.data[2] < E_t.rot.data[2]) )
-    {
-      ROS_DEBUG("is equal");
-      return true;
-    }
+  {
+    ROS_DEBUG("is equal");
+    return true;
+  }
   else
-    {
-      ROS_DEBUG("is not equal");
-      ROS_DEBUG("error linear: E_pf_abs.vel.data[0] %g E_pf_abs.vel.data[1] %g  E_pf_abs.vel.data[2]: %g",  E_pf_abs.vel.data[0],E_pf_abs.vel.data[1], E_pf_abs.vel.data[2]);
-      ROS_DEBUG("error agular: E_pf_abs.rot.data[0] %g E_pf_abs.rot.data[1] %g E_pf_abs.rot.data[2] %g", E_pf_abs.rot.data[0], E_pf_abs.rot.data[1], E_pf_abs.rot.data[2]);
-      return false;
-    }
+  {
+    ROS_DEBUG("is not equal");
+    ROS_DEBUG("error linear: E_pf_abs.vel.data[0] %g E_pf_abs.vel.data[1] %g  E_pf_abs.vel.data[2]: %g",  E_pf_abs.vel.data[0], E_pf_abs.vel.data[1], E_pf_abs.vel.data[2]);
+    ROS_DEBUG("error agular: E_pf_abs.rot.data[0] %g E_pf_abs.rot.data[1] %g E_pf_abs.rot.data[2] %g", E_pf_abs.rot.data[0], E_pf_abs.rot.data[1], E_pf_abs.rot.data[2]);
+    return false;
+  }
 }
 
 
@@ -126,61 +129,99 @@ void Home_state::Error_info_left(const desperate_housewife::Error_msg::ConstPtr&
 
 
 void Home_state::command_start(const std_msgs::Bool::ConstPtr& msg)
-{ 
+{
   std_msgs::Bool msg_send;
   msg_send.data = true;
   ros_pub_start_left.publish(msg_send);
   ros_pub_start_right.publish(msg_send);
   start_flag = true;
   Arm_used = 2;
+  both_arm_use = true;
 }
 
 void Home_state::state_right(const std_msgs::Bool::ConstPtr& msg)
 {
-  ROS_INFO_STREAM("Message to go Home on right arm received");
-  start_flag = true;
-  Arm_used = 0;
+  if (both_arm_use == false)
+  {
+    ROS_INFO_STREAM("Message to go Home on right arm received");
+    start_flag = true;
+    Arm_used = 0;
+  }
 }
 
 void Home_state::state_left(const std_msgs::Bool::ConstPtr& msg)
 {
-  start_flag = true;
-  Arm_used = 1;
+  if (both_arm_use == false)
+  {
+    start_flag = true;
+    Arm_used = 1;
+  }
 }
 
 void Home_state::reset()
 {
-  id_error_msgs = 100;
+  // id_error_msgs = 100;
   finish = false;
-  // Arm_used =  data.arm_to_use;
+  //Arm_used =  data.arm_to_use;
 }
 
 
 void Home_state::run()
 {
-  if(start_flag == true)
+  if (start_flag == true)
+  {
+
+    e_ = vect_error[0] + vect_error [1];
+    switch (Arm_used)
     {
-      // Arm = data.arm_to_use;
-      e_ = vect_error[0] + vect_error [1];
+    case 0: /*use only the righ arm*/
+    {
+      SendHomeRobot_right();
+      finish = false;
+
+      break;
+    }
+    case 1: /*use only the left arm*/
+    {
+      SendHomeRobot_left();
+      finish = false;
+      break;
+    }
+    case 2: /*use both arm*/
+    {
+      SendHomeRobot_right();
+      SendHomeRobot_left();
+      finish = false;
+
+      break;
+    }
+    }
+
+    if ( (id_class == id_error_msgs) && (IsEqual(e_)) )
+      finish = true;
+
+
+    // Arm = data.arm_to_use;
+    /*  e_ = vect_error[0] + vect_error [1];
 
       if( ((id_class != id_error_msgs) && (!IsEqual(e_))) )
         {
           switch(Arm_used)
             {
-            case 0: /*use only the righ arm*/
+            case 0: //use only the righ arm
               {
                 SendHomeRobot_right();
                 finish = false;
 
                 break;
               }
-            case 1: /*use only the left arm*/
+            case 1: // use only the left arm
               {
                 SendHomeRobot_left();
                 finish = false;
                 break;
               }
-            case 2: /*use both arm*/
+            case 2: //use both arm
               {
                 SendHomeRobot_right();
                 SendHomeRobot_left();
@@ -198,19 +239,19 @@ void Home_state::run()
       {
           switch(Arm_used)
           {
-            case 0: /*use only the righ arm*/
+            case 0: //use only the righ arm
               {
                 SendHomeRobot_right();
                 finish = false;
                 break;
               }
-            case 1: /*use only the left arm*/
+            case 1: //use only the left arm
               {
                 SendHomeRobot_left();
                 finish = false;
                 break;
               }
-            case 2: /*use both arm*/
+            case 2: //use both arm
               {
                 SendHomeRobot_right();
                 SendHomeRobot_left();
@@ -220,10 +261,11 @@ void Home_state::run()
               }
           }
       }
+
       Arm_used = data.arm_to_use;
 
-
-    }
+    */
+  }
   else
     finish = false;
 }
@@ -238,11 +280,11 @@ std::map< transition, bool > Home_state::getResults()
 {
   std::map< transition, bool > results;
 
-  if(finish == true)
-    {
-      results[transition::Error_arrived] = finish;
+  if (finish == true)
+  {
+    results[transition::Error_arrived] = finish;
 
-    }
+  }
   return results;
 }
 
@@ -256,7 +298,7 @@ void Home_state::SendHomeRobot_right()
 {
   desperate_housewife::handPoseSingle home_robot_right;
   // std::cout<<"send vito right"<<std::endl;
-  double roll_r,pitch_r,yaw_r;
+  double roll_r, pitch_r, yaw_r;
   nh.param<double>("/home/right_arm_position_x", home_robot_right.pose.position.x, -0.75022);
   nh.param<double>("/home/right_arm_position_y",  home_robot_right.pose.position.y,  0.47078);
   nh.param<double>("/home/right_arm_position_z", home_robot_right.pose.position.z, 0.74494);
@@ -264,9 +306,9 @@ void Home_state::SendHomeRobot_right()
   nh.param<double>("/home/right_arm_B_pitch", pitch_r, -0.08650);
   nh.param<double>("/home/right_arm_C_roll", roll_r, -0.5108);
 
-  KDL::Rotation Rot_matrix_r = KDL::Rotation::RPY(roll_r,pitch_r,yaw_r);
+  KDL::Rotation Rot_matrix_r = KDL::Rotation::RPY(roll_r, pitch_r, yaw_r);
 
-  Rot_matrix_r.GetQuaternion(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
+  Rot_matrix_r.GetQuaternion(quat_des_.v(0), quat_des_.v(1), quat_des_.v(2), quat_des_.a);
 
   home_robot_right.pose.orientation.x = quat_des_.v(0);
   home_robot_right.pose.orientation.y = quat_des_.v(1);
@@ -280,14 +322,14 @@ void Home_state::SendHomeRobot_right()
 
   tf::Transform tfHandTrasform1;
   tf::poseMsgToTF( home_robot_right.pose, tfHandTrasform1);
-  tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform1, ros::Time::now(), base_frame_.c_str(),"home_robot_right") );
+  tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform1, ros::Time::now(), base_frame_.c_str(), "home_robot_right") );
 }
 
 void Home_state::SendHomeRobot_left()
 {
   desperate_housewife::handPoseSingle home_robot_left;
   // std::cout<<"send vito left"<<std::endl;
-  double roll_r,pitch_r,yaw_r;
+  double roll_r, pitch_r, yaw_r;
   nh.param<double>("/home/left_arm_position_x", home_robot_left.pose.position.x, -0.75022);
   nh.param<double>("/home/left_arm_position_y",  home_robot_left.pose.position.y,  0.47078);
   nh.param<double>("/home/left_arm_position_z", home_robot_left.pose.position.z, 0.74494);
@@ -295,9 +337,9 @@ void Home_state::SendHomeRobot_left()
   nh.param<double>("/home/left_arm_B_pitch", pitch_r, -0.08650);
   nh.param<double>("/home/left_arm_C_roll", roll_r, -0.5108);
 
-  KDL::Rotation Rot_matrix_r = KDL::Rotation::RPY(roll_r,pitch_r,yaw_r);
+  KDL::Rotation Rot_matrix_r = KDL::Rotation::RPY(roll_r, pitch_r, yaw_r);
 
-  Rot_matrix_r.GetQuaternion(quat_des_.v(0),quat_des_.v(1),quat_des_.v(2),quat_des_.a);
+  Rot_matrix_r.GetQuaternion(quat_des_.v(0), quat_des_.v(1), quat_des_.v(2), quat_des_.a);
 
   home_robot_left.pose.orientation.x = quat_des_.v(0);
   home_robot_left.pose.orientation.y = quat_des_.v(1);
@@ -311,17 +353,17 @@ void Home_state::SendHomeRobot_left()
 
   tf::Transform tfHandTrasform1;
   tf::poseMsgToTF( home_robot_left.pose, tfHandTrasform1);
-  tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform1, ros::Time::now(), base_frame_.c_str(),"home_robot_left") );
+  tf_desired_hand_pose.sendTransform( tf::StampedTransform( tfHandTrasform1, ros::Time::now(), base_frame_.c_str(), "home_robot_left") );
 }
 
 // switch(Arm_used)
 //         {
 //             case 0: /*use only the righ arm*/
-//             {   
+//             {
 //                 std::cout<<"case 0"<<std::endl;
 //                 if( ((id_class != id_error_msgs) && (!IsEqual(e_right))) || ((id_class != id_error_msgs) && (IsEqual(e_right))) )
 //                 {
-//                     SendHomeRobot_right(); 
+//                     SendHomeRobot_right();
 //                     finish = false;
 //                 }
 //                 if( (id_class == id_error_msgs) && (IsEqual(e_right)) )
@@ -332,7 +374,7 @@ void Home_state::SendHomeRobot_left()
 //             {
 //                 if( ((id_class != id_error_msgs) && (!IsEqual(e_left))) || ((id_class != id_error_msgs) && (IsEqual(e_left))) )
 //                 {
-//                     SendHomeRobot_left(); 
+//                     SendHomeRobot_left();
 //                     finish = false;
 //                 }
 //                 if( (id_class == id_error_msgs) && (IsEqual(e_left)) )
@@ -345,14 +387,14 @@ void Home_state::SendHomeRobot_left()
 //                 if( ((id_class != id_error_msgs) && (!IsEqual(e_right))) || ((id_class != id_error_msgs) && (!IsEqual(e_left))) )
 //                 {
 //                     SendHomeRobot_left();
-//                     SendHomeRobot_right(); 
+//                     SendHomeRobot_right();
 //                     finish = false;
 //                 }
 //                  if( (id_class == id_error_msgs) && (IsEqual(e_right)) &&  (IsEqual(e_left)) )
 //                     finish = true;
 //                 break;
 //             }
-//         }       
+//         }
 //     }
 //     else
 //         finish = false;

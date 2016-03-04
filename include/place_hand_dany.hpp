@@ -85,7 +85,6 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
     else
     {
-      // Point_desired(0) =  radius + distance_softhand_obj;
       Point_desired(1) = T_vito_c(1, 3) + radius + distance_softhand_obj;
       ROS_DEBUG("Not Lying, Empty, right Arm, ");
     }
@@ -124,18 +123,21 @@ geometry_msgs::Pose HandPoseGenerator::placeHand ( desperate_housewife::fittedGe
 
     ROS_DEBUG("cyl is lying");
 
+    // z_l = -z;
+    // x_l << -x.cross(z_l) ;
+    // y_l = -x;
+
     z_l = -z;
-    x_l << -x.cross(z_l) ;
-    y_l = -x;
+    x_l << T_vito_c(0,2), T_vito_c(1,2), T_vito_c(2,2);
+    y_l << z_l.cross(x_l) ;
+    
+
 
     T_w_h.col(0) << x_l, 0;
     T_w_h.col(1) << y_l, 0;
     T_w_h.col(2) << z_l, 0;
     T_w_h.col(3) << Point_desired;
 
-    // T_w_h = T_w_h * Rot_z;
-
-    // ROS_INFO_STREAM("T_w_h det: "<<T_w_h.determinant());
   }
 
   else
