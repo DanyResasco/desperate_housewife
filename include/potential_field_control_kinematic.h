@@ -250,6 +250,7 @@ private:
 	double VelocityLimit(KDL::Twist x_dot_d );
 	Eigen::Matrix<double, 7, 1> potentialEnergy(KDL::JntArray q);
 	Eigen::Matrix<double, 4, 4>  FromKdlToEigen(KDL::Frame &T_v_o);
+	void getClosestPointstoCylinder( KDL::Frame T_link_object, KDL::Frame &T_CollisionPoint, double &distance_to_T_CollisionPoint, double radius, double height);
 
 };
 

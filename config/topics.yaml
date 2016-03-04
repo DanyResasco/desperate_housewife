@@ -1,4 +1,4 @@
 right_arm:
-  controller: PotentialFieldControl
+  controller: PotentialFieldControlKinematicReverseEffort
 left_arm:
-  controller: PotentialFieldControl
+  controller: PotentialFieldControlKinematicReverseEffort

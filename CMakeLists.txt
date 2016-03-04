@@ -106,7 +106,11 @@ add_dependencies(fit_geometries ${PROJECT_NAME}_gencpp)
 target_link_libraries(fit_geometries ${catkin_LIBRARIES}  ${PCL_LIBRARIES} )
 
 
-add_library(${PROJECT_NAME} src/potential_field_control.cpp src/potential_field_control_kinematic.cpp src/potential_field_control_kinematic_reverse.cpp)
+add_library(${PROJECT_NAME} src/potential_field_control.cpp
+                            src/potential_field_control_kinematic.cpp
+                            src/potential_field_control_kinematic_reverse.cpp
+                            src/potential_field_control_kinematic_reverse_effort.cpp
+                            src/distance_between_lines.cpp)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} kdl_parser ${orocos_kdl_LIBRARIES})
 
@@ -138,7 +142,6 @@ target_link_libraries(init_robots ${PROJECT_NAME} ${catkin_LIBRARIES})
 
 
 SET( STATES_FILES
-# src/Grasp_obj_state.cpp
 src/Home_State_grafo.cpp
 src/Pos_trash_state.cpp
 src/SoftHand_close_state.cpp
@@ -148,7 +151,7 @@ src/Wait_msg_state.cpp
 src/Remove_obj_state.cpp
 src/Overtune_state.cpp
 src/HandPoseGenerator_state.cpp
-src/steady_state.cpp
+src/Steady_state.cpp
 )
 
 add_executable(test_grafo ${STATES_FILES} src/desperate_mind_state_machine.cpp src/main_grafo.cpp)

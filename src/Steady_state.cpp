@@ -3,7 +3,7 @@
 steady_state::steady_state()
 {
   nh.param<std::string>("/BasicGeometriesNode/geometries_topic", geometries_topic_, "/BasicGeometriesNode/geometries");
-  stream_subscriber_ = nh.subscribe(geometries_topic_, 1, &steady_state::steady_stateCallback, this);
+  stream_subscriber_ = nh.subscribe(geometries_topic_.c_str(), 1, &steady_state::steady_stateCallback, this);
   finish = false;
 }
 

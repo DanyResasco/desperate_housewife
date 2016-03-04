@@ -19,5 +19,12 @@
     </description>
   </class>
 
+  <class name="desperate_housewife/PotentialFieldControlKinematicReverseEffort" type="desperate_housewife::PotentialFieldControlKinematicReverseEffort" base_class_type="controller_interface::ControllerBase">
+    <description>
+      This is in implementation of potential field controller (Khatib)
+    </description>
+  </class>
+
+
 
   </library>

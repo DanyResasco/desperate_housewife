@@ -3,6 +3,7 @@
   <arg name="spin_rate" default="50" />
   <arg name="on_topic" default="obstacles" />
   <param name="obstacles_to_pub" value="$(arg on_topic)"/>
+  <rosparam command="load" file="$(find desperate_housewife)/config/topics.yaml" />
 	<node name="test_send_obst" pkg="desperate_housewife" type="test_send_obst" output="screen" >
     <param name="spin_rate" value="$(arg spin_rate)" />
 

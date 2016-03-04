@@ -13,7 +13,7 @@ To use this repo execute the following steps:
 	- 'cd ../..'
 	- 'git clone https://github.com/manuelbonilla/desperate_housewife.git'
 	- 'cd desperate_housewife'
-	- 'git checkout tvito_torque_control_devel '
+	- 'git checkout kinematicinJointImpedance'
 	- 'cd ..'
 
 Compile doing 'catkin_make --only_pkg-with-deps desperate_housewife' in your workspace
@@ -25,10 +25,10 @@ If you want to use both arm sends:
 	- rostopic pub -1 /desperate_housewife/start_controller std_msgs/Bool 'True'
 
 instead if you want only the right arm:
-	-rostopic pub -1 /right_arm/PotentialFieldControl/start_controller std_msgs/Bool 'True'
+	-rostopic pub -1 /right_arm/PotentialFieldControlKinematicReverse/start_controller std_msgs/Bool 'True'
 
 Left arm:
-	-rostopic pub -1 /left_arm/PotentialFieldControl/start_controller std_msgs/Bool 'True'
+	-rostopic pub -1 /left_arm/PotentialFieldControlKinematicReverse/start_controller std_msgs/Bool 'True'
 
 If you want use this demo for one arm the command to launch is: 
 - roslaunch desperate_housewife run_vito.launch use_both_arm:=false and select the arm to use with left_arm_enabled:=true or right_arm_enabled:=true
@@ -60,15 +60,14 @@ TEST FILE
 
 To test potential field: 
 
-	- roslaunch desperate_housewife test_send_obst.launch  (sends only upright cylinder)
-	
-	- To send only upright cylinder: rostopic pub  -1 /send_obst std_msgs/Float64MultiArray " data: [Pos_ost_1_x, Pos_ost_1_y, Ps_ost_1_z, radius_1, height_1, Pos_ost_2_x, Pos_ost_2_y, Pos_ost_2_z, radius_2, height_2] "
+	- roslaunch desperate_housewife test_send_obst.launch 
 
-	- To any tipe of cylinder sends: rostopic pub  -1 /PotentialFieldControl/obstacle_list desperate_housewife/fittedGeometriesArray 
+	- rostopic pub  -1 /send_obst std_msgs/Float64MultiArray " data: [Pos_ost_1_x, Pos_ost_1_y, Ps_ost_1_z, angle1,radius_1, height_1, Pos_ost_2_x, Pos_ost_2_y, Pos_ost_2_z, angle2,radius_2, height_2] "
 
 This code draws the repulsive fields like an arrow around the obstacle. For this code sends a ros message:
 
 	- roslaunch desperate_housewife grid.launch
+
 	- rostopic pub -1 /gridspace std_msgs/Float64MultiArray 'data: [x_min, x_max, x_resolution, y_min, y_max, y_resolution, z_min, z_max, z_resolution]'
 
 This code simulate the movements of a ball that moves within the field. For this code sends a ros message:
@@ -78,4 +77,4 @@ This code simulate the movements of a ball that moves within the field. For this
 
 To record a rosbag
 
-	- rosbag record -o subset  /camera/depth_registered/points /head_asus/head_asus/depth/camera_info /head_asus/head_asus/depth/image_raw /head_asus/head_asus/depth_registered/points /head_asus/head_asus/rgb/camera_info /head_asus/head_asus/rgb/image_raw /head_asus/parameter_descriptions /head_asus/parameter_updates /head_right_eye/camera_info /head_right_eye/image_raw
+	- rosbag record -o subset  /camera/depth_registered/points /head_asus/head_asus/depth/camera_info /head_asus/head_asus/depth/image_raw /head_asus/head_asus/depth_registered/points /head_asus/ ead_asus/rgb/camera_info /head_asus/head_asus/rgb/image_raw /head_asus/parameter_descriptions /head_asus/parameter_updates /head_right_eye/camera_info /head_right_eye/image_raw /head_right_eye/parameter_descriptions

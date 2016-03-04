@@ -6,7 +6,12 @@ grid::grid()
   sub_grid_ = nh.subscribe("gridspace", 1, &grid::gridspace, this);
   // vis_pub = nh.advertise<visualization_msgs::Marker>( "visualization_marker", 1 );
   vis_pub = nh.advertise<visualization_msgs::MarkerArray>( "visualization_marker", 1 );
-  nh.param<std::string>("topic_obstacle" , obstacle_avoidance, "obstacles");
+
+  std::string control_topic_right;
+  nh.param<std::string>("/right_arm/controller", control_topic_right, "PotentialFieldControl");
+  obstacle_avoidance = "/right_arm/" + control_topic_right + "/obstacles";
+  // nh.param<std::string>("topic_obstacle" , obstacle_avoidance, "obstacles");
+
   obstacles_subscribe_ = nh.subscribe(obstacle_avoidance.c_str(), 1, &grid::InfoGeometry, this);
   pfc.load_parameters(nh);
 
@@ -173,18 +178,24 @@ void grid::GetForceAndDraw(KDL::Vector &point_pos, int num)
 
   Eigen::Matrix<double,6,1> ForceAndIndex_obstacles= Eigen::Matrix<double,6,1>::Zero();
   for(unsigned int i=0; i < Object_position.size(); i++)
-    {
+  {
       double influence = Object_radius[i] + 0.2;
       std::vector<KDL::Vector> pos;
       pos.push_back(point_pos);
-      KDL::Frame temp_frame;
+      KDL::Frame temp_frame = KDL::Frame::Identity();
       temp_frame.p.data[0] = point_pos.x();
       temp_frame.p.data[1] = point_pos.y();
       temp_frame.p.data[2] = point_pos.z();
 
-      ForceAndIndex_obstacles+= pfc.GetRepulsiveForce(temp_frame, influence, Object_position[i], Object_radius[i], Object_height[i] );
-
-    }
+      // double distance = std::sqrt(std::pow(-Object_position[i].p.x() + temp_frame.p.x(),2)+ std::pow(-Object_position[i].p.y() + temp_frame.p.y(),2), std::pow(-Object_position[i].p.z() + temp_frame.p.z(),2));
+      double distance = (- Object_position[i].p + temp_frame.p).Norm();
+      if(distance <= influence)
+      {
+        // ForceAndIndex_obstacles+= pfc.GetRepulsiveForce(temp_frame, influence, Object_position[i], Object_radius[i], Object_height[i] );
+        Eigen::Vector3d distance_der_partial = pfc.GetPartialDerivate(Object_position[i], temp_frame.p, Object_radius[i],  Object_height[i]);
+        ForceAndIndex_obstacles += pfc.GetFIRAS(distance, distance_der_partial, influence);
+      }
+  }
 
   //repulsive with table
   Eigen::Matrix<double,6,1> ForceAndIndex_table = Eigen::Matrix<double,6,1>::Zero();
@@ -192,28 +203,16 @@ void grid::GetForceAndDraw(KDL::Vector &point_pos, int num)
 
   double distance_ = std::abs( -Table_position.z() + point_pos.z() ); //considered only the z position
   double Influence_table = 0.15;
+  
   if(distance_ <= Influence_table )
-    {
+  {
       Eigen::Vector3d distance_der_partial(0,0,1);
       ForceAndIndex_table = pfc.GetFIRAS( distance_, distance_der_partial, Influence_table );
-      // ROS_INFO("Point x: %f, y: %f, z: %f, Force x: %f, y: %f, z: %f", point_pos.x(), point_pos.y(), point_pos.z(),
-      //                                    ForceAndIndex_table[0], ForceAndIndex_table[1], ForceAndIndex_table[2]);
-    }
-  else
-    {
-      // ROS_INFO("Point x: %f, y: %f, z: %f out of field effect", point_pos.x(), point_pos.y(), point_pos.z());
-    }
-
-
-
-  // ForceAndIndex_table = pfc.RepulsiveWithTable(dist);
+  }
 
   Eigen::Matrix<double,6,1> Force_tot_grid;
-  Force_tot_grid = ForceAndIndex_obstacles + .01*ForceAndIndex_table;
-  // std::cout<<"ForceAndIndex_table.first: "<<ForceAndIndex_table.first<<std::endl;
-  // std::cout<<"f: "<<f<<std::endl;
+  Force_tot_grid = ForceAndIndex_obstacles + .1*ForceAndIndex_table;
 
-  // std::cout<<"Force: "<< Force_tot_grid(0) <<'\t'<<Force_tot_grid(1)<<'\t'<<Force_tot_grid(2)<<std::endl;
   KDL::Vector force_vect(Force_tot_grid(0), Force_tot_grid(1),Force_tot_grid(2));
   KDL::Vector null(0,0,0);
 

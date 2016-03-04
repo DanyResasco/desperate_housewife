@@ -13,30 +13,20 @@ HandPoseGenerator::HandPoseGenerator(shared& m): data(m)
 
   /*reads geometry information*/
   nh.param<std::string>("/BasicGeometriesNode/geometries_topic", geometries_topic_, "/BasicGeometriesNode/geometries");
-  stream_subscriber_ = nh.subscribe(geometries_topic_, 1, &HandPoseGenerator::HandPoseGeneratorCallback, this);
+  stream_subscriber_ = nh.subscribe(geometries_topic_.c_str(), 1, &HandPoseGenerator::HandPoseGeneratorCallback, this);
 
-  // /*sends obstacle informations*/
-  obstacles_topic_right = "/right_arm/" + control_topic_right + "/topic_obstacle";
-  // std::string string_temp_obst_right;
-  // nh.param<std::string>("/right_arm/PotentialFieldControl/topic_obstacle", string_temp_obst_right, "obstacles");
-  // obstacles_topic_right = std::string("/right_arm/PotentialFieldControl/") + string_temp_obst_right;
-  
+  /*sends obstacle informations*/
+  obstacles_topic_right = "/right_arm/" + control_topic_right + "/obstacles"; 
   obstacles_publisher_right = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_right.c_str(), 1);
 
-   obstacles_topic_left = "/left_arm/" + control_topic_left + "/topic_obstacle";
-  // std::string string_temp_obst_left;
-  // nh.param<std::string>("/left_arm/PotentialFieldControl/topic_obstacle", string_temp_obst_left, "obstacles");
-  // obstacles_topic_left = std::string("/left_arm/PotentialFieldControl/") + string_temp_obst_left;
+  obstacles_topic_left = "/left_arm/" + control_topic_left + "/obstacles";
   obstacles_publisher_left = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_left.c_str(), 1);
 
   /*sends information about the remove or grasp objects */
-   
   obj_info_topic_r = "/right_arm/" + control_topic_right + "/objects_info";
-  // nh.param<std::string>("/right_arm/objects_info", obj_info_topic_r, "/right_arm/objects_info");
   objects_info_right_pub = nh.advertise<std_msgs::UInt16 > (obj_info_topic_r.c_str(), 1, this);
   
   obj_info_topic_l = "/left_arm/" + control_topic_left + "/objects_info";
-  // nh.param<std::string>("/left_arm/PotentialFieldControl/objects_info_l", obj_info_topic_l, "/left_arm/objects_info");
   objects_info_left_pub = nh.advertise<std_msgs::UInt16 > (obj_info_topic_l.c_str(), 1, this);
 
   /*config parameteres*/
@@ -45,33 +35,23 @@ HandPoseGenerator::HandPoseGenerator(shared& m): data(m)
   nh.param<std::string>("/left_arm/" + control_topic_right + "/tip_name", left_hand_frame_, "left_hand_palm_ref_link");
 
   /*sends hand pose*/
-   desired_hand_pose_right_topic_ = "/right_arm/" + control_topic_right + "/command";
-  // std::string string_temp_right;
-  // nh.param<std::string>("/right_arm/PotentialFieldControl/topic_desired_reference", string_temp_right, "command");
-  // desired_hand_pose_right_topic_ = std::string("/right_arm/PotentialFieldControl/") + string_temp_right;
+  desired_hand_pose_right_topic_ = "/right_arm/" + control_topic_right + "/command";
   desired_hand_publisher_right = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_pose_right_topic_.c_str(), 1);
 
-   desired_hand_pose_left_topic_ = "/left_arm/" + control_topic_left + "/command";
-  // std::string string_temp_left;
-  // nh.param<std::string>("/left_arm/PotentialFieldControl/topic_desired_reference", string_temp_left, "command");
-  // desired_hand_pose_left_topic_ = std::string("/left_arm/PotentialFieldControl/") + string_temp_left;
+  desired_hand_pose_left_topic_ = "/left_arm/" + control_topic_left + "/command";
   desired_hand_publisher_left = nh.advertise<desperate_housewife::handPoseSingle > (desired_hand_pose_left_topic_.c_str(), 1);
 
-  // nh.param<bool>("/use_both_arm", use_both_arm, true);
   nh.param<double>("/SoftHandDistanceFrame", SoftHandDistanceFrame, 0.2);
 
   id_class = static_cast<int>(transition_id::Gen_pose);
-  // id_arm = 3;
 
   ROS_INFO("HandPoseGenerator: %d", id_class);
 
   /*read the error*/
   error_topic_right = "/right_arm/" + control_topic_right + "/error_id";
-  error_topic_left = "/left_arm/" + control_topic_left + "/error_id";
-  // nh.param<std::string>("/right_arm/PotentialFieldControl/error_id", error_topic_right, "/right_arm/PotentialFieldControl/error_id");
   error_sub_right = nh.subscribe(error_topic_right.c_str(), 1, &HandPoseGenerator::Error_info_right, this);
 
-  // nh.param<std::string>("/left_arm/PotentialFieldControl/error_id", error_topic_left, "/left_arm/PotentialFieldControl/error_id");
+  error_topic_left = "/left_arm/" + control_topic_left + "/error_id";
   error_sub_left = nh.subscribe(error_topic_left.c_str(), 1, &HandPoseGenerator::Error_info_left, this);
 
   /*send the msg to close hand*/
@@ -88,10 +68,9 @@ HandPoseGenerator::HandPoseGenerator(shared& m): data(m)
 
   marker_publisher_ = nh.advertise<visualization_msgs::MarkerArray>( "obstacles_in_control", 1 );
 
+  /*to stop*/
   srv_reset = nh.subscribe("/reset",1, &HandPoseGenerator::resetCallBack, this);
 
-  // srv_reset = nh.advertiseService("/reset", &HandPoseGenerator::resetCallBack, this);
-  // marker_publisher_objecttograsp = nh.advertise<visualization_msgs::MarkerArray>( "object_to_grasp_in_control", 1 );
   /*treshold error*/
   double x, y, z, rotx, roty, rotz;
 
@@ -306,6 +285,7 @@ void HandPoseGenerator::run()
 desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( desperate_housewife::fittedGeometriesSingle geometry, int cyl_nbr )
 {
   desperate_housewife::handPoseSingle hand_pose_local;
+  hand_pose_local.id = id_class;
   hand_pose_local.whichArm = whichArm(  geometry.id);
   hand_pose_local.pose = placeHand( geometry, hand_pose_local.whichArm );
   hand_pose_local.isGraspable = true;
@@ -316,8 +296,7 @@ desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( despera
 bool HandPoseGenerator::isGeometryGraspable ( desperate_housewife::fittedGeometriesSingle geometry )
 {
   /*comparision between ration and treshold and cylinder radius with another threshold*/
-  // if ( (geometry.info[geometry.info.size() - 1] >= 55) && (geometry.info[0] < 0.10))
-  if ( geometry.info[0] < 0.10 )
+  if ( (geometry.info[geometry.info.size() - 1] >= 55) && (geometry.info[0] < 0.10))
   {
     return true;
   }
@@ -383,7 +362,7 @@ void HandPoseGenerator::DesperateDemo0( std::vector<desperate_housewife::fittedG
     }
 
   }
-  DesiredHandPose.id = id_class;
+
   if (graspable_object_exist)
   {
     data.arm_to_use = DesiredHandPose.whichArm;
@@ -394,16 +373,14 @@ void HandPoseGenerator::DesperateDemo0( std::vector<desperate_housewife::fittedG
       desired_hand_publisher_left.publish( DesiredHandPose );
       obstacles_publisher_left.publish(obstaclesMsg);
       ROS_INFO_STREAM("There is a graspable object, No. objects in obstaclesMsg: " << obstaclesMsg.geometries.size() );
-      // finish = false;
     }
 
     else /*right arm*/
     {
-      // DesiredHandPose.id = id_class;
       desired_hand_publisher_right.publish( DesiredHandPose );
       obstacles_publisher_right.publish(obstaclesMsg);
-      // finish = false;
     }
+
     pub_aux_graspable_object.publish(grapableObjectMsg);
     pub_aux_obstacles.publish(obstaclesMsg);
     obstaclesMsg.geometries.push_back(grapableObjectMsg);
@@ -412,7 +389,6 @@ void HandPoseGenerator::DesperateDemo0( std::vector<desperate_housewife::fittedG
   else
   {
     ObjorObst = 1;
-    // DesiredHandPose.id = id_class;
     DesiredHandPose = generateHandPose( obstaclesMsg.geometries[0], obstaclesMsg.geometries[0].id );
     DesiredHandPose.pose = ObstacleReject( obstaclesMsg.geometries[0], DesiredHandPose.whichArm);
 
@@ -420,32 +396,28 @@ void HandPoseGenerator::DesperateDemo0( std::vector<desperate_housewife::fittedG
     obstaclesMsg_local.geometries.clear();
     obstaclesMsg_local = obstaclesMsg;
 
-
     data.arm_to_use = DesiredHandPose.whichArm;
 
     if (DesiredHandPose.whichArm == 1) /*left arm*/
     {
-      // DesiredHandPose.id = id_class;
       desired_hand_publisher_left.publish( DesiredHandPose );
       index_grasp = obstaclesMsg_local.geometries[0].id;
       obstaclesMsg_local.geometries.erase(obstaclesMsg_local.geometries.begin());
       obstacles_publisher_left.publish(obstaclesMsg_local);
-      // finish = false;
     }
 
     else /*right arm*/
     {
-      DesiredHandPose.id = id_class;
       desired_hand_publisher_right.publish( DesiredHandPose );
       index_grasp = obstaclesMsg_local.geometries[0].id;
       obstaclesMsg_local.geometries.erase(obstaclesMsg_local.geometries.begin());
       obstacles_publisher_right.publish(obstaclesMsg_local);
-
     }
+
     pub_aux_obstacles.publish(obstaclesMsg);
     plotObstacles(obstaclesMsg, index_grasp);
-
   }
+
   finish = false;
   ROS_INFO_STREAM((graspable_object_exist ? "There is" : "There is not") << " a graspable object" );
 }
@@ -486,8 +458,6 @@ void  HandPoseGenerator::DesperateDemo1(std::vector<desperate_housewife::fittedG
 
 
   plotObstacles(obstaclesMsg, cyl_[0].id);
-
-
 }
 
 
@@ -528,18 +498,15 @@ void HandPoseGenerator::plotObstacles( desperate_housewife::fittedGeometriesArra
     }
 
     marker_local.color.a = 1.0; // for the clearness
-    // obst_name = "obstacle_" + std::to_string(i);
-    marker_local.lifetime = ros::Duration(10);
+    marker_local.lifetime = ros::Duration(5);
     tf::Transform tfGeomTRansform;
     tf::poseMsgToTF(Obstacles.geometries[i].pose, tfGeomTRansform );
     tf_geometriesTransformations_.sendTransform( tf::StampedTransform( tfGeomTRansform, ros::Time::now(), "world", "obstacle_" + std::to_string(Obstacles.geometries[i].id) ) );
     marker_total.markers.push_back(marker_local);
-
   }
 
 
   marker_publisher_.publish(marker_total);
-
 }
 
 void HandPoseGenerator::resetCallBack(const std_msgs::Bool::ConstPtr msg)
@@ -548,7 +515,6 @@ void HandPoseGenerator::resetCallBack(const std_msgs::Bool::ConstPtr msg)
   home_reset = msg->data;
   finish = true;
   failed = false;
-  // return true;
 }
 
 
@@ -558,16 +524,3 @@ void HandPoseGenerator::reset()
   finish = false;
   failed = false;
 }
-
-
-
-
-
-// bool HandPoseGenerator::resetCallBack(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
-// {
-//   ROS_INFO("HandPoseGenerator::Reset called");
-//   home_reset = true;
-//   finish = true;
-//   failed = false;
-//   return true;
-// }

@@ -5,6 +5,7 @@
 #include <lwr_controllers/PIDKinematicChainControllerBase.h>
 #include <desperate_housewife/handPoseSingle.h>
 #include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <std_msgs/Bool.h>
 
@@ -38,10 +39,14 @@
 
 #include <trajectory_msgs/JointTrajectory.h>
 
+#include "distance_between_lines.h"
+#include "utils/kuka_lwr_utilities.h"
+#include "utils/ros_desperate_housewife_utilities.h"
+
 namespace desperate_housewife
 {
 
-static int Int(0);
+// static int Int(0);
 
 class PotentialFieldControlKinematicReverse: public controller_interface::KinematicChainControllerBase<hardware_interface::PositionJointInterface>
 {
@@ -55,9 +60,6 @@ public:
 	void starting(const ros::Time& time);
 	void update(const ros::Time& time, const ros::Duration& period);
 	void command(const desperate_housewife::handPoseSingle::ConstPtr& msg);
-	void load_parameters(ros::NodeHandle &n);
-	Eigen::Matrix<double, 6, 1> GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial , double influence);
-	Eigen::Matrix<double, 6, 1> GetRepulsiveForce(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height);
 
 
 private:
@@ -91,7 +93,7 @@ private:
 	std::vector<KDL::Frame> Object_position;
 
 	KDL::JntArrayAcc joint_des_states_filtered, joint_des_states_old;
-	
+
 
 
 	ros::Publisher pub_right_arm;
@@ -112,8 +114,8 @@ private:
 		double a;
 	} quat_curr_, quat_des_, quat_now, q_e_c_des, q_e_now;
 
-	Eigen::Matrix<double,3,3> skew_;
-		KDL::Vector v_temp_;
+	Eigen::Matrix<double, 3, 3> skew_;
+	KDL::Vector v_temp_;
 
 	tf::Quaternion quat_tf;
 	// double percentage;
@@ -129,8 +131,8 @@ private:
 		Eigen::Matrix<double, 6, 6> k_d;
 		Eigen::Matrix<double, 6, 6> k_i;
 		std::string root_name, tip_name;
-		double pf_dist_to_obstacles, pf_dist_to_table, pf_repulsive_gain;
-		double max_time_interpolation, max_tau_percentage, vel_limit_robot, gain_null_space;
+		double pf_dist_to_obstacles, pf_dist_to_table, pf_repulsive_gain_obstacles, pf_repulsive_gain_table;
+		double max_time_interpolation, max_vel_percentage, vel_limit_robot, gain_null_space;
 		std::vector<std::string> pf_list_of_links;
 		std::vector<KDL::Chain> pf_list_of_chains;
 		std::vector<KDL::ChainFkSolverPos_recursive> pf_list_of_fk;
@@ -140,16 +142,22 @@ private:
 	} parameters_;
 
 	std::string  topic_obstacle_avoidance, topic_desired_reference;
-	ros::Publisher pub_error, pub_tau, pub_pf_repulsive_forse, pub_pf_attractive_force, pub_pf_total_force, pub_total_wrench;
+	ros::Publisher pub_error, pub_q, pub_qp, pub_pf_repulsive_forse, pub_pf_attractive_force, pub_pf_total_force, pub_total_wrench;
 	ros::Subscriber sub_command, sub_obstacles, sub_start_controller;
 	ros::ServiceServer srv_start_controller;
+	tf::TransformBroadcaster tf_desired_hand_pose;
 
 	ros::Publisher pub_error_id;
+	ros::Publisher collisions_lines_pub, arrows_pub;
 	desperate_housewife::Error_msg error_id;
 
 	bool start_controller;
 
 	Eigen::MatrixXd F_repulsive, F_attractive, F_total;
+
+	visualization_msgs::MarkerArray lines_total;
+	visualization_msgs::MarkerArray arrows_total;
+	int id_global;
 
 	/** Function: task_objective_function
 	* input: position
@@ -170,6 +178,10 @@ private:
 	* input: desperate message with obstacle information
 	* Description: callback that save the obstacle position
 	*/
+
+	void load_parameters(ros::NodeHandle &n);
+	void startControllerCallBack(const std_msgs::Bool::ConstPtr& msg);
+	bool loadParametersCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 	void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
 
 	/** Function: RepulsiveWithTable
@@ -178,10 +190,26 @@ private:
 	* Description: this function calculates the repulsive force between robot arm and table
 	*/
 	// std::pair<Eigen::Matrix<double,6,1>, double> RepulsiveWithTable(std::vector<double> distance_local_obj);
-	Eigen::Matrix<double, 7, 1> RepulsiveWithTable();
+	Eigen::Matrix<double, 6, 1> GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial , double influence, double gain = 1.0);
+	Eigen::Matrix<double, 6, 1> getRepulsiveForceObjects(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height);
+	Eigen::Matrix<double, 6, 1> getRepulsiveForceTable(KDL::Frame &T_in, double influence);
+	Eigen::Vector3d GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height);
 
-	Eigen::Matrix<double, 7, 1>  GetRepulsiveWithObstacle();
-	Eigen::Matrix<double, 7, 1>  getVelRepulsive(KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F);
+	// Eigen::Matrix<double, 7, 1> JointRepulsiveWithTable();
+	// Eigen::Matrix<double, 7, 1> JointRepulsiveWithObstacle();
+	Eigen::Matrix<double, 7, 1> getRepulsiveJointVelocity(KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F);
+	Eigen::Matrix<double, 7, 1> CF_JS_CentralJointAngles(KDL::JntArray q);
+	Eigen::Matrix<double, 7, 1> CF_JS_maxZYDistance(KDL::JntArray q);
+	Eigen::Matrix<double, 7, 1> CF_JS_PotentialEnergy(KDL::JntArray q);
+	Eigen::Matrix<double, 7, 1> CF_JS_JointLimitAvoidance(KDL::JntArray q, double gain = 1.0);
+	// Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension = 6);
+
+
+
+
+
+
+
 
 
 	/** Caalback: InfoOBj
@@ -207,14 +235,14 @@ private:
 	* input: desired pose
 	* Description: this function save the position of endeffector, desired pose, and updaes interpolate times when msg arrived
 	*/
-	void PoseDesiredInterpolation(KDL::Frame frame_des_);
+	// void PoseDesiredInterpolation(KDL::Frame frame_des_);
 
 	/** Function: GetPartialDerivate
 	* input: object frame, link position, object radius and height
 	* output: object derivate
 	* Description: calculates the object derivate in cylinder frame
 	*/
-	Eigen::Vector3d GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height);
+	// Eigen::Vector3d GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height);
 
 	/** Function: GetFIRAS
 	* input: min distance, object derivate, influence of repulsive field
@@ -228,7 +256,7 @@ private:
 	* output: vector with data[0] information if there is a link with distance minor tha influnce, data[1] the minor distance, data[2] index of vector
 	* Description: return the minor distance from a input vector
 	*/
-	std::vector<double> GetMinDistance(std::vector<double> distance_local_obj,  double influence );
+	// std::vector<double> GetMinDistance(std::vector<double> distance_local_obj,  double influence );
 
 	/** Function: GetRepulsiveForce
 	* input: vector with the interested point, object position, influence of repulsive field, object radius and height
@@ -249,20 +277,14 @@ private:
 	* Description: functions tha call the funciont for calculates the repulsive forces
 	*/
 
-	Eigen::Matrix<double, 6, 6> getAdjointT( KDL::Frame Frame_in);
-	Eigen::Matrix<double, 3, 3> getVectorHat(Eigen::Matrix<double, 3, 1> vector_in);
-	Eigen::Matrix<double, 6, 1> GetRepulsiveForceTable(KDL::Frame &T_in, double influence);
-	KDL::JntArray JointLimitAvoidance(KDL::JntArray q);
-	Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension = 6);
-	void startControllerCallBack(const std_msgs::Bool::ConstPtr& msg);
+	// Eigen::Matrix<double, 6, 6> getAdjointT( KDL::Frame Frame_in);
 
-	bool loadParametersCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+	// Eigen::Matrix<double, 4, 4>  FromKdlToEigen(KDL::Frame &T_v_o);
+	// void plotline(LineCollisions::Line Line_local, float r = 0.0, float g = 1.0, float b = 0.0, int id = 0, int type = visualization_msgs::Marker::LINE_LIST);
 
-	Eigen::Matrix<double, 7, 1> task_objective_function(KDL::JntArray q);
-	Eigen::Matrix<double, 7, 1> MaxZYDistance(KDL::JntArray q);
-	double VelocityLimit(KDL::Twist x_dot_d );
-	Eigen::Matrix<double, 7, 1> potentialEnergy(KDL::JntArray q);
-	Eigen::Matrix<double, 4, 4>  FromKdlToEigen(KDL::Frame &T_v_o);
+
+	// Eigen::Quaterniond RotationMarker(KDL::Vector &ris_Force, KDL::Vector &point);
+	// void DrawArrow( KDL::Vector &gridspace_Force, KDL::Vector &gridspace_point, int K = 0, double Fmin = 0, double Fmax = 0);
 
 };
 

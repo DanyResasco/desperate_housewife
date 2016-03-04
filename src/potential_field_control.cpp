@@ -36,6 +36,7 @@ bool PotentialFieldControl::init(hardware_interface::EffortJointInterface *robot
 
     // qdot_last_.resize(kdl_chain_.getNrOfJoints());
     tau_.resize(kdl_chain_.getNrOfJoints());
+    tau_prev_.resize(kdl_chain_.getNrOfJoints());
     J_.resize(kdl_chain_.getNrOfJoints());
     J_dot_.resize(kdl_chain_.getNrOfJoints());
     J_last_.resize(kdl_chain_.getNrOfJoints());
@@ -93,6 +94,7 @@ void PotentialFieldControl::starting(const ros::Time& time)
 
     SetToZero(x_err_integral);
     SetToZero(x_err_);
+    SetToZero(tau_prev_);
     x_err_.vel.data[0] = 10000.0;
     start_controller = false;
 }
@@ -121,7 +123,7 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
     tf::twistKDLToMsg(x_err_, error_id.error_);
 
     //flag to use this code with real robot
-    Eigen::MatrixXd q_instatntanea  = Eigen::MatrixXd::Zero(7,1);
+    Eigen::MatrixXd q_instatntanea  = Eigen::MatrixXd::Zero(7, 1);
 
     KDL::Twist x_err_msg;
     x_err_msg = x_err_;
@@ -194,29 +196,26 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
         x_dot_ = J_.data * joint_msr_states_.qdot.data;
         // std::cout << x_des_ << std::endl;
         x_err_ = diff(x_, x_des_);
-        // x_err_ = diff(x_,x_now_int);
 
-        KDL::Twist x_dot_d;
-
-        x_dot_d.vel.data[0] = parameters_.k_p(0, 0) / parameters_.k_d(0, 0) * x_err_.vel.data[0];
-        x_dot_d.vel.data[1] = parameters_.k_p(1, 1) / parameters_.k_d(1, 1) * x_err_.vel.data[1];
-        x_dot_d.vel.data[2] = parameters_.k_p(2, 2) / parameters_.k_d(2, 2) * x_err_.vel.data[2];
-        x_dot_d.rot.data[0] = parameters_.k_p(3, 3) / parameters_.k_d(3, 3) * x_err_.rot.data[0];
-        x_dot_d.rot.data[1] = parameters_.k_p(4, 4) / parameters_.k_d(4, 4) * x_err_.rot.data[1];
-        x_dot_d.rot.data[2] = parameters_.k_p(5, 5) / parameters_.k_d(5, 5) * x_err_.rot.data[2];
-
-        double v_limited = VelocityLimit(x_dot_d);
-
-        //calculate the attractive filed like PID control
-        // F_attractive = Eigen::Matrix<double,6,1>::Zero();
-        x_err_integral += x_err_ * period.toSec();
 
         if (parameters_.enable_attractive_field)
         {
+            KDL::Twist x_dot_d;
+
+            x_dot_d.vel.data[0] = parameters_.k_p(0, 0) / parameters_.k_d(0, 0) * x_err_.vel.data[0];
+            x_dot_d.vel.data[1] = parameters_.k_p(1, 1) / parameters_.k_d(1, 1) * x_err_.vel.data[1];
+            x_dot_d.vel.data[2] = parameters_.k_p(2, 2) / parameters_.k_d(2, 2) * x_err_.vel.data[2];
+            x_dot_d.rot.data[0] = parameters_.k_p(3, 3) / parameters_.k_d(3, 3) * x_err_.rot.data[0];
+            x_dot_d.rot.data[1] = parameters_.k_p(4, 4) / parameters_.k_d(4, 4) * x_err_.rot.data[1];
+            x_dot_d.rot.data[2] = parameters_.k_p(5, 5) / parameters_.k_d(5, 5) * x_err_.rot.data[2];
+
+            double v_limited = VelocityLimit(x_dot_d);
+
+            x_err_integral += x_err_ * period.toSec();
             for (int i = 0; i < F_attractive.size(); i++)
             {
                 // x_err_integral += x_err_ * period.toSec();
-                F_attractive(i) =  -parameters_.k_d(i, i) * ( x_dot_(i) -  v_limited * x_dot_d(i) ) + parameters_.k_i(i,i)*x_err_integral(i);
+                F_attractive(i) =  -parameters_.k_d(i, i) * ( x_dot_(i) -  v_limited * x_dot_d(i) ) + parameters_.k_i(i, i) * x_err_integral(i);
             }
         }
         // computing b = J*M^-1*(c+g) - J_dot*q_dot
@@ -298,7 +297,7 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
             // }
             if (num_of_links_in_potential > 1.0)
             {
-                tau_repulsive.data = (1.0 / num_of_links_in_potential) * tau_repulsive.data;    
+                tau_repulsive.data = (1.0 / num_of_links_in_potential) * tau_repulsive.data;
             }
             // ROS_INFO_STREAM("Num of liks with potential: " << num_of_links_in_potential);
             tau_.data += tau_repulsive.data;
@@ -334,6 +333,11 @@ void PotentialFieldControl::update(const ros::Time& time, const ros::Duration& p
             tau_.data += N_trans_ * potentialEnergy( joint_msr_states_.q );
         }
 
+        for (unsigned int j = 0; j < joint_handles_.size(); j++)
+        {
+            tau_(j) = filters::exponentialSmoothing(tau_(j), tau_prev_(j), 0.4);
+            tau_prev_(j) = tau_(j);
+        }
         // saving J_ and phi of the last iteration
         J_last_ = J_;
         phi_last_ = phi_;
@@ -609,8 +613,8 @@ Eigen::Vector3d PotentialFieldControl::GetPartialDerivate(KDL::Frame &T_v_o, KDL
 
     Eigen::Vector3d Der_v;
     Eigen::Vector4d partial_temp;
-    // partial_temp = Tvo_eigen*distance_der_partial;
-    partial_temp = distance_der_partial;
+    partial_temp = Tvo_eigen*distance_der_partial;
+
     Der_v[0] = partial_temp[0];
     Der_v[1] = partial_temp[1];
     Der_v[2] = partial_temp[2];
@@ -808,7 +812,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControl::MaxZYDistance(KDL::JntArray q
     double cost = 0;
 
     unsigned int index = 2;
-    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size() -1; ++i)
+    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size() - 1; ++i)
         // for (unsigned int i = 0; i < 1; ++i)
     {
         KDL::Frame T;
@@ -842,7 +846,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControl::MaxZYDistance(KDL::JntArray q
 
     index = 1;
 
-    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size() -1; ++i)
+    for (unsigned int i = 0; i < parameters_.pf_list_of_links.size() - 1; ++i)
     {
         KDL::Frame T;
         const unsigned int numJoints = parameters_.pf_list_of_chains[i].getNrOfJoints();

@@ -3,8 +3,8 @@
 
 SoftHand_open::SoftHand_open(const shared& m):data(m)
 {
-  // this->type=type;
 
+  /*reads the softhand information*/
   nh.param<std::string>("/right_hand/joint_states", hand_joint_position_r, "/right_hand/joint_states");
   hand_info_right = nh.subscribe(hand_joint_position_r.c_str(),1, &SoftHand_open::HandInforRight,this);
 
@@ -15,10 +15,9 @@ SoftHand_open::SoftHand_open(const shared& m):data(m)
   nh.param<bool>("/use_sh_sim",use_sh_sim,false);
   nh.param<double>("/open_hand", Info_open_hand, 0.6);
 
-  // std::cout<<"use_sh_sim: "<<std::boolalpha<<use_sh_sim<<std::endl;
-
   index_sh = use_sh_sim == false ? 0 : 28;
 
+  /*send a command for closing the softhand*/
   nh.param<std::string>("/right_hand/joint_trajectory_controller/command", hand_open_right, "/right_hand/joint_trajectory_controller/command");
   hand_publisher_right = nh.advertise<trajectory_msgs::JointTrajectory>(hand_open_right.c_str(), 1000);
 

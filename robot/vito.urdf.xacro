@@ -29,7 +29,7 @@
                     width="1.05"
                     height="0.910"
                     plate_thickness="0.05">
-    <origin xyz="-0.495 0.55 0" rpy="0 0 0"/>
+    <origin xyz="-0.220 0.55 0" rpy="0 0 0"/>
   </xacro:model_table>
 
   <!-- WORKBENCH -->
@@ -79,7 +79,7 @@
       </inertial>
   </link>
   <joint name="left_hand_palm_ref_joint" type="fixed">
-    <origin xyz="0.002 0.007 0.161" rpy="${3.141592/2} 0 ${3.141592/2}"/>
+    <origin xyz="0.010 0.007 0.192" rpy="${3.141592/2} 0 ${3.141592/2}"/>
     <parent link="left_arm_7_link" />
     <child link="left_hand_palm_ref_link" />
   </joint>
@@ -94,7 +94,7 @@
       </inertial>
   </link>
   <joint name="right_hand_palm_ref_joint" type="fixed">
-    <origin xyz="0.002 -0.007 0.161" rpy="${3.141592/2} 0 ${3.141592/2}"/>
+    <origin xyz="0.010 0.000 0.192" rpy="${3.141592/2} 0 ${3.141592/2}"/>
     <parent link="right_arm_7_link" />
     <child link="right_hand_palm_ref_link" />
   </joint>
