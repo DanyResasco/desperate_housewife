@@ -139,6 +139,10 @@ add_executable(init_robots src/init_robots.cpp)
 add_dependencies(init_robots init_robots_gencpp ${PROJECT_NAME})
 target_link_libraries(init_robots ${PROJECT_NAME} ${catkin_LIBRARIES})
 
+add_executable(keycommands src/keycommands.cpp)
+add_dependencies(keycommands keycommands_gencpp ${PROJECT_NAME})
+target_link_libraries(keycommands ${PROJECT_NAME} ${catkin_LIBRARIES})
+
 
 
 SET( STATES_FILES

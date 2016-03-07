@@ -130,13 +130,30 @@ void Home_state::Error_info_left(const desperate_housewife::Error_msg::ConstPtr&
 
 void Home_state::command_start(const std_msgs::Bool::ConstPtr& msg)
 {
+
+  bool right_arm_enabled, left_arm_enabled;
+  nh.param<bool>("/right_arm/enabled", right_arm_enabled, "false");
+  nh.param<bool>("/left_arm/enabled", left_arm_enabled, "false");
   std_msgs::Bool msg_send;
-  msg_send.data = true;
-  ros_pub_start_left.publish(msg_send);
-  ros_pub_start_right.publish(msg_send);
-  start_flag = true;
-  Arm_used = 2;
-  both_arm_use = true;
+  msg_send.data = msg->data;
+  if (right_arm_enabled)
+  {
+    ros_pub_start_right.publish(msg_send);
+    // Arm_used = 0;
+  }
+  if (left_arm_enabled)
+  {
+    ros_pub_start_left.publish(msg_send);  
+    // Arm_used = 1;
+  }
+  if ( right_arm_enabled && left_arm_enabled)
+  {
+    Arm_used = 2;
+    both_arm_use = true;
+    start_flag = msg->data;
+    ROS_INFO_STREAM("Using both arms");
+  }
+  
 }
 
 void Home_state::state_right(const std_msgs::Bool::ConstPtr& msg)
@@ -144,7 +161,7 @@ void Home_state::state_right(const std_msgs::Bool::ConstPtr& msg)
   if (both_arm_use == false)
   {
     ROS_INFO_STREAM("Message to go Home on right arm received");
-    start_flag = true;
+    start_flag = msg->data;
     Arm_used = 0;
   }
 }
@@ -153,7 +170,7 @@ void Home_state::state_left(const std_msgs::Bool::ConstPtr& msg)
 {
   if (both_arm_use == false)
   {
-    start_flag = true;
+    start_flag = msg->data;
     Arm_used = 1;
   }
 }

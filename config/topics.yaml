@@ -1,4 +1,6 @@
 right_arm:
-  controller: PotentialFieldControlKinematicReverseEffort
+  enabled: false
+  controller: PotentialFieldControlKinematicReverse
 left_arm:
-  controller: PotentialFieldControlKinematicReverseEffort
+  enabled: enabled
+  controller: PotentialFieldControlKinematicReverse

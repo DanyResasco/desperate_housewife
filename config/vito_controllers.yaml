@@ -35,7 +35,7 @@ left_arm:
   #   enable_attractive_field: true
   #   enable_null_space: true
   #   gain_null_space: 0.5
-  #   enable_interpolation: false
+  #   enable_interpolation: true
 
   #   id_arm: 1
 
@@ -63,7 +63,7 @@ left_arm:
   #   enable_attractive_field: true
   #   enable_null_space: true
   #   gain_null_space: 0.2
-  #   enable_interpolation: false
+  #   enable_interpolation: true
     #   id_arm: 0
 
   PotentialFieldControlKinematicReverse:
@@ -72,7 +72,7 @@ left_arm:
     tip_name: left_hand_palm_ref_link
     topic_desired_reference: command
     topic_obstacle: obstacles
-    time_interpolation: 1.0
+    time_interpolation: 2.0
     max_vel_percentage: 0.80
     pf_repulsive_gain_obstacles: 0.001
     pf_repulsive_gain_table: 0.001
@@ -88,7 +88,7 @@ left_arm:
     enable_attractive_field: true
     enable_null_space: false
     gain_null_space: 0.2
-    enable_interpolation: false
+    enable_interpolation: true
 
 
   PotentialFieldControlKinematicReverseEffort:
@@ -97,7 +97,7 @@ left_arm:
     tip_name: left_hand_palm_ref_link
     topic_desired_reference: command
     topic_obstacle: obstacles
-    time_interpolation: 3.0
+    time_interpolation: 2.0
     max_vel_percentage: 0.80
     pf_repulsive_gain_obstacles: 0.001
     pf_repulsive_gain_table: 0.001
@@ -114,7 +114,7 @@ left_arm:
     enable_attractive_field: true
     enable_null_space: true
     gain_null_space: 0.2
-    enable_interpolation: false
+    enable_interpolation: true
 
 
 
@@ -165,7 +165,7 @@ right_arm:
   #   enable_attractive_field: true
   #   enable_null_space: false
   #   gain_null_space: 0.3
-  #   enable_interpolation: false
+  #   enable_interpolation: true
     #   id_arm: 0
 
   # PotentialFieldControlKinematic:
@@ -191,7 +191,7 @@ right_arm:
   #   enable_attractive_field: true
   #   enable_null_space: false
   #   gain_null_space: 0.1
-  #   enable_interpolation: false
+  #   enable_interpolation: true
     #   id_arm: 0
 
   PotentialFieldControlKinematicReverse:
@@ -200,7 +200,7 @@ right_arm:
     tip_name: right_hand_palm_ref_link
     topic_desired_reference: command
     topic_obstacle: obstacles
-    time_interpolation: 3.0
+    time_interpolation: 2.0
     max_vel_percentage: 0.80
     pf_repulsive_gain_obstacles: 0.001
     pf_repulsive_gain_table: 0.001
@@ -217,7 +217,7 @@ right_arm:
     enable_attractive_field: true
     enable_null_space: true
     gain_null_space: 0.2
-    enable_interpolation: false
+    enable_interpolation: true
 
   PotentialFieldControlKinematicReverseEffort:
     type: desperate_housewife/PotentialFieldControlKinematicReverseEffort
@@ -225,7 +225,7 @@ right_arm:
     tip_name: right_hand_palm_ref_link
     topic_desired_reference: command
     topic_obstacle: obstacles
-    time_interpolation: 3.0
+    time_interpolation: 2.0
     max_vel_percentage: 0.80
     pf_repulsive_gain_obstacles: 0.001
     pf_repulsive_gain_table: 0.001
@@ -242,7 +242,7 @@ right_arm:
     enable_attractive_field: true
     enable_null_space: true
     gain_null_space: 0.2
-    enable_interpolation: false
+    enable_interpolation: true
 
 right_hand:
   joint_state_controller:
