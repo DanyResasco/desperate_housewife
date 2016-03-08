@@ -156,12 +156,7 @@ double inline VelocityLimit(KDL::Twist x_dot_d, double limit = 1.0)
     double den = std::sqrt(x_dot_d_local.transpose() * x_dot_d_local);
     double temp = 1.0;
 
-    if (den == 0)
-    {
-        temp = 1.0;
-        std::cout << "velocity limit is NAN" << std::endl;
-    }
-    else
+    if (den != 0.0)
     {
         temp = limit / den;
     }

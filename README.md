@@ -25,10 +25,10 @@ If you want to use both arm sends:
 	- rostopic pub -1 /desperate_housewife/start_controller std_msgs/Bool 'True'
 
 instead if you want only the right arm:
-	-rostopic pub -1 /right_arm/PotentialFieldControlKinematicReverse/start_controller std_msgs/Bool 'True'
+	-rostopic pub -1 /right_arm/PotentialFieldControlKinematicReverseEffort/start_controller std_msgs/Bool 'True'
 
 Left arm:
-	-rostopic pub -1 /left_arm/PotentialFieldControlKinematicReverse/start_controller std_msgs/Bool 'True'
+	-rostopic pub -1 /left_arm/PotentialFieldControlKinematicReverseEffort/start_controller std_msgs/Bool 'True'
 
 If you want use this demo for one arm the command to launch is: 
 - roslaunch desperate_housewife run_vito.launch use_both_arm:=false and select the arm to use with left_arm_enabled:=true or right_arm_enabled:=true
@@ -40,7 +40,7 @@ With this code it's possible to make three different demos changing one param, c
 If set this param to_
 	- 0 starts the demo that take the first graspable object with obstacles avoidance
 	- 1 start the demo tat take the first graspable object and the obstacle will be push down to the table 
-The third demo is not properly a demo because works always at background and starts when on the table there are more than user definition number of obstalces. In this case the robot overtun the table precisely Desperate_housewife. This number is setting into config file desperate_demo_hand_pose_param. This param is called Number_obj. There is another param to set, is the time of interpolation. This time is setting into config file vito_controllers. It's must be setting in both arm. At config param, this time is called time_interp_desired.
+The third demo is not properly a demo because works always at background and starts when on the table there are more than user definition number of obstacles. In this case the robot overtun the table precisely Desperate_housewife. This number is setting into config file desperate_demo_hand_pose_param. This param is called Number_obj. There is another param to set, is the time of interpolation. This time is setting into config file vito_controllers. It's must be setting in both arm. At config param, this time is called time_interp_desired.
 
 Lets a look of all code:  
 
@@ -52,9 +52,9 @@ Lets a look of all code:
 
 To switch the controller without rqt call:
 
-	- rosservice call /right_arm/controller_manager/switch_controller "{start_controllers: ['PotentialFieldControl'], stop_controllers: ['joint_trajectory_controller'], strictness: 2}"
+	- rosservice call /right_arm/controller_manager/switch_controller "{start_controllers: ['PotentialFieldControlKinematicReverseEffort'], stop_controllers: ['joint_trajectory_controller'], strictness: 2}"
 
-	- rosservice call /left_arm/controller_manager/switch_controller "{start_controllers: ['PotentialFieldControl'], stop_controllers: ['joint_trajectory_controller'], strictness: 2}"
+	- rosservice call /left_arm/controller_manager/switch_controller "{start_controllers: ['PotentialFieldControlKinematicReverseEffort'], stop_controllers: ['joint_trajectory_controller'], strictness: 2}"
 	
 TEST FILE
 

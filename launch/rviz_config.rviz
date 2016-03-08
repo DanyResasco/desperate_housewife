@@ -7,11 +7,11 @@ Panels:
         - /Global Options1
         - /Status1
         - /Marker1/Namespaces1
-        - /TF1
         - /TF1/Frames1
+        - /MarkerArray2
         - /Marker3
       Splitter Ratio: 0.683794
-    Tree Height: 359
+    Tree Height: 775
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -30,7 +30,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: PointCloud2
 Visualization Manager:
   Class: ""
   Displays:
@@ -95,279 +95,287 @@ Visualization Manager:
       Frames:
         All Enabled: false
         camera_depth_frame:
-          Value: true
+          Value: false
         camera_depth_optical_frame:
-          Value: true
+          Value: false
         camera_link:
-          Value: true
+          Value: false
         camera_rgb_frame:
-          Value: true
+          Value: false
         camera_rgb_optical_frame:
-          Value: true
+          Value: false
         head_asus_link:
-          Value: true
+          Value: false
         head_base_link:
-          Value: true
+          Value: false
         head_head_1_link:
-          Value: true
+          Value: false
         head_head_2_link:
-          Value: true
+          Value: false
         head_head_3_link:
-          Value: true
+          Value: false
         head_head_4_link:
-          Value: true
+          Value: false
         head_head_5_link:
-          Value: true
+          Value: false
         head_left_eye_link:
-          Value: true
+          Value: false
         head_right_eye_link:
-          Value: true
+          Value: false
         left_arm_1_link:
-          Value: true
+          Value: false
         left_arm_1_link_dummy:
-          Value: true
+          Value: false
         left_arm_2_link:
-          Value: true
+          Value: false
         left_arm_2_link_dummy:
-          Value: true
+          Value: false
         left_arm_3_link:
-          Value: true
+          Value: false
         left_arm_3_link_dummy:
-          Value: true
+          Value: false
         left_arm_4_link:
-          Value: true
+          Value: false
         left_arm_4_link_dummy:
-          Value: true
+          Value: false
         left_arm_5_link:
-          Value: true
+          Value: false
         left_arm_5_link_dummy:
-          Value: true
+          Value: false
         left_arm_6_link:
-          Value: true
+          Value: false
         left_arm_6_link_dummy:
-          Value: true
+          Value: false
         left_arm_7_link:
-          Value: true
+          Value: false
         left_arm_7_link_dummy:
-          Value: true
+          Value: false
         left_arm_base_link:
-          Value: true
+          Value: false
         left_hand_clamp:
-          Value: true
+          Value: false
         left_hand_index_distal_link:
-          Value: true
+          Value: false
         left_hand_index_fake_link1:
-          Value: true
+          Value: false
         left_hand_index_fake_link2:
-          Value: true
+          Value: false
         left_hand_index_fake_link3:
-          Value: true
+          Value: false
         left_hand_index_knuckle_link:
-          Value: true
+          Value: false
         left_hand_index_middle_link:
-          Value: true
+          Value: false
         left_hand_index_proximal_link:
-          Value: true
+          Value: false
         left_hand_invisible_wire_link:
-          Value: true
+          Value: false
         left_hand_kuka_coupler:
-          Value: true
+          Value: false
         left_hand_kuka_coupler_bottom:
-          Value: true
+          Value: false
         left_hand_little_distal_link:
-          Value: true
+          Value: false
         left_hand_little_fake_link1:
-          Value: true
+          Value: false
         left_hand_little_fake_link2:
-          Value: true
+          Value: false
         left_hand_little_fake_link3:
-          Value: true
+          Value: false
         left_hand_little_knuckle_link:
-          Value: true
+          Value: false
         left_hand_little_middle_link:
-          Value: true
+          Value: false
         left_hand_little_proximal_link:
-          Value: true
+          Value: false
         left_hand_middle_distal_link:
-          Value: true
+          Value: false
         left_hand_middle_fake_link1:
-          Value: true
+          Value: false
         left_hand_middle_fake_link2:
-          Value: true
+          Value: false
         left_hand_middle_fake_link3:
-          Value: true
+          Value: false
         left_hand_middle_knuckle_link:
-          Value: true
+          Value: false
         left_hand_middle_middle_link:
-          Value: true
+          Value: false
         left_hand_middle_proximal_link:
-          Value: true
+          Value: false
         left_hand_palm_link:
-          Value: true
+          Value: false
         left_hand_palm_ref_link:
-          Value: true
+          Value: false
         left_hand_ring_distal_link:
-          Value: true
+          Value: false
         left_hand_ring_fake_link1:
-          Value: true
+          Value: false
         left_hand_ring_fake_link2:
-          Value: true
+          Value: false
         left_hand_ring_fake_link3:
-          Value: true
+          Value: false
         left_hand_ring_knuckle_link:
-          Value: true
+          Value: false
         left_hand_ring_middle_link:
-          Value: true
+          Value: false
         left_hand_ring_proximal_link:
-          Value: true
+          Value: false
         left_hand_softhand_base:
-          Value: true
+          Value: false
         left_hand_thumb_distal_link:
-          Value: true
+          Value: false
         left_hand_thumb_fake_link1:
-          Value: true
+          Value: false
         left_hand_thumb_fake_link3:
-          Value: true
+          Value: false
         left_hand_thumb_knuckle_link:
-          Value: true
+          Value: false
         left_hand_thumb_proximal_link:
-          Value: true
+          Value: false
+        object_0:
+          Value: false
+        object_1:
+          Value: false
+        object_2:
+          Value: false
+        object_3:
+          Value: false
         right_arm_1_link:
-          Value: true
+          Value: false
         right_arm_1_link_dummy:
-          Value: true
+          Value: false
         right_arm_2_link:
-          Value: true
+          Value: false
         right_arm_2_link_dummy:
-          Value: true
+          Value: false
         right_arm_3_link:
-          Value: true
+          Value: false
         right_arm_3_link_dummy:
-          Value: true
+          Value: false
         right_arm_4_link:
-          Value: true
+          Value: false
         right_arm_4_link_dummy:
-          Value: true
+          Value: false
         right_arm_5_link:
-          Value: true
+          Value: false
         right_arm_5_link_dummy:
-          Value: true
+          Value: false
         right_arm_6_link:
-          Value: true
+          Value: false
         right_arm_6_link_dummy:
-          Value: true
+          Value: false
         right_arm_7_link:
-          Value: true
+          Value: false
         right_arm_7_link_dummy:
-          Value: true
+          Value: false
         right_arm_base_link:
-          Value: true
+          Value: false
         right_hand_clamp:
-          Value: true
+          Value: false
         right_hand_index_distal_link:
-          Value: true
+          Value: false
         right_hand_index_fake_link1:
-          Value: true
+          Value: false
         right_hand_index_fake_link2:
-          Value: true
+          Value: false
         right_hand_index_fake_link3:
-          Value: true
+          Value: false
         right_hand_index_knuckle_link:
-          Value: true
+          Value: false
         right_hand_index_middle_link:
-          Value: true
+          Value: false
         right_hand_index_proximal_link:
-          Value: true
+          Value: false
         right_hand_invisible_wire_link:
-          Value: true
+          Value: false
         right_hand_kuka_coupler:
-          Value: true
+          Value: false
         right_hand_kuka_coupler_bottom:
-          Value: true
+          Value: false
         right_hand_little_distal_link:
-          Value: true
+          Value: false
         right_hand_little_fake_link1:
-          Value: true
+          Value: false
         right_hand_little_fake_link2:
-          Value: true
+          Value: false
         right_hand_little_fake_link3:
-          Value: true
+          Value: false
         right_hand_little_knuckle_link:
-          Value: true
+          Value: false
         right_hand_little_middle_link:
-          Value: true
+          Value: false
         right_hand_little_proximal_link:
-          Value: true
+          Value: false
         right_hand_middle_distal_link:
-          Value: true
+          Value: false
         right_hand_middle_fake_link1:
-          Value: true
+          Value: false
         right_hand_middle_fake_link2:
-          Value: true
+          Value: false
         right_hand_middle_fake_link3:
-          Value: true
+          Value: false
         right_hand_middle_knuckle_link:
-          Value: true
+          Value: false
         right_hand_middle_middle_link:
-          Value: true
+          Value: false
         right_hand_middle_proximal_link:
-          Value: true
+          Value: false
         right_hand_palm_link:
-          Value: true
+          Value: false
         right_hand_palm_ref_link:
-          Value: true
+          Value: false
         right_hand_ring_distal_link:
-          Value: true
+          Value: false
         right_hand_ring_fake_link1:
-          Value: true
+          Value: false
         right_hand_ring_fake_link2:
-          Value: true
+          Value: false
         right_hand_ring_fake_link3:
-          Value: true
+          Value: false
         right_hand_ring_knuckle_link:
-          Value: true
+          Value: false
         right_hand_ring_middle_link:
-          Value: true
+          Value: false
         right_hand_ring_proximal_link:
-          Value: true
+          Value: false
         right_hand_softhand_base:
-          Value: true
+          Value: false
         right_hand_thumb_distal_link:
-          Value: true
+          Value: false
         right_hand_thumb_fake_link1:
-          Value: true
+          Value: false
         right_hand_thumb_fake_link3:
-          Value: true
+          Value: false
         right_hand_thumb_knuckle_link:
-          Value: true
+          Value: false
         right_hand_thumb_proximal_link:
-          Value: true
+          Value: false
         table_leg_0_link:
-          Value: true
+          Value: false
         table_leg_1_link:
-          Value: true
+          Value: false
         table_leg_2_link:
-          Value: true
+          Value: false
         table_leg_3_link:
-          Value: true
+          Value: false
         table_plate_link:
-          Value: true
+          Value: false
         torso_link:
-          Value: true
+          Value: false
         vito_anchor:
-          Value: true
+          Value: false
         workbench_leg_0_link:
-          Value: true
+          Value: false
         workbench_leg_1_link:
-          Value: true
+          Value: false
         workbench_leg_2_link:
-          Value: true
+          Value: false
         workbench_leg_3_link:
-          Value: true
+          Value: false
         workbench_plate_link:
-          Value: true
+          Value: false
         world:
-          Value: true
+          Value: false
       Marker Scale: 1
       Name: TF
       Show Arrows: true
@@ -381,6 +389,14 @@ Visualization Manager:
           camera_rgb_frame:
             camera_rgb_optical_frame:
               world:
+                object_0:
+                  {}
+                object_1:
+                  {}
+                object_2:
+                  {}
+                object_3:
+                  {}
                 vito_anchor:
                   head_base_link:
                     head_head_1_link:
@@ -1226,7 +1242,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /right_arm/PotentialFieldControlKinematicReverse/collision_lines
+      Marker Topic: /obstacles_in_control
       Name: MarkerArray
       Namespaces:
         {}
@@ -1291,11 +1307,11 @@ Visualization Manager:
     Saved: ~
 Window Geometry:
   Displays:
-    collapsed: true
-  Height: 744
-  Hide Left Dock: true
+    collapsed: false
+  Height: 1056
+  Hide Left Dock: false
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd00000004000000000000015700000396fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006400fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073000000002800000396000000dd00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f0000025efc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a0056006900650077007300000000280000025e000000b000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000005560000003efc0100000002fb0000000800540069006d0065010000000000000556000002f600fffffffb0000000800540069006d00650100000000000004500000000000000000000005560000025e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000015700000396fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006400fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000002800000396000000dd00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f0000025efc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a0056006900650077007300000000280000025e000000b000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000074f0000003efc0100000002fb0000000800540069006d006501000000000000074f000002f600fffffffb0000000800540069006d00650100000000000004500000000000000000000005f20000039600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -1304,6 +1320,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 1366
-  X: 0
+  Width: 1871
+  X: 49
   Y: 24
