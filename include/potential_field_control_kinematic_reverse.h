@@ -60,6 +60,7 @@ public:
 	void starting(const ros::Time& time);
 	void update(const ros::Time& time, const ros::Duration& period);
 	void command(const desperate_housewife::handPoseSingle::ConstPtr& msg);
+	bool loadVelocityCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 
 
 private:
@@ -144,7 +145,7 @@ private:
 	std::string  topic_obstacle_avoidance, topic_desired_reference;
 	ros::Publisher pub_error, pub_q, pub_qp, pub_pf_repulsive_forse, pub_pf_attractive_force, pub_pf_total_force, pub_total_wrench;
 	ros::Subscriber sub_command, sub_obstacles, sub_start_controller;
-	ros::ServiceServer srv_start_controller;
+	ros::ServiceServer srv_start_controller, srv_load_velocity;
 	tf::TransformBroadcaster tf_desired_hand_pose;
 
 	ros::Publisher pub_error_id;
@@ -202,6 +203,8 @@ private:
 	Eigen::Matrix<double, 7, 1> CF_JS_maxZYDistance(KDL::JntArray q);
 	Eigen::Matrix<double, 7, 1> CF_JS_PotentialEnergy(KDL::JntArray q);
 	Eigen::Matrix<double, 7, 1> CF_JS_JointLimitAvoidance(KDL::JntArray q, double gain = 1.0);
+
+	void loadVelocity();
 	// Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension = 6);
 
 

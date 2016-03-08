@@ -73,7 +73,7 @@ left_arm:
     topic_desired_reference: command
     topic_obstacle: obstacles
     time_interpolation: 2.0
-    max_vel_percentage: 0.80
+    max_vel_percentage: 0.85
     pf_repulsive_gain_obstacles: 0.001
     pf_repulsive_gain_table: 0.001
     pf_dist_to_obstacles: 0.1
@@ -98,7 +98,7 @@ left_arm:
     topic_desired_reference: command
     topic_obstacle: obstacles
     time_interpolation: 2.0
-    max_vel_percentage: 0.80
+    max_vel_percentage: 0.85
     pf_repulsive_gain_obstacles: 0.001
     pf_repulsive_gain_table: 0.001
     pf_dist_to_obstacles: 0.20
@@ -201,7 +201,7 @@ right_arm:
     topic_desired_reference: command
     topic_obstacle: obstacles
     time_interpolation: 2.0
-    max_vel_percentage: 0.80
+    max_vel_percentage: 0.85
     pf_repulsive_gain_obstacles: 0.001
     pf_repulsive_gain_table: 0.001
     pf_dist_to_obstacles: 0.15
@@ -226,7 +226,7 @@ right_arm:
     topic_desired_reference: command
     topic_obstacle: obstacles
     time_interpolation: 2.0
-    max_vel_percentage: 0.80
+    max_vel_percentage: 0.85
     pf_repulsive_gain_obstacles: 0.001
     pf_repulsive_gain_table: 0.001
     pf_dist_to_obstacles: 0.20

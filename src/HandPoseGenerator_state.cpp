@@ -296,7 +296,8 @@ desperate_housewife::handPoseSingle HandPoseGenerator::generateHandPose( despera
 bool HandPoseGenerator::isGeometryGraspable ( desperate_housewife::fittedGeometriesSingle geometry )
 {
   /*comparision between ration and treshold and cylinder radius with another threshold*/
-  if ( (geometry.info[geometry.info.size() - 1] >= 55) && (geometry.info[0] < 0.10))
+  // if ( (geometry.info[geometry.info.size() - 1] >= 55) && (geometry.info[0] < 0.10))
+   if ( (geometry.info[geometry.info.size() - 1] >= 55) && (geometry.info[0] < 0.10))
   {
     return true;
   }
