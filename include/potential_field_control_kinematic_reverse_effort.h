@@ -39,9 +39,10 @@
 
 #include <trajectory_msgs/JointTrajectory.h>
 
-#include "distance_between_lines.h"
 #include "utils/kuka_lwr_utilities.h"
 #include "utils/ros_desperate_housewife_utilities.h"
+#include "utils/geometries_utilities.h"
+#include "utils/pf_utilities.h"
 
 namespace desperate_housewife
 {
@@ -63,7 +64,27 @@ public:
 	bool loadVelocityCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 
 
-// private:
+		struct parameters
+	{
+		Eigen::Matrix<double, 6, 6> k_p;
+		Eigen::Matrix<double, 6, 6> k_d;
+		Eigen::Matrix<double, 6, 6> k_i;
+		std::string root_name, tip_name;
+		double pf_dist_to_obstacles, pf_dist_to_table, pf_repulsive_gain_obstacles, pf_repulsive_gain_table;
+		double max_time_interpolation, max_vel_percentage, vel_limit_robot, gain_null_space;
+		std::vector<std::string> pf_list_of_links;
+		std::vector<KDL::Chain> pf_list_of_chains;
+		std::vector<KDL::ChainFkSolverPos_recursive> pf_list_of_fk;
+		std::vector<KDL::ChainJntToJacSolver> pf_list_of_jac;
+		bool enable_obstacle_avoidance, enable_joint_limits_avoidance, enable_attractive_field, enable_null_space, enable_interpolation;
+		int id_arm;
+	};
+
+	parameters getParameters(){return parameters_;};
+	void load_parameters(ros::NodeHandle &n);
+
+
+private:
 
 	KDL::JntArray qdot_last_;
 
@@ -114,21 +135,7 @@ public:
 	double Time_traj, Time_traj_rep, time_inter;
 
 
-	struct parameters
-	{
-		Eigen::Matrix<double, 6, 6> k_p;
-		Eigen::Matrix<double, 6, 6> k_d;
-		Eigen::Matrix<double, 6, 6> k_i;
-		std::string root_name, tip_name;
-		double pf_dist_to_obstacles, pf_dist_to_table, pf_repulsive_gain_obstacles, pf_repulsive_gain_table;
-		double max_time_interpolation, max_vel_percentage, vel_limit_robot, gain_null_space;
-		std::vector<std::string> pf_list_of_links;
-		std::vector<KDL::Chain> pf_list_of_chains;
-		std::vector<KDL::ChainFkSolverPos_recursive> pf_list_of_fk;
-		std::vector<KDL::ChainJntToJacSolver> pf_list_of_jac;
-		bool enable_obstacle_avoidance, enable_joint_limits_avoidance, enable_attractive_field, enable_null_space, enable_interpolation;
-		int id_arm;
-	} parameters_;
+  parameters parameters_;
 
 	std::string  topic_obstacle_avoidance, topic_desired_reference;
 	ros::Publisher pub_error, pub_q, pub_qp, pub_pf_repulsive_forse, pub_pf_attractive_force, pub_pf_total_force, pub_total_wrench;
@@ -168,7 +175,6 @@ public:
 	* Description: callback that save the obstacle position
 	*/
 
-	void load_parameters(ros::NodeHandle &n);
 	void startControllerCallBack(const std_msgs::Bool::ConstPtr& msg);
 	bool loadParametersCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 	void InfoGeometry(const desperate_housewife::fittedGeometriesArray::ConstPtr& msg);
@@ -178,19 +184,6 @@ public:
 	* output: force repulsive
 	* Description: this function calculates the repulsive force between robot arm and table
 	*/
-	// std::pair<Eigen::Matrix<double,6,1>, double> RepulsiveWithTable(std::vector<double> distance_local_obj);
-	Eigen::Matrix<double, 6, 1> GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial , double influence, double gain = 1.0);
-	Eigen::Matrix<double, 6, 1> getRepulsiveForceObjects(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height);
-	Eigen::Matrix<double, 6, 1> getRepulsiveForceTable(KDL::Frame &T_in, double influence);
-	// Eigen::Vector3d GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height);
-
-	// Eigen::Matrix<double, 7, 1> JointRepulsiveWithTable();
-	// Eigen::Matrix<double, 7, 1> JointRepulsiveWithObstacle();
-	Eigen::Matrix<double, 7, 1> getRepulsiveJointVelocity(KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F);
-	Eigen::Matrix<double, 7, 1> CF_JS_CentralJointAngles(KDL::JntArray q);
-	Eigen::Matrix<double, 7, 1> CF_JS_maxZYDistance(KDL::JntArray q);
-	Eigen::Matrix<double, 7, 1> CF_JS_PotentialEnergy(KDL::JntArray q);
-	Eigen::Matrix<double, 7, 1> CF_JS_JointLimitAvoidance(KDL::JntArray q, double gain = 1.0);
 
 	void loadVelocity();
 	// Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension = 6);

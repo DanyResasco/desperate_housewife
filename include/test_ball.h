@@ -44,6 +44,7 @@
       ros::Publisher marker_pub,marker_publisher_ ;
       std::string obstacle_avoidance;
       desperate_housewife::PotentialFieldControlKinematicReverseEffort pfc;
+      desperate_housewife::PotentialFieldControlKinematicReverseEffort::parameters pf_parameters;
       std::vector<KDL::Frame> Object_position;
       ros::Publisher vis_pub;
       // KDL::Vector POS_init;

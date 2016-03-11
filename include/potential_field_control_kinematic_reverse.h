@@ -39,9 +39,10 @@
 
 #include <trajectory_msgs/JointTrajectory.h>
 
-#include "distance_between_lines.h"
 #include "utils/kuka_lwr_utilities.h"
 #include "utils/ros_desperate_housewife_utilities.h"
+#include "utils/geometries_utilities.h"
+#include "utils/pf_utilities.h"
 
 namespace desperate_housewife
 {
@@ -191,21 +192,10 @@ private:
 	* Description: this function calculates the repulsive force between robot arm and table
 	*/
 	// std::pair<Eigen::Matrix<double,6,1>, double> RepulsiveWithTable(std::vector<double> distance_local_obj);
-	Eigen::Matrix<double, 6, 1> GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial , double influence, double gain = 1.0);
-	Eigen::Matrix<double, 6, 1> getRepulsiveForceObjects(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height);
-	Eigen::Matrix<double, 6, 1> getRepulsiveForceTable(KDL::Frame &T_in, double influence);
-	Eigen::Vector3d GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height);
-
-	// Eigen::Matrix<double, 7, 1> JointRepulsiveWithTable();
-	// Eigen::Matrix<double, 7, 1> JointRepulsiveWithObstacle();
-	Eigen::Matrix<double, 7, 1> getRepulsiveJointVelocity(KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F);
-	Eigen::Matrix<double, 7, 1> CF_JS_CentralJointAngles(KDL::JntArray q);
-	Eigen::Matrix<double, 7, 1> CF_JS_maxZYDistance(KDL::JntArray q);
-	Eigen::Matrix<double, 7, 1> CF_JS_PotentialEnergy(KDL::JntArray q);
-	Eigen::Matrix<double, 7, 1> CF_JS_JointLimitAvoidance(KDL::JntArray q, double gain = 1.0);
+	// Eigen::Matrix<double, 6, 1> GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial , double influence, double gain = 1.0);
 
 	void loadVelocity();
-	// Eigen::MatrixXd getGainMatrix(std::string parameter, ros::NodeHandle n, int dimension = 6);
+
 
 
 

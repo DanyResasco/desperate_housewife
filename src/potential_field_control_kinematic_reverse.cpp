@@ -215,7 +215,7 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
 
 
 
-                F_table = getRepulsiveForceTable(fk_chain, parameters_.pf_dist_to_table );
+                F_table = getRepulsiveForceTable(fk_chain, parameters_.pf_dist_to_table, parameters_.pf_repulsive_gain_table );
                 if (F_table.norm() != 0.0)
                 {
                     num_of_links_in_potential = num_of_links_in_potential + 1.0;
@@ -273,7 +273,11 @@ void PotentialFieldControlKinematicReverse::update(const ros::Time& time, const 
         std::vector<Eigen::MatrixXd> xp(n_task + 1);
 
 // Eigen::MatrixXd secondTask = Eigen::MatrixXd::Zero(7,1);
-        Eigen::MatrixXd secondTask = CF_JS_PotentialEnergy( joint_msr_states_.q );
+        // Eigen::MatrixXd secondTask = CF_JS_PotentialEnergy( joint_msr_states_.q );
+        KDL::JntArray G_local(7);
+        id_solver_->JntToGravity(joint_msr_states_.q, G_local);
+        Eigen::MatrixXd secondTask = parameters_.gain_null_space * G_local.data;
+        
         xp[0] = x_err_eigen_;
         xp[1] = secondTask;
 
@@ -407,106 +411,6 @@ void PotentialFieldControlKinematicReverse::InfoGeometry(const desperate_housewi
 }
 
 
-Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::getRepulsiveForceObjects(KDL::Frame &T_in, double influence, KDL::Frame &Object_pos, double radius, double height)
-{
-    Eigen::Matrix<double, 6, 1> ForceAndIndex;
-    ForceAndIndex =  Eigen::Matrix<double, 6, 1>::Zero();
-
-    KDL::Frame T_link_object = ( T_in.Inverse() * Object_pos ).Inverse();
-
-    KDL::Frame T_CollisionPoint;
-
-    getClosestPointstoCylinder( T_link_object, T_CollisionPoint, radius, height);
-
-    T_CollisionPoint = Object_pos * T_CollisionPoint;
-
-
-    double distance = (T_in.p - T_CollisionPoint.p).Norm();
-
-    Eigen::Vector3d Nolmal_to_Cylinder;
-    KDL::Vector Nolmal_to_Cylinder_kdl;
-// Nolmal_to_Cylinder << T_CollisionPoint.M.UnitZ().data[0], T_CollisionPoint.M.UnitZ().data[1], T_CollisionPoint.M.UnitZ().data[2];
-// Nolmal_to_Cylinder_kdl = T_CollisionPoint.M.UnitZ();
-
-    Nolmal_to_Cylinder = GetPartialDerivate(Object_pos, T_CollisionPoint.p, radius, height);
-    Nolmal_to_Cylinder_kdl.data[0] = Nolmal_to_Cylinder[0];
-    Nolmal_to_Cylinder_kdl.data[1] = Nolmal_to_Cylinder[1];
-    Nolmal_to_Cylinder_kdl.data[2] = Nolmal_to_Cylinder[2];
-
-    arrows_total.markers.push_back(Force2MarkerArrow(  Nolmal_to_Cylinder_kdl, T_CollisionPoint.p, id_global));
-
-    LineCollisions::Point Point1(T_in.p.x(), T_in.p.y(), T_in.p.z());
-    LineCollisions::Point Point2(T_CollisionPoint.p.x(), T_CollisionPoint.p.y(), T_CollisionPoint.p.z());
-    LineCollisions::Line ClosestPoints(Point1, Point2);
-
-    if ( distance <= influence)
-    {
-        lines_total.markers.push_back(Line2markerLine(ClosestPoints, 1.0, 0.0, 0.0, id_global));
-        ForceAndIndex = GetFIRAS(distance, Nolmal_to_Cylinder, influence, parameters_.pf_repulsive_gain_obstacles);
-    }
-    else
-    {
-        lines_total.markers.push_back( Line2markerLine(ClosestPoints, 0.0, 1.0, 0.0, id_global) );
-    }
-
-
-    Eigen::Matrix<double, 6
-
-    , 1> force_local_link = Eigen::Matrix<double, 6, 1>::Zero();
-    force_local_link = getAdjointT( T_in.Inverse() * Object_pos) * ForceAndIndex;
-
-    tf::Transform CollisionTransform;
-    tf::transformKDLToTF( T_CollisionPoint, CollisionTransform);
-    tf_desired_hand_pose.sendTransform( tf::StampedTransform( CollisionTransform, ros::Time::now(), "world", "collision_point") );
-
-    return force_local_link;
-
-}
-
-Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::getRepulsiveForceTable(KDL::Frame &T_in, double influence)
-{
-    Eigen::Matrix<double, 6, 1> force_local_object = Eigen::Matrix<double, 6, 1>::Zero();
-
-    KDL::Frame T_table_world;
-
-    T_table_world.p = T_in.p;
-    T_table_world.p.data[2] = 0;
-
-    KDL::Vector Table_position(0, 0, 0.0);
-
-    double distance_local = std::abs( -Table_position.z() + T_in.p.z());
-
-    Eigen::Vector3d distance_der_partial(0, 0, 1);
-
-    if (distance_local <= parameters_.pf_dist_to_table )
-    {
-        force_local_object = GetFIRAS(distance_local, distance_der_partial, parameters_.pf_dist_to_table, parameters_.pf_repulsive_gain_table);
-    }
-
-    Eigen::Matrix<double, 6, 1> force_local_link = Eigen::Matrix<double, 6, 1>::Zero();
-    force_local_link = getAdjointT( T_in.Inverse() * T_table_world) * force_local_object;
-
-    return force_local_link;
-}
-
-Eigen::Matrix<double, 6, 1> PotentialFieldControlKinematicReverse::GetFIRAS(double min_distance, Eigen::Vector3d &distance_der_partial, double influence, double gain)
-{
-
-    Eigen::Matrix<double, 6, 1> Force = Eigen::Matrix<double, 6, 1>::Zero();
-    double V = gain * ( (1.0 / min_distance) -
-                        (1.0 / influence) )  * (1.0 / (min_distance * min_distance));
-    Force(0) = V * distance_der_partial[0];
-    Force(1) = V * distance_der_partial[1];
-    Force(2) = V * distance_der_partial[2];
-    Force(3) = 0;
-    Force(4) = 0;
-    Force(5) = 0;
-
-
-    return Force;
-}
-
-
 void PotentialFieldControlKinematicReverse::load_parameters(ros::NodeHandle &n)
 {
     nh_.param<std::string>("topic_obstacle", topic_obstacle_avoidance, "obstacles");
@@ -618,116 +522,6 @@ bool PotentialFieldControlKinematicReverse::loadVelocityCallback(std_srvs::Empty
     return true;
 }
 
-Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::CF_JS_CentralJointAngles(KDL::JntArray q)
-{
-    double sum = 0;
-    double temp;
-    int N = q.data.size();
-
-    Eigen::Matrix<double, 7, 1> tempret =  Eigen::Matrix<double, 7, 1>::Zero();
-    Eigen::Matrix<double, 7, 1> weights =  Eigen::Matrix<double, 7, 1>::Zero();
-    weights << 1, 1, 1, 10, 1, 1, 1;
-
-    for (int i = 0; i < N; i++)
-    {
-        temp = weights(i) * ((q(i) - joint_limits_.center(i)) / (joint_limits_.max(i) - joint_limits_.min(i)));
-// sum += temp*temp;
-        sum += temp;
-    }
-
-    sum /= 2 * N;
-
-    for (int i = 0; i < N; i++)
-    {
-        tempret(i) = sum;
-    }
-
-    return -parameters_.gain_null_space *   tempret;
-
-}
-
-Eigen::Matrix<double, 7, 1>  PotentialFieldControlKinematicReverse::getRepulsiveJointVelocity( KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F)
-{
-
-    KDL::Jacobian J_local;
-    J_local.resize(7);
-    J_local.data = J.data;
-
-    for (unsigned int i = 6; i > n_joint - 1; i--)
-    {
-        J_local.setColumn(i, KDL::Twist::Zero());
-    }
-
-    Eigen::MatrixXd J_pinv_n;
-    pseudo_inverse(J_local.data, J_pinv_n);
-
-    return J_pinv_n * F;
-}
-
-Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::CF_JS_PotentialEnergy(KDL::JntArray q)
-{
-    KDL::JntArray G_local(7);
-    id_solver_->JntToGravity(joint_msr_states_.q, G_local);
-
-    return parameters_.gain_null_space * G_local.data ;
-}
-
-Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverse::CF_JS_JointLimitAvoidance(KDL::JntArray q, double gain)
-{   // This function implements joint limit avoidance usung the penalty function V = \sum\limits_{i=1}^n\frac{1}{s^2} s = q_{l_1}-|q_i|
-    Eigen::Matrix<double, 7, 1> tau_limit_avoidance = Eigen::Matrix<double, 7, 1>::Zero();
-    double s, potential, treshold, q_abs;
-
-    for (unsigned int i = 0; i < q.data.size(); i++)
-    {
-        treshold = 5.0 * M_PI / 180.0;
-        q_abs = std::fabs(q.data[i]);
-        s = joint_limits_.max(i) - q_abs;
-
-
-        if (  s < treshold )
-        {
-            ROS_WARN("Joint limit %d", i);
-            potential = 0.5 * std::pow((1 / s - 1 / treshold), 2);
-            tau_limit_avoidance(i) = - gain *  KDL::sign(q.data[i]) * potential;
-        }
-        else
-        {
-            tau_limit_avoidance(i) = 0.0;
-        }
-    }
-
-    return tau_limit_avoidance;
-}
-
-Eigen::Vector3d PotentialFieldControlKinematicReverse::GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height)
-{
-    Eigen::Matrix<double, 4, 4>  Tvo_eigen;
-    Tvo_eigen = FromKdlToEigen(T_v_o);
-    Eigen::Vector4d Point_v_eigen(Point_v.x(), Point_v.y(), Point_v.z(), 1);
-
-    Eigen::Vector4d Point_o;
-    Point_o = Tvo_eigen.inverse() * Point_v_eigen;
-    double n = 2; // n as in the paper should be in 4 but considering the shortest distance to obstacles. Here this is not being considered :( TODO
-
-    Eigen::Vector4d distance_der_partial(0, 0, 0, 0);
-// distance_der_partial = x^2/radius + y^2 / radius + 2*(z^2n) /l
-    distance_der_partial[0] = (Point_o[0] * 2) / radius ;
-    distance_der_partial[1] = (Point_o[1] * 2) / radius ;
-    distance_der_partial[2] = (std::pow((Point_o[2] * 2 / height), (2 * n - 1)) * (2 * n) ); //n=4
-//n=1
-// distance_der_partial[2] = (Point_o[2]*4) / height ;
-    distance_der_partial[3] = 0;
-
-    Eigen::Vector3d Der_v;
-    Eigen::Vector4d partial_temp;
-    partial_temp = Tvo_eigen * distance_der_partial;
-    partial_temp = partial_temp.normalized();
-    Der_v[0] = partial_temp[0];
-    Der_v[1] = partial_temp[1];
-    Der_v[2] = partial_temp[2];
-
-    return Der_v;
-}
 
 void PotentialFieldControlKinematicReverse::loadVelocity()
 {

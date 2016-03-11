@@ -21,6 +21,7 @@ ball::ball()
   pub_Fr_ = nh.advertise<std_msgs::Float64MultiArray>("F_repulsive", 1000);
   pub_Ft_ = nh.advertise<std_msgs::Float64MultiArray>("F_total", 1000);
   pfc.load_parameters(nh);
+  pf_parameters = pfc.getParameters();
   F_total = Eigen::Matrix<double, 6,1>::Zero();
   F_total(0) = 1000;
 }
@@ -270,7 +271,7 @@ Eigen::Matrix<double,6,1> ball::GetFieldRep(Eigen::Matrix<double,6,1> &point_pos
       temp_frame.p.data[1] = point_pos(1);
       temp_frame.p.data[2] = point_pos(2);
 
-      ForceAndIndex += pfc.getRepulsiveForceObjects(temp_frame, pfc.parameters_.pf_dist_to_obstacles, Object_position[i], Object_radius[i], Object_height[i] );
+      ForceAndIndex += getRepulsiveForceObjects(temp_frame, pf_parameters.pf_dist_to_obstacles, Object_position[i], Object_radius[i], Object_height[i] );
       ROS_INFO_STREAM("Force" << ForceAndIndex.transpose());
 
     }

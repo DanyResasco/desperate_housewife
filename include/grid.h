@@ -21,6 +21,7 @@
 #include <tf_conversions/tf_kdl.h>
 
 #include <potential_field_control_kinematic_reverse_effort.h>
+// #include <utils/pf_utilities.h>
 
 class grid
 {
@@ -36,6 +37,7 @@ public:
   void generateMarkerMessages( std::vector<KDL::Frame> &Obj_pose );
   std::pair<double,double>  GetMinAndMax(std::vector<double> &field);
   desperate_housewife::PotentialFieldControlKinematicReverseEffort pfc;
+  desperate_housewife::PotentialFieldControlKinematicReverseEffort::parameters pf_parameters;
 
 private:
   ros::Subscriber sub_grid_,obstacles_subscribe_;

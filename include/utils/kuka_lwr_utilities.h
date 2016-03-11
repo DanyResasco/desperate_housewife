@@ -4,7 +4,7 @@
 
 #include <kdl/kdl.hpp>
 #include <Eigen/Core>
-#include "distance_between_lines.h"
+#include "pseudo_inversion.h"
 
 inline void saturateJointPositions( KDL::JntArray &q, double soft_limit = 2.0 * M_PI / 180.0 )
 {
@@ -80,74 +80,6 @@ Eigen::Matrix<double, 6, 6> inline getAdjointT( KDL::Frame Frame_in)
     return Adjoint_local;
 }
 
-
-void inline getClosestPointstoCylinder( KDL::Frame T_link_object, KDL::Frame &T_CollisionPoint, double radius, double height)
-{
-    LineCollisions LineCollisionsLocal;
-
-    LineCollisions::Point Point1(T_link_object.p.x(), T_link_object.p.y(), T_link_object.p.z());
-    LineCollisions::Point Point2(T_link_object.p.x() + .001, T_link_object.p.y() + .001, T_link_object.p.z() + .001);
-
-    LineCollisions::Point Point3(0.0, 0.0, height / 2.0);
-    LineCollisions::Point Point4(0.0, 0.0, -height / 2.0);
-
-    LineCollisions::Line Line1(Point1, Point2);
-    LineCollisions::Line Line2(Point3, Point4);
-    LineCollisions::Line ClosestPoints;
-
-    ClosestPoints = LineCollisionsLocal.getClosestPoints(Line1, Line2);
-
-    KDL::Vector V1(ClosestPoints.P1[0], ClosestPoints.P1[1], ClosestPoints.P1[2]);
-    KDL::Vector V2(ClosestPoints.P2[0], ClosestPoints.P2[1], ClosestPoints.P2[2]);
-    KDL::Vector V3(V1 - V2);
-    // V3  = (V1 - V2);
-    KDL::Frame pos_final;
-    KDL::Vector collision_point_on_line(ClosestPoints.P2[0], ClosestPoints.P2[1], ClosestPoints.P2[2] );
-    if ( (ClosestPoints.P2 == Point4) || (ClosestPoints.P2 == Point3) )
-    {   // The point is on one of the planar face
-
-        KDL::Vector V4( V3.x(), V3.y(), 0.0  );
-        double pos_on_plane = V4.Norm();
-        if (pos_on_plane >= radius )
-        {   // The point is on the border
-            KDL::Vector Uz(V4 / V4.Norm() );
-            KDL::Vector Ux(0.0, 0.0, 1.0);
-            pos_final = KDL::Frame( KDL::Rotation(Ux, Uz * Ux, Uz), collision_point_on_line) *
-                        KDL::Frame( KDL::Rotation::RotX(0.0), KDL::Vector( 0.0 , 0.0, radius) );
-            KDL::Vector V5;
-            V5 = (T_link_object.Inverse() * pos_final).Inverse().p;
-            V5 = V5 /  V5.Norm();
-            double angle = std::atan2(V5.x(), V5.z());
-            pos_final.M =  pos_final.M * KDL::Rotation::RotY( angle );
-        }
-        else
-        {   //The cylinder is on the one of the planar faces
-            KDL::Vector Ux;
-            KDL::Vector Uz;
-            Ux = ( V4 / V4.Norm() );
-            Uz = KDL::Vector(0.0, 0.0, 1.0);
-            if ( ClosestPoints.P2 == Point4 )
-            {
-                Uz = KDL::Vector(0.0, 0.0, -1.0);
-            }
-            pos_final = KDL::Frame( KDL::Rotation(Ux, Uz * Ux, Uz), collision_point_on_line) *
-                        KDL::Frame( KDL::Rotation::RotX(0.0), KDL::Vector(pos_on_plane, 0.0, 0.0) );
-
-        }
-    }
-    else
-    {   // The point is on the cylindrical face
-        KDL::Vector Uz(V3 / V3.Norm() );
-        KDL::Vector Ux(0.0, 0.0, 1.0);
-        pos_final = KDL::Frame( KDL::Rotation(Ux, Uz * Ux, Uz), collision_point_on_line) *
-                    KDL::Frame( KDL::Rotation::RotX(0.0), KDL::Vector(0.0, 0.0, radius) );
-    }
-
-    T_CollisionPoint.M = pos_final.M;
-    T_CollisionPoint.p = pos_final.p;
-
-}
-
 double inline VelocityLimit(KDL::Twist x_dot_d, double limit = 1.0)
 {
     Eigen::Matrix<double, 3, 1> x_dot_d_local = Eigen::Matrix<double, 3, 1>::Zero();
@@ -175,6 +107,81 @@ inline bool checkStatesforNan( KDL::JntArray &q)
     }
 
     return false;
+}
+
+
+inline Eigen::Matrix<double, 7, 1> CF_JS_CentralJointAngles(KDL::JntArray q, KDL::JntArray min, KDL::JntArray max,  KDL::JntArray center, double gain = 1.0)
+{
+  double sum = 0;
+  double temp;
+  int N = q.data.size();
+
+  Eigen::Matrix<double, 7, 1> tempret =  Eigen::Matrix<double, 7, 1>::Zero();
+  Eigen::Matrix<double, 7, 1> weights =  Eigen::Matrix<double, 7, 1>::Zero();
+  weights << 1, 1, 1, 10, 1, 1, 1;
+
+  for (int i = 0; i < N; i++)
+  {
+    temp = weights(i) * ((q(i) - center(i)) / (max(i) - min(i)));
+// sum += temp*temp;
+    sum += temp;
+  }
+
+  sum /= 2 * N;
+
+  for (int i = 0; i < N; i++)
+  {
+    tempret(i) = sum;
+  }
+
+  return -gain *   tempret;
+
+}
+
+inline Eigen::Matrix<double, 7, 1> CF_JS_JointLimitAvoidance(KDL::JntArray q, KDL::JntArray min, KDL::JntArray max,  KDL::JntArray center, double gain = 1.0)
+{ // This function implements joint limit avoidance usung the penalty function V = \sum\limits_{i=1}^n\frac{1}{s^2} s = q_{l_1}-|q_i|
+  Eigen::Matrix<double, 7, 1> tau_limit_avoidance = Eigen::Matrix<double, 7, 1>::Zero();
+  double s, potential, treshold, q_abs;
+
+  for (unsigned int i = 0; i < q.data.size(); i++)
+  {
+    treshold = 5.0 * M_PI / 180.0;
+    q_abs = std::fabs(q.data[i]);
+    s = max(i) - q_abs;
+
+
+    if (  s < treshold )
+    {
+      ROS_WARN("Joint limit %d", i);
+      potential = 0.5 * std::pow((1 / s - 1 / treshold), 2);
+      tau_limit_avoidance(i) = - gain *  KDL::sign(q.data[i]) * potential;
+    }
+    else
+    {
+      tau_limit_avoidance(i) = 0.0;
+    }
+  }
+
+  return tau_limit_avoidance;
+}
+
+
+inline Eigen::Matrix<double, 7, 1>  getRepulsiveJointVelocity( KDL::Jacobian &J, unsigned int n_joint, Eigen::Matrix<double, 6, 1> F)
+{
+
+  KDL::Jacobian J_local;
+  J_local.resize(7);
+  J_local.data = J.data;
+
+  for (unsigned int i = 6; i > n_joint - 1; i--)
+  {
+    J_local.setColumn(i, KDL::Twist::Zero());
+  }
+
+  Eigen::MatrixXd J_pinv_n;
+  pseudo_inverse(J_local.data, J_pinv_n);
+
+  return J_pinv_n * F;
 }
 
 
