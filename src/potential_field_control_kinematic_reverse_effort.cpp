@@ -699,7 +699,7 @@ Eigen::Matrix<double, 7, 1> PotentialFieldControlKinematicReverseEffort::CF_JS_J
 
   return tau_limit_avoidance;
 }
-
+/*
 Eigen::Vector3d PotentialFieldControlKinematicReverseEffort::GetPartialDerivate(KDL::Frame &T_v_o, KDL::Vector &Point_v, double radius, double height)
 {
   Eigen::Matrix<double, 4, 4>  Tvo_eigen;
@@ -728,7 +728,7 @@ Eigen::Vector3d PotentialFieldControlKinematicReverseEffort::GetPartialDerivate(
   Der_v[2] = partial_temp[2];
 
   return Der_v;
-}
+}*/
 
 void PotentialFieldControlKinematicReverseEffort::loadVelocity()
 {

@@ -11,6 +11,7 @@ ball::ball()
   marker_publisher_ = nh.advertise<visualization_msgs::Marker>( "visualization_cylinder", 1 );
   nh.param<std::string>("topic_obstacle" , obstacle_avoidance, "obstacles");
   obstacles_subscribe_ = nh.subscribe(obstacle_avoidance.c_str(), 1, &ball::InfoGeometry, this);
+  ROS_INFO_STREAM("Taking environment from topic: " << obstacle_avoidance);
   Force_attractive = Eigen::Matrix<double,6,1>::Zero();
   F_repulsive = Eigen::Matrix<double,6,1>::Zero();
   x_dot = Eigen::Matrix<double,6,1>::Zero();
@@ -256,53 +257,28 @@ Eigen::Matrix<double,6,1> ball::GetFieldRep(Eigen::Matrix<double,6,1> &point_pos
   //repulsive with obj
   for(unsigned int i=0; i < Object_position.size(); i++)
     {
-      double influence = Object_radius[i] + 0.6;
       std::vector<KDL::Vector> pos;
       KDL::Vector ball_pos_kdl;
       ball_pos_kdl.data[0] = point_pos(0);
       ball_pos_kdl.data[1] = point_pos(1);
       ball_pos_kdl.data[2] = point_pos(2);
       pos.push_back(ball_pos_kdl);
-      // std::pair<Eigen::Matrix<double,6,1>, double> ForceAndIndex;
 
-      // pfc.setTreshold(influence);
-      // pfc.setNi(1.0);
 
       KDL::Frame temp_frame;
       temp_frame.p.data[0] = point_pos(0);
       temp_frame.p.data[1] = point_pos(1);
       temp_frame.p.data[2] = point_pos(2);
 
-      ForceAndIndex += pfc.GetRepulsiveForce(temp_frame, influence, Object_position[i], Object_radius[i], Object_height[i] );
-      // F_rep.push_back(ForceAndIndex);
-      // ForceAndIndex = pfc.GetRepulsiveForce(pos, influence, Object_position[i], Object_radius[i], Object_height[i]);
-      // F_rep.push_back(ForceAndIndex.first);
+      ForceAndIndex += pfc.getRepulsiveForceObjects(temp_frame, pfc.parameters_.pf_dist_to_obstacles, Object_position[i], Object_radius[i], Object_height[i] );
+      ROS_INFO_STREAM("Force" << ForceAndIndex.transpose());
+
     }
 
   Eigen::Matrix<double,6,1> f = Eigen::Matrix<double,6,1>::Zero();
 
-  // for(unsigned int k=0; k < F_rep.size();k++)
-  // {
   f += ForceAndIndex/mass;
-  // }
-
-
 
   return f;
 }
-
-// KDL::Frame FromEigenToKdl(Eigen::Matrix<double,6,1> &Force)
-// {
-//   KDL::Frame Force_kdl;
-//   Force_kdl.M = KDL::Rotation::Identity();
-//   Force_kdl.p = KDL::Vector::Zero();
-//   Force_kdl.p.data[0] = Force(0);
-//   Force_kdl.p.data[1] = Force(1);
-//   Force_kdl.p.data[2] = Force(2);
-
-//   return Force_kdl;
-// }
-
-
-
 

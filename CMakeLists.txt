@@ -24,6 +24,8 @@ find_package(catkin REQUIRED
   geometry_msgs 
   lwr_controllers
   calibration
+  interactive_markers 
+  visualization_msgs
 )
 
 find_package(PCL 1.7.2 REQUIRED)
@@ -93,6 +95,8 @@ catkin_package(
   lwr_hw
   lwr_controllers
   calibration
+  interactive_markers 
+  visualization_msgs
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME})
 
@@ -142,6 +146,10 @@ target_link_libraries(init_robots ${PROJECT_NAME} ${catkin_LIBRARIES})
 add_executable(keycommands src/keycommands.cpp)
 add_dependencies(keycommands keycommands_gencpp ${PROJECT_NAME})
 target_link_libraries(keycommands ${PROJECT_NAME} ${catkin_LIBRARIES})
+
+add_executable(interactive_marker src/interactive_marker.cpp)
+add_dependencies(interactive_marker interactive_marker_gencpp ${PROJECT_NAME})
+target_link_libraries(interactive_marker ${PROJECT_NAME} ${catkin_LIBRARIES})
 
 
 

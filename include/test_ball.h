@@ -10,7 +10,7 @@
 #include <kdl/frames_io.hpp>
 #include <desperate_housewife/fittedGeometriesSingle.h>
 #include <desperate_housewife/fittedGeometriesArray.h>
-#include <potential_field_control.h>
+#include <potential_field_control_kinematic_reverse_effort.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <cmath>
@@ -43,7 +43,7 @@
       std::vector<double> Object_height;
       ros::Publisher marker_pub,marker_publisher_ ;
       std::string obstacle_avoidance;
-      desperate_housewife::PotentialFieldControl pfc;
+      desperate_housewife::PotentialFieldControlKinematicReverseEffort pfc;
       std::vector<KDL::Frame> Object_position;
       ros::Publisher vis_pub;
       // KDL::Vector POS_init;

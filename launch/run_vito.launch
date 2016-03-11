@@ -104,9 +104,9 @@
     <group if="$(arg head_enabled)">
         <!--add a copy of the robot description within the name space -->
         <param name="robot_description" command="$(find xacro)/xacro.py $(find desperate_housewife)/robot/$(arg robot_name).urdf.xacro use_mimic_tag:=true"/>
-        <!-- <include file="$(find kit_head_hw)/launch/head_hw.launch">
+        <include file="$(find kit_head_hw)/launch/head_hw.launch">
         </include>
-        -->
+       
         <!-- openni launch inclusion -->
     </group>
 

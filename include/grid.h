@@ -20,7 +20,7 @@
 #include <tf/transform_datatypes.h>
 #include <tf_conversions/tf_kdl.h>
 
-#include <potential_field_control.h>
+#include <potential_field_control_kinematic_reverse_effort.h>
 
 class grid
 {
@@ -35,6 +35,7 @@ public:
   void GetForceAndDraw(KDL::Vector &point_pos, int num);
   void generateMarkerMessages( std::vector<KDL::Frame> &Obj_pose );
   std::pair<double,double>  GetMinAndMax(std::vector<double> &field);
+  desperate_housewife::PotentialFieldControlKinematicReverseEffort pfc;
 
 private:
   ros::Subscriber sub_grid_,obstacles_subscribe_;
@@ -42,7 +43,7 @@ private:
   std::vector<double> Object_height;
   ros::Publisher marker_pub,marker_publisher_ ;
   std::string obstacle_avoidance;
-  desperate_housewife::PotentialFieldControl pfc;
+  
   std::vector<KDL::Frame> Object_position;
   ros::Publisher vis_pub;
  

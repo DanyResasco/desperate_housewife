@@ -67,18 +67,14 @@ int main(int argc, char **argv)
 
 sendObj::sendObj()
 {
-  std::string control_topic_right;
-  nh.param<std::string>("/right_arm/controller", control_topic_right, "PotentialFieldControl");
+  std::string publish_on_topic;
+  nh.param<std::string>("obstacles_to_pub", publish_on_topic, "obstacles");
   
   sub_grid_ = nh.subscribe("send_obst", 1, &sendObj::obst, this);
 
-  obstacles_topic_right = "/right_arm/" + control_topic_right + "/obstacles"; 
-  ROS_INFO_STREAM("control_topic_right: "<<obstacles_topic_right.c_str());
-  geometries_publisher_ = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_right.c_str(), 1);
+  ROS_INFO_STREAM("publish_on_topic: "<<publish_on_topic.c_str());
+  geometries_publisher_ = nh.advertise<desperate_housewife::fittedGeometriesArray > (publish_on_topic.c_str(), 1);
 
-  // nh.param<std::string>("obstacles_to_pub", obstacles_topic_right, "obstacles");
-  // ROS_INFO("Publishing on %s", obstacles_topic_right.c_str());
-  // geometries_publisher_ = nh.advertise<desperate_housewife::fittedGeometriesArray > (obstacles_topic_right.c_str(),1);
   marker_publisher_ = nh.advertise<visualization_msgs::Marker >( "frame_obst", 1 );
 }
 
@@ -104,15 +100,6 @@ void sendObj::obst(const std_msgs::Float64MultiArray::ConstPtr &msg)
       KDL::Rotation transformation_ = KDL::Rotation::RotX(angle*M_PI/180.0);
       transformation_.GetQuaternion(fittedGeometriesSingleMsg.pose.orientation.x, fittedGeometriesSingleMsg.pose.orientation.y,
                                  fittedGeometriesSingleMsg.pose.orientation.z, fittedGeometriesSingleMsg.pose.orientation.w );
-      // Eigen::Vector3d pos_obj(msg->data[0+p], msg->data[1+p], msg->data[2+p]);
-      // transformation_.row(0) << 1,0,0;
-      // transformation_.row(1) << 0,1,0;
-      // transformation_.row(2) << 0,0,1;
-      // Eigen::Quaterniond quat_eigen_hand(transformation_);
-      // fittedGeometriesSingleMsg.pose.orientation.x = quat_eigen_hand.x();
-      // fittedGeometriesSingleMsg.pose.orientation.y = quat_eigen_hand.y();
-      // fittedGeometriesSingleMsg.pose.orientation.z = quat_eigen_hand.z();
-      // fittedGeometriesSingleMsg.pose.orientation.w = quat_eigen_hand.w();
       std::vector<double> geom_info;
       geom_info.push_back(msg->data[4+p]);
       geom_info.push_back(msg->data[5+p]);
@@ -133,7 +120,6 @@ void sendObj::obst(const std_msgs::Float64MultiArray::ConstPtr &msg)
 
 
   generateMarkerMessages( vect_obst, geom_radius, geom_height );
-  // std::cout<<"pubblico"<<std::endl;
 
   geometries_publisher_.publish(fittedGeometriesArrayMsg);
 }

@@ -1,13 +1,13 @@
 scene_filter/filter: true
-scene_filter/xmin: -1.1
+scene_filter/xmin: -1.3
 scene_filter/xmax: 0.0
 scene_filter/ymin: -0.8
 scene_filter/ymax: 1.1
 scene_filter/zmin: 0.1
 scene_filter/zmax: 1.0
-scene_filter/erase_plane: false
+scene_filter/erase_plane: true
 scene_filter/downsample: true
-scene_filter/leaf_s: 0.01
+scene_filter/leaf_s: 0.008
 scene_filter/keep_organized: false
 scene_filter/change_frame: true
 scene_filter/new_frame: world
